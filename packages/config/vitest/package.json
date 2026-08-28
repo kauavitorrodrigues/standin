@@ -1,0 +1,13 @@
+{
+    "name": "@standin/vitest-config",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./node": "./node.ts",
+        "./web": "./web.ts"
+    },
+    "dependencies": {
+        "vitest": "4.1.10"
+    }
+}
