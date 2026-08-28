@@ -6,6 +6,6 @@
             "@/*": ["./src/*"]
         }
     },
-    "include": ["src", "drizzle.config.ts"],
+    "include": ["src", "drizzle.config.ts", "seed.ts"],
     "exclude": ["node_modules"]
 }
