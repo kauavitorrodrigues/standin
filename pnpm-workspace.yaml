@@ -6,5 +6,8 @@ packages:
 allowBuilds:
   esbuild: true
 
+minimumReleaseAgeExclude:
+  - zod@4.5.1
+
 saveExact: true
 savePrefix: ""
