@@ -1,0 +1,39 @@
+{
+    "name": "api",
+    "version": "0.1.0",
+    "private": true,
+    "main": "server.ts",
+    "scripts": {
+        "build": "tsup",
+        "start": "pnpm env:load node dist/server.js",
+        "dev": "pnpm env:load tsx watch src/server.ts",
+        "env:load": "dotenv -e ../../.env --",
+        "check-types": "tsc --noEmit",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@standin/contracts": "workspace:*",
+        "@standin/core": "workspace:*",
+        "@standin/database": "workspace:*",
+        "bcryptjs": "3.0.3",
+        "cookie-parser": "1.4.7",
+        "cors": "2.8.6",
+        "express": "5.2.1",
+        "jsonwebtoken": "9.0.3",
+        "zod": "4.5.1"
+    },
+    "devDependencies": {
+        "@standin/tsconfig": "workspace:*",
+        "@standin/vitest-config": "workspace:*",
+        "@types/cookie-parser": "1.4.10",
+        "@types/cors": "2.8.19",
+        "@types/express": "5.0.6",
+        "@types/jsonwebtoken": "9.0.10",
+        "@types/node": "26.4.0",
+        "dotenv-cli": "11.0.0",
+        "tsup": "8.5.1",
+        "tsx": "4.23.12",
+        "typescript": "6.0.2",
+        "vitest": "4.1.10"
+    }
+}
