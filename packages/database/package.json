@@ -1,0 +1,27 @@
+{
+    "name": "@standin/database",
+    "version": "1.0.0",
+    "private": true,
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "db:seed": "pnpm env:load tsx seed.ts",
+        "db:generate": "read -p 'Migration name: ' name && drizzle-kit generate --name $name",
+        "db:migrate": "pnpm env:load drizzle-kit migrate",
+        "db:studio": "pnpm env:load drizzle-kit studio",
+        "env:load": "dotenv -e ../../.env --"
+    },
+    "dependencies": {
+        "drizzle-orm": "0.45.2",
+        "pg": "8.23.0",
+        "uuid": "14.0.2"
+    },
+    "devDependencies": {
+        "@standin/tsconfig": "workspace:*",
+        "@types/node": "26.4.0",
+        "@types/pg": "8.23.1",
+        "dotenv-cli": "11.0.0",
+        "drizzle-kit": "0.31.10",
+        "tsx": "4.23.12"
+    }
+}

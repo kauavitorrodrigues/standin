@@ -3,5 +3,8 @@ packages:
   - "packages/*"
   - "packages/config/*"
 
+allowBuilds:
+  esbuild: true
+
 saveExact: true
 savePrefix: ""
