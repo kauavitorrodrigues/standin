@@ -5,7 +5,7 @@ import { getMeQueryOptions } from "@/features/auth/queries/getMe";
 export const Route = createFileRoute("/")({
     beforeLoad: async ({ context }) => {
         const user = await context.queryClient
-            .ensureQueryData(getMeQueryOptions())
+            .query({ ...getMeQueryOptions(), staleTime: "static" })
             .catch(() => null);
 
         if (user) {

@@ -10,7 +10,7 @@ import type { Organization } from "@standin/contracts";
 export const Route = createFileRoute("/_app")({
     beforeLoad: async ({ context }) => {
         const user = await context.queryClient
-            .ensureQueryData(getMeQueryOptions())
+            .query({ ...getMeQueryOptions(), staleTime: "static" })
             .catch(() => null);
 
         if (!user) {
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_app")({
         }
 
         const organizations = await context.queryClient
-            .ensureQueryData(organizationsQueryOptions())
+            .query({ ...organizationsQueryOptions(), staleTime: "static" })
             .catch(() => []);
 
         const activeOrganizationId = getActiveOrganizationId();
