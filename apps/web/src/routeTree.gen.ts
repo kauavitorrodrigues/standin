@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
-import { Route as AppHomeRouteImport } from './routes/_app/home'
+import { Route as AppDefaultRouteImport } from './routes/_app/_default'
+import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
+import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,32 +24,51 @@ const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppHomeRoute = AppHomeRouteImport.update({
+const AppDefaultRoute = AppDefaultRouteImport.update({
+  id: '/_default',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDefaultHomeRoute = AppDefaultHomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => AppDefaultRoute,
+} as any)
+const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
+  id: '/spaces/$spaceId',
+  path: '/spaces/$spaceId',
   getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/home': typeof AppHomeRoute
+  '/home': typeof AppDefaultHomeRoute
+  '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/home': typeof AppHomeRoute
+  '/home': typeof AppDefaultHomeRoute
+  '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/_app/home': typeof AppHomeRoute
+  '/_app/_default': typeof AppDefaultRouteWithChildren
+  '/_app/_default/home': typeof AppDefaultHomeRoute
+  '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/home'
+  fullPaths: '/' | '/home' | '/spaces/$spaceId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home'
-  id: '__root__' | '/' | '/_app' | '/_app/home'
+  to: '/' | '/home' | '/spaces/$spaceId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/_default'
+    | '/_app/_default/home'
+    | '/_app/spaces/$spaceId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -71,22 +92,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/home': {
-      id: '/_app/home'
+    '/_app/_default': {
+      id: '/_app/_default'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppDefaultRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/_default/home': {
+      id: '/_app/_default/home'
       path: '/home'
       fullPath: '/home'
-      preLoaderRoute: typeof AppHomeRouteImport
+      preLoaderRoute: typeof AppDefaultHomeRouteImport
+      parentRoute: typeof AppDefaultRoute
+    }
+    '/_app/spaces/$spaceId': {
+      id: '/_app/spaces/$spaceId'
+      path: '/spaces/$spaceId'
+      fullPath: '/spaces/$spaceId'
+      preLoaderRoute: typeof AppSpacesSpaceIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppDefaultRouteChildren {
+  AppDefaultHomeRoute: typeof AppDefaultHomeRoute
+}
+
+const AppDefaultRouteChildren: AppDefaultRouteChildren = {
+  AppDefaultHomeRoute: AppDefaultHomeRoute,
+}
+
+const AppDefaultRouteWithChildren = AppDefaultRoute._addFileChildren(
+  AppDefaultRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppHomeRoute: typeof AppHomeRoute
+  AppDefaultRoute: typeof AppDefaultRouteWithChildren
+  AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppHomeRoute: AppHomeRoute,
+  AppDefaultRoute: AppDefaultRouteWithChildren,
+  AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { getMeQueryOptions } from "@/features/auth/queries/getMe";
-import { Header } from "@/components/layout/Header";
 import { organizationsQueryOptions } from "@/features/organizations/queries/organizations";
 import { getActiveOrganizationId } from "@/features/organizations/lib/activeOrganization";
 import { OrganizationProvider } from "@/features/organizations/contexts/OrganizationContext";
@@ -38,8 +37,7 @@ function AppLayout() {
     return (
         <AuthProvider user={user}>
             <OrganizationProvider organization={organization}>
-                <div className="flex min-h-dvh w-full flex-col">
-                    <Header />
+                <div className="flex h-dvh w-full flex-col">
                     <Outlet />
                 </div>
             </OrganizationProvider>
