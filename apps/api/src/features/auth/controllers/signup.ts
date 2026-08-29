@@ -1,13 +1,13 @@
 import type { RequestHandler } from "express";
 import { UserDataSchema } from "@standin/contracts";
 import { UserService } from "@standin/core";
-import { validateBody } from "@/utils/validateBody";
+import { parseSchema } from "@/utils/parseSchema";
 import { createToken } from "../services/createToken";
 import { sendSignUpError } from "../utils/sendAuthError";
 
 export const signup: RequestHandler = async (req, res) => {
     try {
-        const data = validateBody(UserDataSchema, req.body, res);
+        const data = parseSchema(UserDataSchema, req.body, res);
         if (!data) return;
 
         const user = await UserService.create(data);

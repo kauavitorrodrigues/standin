@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import { SignInSchema } from "@standin/contracts";
 import { UserService } from "@standin/core";
-import { validateBody } from "@/utils/validateBody";
+import { parseSchema } from "@/utils/parseSchema";
 import { createToken } from "../services/createToken";
 import {
     sendInvalidCredentialsError,
@@ -10,7 +10,7 @@ import {
 
 export const signin: RequestHandler = async (req, res) => {
     try {
-        const data = validateBody(SignInSchema, req.body, res);
+        const data = parseSchema(SignInSchema, req.body, res);
         if (!data) return;
 
         const user = await UserService.isValid(data);
