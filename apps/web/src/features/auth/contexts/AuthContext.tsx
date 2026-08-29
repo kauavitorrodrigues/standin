@@ -1,14 +1,11 @@
 import type { ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getMeQueryOptions } from "../queries/getMe";
+import type { User } from "@standin/contracts";
 import { AuthContext } from "./authContext";
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-    const { data, isLoading } = useQuery(getMeQueryOptions());
+type AuthProviderProps = { user: User; children: ReactNode };
 
+export function AuthProvider({ user, children }: AuthProviderProps) {
     return (
-        <AuthContext.Provider value={{ user: data ?? null, isLoading }}>
-            {children}
-        </AuthContext.Provider>
+        <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
     );
 }
