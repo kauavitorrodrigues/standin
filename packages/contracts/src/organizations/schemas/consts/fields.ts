@@ -1,0 +1,1 @@
+export const MAX_ORGANIZATION_NAME_LENGTH = 100;

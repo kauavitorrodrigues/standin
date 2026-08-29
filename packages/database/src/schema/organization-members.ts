@@ -8,13 +8,14 @@ import {
     timestamp,
     uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { ORGANIZATION_MEMBER_ROLES } from "@standin/contracts";
 import { usersTable } from "./users";
 import { organizationsTable } from "./organizations";
 
-export const organizationMemberRoleEnum = pgEnum("organization_member_role", [
-    "OWNER",
-    "MEMBER",
-]);
+export const organizationMemberRoleEnum = pgEnum(
+    "organization_member_role",
+    ORGANIZATION_MEMBER_ROLES,
+);
 
 export const organizationMembersTable = pgTable(
     "organization_members",
@@ -31,7 +32,9 @@ export const organizationMembersTable = pgTable(
             .references(() => organizationsTable.id),
 
         // Properties columns
-        role: organizationMemberRoleEnum("role").notNull().default("MEMBER"),
+        role: organizationMemberRoleEnum("role")
+            .notNull()
+            .default(ORGANIZATION_MEMBER_ROLES.MEMBER),
 
         // Date columns
         joinedAt: timestamp("joined_at", { mode: "date" })

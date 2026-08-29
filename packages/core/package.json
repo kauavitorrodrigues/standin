@@ -14,7 +14,8 @@
     "dependencies": {
         "@standin/contracts": "workspace:*",
         "@standin/database": "workspace:*",
-        "bcryptjs": "3.0.3"
+        "bcryptjs": "3.0.3",
+        "slugify": "1.6.9"
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",
