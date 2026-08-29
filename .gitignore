@@ -19,6 +19,9 @@ node_modules
 # api
 /apps/api/dist
 
+# web
+apps/web/.tanstack
+
 # production
 /build
 dist
