@@ -1,5 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import type { Space } from "@standin/contracts";
+import type { SpaceDetails } from "@standin/contracts";
 import { api } from "@/lib/axios/api";
 import { useQueryUtils } from "@/lib/tanstack/useQueryUtils";
 
@@ -11,7 +11,7 @@ export const spaceDetailsQueryOptions = (
 ) =>
     queryOptions({
         queryKey: [SPACE_DETAILS_QUERY_KEY, organizationId, spaceId],
-        queryFn: async (): Promise<Space> => {
+        queryFn: async (): Promise<SpaceDetails> => {
             const res = await api.get(
                 `/organizations/${organizationId}/spaces/${spaceId}`,
             );
@@ -29,7 +29,7 @@ export const useSpaceDetailsQueryUtils = (
     organizationId: string,
     spaceId: string,
 ) =>
-    useQueryUtils<Space>([
+    useQueryUtils<SpaceDetails>([
         SPACE_DETAILS_QUERY_KEY,
         organizationId,
         spaceId,

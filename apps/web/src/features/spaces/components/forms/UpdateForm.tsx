@@ -14,7 +14,7 @@ import { SpacesQueries } from "../../queries";
 import { UpdateMessages } from "./Messages";
 
 type Props = {
-    space: Space;
+    space: Pick<Space, "id" | "name">;
     onShowDialog: (open: boolean) => void;
 };
 

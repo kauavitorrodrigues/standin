@@ -1,4 +1,4 @@
-import type { Space } from "@standin/contracts";
+import type { SpaceDetails } from "@standin/contracts";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SpacesQueries } from "@/features/spaces/queries";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
@@ -23,7 +23,7 @@ import { Logo } from "@/components/layout/Logo";
 type ContentProps = {
     isLoading: boolean;
     isError: boolean;
-    space: Space | undefined;
+    space: SpaceDetails | undefined;
 };
 
 function Content({ isLoading, isError, space }: ContentProps) {

@@ -14,7 +14,7 @@ export const getSpaceDetails = async (req: ExtendedRequest, res: Response) => {
         );
         if (!params) return;
 
-        const space = await SpaceService.findById(
+        const space = await SpaceService.findDetailsById(
             params.organizationId,
             params.spaceId,
         );

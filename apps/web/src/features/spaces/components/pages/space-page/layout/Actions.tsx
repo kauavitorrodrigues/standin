@@ -14,7 +14,7 @@ import { DeleteSpaceDialog } from "@/features/spaces/components/dialogs/DeleteDi
 
 type Action = "update" | "delete" | null;
 
-export const Actions = ({ space }: { space: Space }) => {
+export const Actions = ({ space }: { space: Pick<Space, "id" | "name"> }) => {
     const [action, setAction] = useState<Action>(null);
     return (
         <>

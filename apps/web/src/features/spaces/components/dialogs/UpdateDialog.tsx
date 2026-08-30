@@ -9,7 +9,7 @@ import {
 import { UpdateSpaceForm } from "../forms/UpdateForm";
 
 type Props = {
-    space: Space;
+    space: Pick<Space, "id" | "name">;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 };

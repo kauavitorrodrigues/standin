@@ -13,7 +13,7 @@ import { SpacesQueries } from "../../queries";
 import { DeleteMessages } from "../forms/Messages";
 
 type Props = {
-    space: Space;
+    space: Pick<Space, "id" | "name">;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 };
