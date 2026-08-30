@@ -1,5 +1,5 @@
 {
-    "name": "@standin/core",
+    "name": "@standin/infra",
     "version": "1.0.0",
     "private": true,
     "main": "./src/index.ts",
@@ -12,11 +12,7 @@
         "test": "vitest run"
     },
     "dependencies": {
-        "@standin/contracts": "workspace:*",
-        "@standin/database": "workspace:*",
-        "@standin/infra": "workspace:*",
-        "bcryptjs": "3.0.3",
-        "slugify": "1.6.9"
+        "@standin/contracts": "workspace:*"
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",

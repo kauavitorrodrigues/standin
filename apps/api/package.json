@@ -15,11 +15,13 @@
         "@standin/contracts": "workspace:*",
         "@standin/core": "workspace:*",
         "@standin/database": "workspace:*",
+        "@standin/infra": "workspace:*",
         "bcryptjs": "3.0.3",
         "cookie-parser": "1.4.7",
         "cors": "2.8.6",
         "express": "5.2.1",
         "jsonwebtoken": "9.0.3",
+        "multer": "2.3.0",
         "zod": "4.5.1"
     },
     "devDependencies": {
@@ -29,6 +31,7 @@
         "@types/cors": "2.8.19",
         "@types/express": "5.0.6",
         "@types/jsonwebtoken": "9.0.10",
+        "@types/multer": "2.2.0",
         "@types/node": "26.4.0",
         "dotenv-cli": "11.0.0",
         "tsup": "8.5.1",
