@@ -18,7 +18,8 @@ node_modules
 
 # api
 /apps/api/dist
-/apps/api/uploads
+/apps/api/public
+/apps/api/tmp
 
 # web
 apps/web/.tanstack

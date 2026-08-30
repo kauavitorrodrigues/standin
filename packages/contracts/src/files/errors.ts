@@ -59,3 +59,13 @@ export class StorageDriverNotImplementedError extends BaseError {
         );
     }
 }
+
+export class MissingEnvironmentVariableError extends BaseError {
+    constructor(name: string) {
+        super(
+            `A variável de ambiente "${name}" é obrigatória.`,
+            "MISSING_ENVIRONMENT_VARIABLE",
+            500
+        );
+    }
+}

@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import path from "node:path";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -17,6 +18,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use("/public", express.static(path.join(process.cwd(), "public")));
 app.use(router);
 
 const server = createServer(app);
