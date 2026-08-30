@@ -1,6 +1,8 @@
+import { Link } from "@tanstack/react-router";
+import { PlusIcon } from "lucide-react";
 import { PageContainer } from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
 import { SpacesList } from "@/features/spaces/components/instances/SpacesList";
-import { CreateSpaceDialog } from "@/features/spaces/components/dialogs/CreateDialog";
 
 export function SpacesPage() {
     return (
@@ -9,7 +11,14 @@ export function SpacesPage() {
                 title="Meus espaços"
                 controls={
                     <PageContainer.Controls>
-                        <CreateSpaceDialog />
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            render={<Link to="/spaces/new" />}
+                        >
+                            <PlusIcon />
+                            Criar espaço
+                        </Button>
                     </PageContainer.Controls>
                 }
             />

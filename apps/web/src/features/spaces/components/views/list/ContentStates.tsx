@@ -1,6 +1,8 @@
 import { AlertCircle, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { PlusIcon } from "lucide-react";
 import { ListResponseState } from "@/components/ListResponseState";
-import { CreateSpaceDialog } from "@/features/spaces/components/dialogs/CreateDialog";
+import { Button } from "@/components/ui/button";
 
 export const SpacesErrorState = () => (
     <ListResponseState
@@ -17,6 +19,9 @@ export const SpacesEmptyState = () => (
         icon={Sparkles}
         message="Você ainda não tem nenhum espaço por aqui. Crie um para começar!"
     >
-        <CreateSpaceDialog />
+        <Button variant="outline" size="lg" render={<Link to="/spaces/new" />}>
+            <PlusIcon />
+            Criar espaço
+        </Button>
     </ListResponseState>
 );

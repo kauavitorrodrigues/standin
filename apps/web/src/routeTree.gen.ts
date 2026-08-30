@@ -14,6 +14,9 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppDefaultRouteImport } from './routes/_app/_default'
 import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
+import { Route as AppSpacesNewRouteImport } from './routes/_app/spaces/new'
+import { Route as AppDefaultMapsIndexRouteImport } from './routes/_app/_default/maps/index'
+import { Route as AppDefaultMapsNewRouteImport } from './routes/_app/_default/maps/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -38,16 +41,37 @@ const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
   path: '/spaces/$spaceId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSpacesNewRoute = AppSpacesNewRouteImport.update({
+  id: '/spaces/new',
+  path: '/spaces/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDefaultMapsIndexRoute = AppDefaultMapsIndexRouteImport.update({
+  id: '/maps/',
+  path: '/maps/',
+  getParentRoute: () => AppDefaultRoute,
+} as any)
+const AppDefaultMapsNewRoute = AppDefaultMapsNewRouteImport.update({
+  id: '/maps/new',
+  path: '/maps/new',
+  getParentRoute: () => AppDefaultRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/home': typeof AppDefaultHomeRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
+  '/spaces/new': typeof AppSpacesNewRoute
+  '/maps/new': typeof AppDefaultMapsNewRoute
+  '/maps/': typeof AppDefaultMapsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/home': typeof AppDefaultHomeRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
+  '/spaces/new': typeof AppSpacesNewRoute
+  '/maps/new': typeof AppDefaultMapsNewRoute
+  '/maps': typeof AppDefaultMapsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -56,12 +80,16 @@ export interface FileRoutesById {
   '/_app/_default': typeof AppDefaultRouteWithChildren
   '/_app/_default/home': typeof AppDefaultHomeRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
+  '/_app/spaces/new': typeof AppSpacesNewRoute
+  '/_app/_default/maps/new': typeof AppDefaultMapsNewRoute
+  '/_app/_default/maps/': typeof AppDefaultMapsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/home' | '/spaces/$spaceId'
+  fullPaths:
+    '/' | '/home' | '/spaces/$spaceId' | '/spaces/new' | '/maps/new' | '/maps/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/spaces/$spaceId'
+  to: '/' | '/home' | '/spaces/$spaceId' | '/spaces/new' | '/maps/new' | '/maps'
   id:
     | '__root__'
     | '/'
@@ -69,6 +97,9 @@ export interface FileRouteTypes {
     | '/_app/_default'
     | '/_app/_default/home'
     | '/_app/spaces/$spaceId'
+    | '/_app/spaces/new'
+    | '/_app/_default/maps/new'
+    | '/_app/_default/maps/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -113,15 +144,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSpacesSpaceIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/spaces/new': {
+      id: '/_app/spaces/new'
+      path: '/spaces/new'
+      fullPath: '/spaces/new'
+      preLoaderRoute: typeof AppSpacesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/_default/maps/': {
+      id: '/_app/_default/maps/'
+      path: '/maps'
+      fullPath: '/maps/'
+      preLoaderRoute: typeof AppDefaultMapsIndexRouteImport
+      parentRoute: typeof AppDefaultRoute
+    }
+    '/_app/_default/maps/new': {
+      id: '/_app/_default/maps/new'
+      path: '/maps/new'
+      fullPath: '/maps/new'
+      preLoaderRoute: typeof AppDefaultMapsNewRouteImport
+      parentRoute: typeof AppDefaultRoute
+    }
   }
 }
 
 interface AppDefaultRouteChildren {
   AppDefaultHomeRoute: typeof AppDefaultHomeRoute
+  AppDefaultMapsNewRoute: typeof AppDefaultMapsNewRoute
+  AppDefaultMapsIndexRoute: typeof AppDefaultMapsIndexRoute
 }
 
 const AppDefaultRouteChildren: AppDefaultRouteChildren = {
   AppDefaultHomeRoute: AppDefaultHomeRoute,
+  AppDefaultMapsNewRoute: AppDefaultMapsNewRoute,
+  AppDefaultMapsIndexRoute: AppDefaultMapsIndexRoute,
 }
 
 const AppDefaultRouteWithChildren = AppDefaultRoute._addFileChildren(
@@ -131,11 +187,13 @@ const AppDefaultRouteWithChildren = AppDefaultRoute._addFileChildren(
 interface AppRouteChildren {
   AppDefaultRoute: typeof AppDefaultRouteWithChildren
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
+  AppSpacesNewRoute: typeof AppSpacesNewRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDefaultRoute: AppDefaultRouteWithChildren,
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
+  AppSpacesNewRoute: AppSpacesNewRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
