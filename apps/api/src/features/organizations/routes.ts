@@ -3,6 +3,7 @@ import { RequiresAuth } from "@/middlewares/requiresAuth";
 import { RequiresOrgMember, RequiresOrgOwner } from "@/middlewares/requiresOrgMember";
 import { OrganizationController } from "./controllers";
 import { spacesRouter } from "../spaces/routes";
+import { mapsRouter } from "../maps/routes";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.delete(
 );
 
 router.use("/:organizationId/spaces", RequiresOrgMember, spacesRouter);
+router.use("/:organizationId/maps", RequiresOrgMember, mapsRouter);
 
 export const organizationsRouter = router;

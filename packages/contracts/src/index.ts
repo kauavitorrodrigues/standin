@@ -5,3 +5,4 @@ export * from "./users";
 export * from "./organizations";
 export * from "./spaces";
 export * from "./files";
+export * from "./maps";

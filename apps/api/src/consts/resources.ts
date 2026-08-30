@@ -1,4 +1,4 @@
-export const RESOURCES = ["user", "organization", "space"] as const;
+export const RESOURCES = ["user", "organization", "space", "map"] as const;
 
 export type Resource = (typeof RESOURCES)[number];
 
@@ -17,6 +17,10 @@ export const RESOURCE_LABELS: Record<
     space: {
         singular: "espaço",
         plural: "espaços",
+    },
+    map: {
+        singular: "mapa",
+        plural: "mapas",
     },
 };
 
