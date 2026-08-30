@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { createdAtColumn, deletedAtColumn, uuidPrimaryKeyColumn } from "./common";
 import {
     text,
@@ -9,6 +9,7 @@ import {
     uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { organizationsTable } from "./organizations";
+import { usersTable } from "./users";
 
 export const organizationInvitesTable = pgTable(
     "organization_invites",
@@ -20,6 +21,7 @@ export const organizationInvitesTable = pgTable(
         organizationId: text("organization_id")
             .notNull()
             .references(() => organizationsTable.id),
+        createdBy: text("created_by").references(() => usersTable.id),
 
         // Properties columns
         email: varchar("email", { length: 255 }).notNull(),
@@ -39,4 +41,14 @@ export const organizationInvitesTable = pgTable(
             .where(sql`${table.deletedAt} IS NULL`),
         index("organization_invites_email_index").on(table.email),
     ],
+);
+
+export const organizationInvitesRelations = relations(
+    organizationInvitesTable,
+    ({ one }) => ({
+        creator: one(usersTable, {
+            fields: [organizationInvitesTable.createdBy],
+            references: [usersTable.id],
+        }),
+    }),
 );

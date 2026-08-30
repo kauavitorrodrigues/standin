@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
     createdAtColumn,
     deletedAtColumn,
@@ -40,4 +40,14 @@ export const organizationsTable = pgTable(
             .where(sql`${table.deletedAt} IS NULL`),
         index("organizations_owner_id_index").on(table.ownerId),
     ],
+);
+
+export const organizationsRelations = relations(
+    organizationsTable,
+    ({ one }) => ({
+        owner: one(usersTable, {
+            fields: [organizationsTable.ownerId],
+            references: [usersTable.id],
+        }),
+    }),
 );

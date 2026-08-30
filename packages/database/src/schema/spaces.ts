@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
     createdAtColumn,
     deletedAtColumn,
@@ -6,6 +7,8 @@ import {
 } from "./common";
 import { text, varchar, pgTable, index } from "drizzle-orm/pg-core";
 import { organizationsTable } from "./organizations";
+import { mapsTable } from "./maps";
+import { usersTable } from "./users";
 
 export const spacesTable = pgTable(
     "spaces",
@@ -20,6 +23,10 @@ export const spacesTable = pgTable(
         organizationId: text("organization_id")
             .notNull()
             .references(() => organizationsTable.id),
+        mapId: text("map_id")
+            .notNull()
+            .references(() => mapsTable.id),
+        createdBy: text("created_by").references(() => usersTable.id),
 
         // Date columns
         createdAt: createdAtColumn(),
@@ -28,5 +35,13 @@ export const spacesTable = pgTable(
     },
     (table) => [
         index("spaces_organization_id_index").on(table.organizationId),
+        index("spaces_map_id_index").on(table.mapId),
     ],
 );
+
+export const spacesRelations = relations(spacesTable, ({ one }) => ({
+    creator: one(usersTable, {
+        fields: [spacesTable.createdBy],
+        references: [usersTable.id],
+    }),
+}));
