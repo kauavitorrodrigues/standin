@@ -44,4 +44,8 @@ export const spacesRelations = relations(spacesTable, ({ one }) => ({
         fields: [spacesTable.createdBy],
         references: [usersTable.id],
     }),
+    map: one(mapsTable, {
+        fields: [spacesTable.mapId],
+        references: [mapsTable.id],
+    }),
 }));

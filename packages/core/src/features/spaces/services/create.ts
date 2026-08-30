@@ -8,7 +8,7 @@ export const createSpace = async (
 ): Promise<Space> => {
     const [space] = await db
         .insert(spacesTable)
-        .values({ name: data.name, organizationId })
+        .values({ name: data.name, mapId: data.mapId, organizationId })
         .returning(spaceSelect);
 
     return space;

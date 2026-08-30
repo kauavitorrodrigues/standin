@@ -7,6 +7,9 @@ export const SpaceDataSchema = z.object({
         .string({ error: SpaceErrorMessages.name.required })
         .min(2, { error: SpaceErrorMessages.name.required })
         .max(MAX_SPACE_NAME_LENGTH, { error: SpaceErrorMessages.name.max }),
+    mapId: z
+        .string({ error: SpaceErrorMessages.mapId.required })
+        .min(1, { error: SpaceErrorMessages.mapId.required }),
 });
 
 export type SpaceDataSchemaType = z.infer<typeof SpaceDataSchema>;

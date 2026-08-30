@@ -8,4 +8,7 @@ export const SpaceErrorMessages = {
         required: "O nome do espaço é obrigatório.",
         max: `O nome do espaço não pode ter mais de ${MAX_SPACE_NAME_LENGTH} caracteres.`,
     },
+    mapId: {
+        required: "Selecione um mapa para o espaço.",
+    },
 };
