@@ -4,3 +4,8 @@ export * from "./map.data.schema";
 export * from "./map.update.schema";
 export * from "./map-tileset.schema";
 export * from "./map-with-urls.schema";
+export * from "./tiled-object-property.schema";
+export * from "./map-object-properties.schema";
+export * from "./tiled-object.schema";
+export * from "./tiled-layer.schema";
+export * from "./tiled-map.schema";
