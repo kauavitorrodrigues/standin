@@ -24,6 +24,8 @@ import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 import { GameCanvas } from "@/features/game/components/GameCanvas";
 import { GameControls } from "@/features/game/components/GameControls";
 import type { GameEngineHandle } from "@/features/game/types/game";
+import { UserWidget } from "@/features/users/components/UserWidget";
+import { Separator } from "@/components/ui/separator";
 import { SIDEBAR_WIDTH_PX } from "@/features/spaces/components/pages/space-page/layout/sidebarWidth";
 
 type ContentProps = {
@@ -53,12 +55,16 @@ function Content({
 }
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
+    
     const { open, setOpen } = useSpacePageSidebarState();
+    
     const organizationId = useOrganization().organization?.id ?? "";
+    
     const { space, isLoading, isError } = SpacesQueries.useDetails(
         organizationId,
         spaceId
     );
+    
     const { containerRef, handle } = useGameEngine(
         space?.map ?? null,
         open ? SIDEBAR_WIDTH_PX / 2 : 0
@@ -81,12 +87,19 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
                     <LayoutPrimitive.Sidebar />
                 </LayoutPrimitive.Body>
                 <LayoutPrimitive.Controls>
-                    <Logo />
-                    <LayoutPrimitive.ControlGroup>
+                    <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-start">
+                        <Logo />
+                        <Separator
+                            orientation="vertical"
+                            className="h-5 my-auto"
+                        />
+                        <UserWidget />
+                    </LayoutPrimitive.ControlGroup>
+                    <LayoutPrimitive.ControlGroup className="w-full max-w-96">
                         <MicToggleButton />
                         <CameraToggleButton />
                     </LayoutPrimitive.ControlGroup>
-                    <LayoutPrimitive.ControlGroup>
+                    <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-end">
                         <SpaceSidebar.Trigger />
                         <LeaveSpaceButton />
                     </LayoutPrimitive.ControlGroup>
