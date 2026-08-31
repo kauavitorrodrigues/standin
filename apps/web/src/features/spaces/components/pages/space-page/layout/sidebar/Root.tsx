@@ -7,14 +7,19 @@ type Props = { children?: ReactNode; className?: string };
 export const Root = ({ children, className }: Props) => {
     return (
         <div
+            className="pointer-events-none absolute inset-y-0 right-0 z-20 w-(--sidebar-width)"
             style={
                 {
-                    "--sidebar-width": "25rem",
                     "--sidebar": "var(--background)",
                 } as React.CSSProperties
             }
         >
-            <Sidebar position="contained" collapsible="offcanvas" side="right">
+            <Sidebar
+                position="contained"
+                collapsible="offcanvas"
+                side="right"
+                className="pointer-events-auto"
+            >
                 <div
                     className={cn(
                         "flex h-full w-full flex-col gap-4 overflow-auto p-4",

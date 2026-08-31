@@ -1,0 +1,5 @@
+const SIDEBAR_WIDTH_REM = 25;
+const REM_IN_PX = 16;
+
+export const SIDEBAR_WIDTH_CSS_VALUE = `${SIDEBAR_WIDTH_REM}rem`;
+export const SIDEBAR_WIDTH_PX = SIDEBAR_WIDTH_REM * REM_IN_PX;

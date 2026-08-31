@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import type { SpaceDetails } from "@standin/contracts";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SpacesQueries } from "@/features/spaces/queries";
@@ -19,21 +20,35 @@ import {
     MicToggleButton,
 } from "@/features/media-devices/components";
 import { Logo } from "@/components/layout/Logo";
+import { useGameEngine } from "@/features/game/hooks/useGameEngine";
+import { GameCanvas } from "@/features/game/components/GameCanvas";
+import { GameControls } from "@/features/game/components/GameControls";
+import type { GameEngineHandle } from "@/features/game/types/game";
+import { SIDEBAR_WIDTH_PX } from "@/features/spaces/components/pages/space-page/layout/sidebarWidth";
 
 type ContentProps = {
     isLoading: boolean;
     isError: boolean;
     space: SpaceDetails | undefined;
+    containerRef: Ref<HTMLDivElement>;
+    handle: GameEngineHandle | null;
 };
 
-function Content({ isLoading, isError, space }: ContentProps) {
+function Content({
+    isLoading,
+    isError,
+    space,
+    containerRef,
+    handle,
+}: ContentProps) {
     if (isLoading) return <SpaceLoadingState />;
     if (isError) return <SpaceErrorState />;
     if (!space) return <SpaceNotFoundState />;
     return (
-        <div className="flex min-h-0 w-full flex-1 bg-muted items-center justify-center">
-            <span>O mapa aparece aqui!</span>
-        </div>
+        <>
+            <GameCanvas ref={containerRef} />
+            <GameControls handle={handle} />
+        </>
     );
 }
 
@@ -43,6 +58,10 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
     const { space, isLoading, isError } = SpacesQueries.useDetails(
         organizationId,
         spaceId
+    );
+    const { containerRef, handle } = useGameEngine(
+        space?.map ?? null,
+        open ? SIDEBAR_WIDTH_PX / 2 : 0
     );
 
     return (
@@ -55,6 +74,8 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
                             isLoading={isLoading}
                             isError={isError}
                             space={space}
+                            containerRef={containerRef}
+                            handle={handle}
                         />
                     </LayoutPrimitive.Content>
                     <LayoutPrimitive.Sidebar />
