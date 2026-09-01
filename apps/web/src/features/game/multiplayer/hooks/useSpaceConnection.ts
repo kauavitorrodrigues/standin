@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import type { Organization, Space, User } from "@standin/contracts";
 import type { SignalData } from "simple-peer";
+import type Phaser from "phaser";
 import { socket } from "../socket";
 import {
     PeerConnectionManager,
     type PeerConnectionEvents,
 } from "../lib/PeerConnectionManager";
+import { isPlayerPosition } from "../utils/isPlayerPosition";
+import { getMapScene } from "@/features/game/utils/map";
+import { SCENE_EVENTS } from "@/features/game/consts/scene-keys";
 import { useSocketEvent } from "./useSocketEvent";
 
 export type UseSpaceConnectionOptions = {
     organizationId: Organization["id"];
     spaceId: Space["id"];
     userId: User["id"];
+    game: Phaser.Game | null;
 };
 
 const JOIN_TIMEOUT_MS = 5000;
@@ -23,14 +28,18 @@ const removePeerId = (peerIds: string[], socketId: string): string[] =>
     peerIds.filter((id) => id !== socketId);
 
 // Orchestrates the join -> peer discovery -> WebRTC handshake cycle
-// described in the multiplayer spec: connects the socket, joins the space,
-// and, for every peer that's already there vs. one that joins later,
-// applies the initiator rule so both sides don't race to start the same
-// connection. No rendering here yet, just the connections themselves.
+// described in the multiplayer spec, and drives the MapScene from it:
+// connects the socket, joins the space, and, for every peer that's already
+// there vs. one that joins later, applies the initiator rule so both sides
+// don't race to start the same connection. Every peer discovered here also
+// gets a RemoteAvatar spawned/moved/removed in the running scene (a no-op
+// while the scene isn't mounted yet, e.g. before the game engine finishes
+// its first render).
 export function useSpaceConnection({
     organizationId,
     spaceId,
     userId,
+    game,
 }: UseSpaceConnectionOptions) {
     const [connectedPeerIds, setConnectedPeerIds] = useState<string[]>([]);
 
@@ -49,9 +58,21 @@ export function useSpaceConnection({
             setConnectedPeerIds((peerIds) => removePeerId(peerIds, socketId));
         },
         onPeerData: (socketId, data) => {
-            if (import.meta.env.DEV) {
-                console.log("[multiplayer] data from", socketId, data);
+            if (!isPlayerPosition(data)) {
+                if (import.meta.env.DEV) {
+                    console.warn(
+                        "[multiplayer] malformed position from",
+                        socketId,
+                        data
+                    );
+                }
+                return;
             }
+
+            (game ? getMapScene(game) : null)?.applyRemotePosition(
+                socketId,
+                data
+            );
         },
     };
 
@@ -75,13 +96,18 @@ export function useSpaceConnection({
         // the server once the socket reconnects with a new id.
         manager.destroyAll();
         setConnectedPeerIds([]);
+
+        const scene = game ? getMapScene(game) : null;
+        scene?.clearRemoteAvatars();
         peers.forEach((peer) => {
             manager.createConnection(peer.socketId, true);
+            scene?.spawnRemoteAvatar(peer.socketId);
         });
     });
 
     useSocketEvent("space:peer-joined", (peer) => {
         manager.createConnection(peer.socketId, false);
+        (game ? getMapScene(game) : null)?.spawnRemoteAvatar(peer.socketId);
     });
 
     useSocketEvent("webrtc:signal", ({ fromSocketId, signal }) => {
@@ -94,7 +120,37 @@ export function useSpaceConnection({
     useSocketEvent("space:peer-left", ({ socketId }) => {
         manager.destroy(socketId);
         setConnectedPeerIds((peerIds) => removePeerId(peerIds, socketId));
+        (game ? getMapScene(game) : null)?.removeRemoteAvatar(socketId);
     });
+
+    // Separate from the connection effect below on purpose: this only wires
+    // the scene up to the already-live manager, it must not disconnect or
+    // rejoin the space when the game engine mounts after the socket already
+    // connected (the scene is created after the first render, so `game`
+    // starts null and flips to an instance shortly after). Listening on
+    // `game.events` (rather than calling getMapScene(game) once here) avoids
+    // a race with Phaser's own async scene boot: `game.scene.add(..., true)`
+    // doesn't create the MapScene instance synchronously, so `game` being
+    // non-null is no guarantee the scene already exists - by the time this
+    // effect's dependencies change again (they don't, since `game`/`manager`
+    // are both stable once set), the window to retry would already be gone.
+    useEffect(() => {
+        if (!game) return;
+
+        const applyBroadcaster = () => {
+            getMapScene(game)?.setPositionBroadcaster((state) =>
+                manager.broadcastPosition(state)
+            );
+        };
+
+        applyBroadcaster();
+        game.events.on(SCENE_EVENTS.MAP_READY, applyBroadcaster);
+
+        return () => {
+            game.events.off(SCENE_EVENTS.MAP_READY, applyBroadcaster);
+            getMapScene(game)?.setPositionBroadcaster(null);
+        };
+    }, [game, manager]);
 
     useEffect(() => {
         // Joining on "connect" (rather than right after calling connect())

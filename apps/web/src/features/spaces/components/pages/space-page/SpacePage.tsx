@@ -3,6 +3,8 @@ import type { SpaceDetails } from "@standin/contracts";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SpacesQueries } from "@/features/spaces/queries";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 import {
     SpaceErrorState,
     SpaceLoadingState,
@@ -57,18 +59,26 @@ function Content({
 export function SpacePage({ spaceId }: { spaceId: string }) {
     
     const { open, setOpen } = useSpacePageSidebarState();
-    
+
     const organizationId = useOrganization().organization?.id ?? "";
-    
+    const { user } = useAuth();
+
     const { space, isLoading, isError } = SpacesQueries.useDetails(
         organizationId,
         spaceId
     );
-    
+
     const { containerRef, handle } = useGameEngine(
         space?.map ?? null,
         open ? SIDEBAR_WIDTH_PX / 2 : 0
     );
+
+    useSpaceConnection({
+        organizationId,
+        spaceId,
+        userId: user.id,
+        game: handle?.game ?? null,
+    });
 
     return (
         <SidebarProvider open={open} onOpenChange={setOpen}>
