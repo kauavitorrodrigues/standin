@@ -1,8 +1,11 @@
 import type Phaser from "phaser";
+import { PLAYER_DIRECTIONS, type PlayerDirection } from "@standin/contracts";
 import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
 
 export class Player {
     readonly gameObject: Phaser.GameObjects.Arc;
+    direction: PlayerDirection = PLAYER_DIRECTIONS.DOWN;
+    isSitting = false;
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         const circle = scene.add.circle(
@@ -38,5 +41,13 @@ export class Player {
 
     teleportTo(x: number, y: number): void {
         this.body.reset(x, y);
+    }
+
+    setDirection(direction: PlayerDirection): void {
+        this.direction = direction;
+    }
+
+    setSitting(isSitting: boolean): void {
+        this.isSitting = isSitting;
     }
 }

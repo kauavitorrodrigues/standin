@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { MAP_OBJECT_ACTIONS } from "@standin/contracts";
 import { INTERACTION_PROMPT_STYLE } from "@/features/game/consts/interaction";
 import { PLAYER_INTERACT_KEY } from "@/features/game/consts/player";
 import {
@@ -89,5 +90,6 @@ export class InteractionController {
 
         const target = resolveActionTarget(this.activeProperties);
         this.player.teleportTo(target.x, target.y);
+        this.player.setSitting(this.activeProperties.action === MAP_OBJECT_ACTIONS.SIT);
     }
 }
