@@ -1,4 +1,6 @@
 import Peer from "simple-peer";
+import type { PlayerPosition } from "@standin/contracts";
+import { SEND_INTERVAL_MS } from "../consts/sync";
 import { ICE_SERVERS } from "../consts/ice-servers";
 
 export type PeerConnectionEvents = {
@@ -16,6 +18,7 @@ const textDecoder = new TextDecoder();
 export class PeerConnectionManager {
     private readonly peers = new Map<string, Peer.Instance>();
     private readonly events: PeerConnectionEvents;
+    private lastPositionSentAt = 0;
 
     constructor(events: PeerConnectionEvents) {
         this.events = events;
@@ -104,6 +107,14 @@ export class PeerConnectionManager {
         this.peers.forEach((peer) => {
             if (peer.connected) peer.send(message);
         });
+    }
+
+    broadcastPosition(state: PlayerPosition): void {
+        const now = Date.now();
+        if (now - this.lastPositionSentAt < SEND_INTERVAL_MS) return;
+
+        this.lastPositionSentAt = now;
+        this.send(state);
     }
 
     destroy(socketId: string): void {
