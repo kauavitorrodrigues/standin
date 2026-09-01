@@ -6,3 +6,4 @@ export * from "./organizations";
 export * from "./spaces";
 export * from "./files";
 export * from "./maps";
+export * from "./game";
