@@ -1,4 +1,5 @@
 import Peer from "simple-peer";
+import { ICE_SERVERS } from "../consts/ice-servers";
 
 export type PeerConnectionEvents = {
     onSignal: (targetSocketId: string, signal: Peer.SignalData) => void;
@@ -27,7 +28,11 @@ export class PeerConnectionManager {
         const existingPeer = this.peers.get(targetSocketId);
         if (existingPeer) return existingPeer;
 
-        const peer = new Peer({ initiator, trickle: true });
+        const peer = new Peer({
+            initiator,
+            trickle: true,
+            config: { iceServers: ICE_SERVERS },
+        });
 
         peer.on("signal", (signal) => {
             this.events.onSignal(targetSocketId, signal);
