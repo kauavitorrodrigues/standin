@@ -113,10 +113,10 @@ export class MapScene extends Phaser.Scene {
         this.game.events.emit(SCENE_EVENTS.MAP_READY);
     }
 
-    update(): void {
+    update(_time: number, delta: number): void {
         this.playerController?.update();
         this.interactionController?.update();
-        this.remoteAvatars.forEach((avatar) => avatar.update());
+        this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.emitLocalPosition();
     }
 
