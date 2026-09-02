@@ -9,6 +9,11 @@ export type SocketContextType = {
     transport: Transport["name"];
     status: SocketStatus;
     lastError: string | null;
+    // True once this tab's connection was kicked for space:duplicate-session
+    // (the same account joined the same space from another tab/device).
+    // Distinct from lastError/status: this is terminal for the tab until the
+    // user acts on it, not a transient connection error to retry silently.
+    isDuplicateSession: boolean;
 };
 
 export const SocketContext = createContext<SocketContextType | null>(null);
