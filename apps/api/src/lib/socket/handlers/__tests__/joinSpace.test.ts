@@ -19,6 +19,7 @@ function createFakeSocket(id: string, userId: string) {
         emit: vi.fn(),
         to: vi.fn().mockReturnValue({ emit: vi.fn() }),
         on: vi.fn(),
+        disconnect: vi.fn(),
     };
 }
 
@@ -144,5 +145,30 @@ describe("registerJoinSpace", () => {
         });
         expect(socket.leave).toHaveBeenCalledWith("space:space-old");
         expect(socket.join).toHaveBeenCalledWith("space:space-1");
+    });
+
+    it("disconnects an older connection from the same account already in the room", async () => {
+        const staleSocket = createFakeSocket("socket-stale", "user-b");
+        const newSocket = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([staleSocket], "space:space-1");
+
+        registerJoinSpace(io as any, newSocket as any);
+        await getJoinHandler(newSocket)?.(validPayload);
+
+        expect(staleSocket.emit).toHaveBeenCalledWith("space:duplicate-session");
+        expect(staleSocket.disconnect).toHaveBeenCalledWith(true);
+        expect(newSocket.emit).toHaveBeenCalledWith("space:joined", { peers: [] });
+    });
+
+    it("does not touch peers belonging to a different account", async () => {
+        const peerA = createFakeSocket("socket-a", "user-a");
+        const newSocket = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([peerA], "space:space-1");
+
+        registerJoinSpace(io as any, newSocket as any);
+        await getJoinHandler(newSocket)?.(validPayload);
+
+        expect(peerA.emit).not.toHaveBeenCalledWith("space:duplicate-session");
+        expect(peerA.disconnect).not.toHaveBeenCalled();
     });
 });

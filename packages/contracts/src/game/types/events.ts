@@ -7,6 +7,7 @@ export const SpaceEvents = {
     SPACE_JOINED: "space:joined",
     SPACE_PEER_JOINED: "space:peer-joined",
     SPACE_PEER_LEFT: "space:peer-left",
+    SPACE_DUPLICATE_SESSION: "space:duplicate-session",
     WEBRTC_SIGNAL: "webrtc:signal",
 } as const;
 
@@ -40,5 +41,10 @@ export type ServerToClientEvents = {
     "space:joined": (payload: SpaceJoinedPayload) => void;
     "space:peer-joined": (payload: PeerJoinedPayload) => void;
     "space:peer-left": (payload: PeerLeftPayload) => void;
+    // Sent right before the server force-disconnects this socket because
+    // the same userId just joined this space from another connection (e.g.
+    // a second tab). socket.io-client doesn't auto-reconnect after a
+    // server-initiated disconnect, so no rejoin loop follows.
+    "space:duplicate-session": () => void;
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
 };

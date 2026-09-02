@@ -21,3 +21,15 @@ export class SpaceNotJoinedError extends BaseError {
         );
     }
 }
+
+// Sent to a socket right before the server force-disconnects it because the
+// same account just joined the same space from another connection.
+export class DuplicateSessionError extends BaseError {
+    constructor() {
+        super(
+            "Você entrou nesse espaço em outra aba ou dispositivo. Essa conexão foi encerrada.",
+            "SPACE_DUPLICATE_SESSION",
+            409
+        );
+    }
+}
