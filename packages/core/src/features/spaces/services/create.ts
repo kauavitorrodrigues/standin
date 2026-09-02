@@ -1,15 +1,31 @@
 import { spaceSelect } from "../consts/select";
 import { db, spacesTable } from "@standin/database";
 import type { Space, SpaceDataSchemaType } from "@standin/contracts";
+import { OrganizationService } from "../../organizations/services";
+import { ChatService } from "../../chat/services";
 
 export const createSpace = async (
     organizationId: string,
-    data: SpaceDataSchemaType,
+    data: SpaceDataSchemaType
 ): Promise<Space> => {
-    const [space] = await db
-        .insert(spacesTable)
-        .values({ name: data.name, mapId: data.mapId, organizationId })
-        .returning(spaceSelect);
+    return db.transaction(async (tx) => {
+        const [space] = await tx
+            .insert(spacesTable)
+            .values({ name: data.name, mapId: data.mapId, organizationId })
+            .returning(spaceSelect);
 
-    return space;
+        const activeMembers = await OrganizationService.members.findActive(
+            organizationId,
+            tx
+        );
+
+        await ChatService.conversations.createForSpace(
+            organizationId,
+            space.id,
+            activeMembers.map(({ userId }) => userId),
+            tx
+        );
+
+        return space;
+    });
 };

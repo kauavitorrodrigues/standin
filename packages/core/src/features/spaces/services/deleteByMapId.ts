@@ -1,12 +1,19 @@
 import { spacesTable, eq, and, isNull } from "@standin/database";
 import type { Transaction } from "@standin/database";
+import { ChatService } from "../../chat/services";
 
 export const deleteSpacesByMapId = async (
     mapId: string,
-    tx: Transaction,
+    tx: Transaction
 ): Promise<void> => {
-    await tx
+    const deletedSpaces = await tx
         .update(spacesTable)
         .set({ deletedAt: new Date() })
-        .where(and(eq(spacesTable.mapId, mapId), isNull(spacesTable.deletedAt)));
+        .where(and(eq(spacesTable.mapId, mapId), isNull(spacesTable.deletedAt)))
+        .returning({ id: spacesTable.id });
+
+    await ChatService.conversations.deleteBySpaceIds(
+        deletedSpaces.map(({ id }) => id),
+        tx
+    );
 };
