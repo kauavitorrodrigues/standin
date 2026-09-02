@@ -57,18 +57,25 @@ export function ListResponseState({
     return (
         <Empty className={cn("h-full flex-1", className)}>
             <EmptyHeader>
-                <EmptyMedia variant={mediaVariant} className={cn(mediaClassName)}>
+                <EmptyMedia
+                    variant={mediaVariant}
+                    className={cn(mediaClassName)}
+                >
                     <Icon
                         className={cn(
-                            "size-12 text-muted-foreground",
+                            "text-muted-foreground",
                             iconColorClassName,
-                            iconClassName,
+                            iconClassName
                         )}
+                        size={20}
                     />
                 </EmptyMedia>
                 <Title title={title} className={titleClassName} />
                 <EmptyDescription
-                    className={cn(descriptionClassName, descriptionVariantClassName)}
+                    className={cn(
+                        descriptionClassName,
+                        descriptionVariantClassName
+                    )}
                 >
                     {message}
                 </EmptyDescription>
