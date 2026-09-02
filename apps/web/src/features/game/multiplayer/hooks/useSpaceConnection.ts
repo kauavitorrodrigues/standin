@@ -56,6 +56,14 @@ export function useSpaceConnection({
         },
         onPeerClosed: (socketId) => {
             setConnectedPeerIds((peerIds) => removePeerId(peerIds, socketId));
+            // Covers both a real space:peer-left and a purely local failure
+            // (e.g. PeerConnectionManager's connect timeout): either way,
+            // nothing is arriving from this peer anymore, so its avatar
+            // shouldn't sit there frozen. Redundant with the
+            // space:peer-left handler's own removeRemoteAvatar call when
+            // both fire for the same departure; MapScene.removeRemoteAvatar
+            // is a no-op for an id it doesn't have.
+            (game ? getMapScene(game) : null)?.removeRemoteAvatar(socketId);
         },
         onPeerData: (socketId, data) => {
             if (!isPlayerPosition(data)) {
