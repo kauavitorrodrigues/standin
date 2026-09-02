@@ -5,3 +5,8 @@ export * from "./organization-invites";
 export * from "./files";
 export * from "./maps";
 export * from "./spaces";
+export * from "./conversations";
+export * from "./conversation-participants";
+export * from "./messages";
+export * from "./message-attachments";
+export * from "./message-reactions";

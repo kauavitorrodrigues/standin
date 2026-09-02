@@ -14,6 +14,8 @@ export const updatedAtColumn = () =>
 
 export const deletedAtColumn = () => timestamp("deleted_at", { mode: "date" });
 
+export const editedAtColumn = () => timestamp("edited_at", { mode: "date" });
+
 // PRIMARY KEY COLUMNS
 
 export const uuidPrimaryKeyColumn = () =>

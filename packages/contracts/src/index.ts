@@ -7,3 +7,4 @@ export * from "./spaces";
 export * from "./files";
 export * from "./maps";
 export * from "./game";
+export * from "./chat";

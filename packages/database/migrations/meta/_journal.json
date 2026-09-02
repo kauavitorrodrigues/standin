@@ -15,6 +15,13 @@
       "when": 1788103487889,
       "tag": "0001_add_maps_files_and_creator_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788373699704,
+      "tag": "0002_add_chat_conversations_and_messages",
+      "breakpoints": true
     }
   ]
 }
