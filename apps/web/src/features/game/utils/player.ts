@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import {
     MAP_OBJECT_ACTIONS,
+    PLAYER_DIRECTIONS,
     type MapObjectAction,
     type MapObjectPropertiesSchemaType,
+    type PlayerDirection,
 } from "@standin/contracts";
 import {
     EDITABLE_ELEMENT_TAG_NAMES,
@@ -94,6 +96,21 @@ export const normalizeToSpeed = (
     if (magnitude === ZERO_MAGNITUDE) return ZERO_VELOCITY;
 
     return { x: (x / magnitude) * speed, y: (y / magnitude) * speed };
+};
+
+// Vertical axis takes priority over horizontal when both are pressed at
+// once - arbitrary but deterministic, and there's no diagonal sprite to
+// pick between anyway. Returns null when idle so the caller can keep facing
+// whichever direction was last active.
+export const resolveDirection = (
+    axisX: number,
+    axisY: number
+): PlayerDirection | null => {
+    if (axisY < ZERO_MAGNITUDE) return PLAYER_DIRECTIONS.UP;
+    if (axisY > ZERO_MAGNITUDE) return PLAYER_DIRECTIONS.DOWN;
+    if (axisX < ZERO_MAGNITUDE) return PLAYER_DIRECTIONS.LEFT;
+    if (axisX > ZERO_MAGNITUDE) return PLAYER_DIRECTIONS.RIGHT;
+    return null;
 };
 
 export type InteractableMapObjectProperties = Extract<

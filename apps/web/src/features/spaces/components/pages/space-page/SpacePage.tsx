@@ -3,7 +3,12 @@ import type { SpaceDetails } from "@standin/contracts";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SpacesQueries } from "@/features/spaces/queries";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
+import { SocketProvider } from "@/features/game/multiplayer/contexts/SocketContext";
+import { useSocket } from "@/features/game/multiplayer/hooks/useSocket";
 import {
+    SpaceDuplicateSessionState,
     SpaceErrorState,
     SpaceLoadingState,
     SpaceNotFoundState,
@@ -29,6 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { SIDEBAR_WIDTH_PX } from "@/features/spaces/components/pages/space-page/layout/sidebarWidth";
 
 type ContentProps = {
+    isDuplicateSession: boolean;
     isLoading: boolean;
     isError: boolean;
     space: SpaceDetails | undefined;
@@ -37,12 +43,14 @@ type ContentProps = {
 };
 
 function Content({
+    isDuplicateSession,
     isLoading,
     isError,
     space,
     containerRef,
     handle,
 }: ContentProps) {
+    if (isDuplicateSession) return <SpaceDuplicateSessionState />;
     if (isLoading) return <SpaceLoadingState />;
     if (isError) return <SpaceErrorState />;
     if (!space) return <SpaceNotFoundState />;
@@ -55,20 +63,36 @@ function Content({
 }
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
-    
+    return (
+        <SocketProvider>
+            <SpacePageContent spaceId={spaceId} />
+        </SocketProvider>
+    );
+}
+
+function SpacePageContent({ spaceId }: { spaceId: string }) {
+    const { isDuplicateSession } = useSocket();
     const { open, setOpen } = useSpacePageSidebarState();
-    
+
     const organizationId = useOrganization().organization?.id ?? "";
-    
+    const { user } = useAuth();
+
     const { space, isLoading, isError } = SpacesQueries.useDetails(
         organizationId,
         spaceId
     );
-    
+
     const { containerRef, handle } = useGameEngine(
         space?.map ?? null,
         open ? SIDEBAR_WIDTH_PX / 2 : 0
     );
+
+    useSpaceConnection({
+        organizationId,
+        spaceId,
+        userId: user.id,
+        game: handle?.game ?? null,
+    });
 
     return (
         <SidebarProvider open={open} onOpenChange={setOpen}>
@@ -77,6 +101,7 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
                 <LayoutPrimitive.Body>
                     <LayoutPrimitive.Content>
                         <Content
+                            isDuplicateSession={isDuplicateSession}
                             isLoading={isLoading}
                             isError={isError}
                             space={space}
