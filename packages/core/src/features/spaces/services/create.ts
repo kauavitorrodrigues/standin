@@ -6,12 +6,18 @@ import { ChatService } from "../../chat/services";
 
 export const createSpace = async (
     organizationId: string,
+    createdBy: string,
     data: SpaceDataSchemaType
 ): Promise<Space> => {
     return db.transaction(async (tx) => {
         const [space] = await tx
             .insert(spacesTable)
-            .values({ name: data.name, mapId: data.mapId, organizationId })
+            .values({
+                name: data.name,
+                mapId: data.mapId,
+                organizationId,
+                createdBy,
+            })
             .returning(spaceSelect);
 
         const activeMembers = await OrganizationService.members.findActive(
