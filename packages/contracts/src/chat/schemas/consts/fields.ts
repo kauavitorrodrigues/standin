@@ -1,0 +1,2 @@
+export const MAX_MESSAGE_CONTENT_LENGTH = 4000;
+export const MAX_REACTION_EMOJI_LENGTH = 32;
