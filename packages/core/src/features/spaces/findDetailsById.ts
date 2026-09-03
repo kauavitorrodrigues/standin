@@ -8,8 +8,10 @@ export const findSpaceDetailsById = async (
     id: string
 ): Promise<SpaceDetails> => {
     const space = await findSpaceById(organizationId, id);
-    const map = await MapService.findResolvedById(space.mapId);
-    const conversation = await ConversationService.findBySpaceId(space.id);
+    const [map, conversation] = await Promise.all([
+        MapService.findResolvedById(space.mapId),
+        ConversationService.findBySpaceId(space.id),
+    ]);
     return {
         id: space.id,
         conversationId: conversation.id,

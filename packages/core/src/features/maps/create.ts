@@ -38,13 +38,20 @@ export const createMap = async ({
         })
         .returning(mapSelect);
 
-    for (const image of tilesetImages) {
-        const fileRecord = await FileService.upload(image);
-        await db.insert(mapTilesetsTable).values({
-            mapId: map.id,
-            fileId: fileRecord.id,
-            tilesetName: deriveTilesetName(image.originalname),
-        });
+    if (tilesetImages.length > 0) {
+        const tilesetFileRecords = await Promise.all(
+            tilesetImages.map((image) => FileService.upload(image))
+        );
+
+        await db.insert(mapTilesetsTable).values(
+            tilesetFileRecords.map((fileRecord, index) => ({
+                mapId: map.id,
+                fileId: fileRecord.id,
+                tilesetName: deriveTilesetName(
+                    tilesetImages[index].originalname
+                ),
+            }))
+        );
     }
 
     return map;
