@@ -19,7 +19,11 @@ import {
     SpaceSidebar,
     useSpacePageSidebarState,
 } from "@/features/spaces/components/pages/space-page/layout/sidebar";
+import { SPACE_SIDEBAR_TABS } from "@/features/spaces/consts/sidebar";
 import { LeaveSpaceButton } from "@/features/spaces/components/pages/space-page/layout/LeaveSpaceButton";
+import { ChatSidebar } from "@/features/chat/components";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { MessagesSquareIcon } from "lucide-react";
 import {
     CameraToggleButton,
     MicToggleButton,
@@ -72,7 +76,8 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
 
 function SpacePageContent({ spaceId }: { spaceId: string }) {
     const { isDuplicateSession } = useSocket();
-    const { open, setOpen } = useSpacePageSidebarState();
+    const { open, setOpen, tab, setTab, selectTab } =
+        useSpacePageSidebarState();
 
     const organizationId = useOrganization().organization?.id ?? "";
     const { user } = useAuth();
@@ -98,37 +103,57 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
         <SidebarProvider open={open} onOpenChange={setOpen}>
             <SpacePageRoot>
                 <LayoutPrimitive.Header />
-                <LayoutPrimitive.Body>
-                    <LayoutPrimitive.Content>
-                        <Content
-                            isDuplicateSession={isDuplicateSession}
-                            isLoading={isLoading}
-                            isError={isError}
-                            space={space}
-                            containerRef={containerRef}
-                            handle={handle}
-                        />
-                    </LayoutPrimitive.Content>
-                    <LayoutPrimitive.Sidebar />
-                </LayoutPrimitive.Body>
-                <LayoutPrimitive.Controls>
-                    <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-start">
-                        <Logo />
-                        <Separator
-                            orientation="vertical"
-                            className="h-5 my-auto"
-                        />
-                        <UserWidget />
-                    </LayoutPrimitive.ControlGroup>
-                    <LayoutPrimitive.ControlGroup className="w-full max-w-96">
-                        <MicToggleButton />
-                        <CameraToggleButton />
-                    </LayoutPrimitive.ControlGroup>
-                    <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-end">
-                        <SpaceSidebar.Trigger />
-                        <LeaveSpaceButton />
-                    </LayoutPrimitive.ControlGroup>
-                </LayoutPrimitive.Controls>
+                <Tabs
+                    value={tab}
+                    onValueChange={(value) => setTab(value as typeof tab)}
+                    className="flex min-h-0 w-full flex-1 flex-col gap-0"
+                >
+                    <LayoutPrimitive.Body>
+                        <LayoutPrimitive.Content>
+                            <Content
+                                isDuplicateSession={isDuplicateSession}
+                                isLoading={isLoading}
+                                isError={isError}
+                                space={space}
+                                containerRef={containerRef}
+                                handle={handle}
+                            />
+                        </LayoutPrimitive.Content>
+                        <LayoutPrimitive.Sidebar>
+                            <TabsContent
+                                value={SPACE_SIDEBAR_TABS.CHAT}
+                                className="flex min-h-0 flex-1 flex-col"
+                            >
+                                {space && <ChatSidebar space={space} />}
+                            </TabsContent>
+                        </LayoutPrimitive.Sidebar>
+                    </LayoutPrimitive.Body>
+                    <LayoutPrimitive.Controls>
+                        <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-start">
+                            <Logo />
+                            <Separator
+                                orientation="vertical"
+                                className="h-5 my-auto"
+                            />
+                            <UserWidget />
+                        </LayoutPrimitive.ControlGroup>
+                        <LayoutPrimitive.ControlGroup className="w-full max-w-96">
+                            <MicToggleButton />
+                            <CameraToggleButton />
+                        </LayoutPrimitive.ControlGroup>
+                        <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-end">
+                            <SpaceSidebar.TriggerGroup>
+                                <SpaceSidebar.Trigger
+                                    tab={SPACE_SIDEBAR_TABS.CHAT}
+                                    icon={MessagesSquareIcon}
+                                    label="Abrir o chat"
+                                    onSelect={selectTab}
+                                />
+                            </SpaceSidebar.TriggerGroup>
+                            <LeaveSpaceButton />
+                        </LayoutPrimitive.ControlGroup>
+                    </LayoutPrimitive.Controls>
+                </Tabs>
             </SpacePageRoot>
         </SidebarProvider>
     );

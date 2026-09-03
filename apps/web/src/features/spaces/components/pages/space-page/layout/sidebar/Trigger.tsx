@@ -1,19 +1,36 @@
-import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/components/ui/sidebar";
+import type { SpaceSidebarTab } from "@/features/spaces/consts/sidebar";
 
-export const Trigger = () => {
-    const { open, toggleSidebar } = useSidebar();
-    const Icon = open ? PanelLeftCloseIcon : PanelLeftOpenIcon;
+type TriggerProps = {
+    tab: SpaceSidebarTab;
+    icon: LucideIcon;
+    label: string;
+    onSelect: (tab: SpaceSidebarTab) => void;
+};
 
+// Rendered from the unstyled Base UI primitive instead of the styled
+// TabsTrigger: the tab keeps its semantics while the element that actually
+// renders is a plain Button, identical to the other control bar buttons.
+export const Trigger = ({ tab, icon: Icon, label, onSelect }: TriggerProps) => {
     return (
-        <Button
-            variant="outline"
-            size="icon-lg"
-            aria-label={open ? "Fechar painel lateral" : "Abrir painel lateral"}
-            onClick={toggleSidebar}
+        <TabsPrimitive.Tab
+            value={tab}
+            aria-label={label}
+            onClick={() => onSelect(tab)}
+            render={<Button variant="outline" size="icon-lg" />}
         >
             <Icon />
-        </Button>
+        </TabsPrimitive.Tab>
+    );
+};
+
+export const TriggerGroup = ({ children }: { children: ReactNode }) => {
+    return (
+        <TabsPrimitive.List className="flex items-center gap-2">
+            {children}
+        </TabsPrimitive.List>
     );
 };
