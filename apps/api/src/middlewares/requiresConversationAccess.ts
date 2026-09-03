@@ -12,10 +12,19 @@ export const RequiresConversationAccess = async (
 ) => {
     if (!req.user) return;
 
-    const params = parseSchema(paramsSchema("conversationId"), req.params, res);
+    const params = parseSchema(
+        paramsSchema("organizationId", "conversationId"),
+        req.params,
+        res
+    );
     if (!params) return;
 
     try {
+        await ConversationService.findById(
+            params.conversationId,
+            params.organizationId
+        );
+
         const hasAccess = await ConversationService.canAccess(
             req.user.id,
             params.conversationId

@@ -4,6 +4,7 @@ import { RequiresOrgMember, RequiresOrgOwner } from "@/middlewares/requiresOrgMe
 import { OrganizationController } from "./controllers";
 import { spacesRouter } from "../spaces/routes";
 import { mapsRouter } from "../maps/routes";
+import { conversationsRouter } from "../chat/routes";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.delete(
 
 router.use("/:organizationId/spaces", RequiresOrgMember, spacesRouter);
 router.use("/:organizationId/maps", RequiresOrgMember, mapsRouter);
+router.use("/:organizationId/conversations", RequiresOrgMember, conversationsRouter);
 
 export const organizationsRouter = router;

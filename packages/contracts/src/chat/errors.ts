@@ -11,3 +11,13 @@ export class MessageNotFoundError extends BaseError {
         super("Mensagem não encontrada.", "MESSAGE_NOT_FOUND", 404);
     }
 }
+
+export class MessageAccessDeniedError extends BaseError {
+    constructor() {
+        super(
+            "Você só pode gerenciar suas próprias mensagens.",
+            "MESSAGE_ACCESS_DENIED",
+            403
+        );
+    }
+}
