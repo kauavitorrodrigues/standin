@@ -1,5 +1,5 @@
 import type { NextFunction, Response } from "express";
-import { ChatService } from "@standin/core";
+import { ConversationService } from "@standin/core";
 import type { ExtendedRequest } from "@/types/request";
 import { sendError, sendForbiddenError } from "@/utils/sendError";
 import { parseSchema } from "@/utils/parseSchema";
@@ -16,7 +16,7 @@ export const RequiresConversationAccess = async (
     if (!params) return;
 
     try {
-        const hasAccess = await ChatService.conversations.canAccess(
+        const hasAccess = await ConversationService.canAccess(
             req.user.id,
             params.conversationId
         );

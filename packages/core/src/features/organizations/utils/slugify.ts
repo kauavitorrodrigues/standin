@@ -2,9 +2,10 @@ import slugify from "slugify";
 import { db, organizationsTable, eq, and, isNull } from "@standin/database";
 
 export const generateUniqueOrganizationSlug = async (
-    name: string,
+    name: string
 ): Promise<string> => {
-    const baseSlug = slugify(name, { lower: true, strict: true }) || "organizacao";
+    const baseSlug =
+        slugify(name, { lower: true, strict: true }) || "organizacao";
 
     let slug = baseSlug;
     let attempt = 0;
@@ -16,8 +17,8 @@ export const generateUniqueOrganizationSlug = async (
             .where(
                 and(
                     eq(organizationsTable.slug, slug),
-                    isNull(organizationsTable.deletedAt),
-                ),
+                    isNull(organizationsTable.deletedAt)
+                )
             );
 
         if (!existing) return slug;
