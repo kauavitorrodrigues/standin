@@ -1,10 +1,13 @@
 import { db, conversationsTable, eq, and, isNull } from "@standin/database";
-import { ConversationNotFoundError } from "@standin/contracts";
+import {
+    assertConversationAccessible,
+    type ConversationRow,
+} from "./utils/assertAccessible";
 
 export const findConversationById = async (
     conversationId: string,
     organizationId: string
-): Promise<{ id: string; organizationId: string }> => {
+): Promise<ConversationRow> => {
     const [conversation] = await db
         .select({
             id: conversationsTable.id,
@@ -18,9 +21,5 @@ export const findConversationById = async (
             )
         );
 
-    if (!conversation || conversation.organizationId !== organizationId) {
-        throw new ConversationNotFoundError();
-    }
-
-    return conversation;
+    return assertConversationAccessible(conversation, organizationId);
 };

@@ -19,20 +19,11 @@ type ConversationAccessContext = {
     organizationId: string;
 };
 
-const hasActiveOrgMembership = async ({
+const canAccessSpaceConversation = ({
     userId,
     organizationId,
-}: ConversationAccessContext): Promise<boolean> => {
-    const membership = await OrganizationService.findMembership(
-        userId,
-        organizationId
-    );
-    return membership !== null;
-};
-
-const canAccessSpaceConversation = (
-    context: ConversationAccessContext
-): Promise<boolean> => hasActiveOrgMembership(context);
+}: ConversationAccessContext): Promise<boolean> =>
+    OrganizationService.hasActiveMembership(userId, organizationId);
 
 const canAccessDirectConversation = async (
     context: ConversationAccessContext
@@ -53,7 +44,10 @@ const canAccessDirectConversation = async (
 
     if (!participant) return false;
 
-    return hasActiveOrgMembership(context);
+    return OrganizationService.hasActiveMembership(
+        context.userId,
+        context.organizationId
+    );
 };
 
 const CONVERSATION_ACCESS_CHECKS: Record<
