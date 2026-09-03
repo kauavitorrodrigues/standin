@@ -4,6 +4,7 @@ export const RESOURCES = [
     "space",
     "map",
     "message",
+    "participant",
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
@@ -31,6 +32,10 @@ export const RESOURCE_LABELS: Record<
     message: {
         singular: "mensagem",
         plural: "mensagens",
+    },
+    participant: {
+        singular: "participante",
+        plural: "participantes",
     },
 };
 

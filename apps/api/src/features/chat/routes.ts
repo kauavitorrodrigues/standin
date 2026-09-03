@@ -7,6 +7,12 @@ import { uploadMessageAttachments } from "./middleware/createMessageUploadMiddle
 const router = Router({ mergeParams: true });
 
 router.get(
+    "/:conversationId/participants",
+    RequiresConversationAccess,
+    ChatController.participants.list
+);
+
+router.get(
     "/:conversationId/messages",
     RequiresConversationAccess,
     ChatController.messages.list

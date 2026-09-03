@@ -3,6 +3,7 @@ import { deleteConversationsBySpaceIds } from "./deleteBySpaceIds";
 import { findConversationBySpaceId } from "./findBySpaceId";
 import { findConversationById } from "./findById";
 import { canAccessConversation } from "./canAccess";
+import { listConversationParticipants } from "./participants/listByConversation";
 
 export const ConversationService = {
     createForSpace: createConversationForSpace,
@@ -10,4 +11,5 @@ export const ConversationService = {
     findBySpaceId: findConversationBySpaceId,
     findById: findConversationById,
     canAccess: canAccessConversation,
+    listParticipants: listConversationParticipants,
 };
