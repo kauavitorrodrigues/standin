@@ -7,7 +7,7 @@ export const Controls = ({ children, className }: Props) => {
         <div
             className={cn(
                 "flex w-full shrink-0 items-center justify-between gap-2 border-t border-border p-4",
-                className,
+                className
             )}
         >
             {children}

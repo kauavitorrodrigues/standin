@@ -8,10 +8,12 @@ export const Body = ({ children, className }: Props) => {
         <div
             className={cn(
                 "relative flex min-h-0 w-full flex-1 overflow-hidden",
-                className,
+                className
             )}
             style={
-                { "--sidebar-width": SIDEBAR_WIDTH_CSS_VALUE } as React.CSSProperties
+                {
+                    "--sidebar-width": SIDEBAR_WIDTH_CSS_VALUE,
+                } as React.CSSProperties
             }
         >
             {children}
