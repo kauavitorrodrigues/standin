@@ -3,12 +3,12 @@ import {
     db,
     organizationsTable,
     organizationMembersTable,
-    spacesTable,
     eq,
     isNull,
     and,
 } from "@standin/database";
 import type { Organization } from "@standin/contracts";
+import { SpaceService } from "../spaces";
 
 export const deleteOrganization = async (id: string): Promise<Organization> => {
     return db.transaction(async (tx) => {
@@ -28,15 +28,7 @@ export const deleteOrganization = async (id: string): Promise<Organization> => {
                 )
             );
 
-        await tx
-            .update(spacesTable)
-            .set({ deletedAt: new Date() })
-            .where(
-                and(
-                    eq(spacesTable.organizationId, id),
-                    isNull(spacesTable.deletedAt)
-                )
-            );
+        await SpaceService.deleteByOrganizationId(id, tx);
 
         return organization;
     });

@@ -5,6 +5,7 @@ import { findSpaceDetailsById } from "./findDetailsById";
 import { updateSpace } from "./update";
 import { deleteSpace } from "./delete";
 import { deleteSpacesByMapId } from "./deleteByMapId";
+import { deleteSpacesByOrganizationId } from "./deleteByOrganizationId";
 
 export const SpaceService = {
     create: createSpace,
@@ -14,4 +15,5 @@ export const SpaceService = {
     update: updateSpace,
     delete: deleteSpace,
     deleteByMapId: deleteSpacesByMapId,
+    deleteByOrganizationId: deleteSpacesByOrganizationId,
 };
