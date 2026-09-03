@@ -1,15 +1,8 @@
-import {
-    db,
-    mapsTable,
-    mapTilesetsTable,
-    filesTable,
-    eq,
-    and,
-    isNull,
-} from "@standin/database";
+import { db, mapsTable, mapTilesetsTable, eq, and, isNull } from "@standin/database";
 import { StorageProvider } from "@standin/infra";
 import { MapNotFoundError } from "@standin/contracts";
 import type { MapWithUrls } from "@standin/contracts";
+import { FileService } from "../files";
 
 export const findResolvedMapById = async (id: string): Promise<MapWithUrls> => {
     const [map] = await db
@@ -18,10 +11,9 @@ export const findResolvedMapById = async (id: string): Promise<MapWithUrls> => {
             width: mapsTable.width,
             height: mapsTable.height,
             tileSize: mapsTable.tileSize,
-            mapJsonFileName: filesTable.fileName,
+            mapJsonFileId: mapsTable.mapJsonFileId,
         })
         .from(mapsTable)
-        .innerJoin(filesTable, eq(filesTable.id, mapsTable.mapJsonFileId))
         .where(and(eq(mapsTable.id, id), isNull(mapsTable.deletedAt)));
 
     if (!map) throw new MapNotFoundError();
@@ -29,19 +21,31 @@ export const findResolvedMapById = async (id: string): Promise<MapWithUrls> => {
     const tilesets = await db
         .select({
             tilesetName: mapTilesetsTable.tilesetName,
-            fileName: filesTable.fileName,
+            fileId: mapTilesetsTable.fileId,
         })
         .from(mapTilesetsTable)
-        .innerJoin(filesTable, eq(filesTable.id, mapTilesetsTable.fileId))
         .where(eq(mapTilesetsTable.mapId, id));
 
+    const [mapJsonFile, tilesetFiles] = await Promise.all([
+        FileService.findById(map.mapJsonFileId),
+        FileService.findManyByIds(tilesets.map((tileset) => tileset.fileId)),
+    ]);
+
+    const tilesetFilesById = new Map(
+        tilesetFiles.map((file) => [file.id, file])
+    );
+
     const [mapJsonUrl, resolvedTilesets] = await Promise.all([
-        StorageProvider.getUrl(map.mapJsonFileName),
+        StorageProvider.getUrl(mapJsonFile.fileName),
         Promise.all(
-            tilesets.map(async (tileset) => ({
-                tilesetName: tileset.tilesetName,
-                url: await StorageProvider.getUrl(tileset.fileName),
-            }))
+            tilesets
+                .filter((tileset) => tilesetFilesById.has(tileset.fileId))
+                .map(async (tileset) => ({
+                    tilesetName: tileset.tilesetName,
+                    url: await StorageProvider.getUrl(
+                        tilesetFilesById.get(tileset.fileId)!.fileName
+                    ),
+                }))
         ),
     ]);
 
