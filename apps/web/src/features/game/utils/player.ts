@@ -64,13 +64,27 @@ const isEditableElement = (element: Element | null): boolean => {
  * unrelated input elsewhere on the page (e.g. the space sidebar) would also
  * drive player movement/interaction. This disables it while any editable
  * element has focus.
+ *
+ * `keyboard.enabled` alone is not enough: it only gates the scene-level
+ * plugin, not the game-wide KeyboardManager that actually listens on the
+ * DOM. That manager still calls `preventDefault()` on every captured
+ * movement key (W/A/S/D/E by default), which swallows those characters
+ * before they ever reach a focused input or textarea. Toggling global
+ * capture alongside `enabled` stops that.
  */
 export const bindKeyboardFocusGuard = (scene: Phaser.Scene): void => {
     const keyboard = scene.input.keyboard;
     if (!keyboard) return;
 
     const syncEnabled = (): void => {
-        keyboard.enabled = !isEditableElement(document.activeElement);
+        const isTyping = isEditableElement(document.activeElement);
+        keyboard.enabled = !isTyping;
+
+        if (isTyping) {
+            keyboard.disableGlobalCapture();
+        } else {
+            keyboard.enableGlobalCapture();
+        }
     };
 
     document.addEventListener(FOCUS_TRACKING_EVENTS.IN, syncEnabled);
