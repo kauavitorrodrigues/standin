@@ -1,6 +1,10 @@
 import type { RemotePlayer } from "./player";
 import type { SpaceJoinSchema, WebrtcSignalSchema } from "../schemas/space";
 import type { z } from "zod/v4";
+import type {
+    ChatMessageSeenPayload,
+    ChatUnreadChangedPayload,
+} from "../../chat/types/events";
 
 export const SpaceEvents = {
     SPACE_JOIN: "space:join",
@@ -47,4 +51,6 @@ export type ServerToClientEvents = {
     // server-initiated disconnect, so no rejoin loop follows.
     "space:duplicate-session": () => void;
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
+    "chat:unread-changed": (payload: ChatUnreadChangedPayload) => void;
+    "chat:message-seen": (payload: ChatMessageSeenPayload) => void;
 };

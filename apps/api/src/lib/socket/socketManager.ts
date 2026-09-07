@@ -3,6 +3,7 @@ import {
     SocketNotInitializedError,
     type ServerToClientEvents,
 } from "@standin/contracts";
+import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
 export class SocketManager {
     private static instance: Server<
@@ -27,6 +28,14 @@ export class SocketManager {
     ) {
         const io = this.get();
         io.to(room).emit(event, ...args);
+    }
+
+    static emitToUser<K extends keyof ServerToClientEvents>(
+        userId: string,
+        event: K,
+        ...args: Parameters<ServerToClientEvents[K]>
+    ) {
+        this.emitToRoom(buildUserRoom(userId), event, ...args);
     }
 
     static emitToSocket<K extends keyof ServerToClientEvents>(

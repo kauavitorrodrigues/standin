@@ -1,3 +1,4 @@
+import type { Readable } from "node:stream";
 import { StorageDriverNotImplementedError } from "@standin/contracts";
 import type { StorageProvider } from "../../types";
 
@@ -19,6 +20,10 @@ export class S3CompatibleStorageProvider implements StorageProvider {
     }
 
     async getUrl(_fileName: string): Promise<string> {
+        throw new StorageDriverNotImplementedError();
+    }
+
+    async download(_fileName: string): Promise<Readable> {
         throw new StorageDriverNotImplementedError();
     }
 

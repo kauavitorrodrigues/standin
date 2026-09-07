@@ -5,6 +5,9 @@ import { MapWithUrlsSchema } from "../../maps/schemas/map-with-urls.schema";
 
 export const SpaceDetailsSchema = z.object({
     id: z.string({ error: SpaceErrorMessages.id.invalid }),
+    conversationId: z.string({
+        error: SpaceErrorMessages.conversationId.invalid,
+    }),
     name: z
         .string({ error: SpaceErrorMessages.name.required })
         .min(2, { error: SpaceErrorMessages.name.required })

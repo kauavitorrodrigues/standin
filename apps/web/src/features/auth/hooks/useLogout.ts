@@ -10,7 +10,10 @@ export function useLogout() {
     return async () => {
         await signOutMutation.mutateAsync(undefined, {
             onSuccess: () => {
-                queryClient.setQueryData(getMeQueryOptions().queryKey, null);
+                queryClient.setQueryData(
+                    getMeQueryOptions().queryKey,
+                    undefined
+                );
                 navigate({ to: "/" });
             },
         });

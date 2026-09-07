@@ -12,6 +12,12 @@ export class FileDeleteError extends BaseError {
     }
 }
 
+export class FileDownloadError extends BaseError {
+    constructor() {
+        super("Falha ao baixar o arquivo.", "FILE_DOWNLOAD_ERROR", 500);
+    }
+}
+
 export class FileNotFoundError extends BaseError {
     constructor() {
         super("Arquivo não encontrado.", "FILE_NOT_FOUND", 404);

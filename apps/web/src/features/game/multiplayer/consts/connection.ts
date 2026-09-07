@@ -1,0 +1,1 @@
+export const JOIN_TIMEOUT_MS = 5000;
