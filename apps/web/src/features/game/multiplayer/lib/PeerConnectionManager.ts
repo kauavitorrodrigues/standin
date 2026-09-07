@@ -1,5 +1,15 @@
 import Peer from "simple-peer";
-import type { PlayerPosition } from "@standin/contracts";
+import {
+    PEER_MESSAGE_TYPES,
+    type PeerChatPayload,
+    type PeerConfirmPayload,
+    type PeerDeletePayload,
+    type PeerEditPayload,
+    type PeerMessage,
+    type PeerReactionPayload,
+    type PeerTypingPayload,
+    type PlayerPosition,
+} from "@standin/contracts";
 import { PEER_CONNECT_TIMEOUT_MS, SEND_INTERVAL_MS } from "../consts/sync";
 import { ICE_SERVERS } from "../consts/ice-servers";
 
@@ -21,10 +31,17 @@ export class PeerConnectionManager {
         string,
         ReturnType<typeof setTimeout>
     >();
-    private readonly events: PeerConnectionEvents;
+    private events: PeerConnectionEvents;
     private lastPositionSentAt = 0;
 
     constructor(events: PeerConnectionEvents) {
+        this.events = events;
+    }
+
+    // Lets the caller swap in event handlers that close over fresh
+    // React state/props without re-creating the manager (and therefore the
+    // underlying peer connections) on every render.
+    setEvents(events: PeerConnectionEvents): void {
         this.events = events;
     }
 
@@ -120,10 +137,10 @@ export class PeerConnectionManager {
         }
     }
 
-    send(payload: unknown): void {
-        const message = JSON.stringify(payload);
+    private dispatch(message: PeerMessage): void {
+        const serialized = JSON.stringify(message);
         this.peers.forEach((peer) => {
-            if (peer.connected) peer.send(message);
+            if (peer.connected) peer.send(serialized);
         });
     }
 
@@ -132,7 +149,44 @@ export class PeerConnectionManager {
         if (now - this.lastPositionSentAt < SEND_INTERVAL_MS) return;
 
         this.lastPositionSentAt = now;
-        this.send(state);
+        this.dispatch({ type: PEER_MESSAGE_TYPES.POSITION, payload: state });
+    }
+
+    // No throttling here on purpose: a chat message is a discrete, user-
+    // triggered event (unlike position, which is sampled continuously), so
+    // every send must go out immediately.
+    broadcastChatMessage(payload: PeerChatPayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.CHAT, payload });
+    }
+
+    // Debouncing/expiry is the caller's responsibility (see SendMessageForm),
+    // same reasoning as broadcastChatMessage.
+    broadcastTyping(payload: PeerTypingPayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.TYPING, payload });
+    }
+
+    // Same reasoning as broadcastChatMessage: a reaction toggle is a
+    // discrete, user-triggered event, so it goes out immediately.
+    broadcastReaction(payload: PeerReactionPayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.REACTION, payload });
+    }
+
+    // Same reasoning as broadcastChatMessage: an edit is a discrete, user-
+    // triggered event, so it goes out immediately.
+    broadcastEdit(payload: PeerEditPayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.EDIT, payload });
+    }
+
+    // Same reasoning as broadcastChatMessage: a delete is a discrete, user-
+    // triggered event, so it goes out immediately.
+    broadcastDelete(payload: PeerDeletePayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.DELETE, payload });
+    }
+
+    // Sent once the API call behind an earlier broadcastChatMessage
+    // resolves, so peers can swap the temporary id for the real one.
+    broadcastConfirm(payload: PeerConfirmPayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.CONFIRM, payload });
     }
 
     destroy(socketId: string): void {

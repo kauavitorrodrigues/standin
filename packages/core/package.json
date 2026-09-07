@@ -16,7 +16,8 @@
         "@standin/database": "workspace:*",
         "@standin/infra": "workspace:*",
         "bcryptjs": "3.0.3",
-        "slugify": "1.6.9"
+        "slugify": "1.6.9",
+        "uuid": "14.0.2"
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",

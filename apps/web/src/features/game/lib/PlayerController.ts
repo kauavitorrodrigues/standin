@@ -3,6 +3,7 @@ import { PLAYER_PHYSICS, ZERO_VELOCITY } from "@/features/game/consts/player";
 import {
     resolveMovementKeys,
     isAnyKeyDown,
+    isTypingInEditableElement,
     resolveAxis,
     resolveDirection,
     normalizeToSpeed,
@@ -20,6 +21,13 @@ export class PlayerController {
     }
 
     update(): void {
+        // Backstop for `bindKeyboardFocusGuard`: if a focusin/focusout event
+        // was ever missed, this still stops movement while typing.
+        if (isTypingInEditableElement()) {
+            this.player.setVelocity(ZERO_VELOCITY.x, ZERO_VELOCITY.y);
+            return;
+        }
+
         const axisX = resolveAxis(
             isAnyKeyDown(this.keys.LEFT),
             isAnyKeyDown(this.keys.RIGHT)

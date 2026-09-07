@@ -22,7 +22,7 @@ export const Root = ({ children, className }: Props) => {
             >
                 <div
                     className={cn(
-                        "flex h-full w-full flex-col gap-4 overflow-auto p-4",
+                        "flex h-full min-h-0 w-full flex-col gap-4 p-4",
                         className
                     )}
                 >

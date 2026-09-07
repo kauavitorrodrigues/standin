@@ -15,3 +15,24 @@ export const GENERIC_UPLOAD_MIME_TYPES = [
         ...THUMBNAIL_IMAGE_MIME_TYPES,
     ]),
 ] as const;
+
+export const CHAT_ATTACHMENT_MIME_TYPES = [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif",
+    "application/pdf",
+    "text/plain",
+] as const;
+
+// Guards against a spoofed Content-Type paired with a mismatched extension
+// (e.g. an .html file declared as image/png) being served back with the
+// spoofed mime type by the static file server.
+export const ALLOWED_EXTENSIONS_BY_MIME_TYPE: Record<string, readonly string[]> = {
+    "image/png": [".png"],
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/webp": [".webp"],
+    "image/gif": [".gif"],
+    "application/pdf": [".pdf"],
+    "text/plain": [".txt"],
+};

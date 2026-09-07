@@ -9,6 +9,7 @@ import { text, varchar, pgTable, index } from "drizzle-orm/pg-core";
 import { organizationsTable } from "./organizations";
 import { mapsTable } from "./maps";
 import { usersTable } from "./users";
+import { conversationsTable } from "./conversations";
 
 export const spacesTable = pgTable(
     "spaces",
@@ -36,10 +37,10 @@ export const spacesTable = pgTable(
     (table) => [
         index("spaces_organization_id_index").on(table.organizationId),
         index("spaces_map_id_index").on(table.mapId),
-    ],
+    ]
 );
 
-export const spacesRelations = relations(spacesTable, ({ one }) => ({
+export const spacesRelations = relations(spacesTable, ({ one, many }) => ({
     creator: one(usersTable, {
         fields: [spacesTable.createdBy],
         references: [usersTable.id],
@@ -48,4 +49,5 @@ export const spacesRelations = relations(spacesTable, ({ one }) => ({
         fields: [spacesTable.mapId],
         references: [mapsTable.id],
     }),
+    conversations: many(conversationsTable),
 }));

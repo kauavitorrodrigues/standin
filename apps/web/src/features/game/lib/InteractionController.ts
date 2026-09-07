@@ -5,6 +5,7 @@ import { PLAYER_INTERACT_KEY } from "@/features/game/consts/player";
 import {
     resolveActionTarget,
     resolveInteractionPromptLabel,
+    isTypingInEditableElement,
     type InteractableMapObjectProperties,
 } from "@/features/game/utils/player";
 import type { Player } from "@/features/game/lib/Player";
@@ -86,7 +87,12 @@ export class InteractionController {
 
     private handleInteractKey(): void {
         if (!this.interactKey || !this.activeProperties) return;
-        if (!Phaser.Input.Keyboard.JustDown(this.interactKey)) return;
+
+        // Always consume `JustDown` even while typing, so a key pressed
+        // during typing doesn't fire a stale interaction the moment the
+        // input loses focus.
+        const wasJustPressed = Phaser.Input.Keyboard.JustDown(this.interactKey);
+        if (!wasJustPressed || isTypingInEditableElement()) return;
 
         const target = resolveActionTarget(this.activeProperties);
         this.player.teleportTo(target.x, target.y);

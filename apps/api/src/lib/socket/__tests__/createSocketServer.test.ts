@@ -102,7 +102,12 @@ describe("createSocketServer", () => {
             ([event]) => event === "connection"
         )?.[1] as (socket: any) => void;
 
-        const fakeSocket = { id: "socket-1" };
+        const joinMock = vi.fn();
+        const fakeSocket = {
+            id: "socket-1",
+            data: { userId: "user-1" },
+            join: joinMock,
+        };
         connectionHandler(fakeSocket);
 
         expect(registerJoinSpaceMock).toHaveBeenCalledWith(
@@ -114,5 +119,23 @@ describe("createSocketServer", () => {
             fakeSocket
         );
         expect(registerDisconnectMock).toHaveBeenCalledWith(fakeSocket);
+    });
+
+    it("joins the socket to its own user room on connection", () => {
+        createSocketServer({} as any);
+
+        const connectionHandler = serverInstanceMock.__onMock.mock.calls.find(
+            ([event]) => event === "connection"
+        )?.[1] as (socket: any) => void;
+
+        const joinMock = vi.fn();
+        const fakeSocket = {
+            id: "socket-1",
+            data: { userId: "user-1" },
+            join: joinMock,
+        };
+        connectionHandler(fakeSocket);
+
+        expect(joinMock).toHaveBeenCalledWith("user:user-1");
     });
 });

@@ -13,6 +13,7 @@ import {
     uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
+import { conversationsTable } from "./conversations";
 
 export const organizationsTable = pgTable(
     "organizations",
@@ -39,15 +40,16 @@ export const organizationsTable = pgTable(
             .on(table.slug)
             .where(sql`${table.deletedAt} IS NULL`),
         index("organizations_owner_id_index").on(table.ownerId),
-    ],
+    ]
 );
 
 export const organizationsRelations = relations(
     organizationsTable,
-    ({ one }) => ({
+    ({ one, many }) => ({
         owner: one(usersTable, {
             fields: [organizationsTable.ownerId],
             references: [usersTable.id],
         }),
-    }),
+        conversations: many(conversationsTable),
+    })
 );
