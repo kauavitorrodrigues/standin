@@ -9,6 +9,7 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "check-types": "tsc -b --noEmit",
+        "test": "vitest run",
         "env:load": "dotenv -e ../../.env --"
     },
     "dependencies": {
@@ -26,6 +27,7 @@
         "date-fns": "4.4.0",
         "frimousse": "0.3.0",
         "lucide-react": "1.34.0",
+        "motion": "13.2.0",
         "phaser": "^3.90.0",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
@@ -41,6 +43,7 @@
     "devDependencies": {
         "@standin/eslint-config": "workspace:*",
         "@standin/tsconfig": "workspace:*",
+        "@standin/vitest-config": "workspace:*",
         "@tailwindcss/vite": "4.3.3",
         "@tanstack/router-plugin": "1.168.35",
         "@types/node": "^24.13.3",
@@ -53,6 +56,7 @@
         "tailwindcss": "4.3.3",
         "typescript": "~6.0.2",
         "vite": "^8.2.2",
-        "vite-plugin-node-polyfills": "0.28.0"
+        "vite-plugin-node-polyfills": "0.28.0",
+        "vitest": "4.1.10"
     }
 }
