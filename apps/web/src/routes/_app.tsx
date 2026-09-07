@@ -4,6 +4,8 @@ import { organizationsQueryOptions } from "@/features/organizations/queries/orga
 import { getActiveOrganizationId } from "@/features/organizations/lib/activeOrganization";
 import { OrganizationProvider } from "@/features/organizations/contexts/OrganizationContext";
 import { AuthProvider } from "@/features/auth/contexts/AuthContext";
+import { RealtimeSocketProvider } from "@/features/realtime/contexts/RealtimeSocketContext";
+import { RealtimeProvider } from "@/features/realtime/components/RealtimeProvider";
 import type { Organization } from "@standin/contracts";
 
 export const Route = createFileRoute("/_app")({
@@ -37,9 +39,16 @@ function AppLayout() {
     return (
         <AuthProvider user={user}>
             <OrganizationProvider organization={organization}>
-                <div className="flex h-dvh w-full flex-col">
-                    <Outlet />
-                </div>
+                <RealtimeSocketProvider>
+                    {/* Needs OrganizationProvider above it: useChatRealtimeEvents
+                        reads the active organization to scope its query
+                        invalidation. */}
+                    <RealtimeProvider>
+                        <div className="flex h-dvh w-full flex-col">
+                            <Outlet />
+                        </div>
+                    </RealtimeProvider>
+                </RealtimeSocketProvider>
             </OrganizationProvider>
         </AuthProvider>
     );
