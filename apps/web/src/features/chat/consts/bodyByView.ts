@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { ListBody } from "@/features/chat/components/layout/ListBody";
 import { ThreadBody } from "@/features/chat/components/layout/ThreadBody";
 import { ParticipantsBody } from "@/features/chat/components/layout/ParticipantsBody";
+import { NewConversationBody } from "@/features/chat/components/layout/NewConversationBody";
 import type { SidebarBodyProps } from "@/features/chat/components/layout/SidebarBodyProps";
 import {
     CHAT_SIDEBAR_VIEWS,
@@ -15,4 +16,5 @@ export const BODY_BY_VIEW: Record<
     [CHAT_SIDEBAR_VIEWS.LIST]: ListBody,
     [CHAT_SIDEBAR_VIEWS.THREAD]: ThreadBody,
     [CHAT_SIDEBAR_VIEWS.PARTICIPANTS]: ParticipantsBody,
+    [CHAT_SIDEBAR_VIEWS.NEW_CONVERSATION]: NewConversationBody,
 };

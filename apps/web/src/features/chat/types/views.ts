@@ -3,4 +3,5 @@ export type HeaderActionsProps = {
     onRefresh: () => void;
     onClose: () => void;
     onOpenParticipants: () => void;
+    onOpenNewConversation: () => void;
 };

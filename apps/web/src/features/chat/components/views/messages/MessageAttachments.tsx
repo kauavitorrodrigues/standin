@@ -2,11 +2,16 @@ import { DownloadIcon, FileIcon } from "lucide-react";
 import type { MessageAttachment } from "@standin/contracts";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { useOrganization } from "@/features/organizations/hooks/useOrganization";
 import { resolveAttachmentUrl } from "@/features/chat/utils/attachmentUrl";
 import { downloadAttachment } from "@/features/chat/utils/downloadAttachment";
 import { AttachmentMessages } from "@/features/chat/components/forms/Messages";
 
-type Props = { attachments: MessageAttachment[] };
+type Props = {
+    attachments: MessageAttachment[];
+    conversationId: string;
+    messageId: string;
+};
 
 const handleDownload = async (url: string, filename: string) => {
     try {
@@ -16,13 +21,24 @@ const handleDownload = async (url: string, filename: string) => {
     }
 };
 
-export const MessageAttachments = ({ attachments }: Props) => {
+export const MessageAttachments = ({
+    attachments,
+    conversationId,
+    messageId,
+}: Props) => {
+    const organizationId = useOrganization().organization?.id ?? "";
+
     if (attachments.length === 0) return null;
 
     return (
         <div className="mt-2 flex flex-wrap gap-2">
             {attachments.map(({ id, file }) => {
-                const url = resolveAttachmentUrl(file);
+                const url = resolveAttachmentUrl({
+                    organizationId,
+                    conversationId,
+                    messageId,
+                    attachmentId: id,
+                });
                 const isImage = file.mimeType.startsWith("image/");
 
                 if (isImage) {
