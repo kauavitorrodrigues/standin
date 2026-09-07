@@ -1,8 +1,6 @@
 import { text, timestamp } from "drizzle-orm/pg-core";
 import { v7 as uuidv7 } from "uuid";
 
-// DATE COLUMNS
-
 export const createdAtColumn = () =>
     timestamp("created_at", { mode: "date" }).defaultNow().notNull();
 
@@ -15,8 +13,6 @@ export const updatedAtColumn = () =>
 export const deletedAtColumn = () => timestamp("deleted_at", { mode: "date" });
 
 export const editedAtColumn = () => timestamp("edited_at", { mode: "date" });
-
-// PRIMARY KEY COLUMNS
 
 export const uuidPrimaryKeyColumn = () =>
     text("id")

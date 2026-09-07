@@ -7,10 +7,8 @@ import { filesTable } from "./files";
 export const messageAttachmentsTable = pgTable(
     "message_attachments",
     {
-        // Primary key column
         id: uuidPrimaryKeyColumn(),
 
-        // Relations columns
         messageId: text("message_id")
             .notNull()
             .references(() => messagesTable.id),
@@ -18,7 +16,6 @@ export const messageAttachmentsTable = pgTable(
             .notNull()
             .references(() => filesTable.id),
 
-        // Date columns
         createdAt: createdAtColumn(),
     },
     (table) => [

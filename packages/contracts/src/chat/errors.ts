@@ -21,3 +21,29 @@ export class MessageAccessDeniedError extends BaseError {
         );
     }
 }
+
+export class AttachmentNotFoundError extends BaseError {
+    constructor() {
+        super("Anexo não encontrado.", "ATTACHMENT_NOT_FOUND", 404);
+    }
+}
+
+export class SelfConversationNotAllowedError extends BaseError {
+    constructor() {
+        super(
+            "Não é possível iniciar uma conversa consigo mesmo.",
+            "SELF_CONVERSATION_NOT_ALLOWED",
+            400
+        );
+    }
+}
+
+export class ConversationRecipientAccessDeniedError extends BaseError {
+    constructor() {
+        super(
+            "O destinatário não é membro ativo desta organização.",
+            "CONVERSATION_RECIPIENT_ACCESS_DENIED",
+            403
+        );
+    }
+}

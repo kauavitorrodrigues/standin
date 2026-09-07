@@ -13,10 +13,8 @@ import { usersTable } from "./users";
 export const conversationParticipantsTable = pgTable(
     "conversation_participants",
     {
-        // Primary key column
         id: uuidPrimaryKeyColumn(),
 
-        // Relations columns
         conversationId: text("conversation_id")
             .notNull()
             .references(() => conversationsTable.id),
@@ -24,7 +22,6 @@ export const conversationParticipantsTable = pgTable(
             .notNull()
             .references(() => usersTable.id),
 
-        // Date columns
         joinedAt: timestamp("joined_at", { mode: "date" })
             .defaultNow()
             .notNull(),

@@ -10,14 +10,13 @@ import { conversationsTable } from "./conversations";
 import { usersTable } from "./users";
 import { messageAttachmentsTable } from "./message-attachments";
 import { messageReactionsTable } from "./message-reactions";
+import { messageReadsTable } from "./message-reads";
 
 export const messagesTable = pgTable(
     "messages",
     {
-        // Primary key column
         id: uuidPrimaryKeyColumn(),
 
-        // Relations columns
         conversationId: text("conversation_id")
             .notNull()
             .references(() => conversationsTable.id),
@@ -25,12 +24,11 @@ export const messagesTable = pgTable(
             .notNull()
             .references(() => usersTable.id),
 
-        // Properties columns
-        content: text("content").notNull(),
+        // Nullable. A message can be attachment-only, with no text at all.
+        content: text("content"),
 
-        // Date columns
         createdAt: createdAtColumn(),
-        // Set by the service only on a real edit of `content` — not updatedAtColumn().
+        // Set by the service only on a real edit of `content`, not updatedAtColumn().
         editedAt: editedAtColumn(),
         deletedAt: deletedAtColumn(),
     },
@@ -54,4 +52,5 @@ export const messagesRelations = relations(messagesTable, ({ one, many }) => ({
     }),
     attachments: many(messageAttachmentsTable),
     reactions: many(messageReactionsTable),
+    reads: many(messageReadsTable),
 }));

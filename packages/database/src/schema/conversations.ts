@@ -10,6 +10,7 @@ import { spacesTable } from "./spaces";
 import { organizationsTable } from "./organizations";
 import { usersTable } from "./users";
 import { conversationParticipantsTable } from "./conversation-participants";
+import { conversationReadsTable } from "./conversation-reads";
 import { messagesTable } from "./messages";
 
 export const conversationTypeEnum = pgEnum(
@@ -20,24 +21,21 @@ export const conversationTypeEnum = pgEnum(
 export const conversationsTable = pgTable(
     "conversations",
     {
-        // Primary key column
         id: uuidPrimaryKeyColumn(),
 
-        // Properties columns
         type: conversationTypeEnum("type").notNull(),
 
-        // Relations columns
-        // Scopes every conversation (SPACE and DIRECT) to an organization — DMs never
-        // cross organization boundaries, even between the same pair/group of users.
+        // Scopes every conversation (SPACE and DIRECT) to an organization.
+        // DMs never cross organization boundaries, even between the same
+        // pair/group of users.
         organizationId: text("organization_id")
             .notNull()
             .references(() => organizationsTable.id),
         // Only populated when type = SPACE; invariant validated in the application.
         spaceId: text("space_id").references(() => spacesTable.id),
-        // Nullable — not applicable to SPACE conversations (auto-created, no human author).
+        // Nullable. Not applicable to SPACE conversations (auto-created, no human author).
         createdBy: text("created_by").references(() => usersTable.id),
 
-        // Date columns
         createdAt: createdAtColumn(),
         deletedAt: deletedAtColumn(),
     },
@@ -68,5 +66,6 @@ export const conversationsRelations = relations(
         }),
         participants: many(conversationParticipantsTable),
         messages: many(messagesTable),
+        reads: many(conversationReadsTable),
     })
 );

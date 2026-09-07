@@ -17,6 +17,7 @@ export const MessageErrorMessages = {
     content: {
         required: "O conteúdo da mensagem é obrigatório.",
         max: `A mensagem não pode ter mais de ${MAX_MESSAGE_CONTENT_LENGTH} caracteres.`,
+        orAttachmentRequired: "Envie um texto ou pelo menos um anexo.",
     },
     createdAt: {
         invalid: "A data de criação da mensagem é inválida.",
@@ -24,12 +25,22 @@ export const MessageErrorMessages = {
     editedAt: {
         invalid: "A data de edição da mensagem é inválida.",
     },
+    contentOrAttachment: {
+        required: "Envie um texto ou pelo menos um anexo.",
+    },
 };
 
 export const ReactionErrorMessages = {
     emoji: {
         required: "Selecione um emoji para reagir.",
         max: `O emoji não pode ter mais de ${MAX_REACTION_EMOJI_LENGTH} caracteres.`,
+        invalid: "A reação precisa ser um emoji.",
+    },
+};
+
+export const DirectConversationErrorMessages = {
+    recipientUserId: {
+        required: "Selecione com quem você quer conversar.",
     },
 };
 
