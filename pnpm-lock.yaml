@@ -505,6 +505,9 @@ importers:
       slugify:
         specifier: 1.6.9
         version: 1.6.9
+      uuid:
+        specifier: 14.0.2
+        version: 14.0.2
     devDependencies:
       '@standin/tsconfig':
         specifier: workspace:*

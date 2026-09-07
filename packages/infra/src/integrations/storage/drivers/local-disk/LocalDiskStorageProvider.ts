@@ -18,8 +18,9 @@ export class LocalDiskStorageProvider implements StorageProvider {
 
     async upload(file: Buffer, fileName: string) {
         try {
-            await fs.mkdir(this.basePath, { recursive: true });
-            await fs.writeFile(path.join(this.basePath, fileName), file);
+            const filePath = path.join(this.basePath, fileName);
+            await fs.mkdir(path.dirname(filePath), { recursive: true });
+            await fs.writeFile(filePath, file);
             return { fileName };
         } catch (error) {
             throw new FileUploadError();

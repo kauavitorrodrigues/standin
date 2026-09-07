@@ -4,7 +4,7 @@ import type {
     MessageWithDetails,
 } from "@standin/contracts";
 import { FileService } from "../files";
-import { messageSelect } from "./consts";
+import { messageSelect, MESSAGE_ATTACHMENTS_STORAGE_FOLDER } from "./consts";
 import { MessageAttachmentService } from "./attachments";
 import { buildMessageWithDetails } from "./builders";
 import { buildMessageAttachments } from "./attachments/builders";
@@ -19,7 +19,11 @@ export const createMessage = async (
     // are then inserted together so a mid-loop failure can't leave a
     // partially-attached message visible to other participants.
     const uploadedFiles = await Promise.all(
-        attachmentFiles.map((file) => FileService.upload(file))
+        attachmentFiles.map((file) =>
+            FileService.upload(file, {
+                folder: MESSAGE_ATTACHMENTS_STORAGE_FOLDER,
+            })
+        )
     );
 
     const { message, attachmentRows } = await db
