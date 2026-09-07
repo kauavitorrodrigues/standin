@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "motion/react";
 import {
     MessageScroller as MessageScrollerPrimitive,
     useMessageScroller,
@@ -47,7 +48,7 @@ function MessageScrollerViewport({
                 // spacer keeps the true scroll position just short of 100%,
                 // so the fade never fully clears and permanently dims the
                 // newest message.
-                "scroll-fade-t size-full min-h-0 min-w-0 scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain contain-content data-autoscrolling:scrollbar-thumb-transparent data-autoscrolling:scrollbar-track-transparent data-pending-scroll:invisible",
+                "scroll-fade-t size-full min-h-0 min-w-0 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent scrollbar-gutter-stable overflow-y-auto overscroll-contain contain-content data-autoscrolling:scrollbar-thumb-transparent data-autoscrolling:scrollbar-track-transparent data-pending-scroll:invisible",
                 className
             )}
             {...props}
@@ -85,6 +86,11 @@ function MessageScrollerItem({
         />
     );
 }
+
+// A motion version of the item, per shadcn's message-scroller guidance:
+// used only for its `exit` animation (a deleted message's row), never for
+// entrance, which the message content inside already animates on its own.
+const MotionMessageScrollerItem = motion.create(MessageScrollerItem);
 
 function MessageScrollerButton({
     direction = "end",
@@ -130,6 +136,7 @@ export {
     MessageScrollerViewport,
     MessageScrollerContent,
     MessageScrollerItem,
+    MotionMessageScrollerItem,
     MessageScrollerButton,
     useMessageScroller,
     useMessageScrollerScrollable,

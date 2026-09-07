@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type {
     ConversationMessagesListResponse,
@@ -32,19 +33,41 @@ export const useConversationMessages = (conversationId: string) => {
         enabled: !!organizationId && !!conversationId,
     });
 
-    // Each page comes back newest-first (see MessageService.listByConversation).
-    // Pages themselves are fetched oldest-last. Reverse both levels so the
-    // flattened list reads chronologically, oldest to newest, top to bottom.
-    const messages: MessageWithDetails[] =
-        query.data?.pages
-            .slice()
-            .reverse()
-            .flatMap((page) => page.messages.slice().reverse()) ?? [];
+    const pages = query.data?.pages;
 
-    const users: Record<string, MessageSender> = {};
-    for (const page of query.data?.pages ?? []) {
-        Object.assign(users, page.users);
-    }
+    // Each page comes back newest-first, and pages themselves are fetched
+    // oldest-last. Walking both levels back to front reads the flattened
+    // list chronologically straight into the result array, with no
+    // intermediate slice/reverse/flatMap copies of a list that can get long
+    // once "load more" has pulled in several pages of history. Memoized on
+    // `pages` so consumers keying their own memoization off this array's
+    // identity (groupMessagesBySender, useMessageAnimationFlags) only see a
+    // new reference when the underlying data actually changed.
+    const messages: MessageWithDetails[] = useMemo(() => {
+        const result: MessageWithDetails[] = [];
+        if (!pages) return result;
+
+        for (let pageIndex = pages.length - 1; pageIndex >= 0; pageIndex--) {
+            const pageMessages = pages[pageIndex].messages;
+            for (
+                let messageIndex = pageMessages.length - 1;
+                messageIndex >= 0;
+                messageIndex--
+            ) {
+                result.push(pageMessages[messageIndex]);
+            }
+        }
+
+        return result;
+    }, [pages]);
+
+    const users: Record<string, MessageSender> = useMemo(() => {
+        const result: Record<string, MessageSender> = {};
+        for (const page of pages ?? []) {
+            Object.assign(result, page.users);
+        }
+        return result;
+    }, [pages]);
 
     return { ...query, messages, users };
 };

@@ -4,6 +4,7 @@ import { OwnMessageActions } from "@/features/chat/components/views/messages/Own
 
 type Props = {
     isOwn: boolean;
+    disabled?: boolean;
     reactions: MessageReactionSummary[];
     onToggleReaction: (emoji: string, reactedByMe: boolean) => void;
     onEdit: () => void;
@@ -15,6 +16,7 @@ type Props = {
 // under every message all the time.
 export const MessageLineToolbar = ({
     isOwn,
+    disabled = false,
     reactions,
     onToggleReaction,
     onEdit,
@@ -23,8 +25,14 @@ export const MessageLineToolbar = ({
     <div className="absolute -top-3 right-2 flex items-center gap-0.5 rounded-md border border-border bg-background p-0.5 opacity-0 shadow-sm transition-opacity group-hover/line:opacity-100">
         <MessageReactionPicker
             reactions={reactions}
+            disabled={disabled}
             onToggleReaction={onToggleReaction}
         />
-        <OwnMessageActions isOwn={isOwn} onEdit={onEdit} onDelete={onDelete} />
+        <OwnMessageActions
+            isOwn={isOwn}
+            disabled={disabled}
+            onEdit={onEdit}
+            onDelete={onDelete}
+        />
     </div>
 );

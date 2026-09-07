@@ -65,6 +65,10 @@ export function useOptimisticMessagesMutation<
         onError: (_error, _input, context) => {
             if (!context) return;
             queryClient.setQueryData(context.queryKey, context.previous);
+            // The rolled-back snapshot can itself be stale if another
+            // mutation or a peer update landed while this one was in
+            // flight, so refetch instead of trusting it as final.
+            queryClient.invalidateQueries({ queryKey: context.queryKey });
         },
         onSuccess: reconcileWithServer,
     });

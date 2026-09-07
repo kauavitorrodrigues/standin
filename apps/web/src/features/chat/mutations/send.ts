@@ -7,27 +7,27 @@ import {
     updateMessage,
 } from "@/features/chat/utils/messagesCache";
 import { useOptimisticMessagesMutation } from "@/features/chat/mutations/useOptimisticMessagesMutation";
-import { OPTIMISTIC_MESSAGE_ID_PREFIX } from "@/features/chat/consts/messages";
+import {
+    buildTempMessage,
+    createOptimisticMessageId,
+} from "@/features/chat/utils/tempMessage";
 
 type SendMessageInput = {
     conversationId: string;
-    content: string;
+    content?: string;
     attachments?: File[];
 };
 
 const buildOptimisticMessage = (
     { conversationId, content }: SendMessageInput,
     senderId: string
-): MessageWithDetails => ({
-    id: `${OPTIMISTIC_MESSAGE_ID_PREFIX}${crypto.randomUUID()}`,
-    conversationId,
-    senderId,
-    content,
-    createdAt: new Date().toISOString(),
-    editedAt: null,
-    attachments: [],
-    reactions: [],
-});
+): MessageWithDetails =>
+    buildTempMessage({
+        id: createOptimisticMessageId(),
+        conversationId,
+        senderId,
+        content: content ?? null,
+    });
 
 export const useSendMessage = () => {
     const { user } = useAuth();
@@ -41,7 +41,7 @@ export const useSendMessage = () => {
         conversationId: (input) => input.conversationId,
         mutationFn: async ({ conversationId, content, attachments }) => {
             const formData = new FormData();
-            formData.append("content", content);
+            if (content) formData.append("content", content);
             for (const file of attachments ?? []) {
                 formData.append("attachments", file);
             }

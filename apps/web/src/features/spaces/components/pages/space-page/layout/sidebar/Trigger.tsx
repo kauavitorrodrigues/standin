@@ -9,21 +9,51 @@ type TriggerProps = {
     icon: LucideIcon;
     label: string;
     onSelect: (tab: SpaceSidebarTab) => void;
+    badge?: ReactNode;
+    // Rendered inline, next to the icon, instead of as a floating corner
+    // badge. Use this for a count that's part of what the button means (how
+    // many participants), not for a notification layered on top of it.
+    count?: number;
 };
 
 // Rendered from the unstyled Base UI primitive instead of the styled
 // TabsTrigger: the tab keeps its semantics while the element that actually
 // renders is a plain Button, identical to the other control bar buttons.
-export const Trigger = ({ tab, icon: Icon, label, onSelect }: TriggerProps) => {
+export const Trigger = ({
+    tab,
+    icon: Icon,
+    label,
+    onSelect,
+    badge,
+    count,
+}: TriggerProps) => {
     return (
-        <TabsPrimitive.Tab
-            value={tab}
-            aria-label={label}
-            onClick={() => onSelect(tab)}
-            render={<Button variant="outline" size="icon-lg" />}
-        >
-            <Icon />
-        </TabsPrimitive.Tab>
+        <span className="relative inline-flex">
+            <TabsPrimitive.Tab
+                value={tab}
+                aria-label={label}
+                onClick={() => onSelect(tab)}
+                render={
+                    <Button
+                        variant="outline"
+                        size={count === undefined ? "icon-lg" : "lg"}
+                    />
+                }
+            >
+                <Icon />
+                {count !== undefined && (
+                    <>
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        <span className="text-xs tabular-nums">{count}</span>
+                    </>
+                )}
+            </TabsPrimitive.Tab>
+            {badge && (
+                <span className="pointer-events-none absolute -top-1 -right-1">
+                    {badge}
+                </span>
+            )}
+        </span>
     );
 };
 

@@ -17,13 +17,18 @@ import { QUICK_REACTIONS } from "@/features/chat/consts/reactions";
 
 type Props = {
     reactions: MessageReactionSummary[];
+    disabled?: boolean;
     onToggleReaction: (emoji: string, reactedByMe: boolean) => void;
 };
 
 // Opens on the fixed quick-react row. "Mais reações" swaps it for the full
 // Frimousse picker (https://frimousse.liveblocks.io) so any emoji is reachable,
 // not just the six defaults.
-export const MessageReactionPicker = ({ reactions, onToggleReaction }: Props) => {
+export const MessageReactionPicker = ({
+    reactions,
+    disabled = false,
+    onToggleReaction,
+}: Props) => {
     const [open, setOpen] = useState(false);
     const [showAllEmojis, setShowAllEmojis] = useState(false);
 
@@ -49,7 +54,8 @@ export const MessageReactionPicker = ({ reactions, onToggleReaction }: Props) =>
                     <button
                         type="button"
                         aria-label="Reagir"
-                        className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+                        disabled={disabled}
+                        className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
                     />
                 }
             >

@@ -1,4 +1,4 @@
-import type { MessageWithDetails } from "@standin/contracts";
+import type { Message } from "@standin/contracts";
 import { api } from "@/lib/axios/api";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
 import { updateMessage } from "@/features/chat/utils/messagesCache";
@@ -13,10 +13,7 @@ type UpdateMessageInput = {
 export const useUpdateMessage = () => {
     const organizationId = useOrganization().organization?.id ?? "";
 
-    return useOptimisticMessagesMutation<
-        UpdateMessageInput,
-        MessageWithDetails
-    >({
+    return useOptimisticMessagesMutation<UpdateMessageInput, Message>({
         conversationId: (input) => input.conversationId,
         mutationFn: async ({ conversationId, messageId, content }) => {
             const res = await api.patch(
@@ -26,8 +23,7 @@ export const useUpdateMessage = () => {
             return res.data.message;
         },
         // A message can only be edited from a row already rendered on
-        // screen, so its conversation cache is guaranteed to be populated
-        // (same invariant as the reaction toggle mutation).
+        // screen, so its conversation cache is guaranteed to be populated.
         apply: (data, { messageId, content }) => ({
             data: updateMessage(data!, messageId, (message) => ({
                 ...message,
@@ -35,7 +31,15 @@ export const useUpdateMessage = () => {
             })),
             meta: undefined,
         }),
+        // The update endpoint only returns the bare Message row (content and
+        // editedAt), so merge just those two fields instead of replacing
+        // the cached message wholesale, which would wipe out its
+        // attachments and any reaction change that landed meanwhile.
         reconcile: (data, message) =>
-            updateMessage(data, message.id, () => message),
+            updateMessage(data, message.id, (existing) => ({
+                ...existing,
+                content: message.content,
+                editedAt: message.editedAt,
+            })),
     });
 };
