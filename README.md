@@ -1,4 +1,9 @@
 <div align="center">
+	<img src="assets/logo.png" alt="Stand!N logo" width="220" />
+
+<br>
+
+<br>
 
 ![Repository](https://img.shields.io/badge/repository-public-101418?style=for-the-badge&labelColor=101418&color=FFFFFF)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-101418?style=for-the-badge&labelColor=101418&color=FFFFFF)
