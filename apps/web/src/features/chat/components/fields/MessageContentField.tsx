@@ -56,6 +56,10 @@ export function MessageContentField<
 
     const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.key !== "Enter" || event.shiftKey) return;
+        // While an IME composition is active (accents via dead keys,
+        // Japanese/Chinese/Korean input), Enter confirms the candidate
+        // instead of submitting the message.
+        if (event.nativeEvent.isComposing) return;
         event.preventDefault();
         onSubmit();
     };
