@@ -1,17 +1,13 @@
 import {
     db,
-    conversationsTable,
     conversationParticipantsTable,
     eq,
     and,
     isNull,
 } from "@standin/database";
-import {
-    ConversationNotFoundError,
-    CONVERSATION_TYPES,
-    type ConversationType,
-} from "@standin/contracts";
+import { CONVERSATION_TYPES, type ConversationType } from "@standin/contracts";
 import { OrganizationService } from "../organizations";
+import type { ConversationRow } from "./utils/assertAccessible";
 
 type ConversationAccessContext = {
     userId: string;
@@ -19,6 +15,11 @@ type ConversationAccessContext = {
     organizationId: string;
 };
 
+// A space's conversation is scoped to the whole organization, not to the
+// conversation_participants snapshot taken when the space was created:
+// any active org member can read/post here, even one who joined after the
+// space existed. conversation_participants is only used to list who was
+// around at creation time, not to gate access.
 const canAccessSpaceConversation = ({
     userId,
     organizationId,
@@ -60,29 +61,14 @@ const CONVERSATION_ACCESS_CHECKS: Record<
 
 export const canAccessConversation = async (
     userId: string,
-    conversationId: string
+    conversation: ConversationRow
 ): Promise<boolean> => {
-    const [conversation] = await db
-        .select({
-            type: conversationsTable.type,
-            organizationId: conversationsTable.organizationId,
-        })
-        .from(conversationsTable)
-        .where(
-            and(
-                eq(conversationsTable.id, conversationId),
-                isNull(conversationsTable.deletedAt)
-            )
-        );
-
-    if (!conversation) throw new ConversationNotFoundError();
-
     const checkAccess = CONVERSATION_ACCESS_CHECKS[conversation.type];
     if (!checkAccess) return false;
 
     return checkAccess({
         userId,
-        conversationId,
+        conversationId: conversation.id,
         organizationId: conversation.organizationId,
     });
 };

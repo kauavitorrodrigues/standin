@@ -12,6 +12,7 @@ export const findConversationById = async (
         .select({
             id: conversationsTable.id,
             organizationId: conversationsTable.organizationId,
+            type: conversationsTable.type,
         })
         .from(conversationsTable)
         .where(

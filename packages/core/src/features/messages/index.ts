@@ -12,3 +12,4 @@ export const MessageService = {
 
 export * from "./reactions";
 export * from "./attachments";
+export * from "./reads";

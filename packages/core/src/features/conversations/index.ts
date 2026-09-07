@@ -4,6 +4,9 @@ import { findConversationBySpaceId } from "./findBySpaceId";
 import { findConversationById } from "./findById";
 import { canAccessConversation } from "./canAccess";
 import { listConversationParticipants } from "./participants/listByConversation";
+import { getConversationRecipientUserIds } from "./getRecipientUserIds";
+import { listConversationsForUser } from "./listForUser";
+import { findOrCreateDirectConversation } from "./findOrCreateDirect";
 
 export const ConversationService = {
     createForSpace: createConversationForSpace,
@@ -12,4 +15,9 @@ export const ConversationService = {
     findById: findConversationById,
     canAccess: canAccessConversation,
     listParticipants: listConversationParticipants,
+    getRecipientUserIds: getConversationRecipientUserIds,
+    listForUser: listConversationsForUser,
+    findOrCreateDirect: findOrCreateDirectConversation,
 };
+
+export * from "./reads";

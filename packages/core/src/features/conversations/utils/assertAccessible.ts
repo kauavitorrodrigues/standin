@@ -1,6 +1,13 @@
-import { ConversationNotFoundError } from "@standin/contracts";
+import {
+    ConversationNotFoundError,
+    type ConversationType,
+} from "@standin/contracts";
 
-export type ConversationRow = { id: string; organizationId: string };
+export type ConversationRow = {
+    id: string;
+    organizationId: string;
+    type: ConversationType;
+};
 
 // Central place for the "is this conversation reachable in this context"
 // checks, so a new constraint (e.g. deletedAt, spaceId scoping) is added

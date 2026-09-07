@@ -17,6 +17,7 @@ import { UserService } from "../users";
 import { FileService } from "../files";
 import { MessageAttachmentService } from "./attachments";
 import { MessageReactionService } from "./reactions";
+import { MessageReadService } from "./reads";
 import { buildConversationMessagesListResponse } from "./builders";
 
 export const listMessagesByConversation = async (
@@ -50,11 +51,13 @@ export const listMessagesByConversation = async (
     const messageIds = page.map((message) => message.id);
     const senderIds = [...new Set(page.map((message) => message.senderId))];
 
-    const [senders, attachmentRows, reactionRows] = await Promise.all([
-        UserService.findManyByIds(senderIds),
-        MessageAttachmentService.listByMessageIds(messageIds),
-        MessageReactionService.listByMessageIds(messageIds),
-    ]);
+    const [senders, attachmentRows, reactionRows, seenByMessage] =
+        await Promise.all([
+            UserService.findManyByIds(senderIds),
+            MessageAttachmentService.listByMessageIds(messageIds),
+            MessageReactionService.listByMessageIds(messageIds),
+            MessageReadService.listSeenBy(messageIds),
+        ]);
 
     const files = await FileService.findManyByIds(
         attachmentRows.map((attachment) => attachment.fileId)
@@ -66,6 +69,7 @@ export const listMessagesByConversation = async (
         attachmentRows,
         files,
         reactionRows,
+        seenByMessage,
         currentUserId,
         nextCursor,
     });

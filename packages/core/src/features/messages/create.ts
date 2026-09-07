@@ -50,6 +50,7 @@ export const createMessage = async (
     return buildMessageWithDetails(
         message,
         buildMessageAttachments(attachmentRows, uploadedFiles),
+        [],
         []
     );
 };

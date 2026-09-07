@@ -2,6 +2,7 @@ import type {
     ConversationMessagesListResponse,
     File,
     UserSummary,
+    SeenByEntry,
 } from "@standin/contracts";
 import { groupReactionsByMessage } from "../utils";
 import { buildMessageWithDetails, MessageRow } from "./message";
@@ -17,6 +18,7 @@ type BuildConversationMessagesListResponseInput = {
     attachmentRows: AttachmentRow[];
     files: File[];
     reactionRows: ReactionRow[];
+    seenByMessage: Map<string, SeenByEntry[]>;
     currentUserId: string;
     nextCursor: string | null;
 };
@@ -41,6 +43,7 @@ export const buildConversationMessagesListResponse = ({
     attachmentRows,
     files,
     reactionRows,
+    seenByMessage,
     currentUserId,
     nextCursor,
 }: BuildConversationMessagesListResponseInput): ConversationMessagesListResponse => {
@@ -61,7 +64,8 @@ export const buildConversationMessagesListResponse = ({
                 attachmentRowsByMessage.get(row.id) ?? [],
                 files
             ),
-            reactionsByMessage.get(row.id) ?? []
+            reactionsByMessage.get(row.id) ?? [],
+            seenByMessage.get(row.id) ?? []
         )
     );
 

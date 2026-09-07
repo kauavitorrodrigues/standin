@@ -1,6 +1,12 @@
-import { db, messageReactionsTable } from "@standin/database";
+import { db, messageReactionsTable, eq, and } from "@standin/database";
 import { assertMessageInConversation } from "../utils/assertMessageInConversation";
 import { serializeReaction } from "../utils/serializeReaction";
+
+const reactionReturning = {
+    emoji: messageReactionsTable.emoji,
+    userId: messageReactionsTable.userId,
+    createdAt: messageReactionsTable.createdAt,
+};
 
 export const addReaction = async (
     conversationId: string,
@@ -10,22 +16,33 @@ export const addReaction = async (
 ) => {
     await assertMessageInConversation(messageId, conversationId);
 
-    const [row] = await db
+    const [inserted] = await db
         .insert(messageReactionsTable)
         .values({ messageId, userId, emoji })
-        .onConflictDoUpdate({
+        .onConflictDoNothing({
             target: [
                 messageReactionsTable.messageId,
                 messageReactionsTable.userId,
                 messageReactionsTable.emoji,
             ],
-            set: { emoji },
         })
-        .returning({
-            emoji: messageReactionsTable.emoji,
-            userId: messageReactionsTable.userId,
-            createdAt: messageReactionsTable.createdAt,
-        });
+        .returning(reactionReturning);
 
-    return serializeReaction(row);
+    if (inserted) return serializeReaction(inserted);
+
+    // Already reacted with this exact emoji, so the insert above was a
+    // no-op: read back the existing row instead of writing the same value
+    // again.
+    const [existing] = await db
+        .select(reactionReturning)
+        .from(messageReactionsTable)
+        .where(
+            and(
+                eq(messageReactionsTable.messageId, messageId),
+                eq(messageReactionsTable.userId, userId),
+                eq(messageReactionsTable.emoji, emoji)
+            )
+        );
+
+    return serializeReaction(existing);
 };
