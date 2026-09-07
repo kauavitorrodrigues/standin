@@ -5,6 +5,9 @@ export const RESOURCES = [
     "map",
     "message",
     "participant",
+    "attachment",
+    "conversation",
+    "member",
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
@@ -36,6 +39,18 @@ export const RESOURCE_LABELS: Record<
     participant: {
         singular: "participante",
         plural: "participantes",
+    },
+    attachment: {
+        singular: "anexo",
+        plural: "anexos",
+    },
+    conversation: {
+        singular: "conversa",
+        plural: "conversas",
+    },
+    member: {
+        singular: "membro",
+        plural: "membros",
     },
 };
 

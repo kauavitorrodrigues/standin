@@ -25,6 +25,12 @@ router.delete(
     OrganizationController.delete,
 );
 
+router.get(
+    "/:organizationId/members",
+    RequiresOrgMember,
+    OrganizationController.members.list,
+);
+
 router.use("/:organizationId/spaces", RequiresOrgMember, spacesRouter);
 router.use("/:organizationId/maps", RequiresOrgMember, mapsRouter);
 router.use("/:organizationId/conversations", RequiresOrgMember, conversationsRouter);

@@ -1,17 +1,18 @@
 import type { Response } from "express";
 import { MessageService } from "@standin/core";
-import { MessageDataSchema } from "@standin/contracts";
+import { MessageDataSchema, MessageErrorMessages } from "@standin/contracts";
 import { parseSchema } from "@/utils/parseSchema";
 import { paramsSchema } from "@/utils/paramsSchema";
 import { sendError } from "@/utils/sendError";
 import type { ExtendedRequest } from "@/types/request";
+import { notifyNewMessage } from "./notifyNewMessage";
 
 export const createMessage = async (req: ExtendedRequest, res: Response) => {
     try {
         if (!req.user) return;
 
         const params = parseSchema(
-            paramsSchema("conversationId"),
+            paramsSchema("organizationId", "conversationId"),
             req.params,
             res
         );
@@ -27,10 +28,23 @@ export const createMessage = async (req: ExtendedRequest, res: Response) => {
         const attachmentFiles =
             (req.files as Express.Multer.File[] | undefined) ?? [];
 
+        if (!data.content && attachmentFiles.length === 0) {
+            return sendError({
+                res,
+                message: MessageErrorMessages.content.orAttachmentRequired,
+            });
+        }
+
         const message = await MessageService.create(
             params.conversationId,
             req.user.id,
             { content: data.content, attachmentFiles }
+        );
+
+        void notifyNewMessage(
+            params.conversationId,
+            params.organizationId,
+            req.user.id
         );
 
         res.status(201).json({ message });

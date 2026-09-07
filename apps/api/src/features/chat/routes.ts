@@ -6,6 +6,22 @@ import { uploadMessageAttachments } from "./middleware/createMessageUploadMiddle
 
 const router = Router({ mergeParams: true });
 
+router.get("/", ChatController.conversations.list);
+
+// Must be declared before the "/:conversationId" routes, or Express would
+// match "direct" as a conversationId.
+router.post("/direct", ChatController.conversations.createDirect);
+
+// Must be declared before the "/:conversationId" routes, or Express would
+// match "unread-counts" as a conversationId.
+router.get("/unread-counts", ChatController.reads.unreadCounts);
+
+router.post(
+    "/:conversationId/read",
+    RequiresConversationAccess,
+    ChatController.reads.markAsRead
+);
+
 router.get(
     "/:conversationId/participants",
     RequiresConversationAccess,
@@ -36,6 +52,12 @@ router.delete(
     "/:conversationId/messages/:messageId",
     RequiresConversationAccess,
     ChatController.messages.delete
+);
+
+router.get(
+    "/:conversationId/messages/:messageId/attachments/:attachmentId",
+    RequiresConversationAccess,
+    ChatController.messages.attachments.download
 );
 
 router.post(

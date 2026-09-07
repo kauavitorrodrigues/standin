@@ -20,14 +20,14 @@ export const RequiresConversationAccess = async (
     if (!params) return;
 
     try {
-        await ConversationService.findById(
+        const conversation = await ConversationService.findById(
             params.conversationId,
             params.organizationId
         );
 
         const hasAccess = await ConversationService.canAccess(
             req.user.id,
-            params.conversationId
+            conversation
         );
         if (!hasAccess) return sendForbiddenError(res);
 

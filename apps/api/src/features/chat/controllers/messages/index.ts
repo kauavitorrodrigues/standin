@@ -4,6 +4,7 @@ import { updateMessage } from "./update";
 import { deleteMessage } from "./delete";
 import { addReaction } from "./reactions/add";
 import { removeReaction } from "./reactions/remove";
+import { downloadAttachment } from "./attachments/download";
 
 export const MessageController = {
     list: listMessages,
@@ -13,5 +14,8 @@ export const MessageController = {
     reactions: {
         add: addReaction,
         remove: removeReaction,
+    },
+    attachments: {
+        download: downloadAttachment,
     },
 };
