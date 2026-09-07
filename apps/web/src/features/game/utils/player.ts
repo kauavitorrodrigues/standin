@@ -59,6 +59,24 @@ const isEditableElement = (element: Element | null): boolean => {
     return (element as HTMLElement).isContentEditable;
 };
 
+// Authoritative, synchronous source of truth for "is the user typing right
+// now". `bindKeyboardFocusGuard` mirrors this into `keyboard.enabled` on
+// focusin/focusout so the DOM-level capture is disabled promptly, but
+// per-frame consumers (PlayerController, InteractionController) also check
+// this directly so a missed or out-of-order focus event can never leave
+// movement/interaction unguarded.
+export const isTypingInEditableElement = (): boolean =>
+    isEditableElement(document.activeElement);
+
+// Lets clicking the game canvas return focus (and therefore movement) to the
+// game while the user was typing in a chat input elsewhere on the page.
+export const blurActiveEditableElement = (): void => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && isEditableElement(active)) {
+        active.blur();
+    }
+};
+
 /**
  * The game's keyboard plugin listens on the whole window, so typing into an
  * unrelated input elsewhere on the page (e.g. the space sidebar) would also
@@ -78,6 +96,14 @@ export const bindKeyboardFocusGuard = (scene: Phaser.Scene): void => {
 
     const syncEnabled = (): void => {
         const isTyping = isEditableElement(document.activeElement);
+
+        // A key held down when focus moves to an editable element never
+        // gets its matching keyup: the plugin stops processing events while
+        // disabled, so `key.isDown` would otherwise stay stuck true forever
+        // (Phaser only resets keys on window blur, which doesn't fire here
+        // since focus just moves to another element on the same page).
+        if (isTyping) keyboard.resetKeys();
+
         keyboard.enabled = !isTyping;
 
         if (isTyping) {
@@ -86,6 +112,10 @@ export const bindKeyboardFocusGuard = (scene: Phaser.Scene): void => {
             keyboard.enableGlobalCapture();
         }
     };
+
+    // Covers the case where an editable element is already focused when the
+    // scene starts (e.g. the chat input was focused before the map loaded).
+    syncEnabled();
 
     document.addEventListener(FOCUS_TRACKING_EVENTS.IN, syncEnabled);
     document.addEventListener(FOCUS_TRACKING_EVENTS.OUT, syncEnabled);
