@@ -50,4 +50,15 @@ export class Player {
     setSitting(isSitting: boolean): void {
         this.isSitting = isSitting;
     }
+
+    setSpeaking(isSpeaking: boolean): void {
+        if (isSpeaking) {
+            this.gameObject.setStrokeStyle(
+                PLAYER_APPEARANCE.SPEAKING_RING_WIDTH,
+                PLAYER_APPEARANCE.SPEAKING_RING_COLOR
+            );
+        } else {
+            this.gameObject.setStrokeStyle();
+        }
+    }
 }

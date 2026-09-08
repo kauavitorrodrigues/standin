@@ -22,6 +22,7 @@ const DIRECTION_OFFSETS: Record<PlayerDirection, { x: number; y: number }> = {
 // project yet; avatarConfig is always null until that feature exists).
 export class RemoteAvatar {
     readonly gameObject: Phaser.GameObjects.Container;
+    private readonly body: Phaser.GameObjects.Arc;
     private readonly directionIndicator: Phaser.GameObjects.Arc;
     private targetX: number;
     private targetY: number;
@@ -31,7 +32,7 @@ export class RemoteAvatar {
     private hasReceivedPosition = false;
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
-        const body = scene.add.circle(
+        this.body = scene.add.circle(
             0,
             0,
             REMOTE_AVATAR_APPEARANCE.RADIUS,
@@ -46,7 +47,7 @@ export class RemoteAvatar {
         );
 
         this.gameObject = scene.add.container(x, y, [
-            body,
+            this.body,
             this.directionIndicator,
         ]);
         this.gameObject.setDepth(REMOTE_AVATAR_APPEARANCE.DEPTH);
@@ -86,6 +87,17 @@ export class RemoteAvatar {
 
     setSitting(isSitting: boolean): void {
         this.gameObject.setAlpha(resolveSittingAlpha(isSitting));
+    }
+
+    setSpeaking(isSpeaking: boolean): void {
+        if (isSpeaking) {
+            this.body.setStrokeStyle(
+                REMOTE_AVATAR_APPEARANCE.SPEAKING_RING_WIDTH,
+                REMOTE_AVATAR_APPEARANCE.SPEAKING_RING_COLOR
+            );
+        } else {
+            this.body.setStrokeStyle();
+        }
     }
 
     destroy(): void {

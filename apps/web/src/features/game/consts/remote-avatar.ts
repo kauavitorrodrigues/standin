@@ -6,6 +6,8 @@ export const REMOTE_AVATAR_APPEARANCE = {
     SITTING_ALPHA: 0.6,
     DIRECTION_INDICATOR_RADIUS: 2,
     DIRECTION_INDICATOR_COLOR: 0x0c4a6e,
+    SPEAKING_RING_WIDTH: 3,
+    SPEAKING_RING_COLOR: 0x22c55e,
     // Exponential smoothing rate (1/s) towards the latest network position.
     // Smooths out the visible steps between throttled position updates
     // instead of snapping the avatar to each one. Applied per frame as
