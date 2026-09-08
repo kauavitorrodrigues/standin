@@ -49,6 +49,7 @@ import { MessageCircleIcon, UsersIcon } from "lucide-react";
 import {
     CameraToggleButton,
     MicToggleButton,
+    MicUnavailableIndicator,
 } from "@/features/media-devices/components";
 import { Logo } from "@/components/layout/Logo";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
@@ -163,6 +164,7 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
     );
 
     const {
+        localAudioError,
         broadcastChatMessage,
         broadcastTyping,
         broadcastReaction,
@@ -174,10 +176,7 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
         spaceId,
         userId: user.id,
         game: handle?.game ?? null,
-        onChatMessage: (
-            _socketId,
-            { conversationId, message, senderName }
-        ) => {
+        onChatMessage: (_socketId, { conversationId, message, senderName }) => {
             // Our own message is already applied optimistically by the
             // send mutation, so only other peers' messages need to be
             // merged here.
@@ -456,6 +455,11 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
                         <LayoutPrimitive.ControlGroup className="w-full max-w-96">
                             <MicToggleButton />
                             <CameraToggleButton />
+                            {localAudioError && (
+                                <MicUnavailableIndicator
+                                    error={localAudioError}
+                                />
+                            )}
                         </LayoutPrimitive.ControlGroup>
                         <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-end">
                             <SpaceSidebar.TriggerGroup>

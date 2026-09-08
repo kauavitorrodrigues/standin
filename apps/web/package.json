@@ -53,6 +53,7 @@
         "@vitejs/plugin-react": "^6.1.0",
         "dotenv-cli": "11.0.0",
         "eslint": "^10.9.0",
+        "jsdom": "30.0.1",
         "tailwindcss": "4.3.3",
         "typescript": "~6.0.2",
         "vite": "^8.2.2",
