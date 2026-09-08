@@ -4,6 +4,8 @@ export const PLAYER_APPEARANCE = {
     RADIUS: 8,
     COLOR: 0xf97316,
     DEPTH: 20,
+    SPEAKING_RING_WIDTH: 3,
+    SPEAKING_RING_COLOR: 0x22c55e,
 } as const;
 
 export const PLAYER_PHYSICS = {
