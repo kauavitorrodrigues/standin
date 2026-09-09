@@ -10,7 +10,7 @@
 ![pnpm](https://img.shields.io/badge/pnpm-11%2B-101418?style=for-the-badge&labelColor=101418&color=FFFFFF)
 ![TypeScript](https://img.shields.io/badge/typescript-6.x-101418?style=for-the-badge&labelColor=101418&color=FFFFFF)
 
-A 2D top-down virtual space for small teams, with customizable maps and real-time presence over WebRTC/P2P.
+A 2D top-down virtual space for small teams, with customizable maps, real-time presence over WebRTC/P2P, text/attachment chat, and proximity voice.
 
 [Overview](#overview) • [Features](#features) • [How It Works](#how-it-works) • [Architecture](#architecture) • [Storage](#storage) • [Getting Started](#getting-started) • [Scripts](#scripts) • [Deployment](#deployment)
 
@@ -33,6 +33,8 @@ The product goal is to give a small team a navigable "virtual office" — a cust
 - **Self-hostable**: no mandatory third-party service — run your own instance with just a server and a PostgreSQL database (see [Deployment](#deployment) below).
 - **Phaser game engine**: the space is rendered full-screen via Phaser 3 (real tilemap, ground/collision/special-zone layers), with the product UI (toolbar, sidebar) overlaid on top of the canvas.
 - **Own auth**: password-based sign-up/login (bcrypt) and JWT, with no external provider dependency.
+- **Chat messaging**: text and attachment messages, in two conversation shapes — a `DIRECT` conversation between two members, or a `SPACE` conversation shared by every member of that space (both scoped to the organization).
+- **Proximity voice chat**: peer-to-peer voice over WebRTC that unlocks automatically between two users when their avatars get close enough inside a space, on top of the same mesh P2P connection used for presence.
 
 ## How It Works
 
@@ -62,7 +64,15 @@ When a `Space` loads, the app resolves the chain: `Space → Map → (map JSON +
 
 ### Real-time presence
 
-At scale, the target is 2 to 10 concurrent people per room — small enough for a mesh P2P topology (every peer connected to every peer), with no need for an SFU or dedicated streaming infrastructure. Teammates in the same space see each other move and can talk over proximity-based audio/video.
+At scale, the target is 2 to 10 concurrent people per room — small enough for a mesh P2P topology (every peer connected to every peer), with no need for an SFU or dedicated streaming infrastructure. Teammates in the same space see each other move over WebSocket-signaled WebRTC.
+
+### Proximity voice chat
+
+Each user's avatar carries a proximity radius; when two avatars in the same space come within range, the game scene unlocks a live P2P voice channel between them over the same WebRTC mesh used for presence — move apart and the channel closes. No SFU, no manual "join call" step.
+
+### Chat (spaces and DMs)
+
+Every space has one standing `SPACE` conversation shared by all of that space's members, for talking without being in proximity range. On top of that, any two members of the same organization can open a `DIRECT` conversation with each other. Both support text and file-attachment messages, editing, reactions, and read receipts, and both are scoped to the organization.
 
 ## Storage
 
@@ -127,7 +137,9 @@ A `pnpm` + Turborepo monorepo with two deployable apps (`web`, `api`) and shared
 | `Space` | Navigable space; belongs to an `Organization` and always references a `Map` |
 | `Map` | Registered map (dimension, `tileSize`, Tiled JSON, thumbnail); global or private to an organization |
 | `MapTileset` | Join between `Map` and `File`, one tileset per row, matched by the name declared in the Tiled JSON |
-| `File` | Generic upload entity (map JSON, tileset, thumbnail); stores metadata, not the binary |
+| `File` | Generic upload entity (map JSON, tileset, thumbnail, message attachment); stores metadata, not the binary |
+| `Conversation` | Chat thread; `SPACE` (one per space, shared by its members) or `DIRECT` (between two organization members) |
+| `Message` | Text and/or attachment message in a `Conversation`, with edit/delete support |
 
 ## Getting Started
 
