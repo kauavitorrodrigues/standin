@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "pnpm env:load vite",
+        "dev:lan": "VITE_LAN=true VITE_BASE_API_URL=/api pnpm env:load vite",
         "build": "pnpm env:load sh -c 'tsc -b && vite build'",
         "lint": "eslint .",
         "preview": "vite preview",
@@ -48,6 +49,7 @@
         "@types/node": "^24.13.3",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.4",
+        "@vitejs/plugin-basic-ssl": "2.3.0",
         "@vitejs/plugin-react": "^6.1.0",
         "dotenv-cli": "11.0.0",
         "eslint": "^10.9.0",
