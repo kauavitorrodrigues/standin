@@ -17,6 +17,73 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # STUN/TURN relay for peers that cannot reach each other directly (strict
+  # NAT, corporate firewall). Optional: it sits behind the "turn" profile, so
+  # a plain `docker compose up` does not start it. Enable with
+  # `docker compose --profile turn up -d coturn` after setting TURN_HOST and
+  # TURN_SECRET in .env (the API reads the same two values to issue
+  # short-lived credentials, see apps/api/src/features/ice).
+  #
+  # Host networking on purpose: the relay uses a range of UDP ports and
+  # Docker's NAT layer gets in the way of it. The port range below must match
+  # the ports opened in the firewall (host firewall and, on most VPS
+  # providers, the separate provider-side firewall too).
+  coturn:
+    profiles: ["turn"]
+    # Pinned by digest (coturn 4.18.0 at the time of pinning) so a pull can
+    # never change the relay under you. To upgrade on purpose:
+    # `docker pull coturn/coturn:latest`, then take the new digest from
+    # `docker inspect coturn/coturn:latest --format '{{index .RepoDigests 0}}'`.
+    image: coturn/coturn@sha256:bbefd3e1fdfdc0d58770fe01b581fd8b00d9f3a5580d00acb77cf719a6bc78e3
+    container_name: standin_coturn
+    network_mode: host
+    restart: unless-stopped
+    # TURN_SECRET never goes on the command line: with host networking every
+    # user on the machine can read another process's arguments (`ps`), and
+    # the secret signs every credential the API hands out. It is written to
+    # a private config file inside the container (readable only by the
+    # coturn user) and passed with -c, so only the file name is visible. The
+    # container refuses to start without it, rather than running with an
+    # empty secret. `$$` is how compose spells a literal `$`.
+    entrypoint: ["/bin/sh", "-c"]
+    environment:
+      TURN_SECRET: ${TURN_SECRET:-}
+    #
+    # Flags, in the order below:
+    #  - max-bps is bytes per second, not bits: 2,000,000 is about 16 Mbps
+    #    per session, comfortably above the 4 Mbps the app sends for a screen.
+    #  - denied-peer-ip: never relay into private or loopback ranges, or the
+    #    TURN server becomes a bridge into the host's internal network. The
+    #    last block covers carrier-grade NAT, IPv6 loopback, unique local and
+    #    link-local, and IPv4-mapped IPv6 (which would otherwise sidestep the
+    #    IPv4 rules).
+    command:
+      - |
+        [ -n "$$TURN_SECRET" ] || { echo "TURN_SECRET is required" >&2; exit 1; }
+        umask 077
+        printf 'static-auth-secret=%s\n' "$$TURN_SECRET" > /tmp/turn-secret.conf
+        exec turnserver -c /tmp/turn-secret.conf \
+          --fingerprint \
+          --use-auth-secret \
+          --realm=${TURN_HOST:-} \
+          --listening-port=${TURN_PORT:-3478} \
+          --min-port=49160 \
+          --max-port=49200 \
+          --total-quota=100 \
+          --max-bps=2000000 \
+          --no-multicast-peers \
+          --denied-peer-ip=0.0.0.0-0.255.255.255 \
+          --denied-peer-ip=10.0.0.0-10.255.255.255 \
+          --denied-peer-ip=127.0.0.0-127.255.255.255 \
+          --denied-peer-ip=169.254.0.0-169.254.255.255 \
+          --denied-peer-ip=172.16.0.0-172.31.255.255 \
+          --denied-peer-ip=192.168.0.0-192.168.255.255 \
+          --denied-peer-ip=100.64.0.0-100.127.255.255 \
+          --denied-peer-ip=::1 \
+          --denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff \
+          --denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff \
+          --denied-peer-ip=::ffff:0.0.0.0-::ffff:255.255.255.255
+
 volumes:
   postgres_data:
     driver: local
