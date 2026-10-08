@@ -35,6 +35,7 @@ export const UserAvatarInfo = ({
         <div className={cn("flex items-center gap-2", className)}>
             <UserAvatar
                 id={id}
+                name={name}
                 avatar={avatar}
                 size={size}
                 className={avatarClassname}
