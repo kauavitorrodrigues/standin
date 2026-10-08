@@ -1,80 +1,96 @@
-import Peer from "simple-peer";
 import {
     PEER_MESSAGE_TYPES,
     type PeerChatPayload,
     type PeerConfirmPayload,
     type PeerDeletePayload,
     type PeerEditPayload,
+    type PeerMediaStatePayload,
     type PeerMessage,
     type PeerReactionPayload,
     type PeerTypingPayload,
     type PlayerPosition,
 } from "@standin/contracts";
 import { PEER_CONNECT_TIMEOUT_MS, SEND_INTERVAL_MS } from "../consts/sync";
-import { ICE_SERVERS } from "../consts/ice-servers";
-import { getPeersMissingLocalStream } from "../utils/localStream";
+import { PeerLink, type PeerLinkOptions } from "./PeerLink";
+import {
+    MEDIA_SLOTS,
+    type MediaSlot,
+    type PeerSignal,
+    type RemoteTrack,
+} from "../types/transport";
+import { isPolitePeer } from "../utils/negotiation";
+import {
+    getReceivingVideoPeers,
+    getVideoEncoding,
+    NO_MEDIA,
+    type PeerMediaPolicy,
+} from "../utils/mediaPolicy";
 
 export type PeerConnectionEvents = {
-    onSignal: (targetSocketId: string, signal: Peer.SignalData) => void;
+    onSignal: (targetSocketId: string, signal: PeerSignal) => void;
     onPeerConnected: (socketId: string) => void;
     onPeerData: (socketId: string, data: unknown) => void;
-    onRemoteStream: (socketId: string, stream: MediaStream) => void;
+    onRemoteTrack: (socketId: string, remote: RemoteTrack) => void;
     onPeerClosed: (socketId: string) => void;
 };
 
-const textDecoder = new TextDecoder();
+// The slice of PeerLink the manager depends on, so tests can hand it a
+// stand-in instead of a real RTCPeerConnection.
+export type PeerLinkHandle = Pick<
+    PeerLink,
+    | "isOpen"
+    | "getStreamId"
+    | "signal"
+    | "send"
+    | "setTrack"
+    | "setEncoding"
+    | "close"
+>;
+
+export type PeerLinkFactory = (options: PeerLinkOptions) => PeerLinkHandle;
+
+const defaultLinkFactory: PeerLinkFactory = (options) => new PeerLink(options);
+
+type LocalTracks = Record<MediaSlot, MediaStreamTrack | null>;
 
 // One instance per Space session, created and destroyed alongside it, not a
 // singleton: the set of peers only makes sense for the Space currently
 // joined.
 //
-// Known limitation: proximity muting (see MapScene/RemoteAudioManager) is
-// enforced receiver-side only, by lowering playback volume. The outgoing
-// mic track itself keeps flowing to every peer in the mesh regardless of
-// distance (gated only by the local mute toggle), so this is a UX feature,
-// not a privacy guarantee - a modified client can always set its own
-// received volume back to 1 and listen from anywhere in the space.
-//
-// Known limitation: if two already-connected peers both call
-// setLocalStream with a fresh MediaStream at nearly the same time (e.g.
-// both grant mic permission moments after the mesh comes up), both sides
-// trigger addStream-driven renegotiation concurrently. simple-peer has no
-// perfect-negotiation/polite-peer rollback for that glare; it's expected
-// to be rare in practice (most local streams arrive well before any peer
-// connects) and is left as a known gap rather than adding a speculative
-// negotiation queue.
+// Outgoing media is decided per peer, never globally: setMediaPolicies says
+// what each peer may receive (audio and video only while in range), and
+// every outgoing track is attached to, or detached from, that peer's link
+// accordingly. A peer out of range therefore receives no media at all, not
+// merely a lowered volume, so this is a real privacy boundary and not only
+// a UX one.
 export class PeerConnectionManager {
-    private readonly peers = new Map<string, Peer.Instance>();
+    private readonly peers = new Map<string, PeerLinkHandle>();
     private readonly connectTimeouts = new Map<
         string,
         ReturnType<typeof setTimeout>
     >();
-    // Tracks, per peer, the local media stream/track currently registered
-    // with simple-peer. `senderStream` is the exact MediaStream object
-    // originally passed to peer.addStream for that peer and never changes
-    // afterwards - simple-peer's internal _senderMap keys a peer's sender by
-    // that stream object for the lifetime of the connection, so a later
-    // replaceTrack or removeStream call MUST keep using it (not whatever
-    // the most recently set stream happens to be) or the lookup misses and
-    // throws. `track` is the currently active audio track, updated on every
-    // replaceTrack.
-    private readonly localStreamAttachments = new Map<
-        string,
-        { senderStream: MediaStream; track: MediaStreamTrack }
-    >();
+    private readonly policies = new Map<string, PeerMediaPolicy>();
+    // Last media state announced to each peer, so an unchanged state is not
+    // resent on every proximity tick.
+    private readonly announcedMediaState = new Map<string, string>();
+    private readonly localTracks: LocalTracks = {
+        [MEDIA_SLOTS.AUDIO]: null,
+        [MEDIA_SLOTS.CAMERA]: null,
+        [MEDIA_SLOTS.SCREEN]: null,
+    };
     private events: PeerConnectionEvents;
+    private readonly createLink: PeerLinkFactory;
     private lastPositionSentAt = 0;
-    // Single source of truth for the outgoing media track: every peer,
-    // whether created before or after this is set, reads it from here
-    // instead of receiving it as a per-call argument. That's what makes
-    // handleSignal's own createConnection call (an offer racing ahead of
-    // space:peer-joined) get the stream too, instead of being created
-    // stream-less and silently staying that way for the rest of the
-    // session.
-    private localStream: MediaStream | null = null;
+    private iceServers: RTCIceServer[] = [];
+    private localSocketId: string | null = null;
+    private localUserId: string | null = null;
 
-    constructor(events: PeerConnectionEvents) {
+    constructor(
+        events: PeerConnectionEvents,
+        createLink: PeerLinkFactory = defaultLinkFactory
+    ) {
         this.events = events;
+        this.createLink = createLink;
     }
 
     // Lets the caller swap in event handlers that close over fresh
@@ -84,117 +100,114 @@ export class PeerConnectionManager {
         this.events = events;
     }
 
-    createConnection(
-        targetSocketId: string,
-        initiator: boolean
-    ): Peer.Instance {
-        const existingPeer = this.peers.get(targetSocketId);
-        if (existingPeer) return existingPeer;
-
-        const peer = new Peer({
-            initiator,
-            trickle: true,
-            config: { iceServers: ICE_SERVERS },
-            ...(this.localStream ? { stream: this.localStream } : {}),
-        });
-        if (this.localStream) {
-            const track = this.localStream.getAudioTracks()[0];
-            if (track) {
-                this.localStreamAttachments.set(targetSocketId, {
-                    senderStream: this.localStream,
-                    track,
-                });
-            }
-        }
-
-        peer.on("signal", (signal) => {
-            this.events.onSignal(targetSocketId, signal);
-        });
-
-        const timeoutId = setTimeout(() => {
-            console.warn(
-                "[multiplayer] peer connection to",
-                targetSocketId,
-                "timed out after",
-                PEER_CONNECT_TIMEOUT_MS,
-                "ms without connecting"
-            );
-            this.destroy(targetSocketId);
-        }, PEER_CONNECT_TIMEOUT_MS);
-        this.connectTimeouts.set(targetSocketId, timeoutId);
-
-        peer.on("connect", () => {
-            this.clearConnectTimeout(targetSocketId);
-            this.events.onPeerConnected(targetSocketId);
-        });
-
-        peer.on("stream", (stream) => {
-            this.events.onRemoteStream(targetSocketId, stream);
-        });
-
-        peer.on("data", (data: Uint8Array) => {
-            try {
-                this.events.onPeerData(
-                    targetSocketId,
-                    JSON.parse(textDecoder.decode(data))
-                );
-            } catch (error) {
-                console.warn(
-                    "[multiplayer] malformed data frame from",
-                    targetSocketId,
-                    error
-                );
-            }
-        });
-
-        peer.on("close", () => {
-            this.clearConnectTimeout(targetSocketId);
-            this.peers.delete(targetSocketId);
-            this.localStreamAttachments.delete(targetSocketId);
-            this.events.onPeerClosed(targetSocketId);
-        });
-
-        peer.on("error", (error) => {
-            // simple-peer always emits "close" right after "error", which
-            // already handles cleanup here - just surface the failure
-            // instead of reporting it twice.
-            console.error(
-                "[multiplayer] peer connection error with",
-                targetSocketId,
-                error
-            );
-        });
-
-        this.peers.set(targetSocketId, peer);
-        return peer;
+    setIceServers(iceServers: RTCIceServer[]): void {
+        this.iceServers = iceServers;
     }
 
-    handleSignal(fromSocketId: string, signal: Peer.SignalData): void {
-        const existingPeer = this.peers.get(fromSocketId);
+    // Both are needed before any link is created: the socket id decides
+    // which side of each pair is the polite one, and the user id goes into
+    // the media state announced to peers.
+    setLocalIdentity(identity: { socketId: string; userId: string }): void {
+        this.localSocketId = identity.socketId;
+        this.localUserId = identity.userId;
+    }
+
+    createConnection(targetSocketId: string, initiator: boolean): void {
+        if (this.peers.has(targetSocketId)) return;
+
+        if (!this.localSocketId) {
+            console.warn(
+                "[multiplayer] creating a peer link before the local socket id is known"
+            );
+        }
+
+        const link = this.createLink({
+            initiator,
+            // Without our own socket id there is nothing to compare, so
+            // fall back to something that is still asymmetric by
+            // construction: the side that was told to initiate is the
+            // impolite one. Two impolite peers would deadlock on glare.
+            polite: this.localSocketId
+                ? isPolitePeer(this.localSocketId, targetSocketId)
+                : !initiator,
+            iceServers: this.iceServers,
+            getIceServers: () => this.iceServers,
+            events: {
+                onSignal: (signal) =>
+                    this.events.onSignal(targetSocketId, signal),
+                onOpen: () => this.handleOpen(targetSocketId),
+                onData: (data) => this.handleData(targetSocketId, data),
+                onTrack: (remote) =>
+                    this.events.onRemoteTrack(targetSocketId, remote),
+                onClose: () => this.handleClosed(targetSocketId),
+            },
+        });
+        this.peers.set(targetSocketId, link);
+
+        this.connectTimeouts.set(
+            targetSocketId,
+            setTimeout(() => {
+                console.warn(
+                    "[multiplayer] peer connection to",
+                    targetSocketId,
+                    "timed out after",
+                    PEER_CONNECT_TIMEOUT_MS,
+                    "ms without connecting"
+                );
+                this.destroy(targetSocketId);
+            }, PEER_CONNECT_TIMEOUT_MS)
+        );
+
+        // Attached before the first offer is even built, so media that is
+        // already allowed for this peer travels in the initial negotiation
+        // instead of triggering a second one right after.
+        this.applyMedia(targetSocketId);
+    }
+
+    handleSignal(fromSocketId: string, signal: PeerSignal): void {
+        const existing = this.peers.get(fromSocketId);
         // Only an offer can legitimately start a connection we don't know
         // about yet (a signal racing ahead of space:peer-joined). Anything
         // else for an unknown peer is a straggler from someone who already
-        // left - creating a connection for it would never complete and
+        // left: creating a connection for it would never complete and
         // would leak for the lifetime of the page.
-        if (!existingPeer && signal.type !== "offer") return;
+        if (!existing && signal.description?.type !== "offer") return;
 
-        const peer = existingPeer ?? this.createConnection(fromSocketId, false);
+        if (!existing) this.createConnection(fromSocketId, false);
+        this.peers.get(fromSocketId)?.signal(signal);
+    }
+
+    private handleOpen(socketId: string): void {
+        this.clearConnectTimeout(socketId);
+        this.announcedMediaState.delete(socketId);
+        this.sendMediaState(socketId);
+        this.events.onPeerConnected(socketId);
+    }
+
+    private handleData(socketId: string, data: string): void {
         try {
-            peer.signal(signal);
+            this.events.onPeerData(socketId, JSON.parse(data));
         } catch (error) {
-            console.error(
-                "[multiplayer] invalid signal from",
-                fromSocketId,
+            console.warn(
+                "[multiplayer] malformed data frame from",
+                socketId,
                 error
             );
-            this.destroy(fromSocketId);
         }
+    }
+
+    private handleClosed(socketId: string): void {
+        this.clearConnectTimeout(socketId);
+        this.peers.delete(socketId);
+        this.policies.delete(socketId);
+        this.announcedMediaState.delete(socketId);
+        this.events.onPeerClosed(socketId);
     }
 
     private dispatch(message: PeerMessage): void {
         const serialized = JSON.stringify(message);
-        this.peers.forEach((peer) => {
-            if (peer.connected) peer.send(serialized);
+        this.peers.forEach((link) => {
+            if (link.isOpen) link.send(serialized);
         });
     }
 
@@ -243,157 +256,110 @@ export class PeerConnectionManager {
         this.dispatch({ type: PEER_MESSAGE_TYPES.CONFIRM, payload });
     }
 
-    // Called whenever the local mic stream changes: becomes available for
-    // the first time (permission granted with a delay), swaps to a
-    // different device, or goes away (permission revoked, device
-    // unplugged). Every already-connected peer is reconciled against the
-    // new value; a peer created afterwards picks it up on its own via
-    // `this.localStream` in createConnection.
-    setLocalStream(stream: MediaStream | null): void {
-        const previousStream = this.localStream;
-        this.localStream = stream;
+    // Called whenever a local source changes: the mic stream becoming
+    // available or being swapped, the camera or a screen share starting or
+    // stopping. Every peer is reconciled against the new track and its own
+    // policy.
+    setLocalTrack(slot: MediaSlot, track: MediaStreamTrack | null): void {
+        if (this.localTracks[slot] === track) return;
 
-        if (previousStream === stream) return;
-
-        if (!stream) {
-            this.detachStream();
-            return;
-        }
-
-        if (!previousStream) {
-            this.attachStreamToMissingPeers(stream);
-            return;
-        }
-
-        this.replaceStreamForAttachedPeers(stream);
+        this.localTracks[slot] = track;
+        this.peers.forEach((_link, socketId) => this.applyMedia(socketId));
     }
 
-    private attachStreamToMissingPeers(stream: MediaStream): void {
-        const attachedSocketIds = new Set(this.localStreamAttachments.keys());
-        const missingSocketIds = getPeersMissingLocalStream(
-            this.peers,
-            attachedSocketIds
+    // Replaces the whole picture of who may receive what. Peers missing from
+    // the map are treated as out of range.
+    setMediaPolicies(policies: ReadonlyMap<string, PeerMediaPolicy>): void {
+        this.policies.clear();
+        policies.forEach((policy, socketId) =>
+            this.policies.set(socketId, policy)
         );
 
-        missingSocketIds.forEach((socketId) => {
-            this.addStreamToPeer(socketId, stream);
+        this.peers.forEach((_link, socketId) => this.applyMedia(socketId));
+    }
+
+    // Which peers currently receive the local video. Feeds the hysteresis
+    // of the next policy computation.
+    getReceivingVideoPeers(): Set<string> {
+        return getReceivingVideoPeers(this.policies);
+    }
+
+    private applyMedia(socketId: string): void {
+        const link = this.peers.get(socketId);
+        if (!link) return;
+
+        const policy = this.policies.get(socketId) ?? NO_MEDIA;
+        link.setTrack(
+            MEDIA_SLOTS.AUDIO,
+            policy.audio ? this.localTracks[MEDIA_SLOTS.AUDIO] : null
+        );
+        link.setTrack(
+            MEDIA_SLOTS.CAMERA,
+            policy.video ? this.localTracks[MEDIA_SLOTS.CAMERA] : null
+        );
+        link.setTrack(
+            MEDIA_SLOTS.SCREEN,
+            policy.video ? this.localTracks[MEDIA_SLOTS.SCREEN] : null
+        );
+
+        this.applyEncodings();
+        this.sendMediaState(socketId);
+    }
+
+    private applyEncodings(): void {
+        const receiverCount = this.getReceivingVideoPeers().size;
+        const camera = getVideoEncoding("camera", receiverCount);
+        const screen = getVideoEncoding("screen", receiverCount);
+
+        this.peers.forEach((link) => {
+            link.setEncoding(MEDIA_SLOTS.CAMERA, camera);
+            link.setEncoding(MEDIA_SLOTS.SCREEN, screen);
         });
     }
 
-    // A device change while peers are already up: peers that already carry
-    // a stream get their track swapped in place via replaceTrack (no
-    // renegotiation, unlike addStream/removeStream), and any peer that
-    // never got a stream at all (e.g. connected while the mic was still
-    // unavailable) gets the new one attached like normal.
-    private replaceStreamForAttachedPeers(stream: MediaStream): void {
-        const newTrack = stream.getAudioTracks()[0];
+    // Tells one peer which of its incoming video tracks are live and which
+    // slot each one is. Sent per peer (not broadcast) because it depends on
+    // that peer's own range.
+    private sendMediaState(socketId: string): void {
+        const link = this.peers.get(socketId);
+        if (!link?.isOpen || !this.localUserId) return;
 
-        this.peers.forEach((peer, socketId) => {
-            if (peer.destroyed) return;
+        const policy = this.policies.get(socketId) ?? NO_MEDIA;
+        const payload: PeerMediaStatePayload = {
+            userId: this.localUserId,
+            cameraStreamId:
+                policy.video && this.localTracks[MEDIA_SLOTS.CAMERA]
+                    ? link.getStreamId(MEDIA_SLOTS.CAMERA)
+                    : null,
+            screenStreamId:
+                policy.video && this.localTracks[MEDIA_SLOTS.SCREEN]
+                    ? link.getStreamId(MEDIA_SLOTS.SCREEN)
+                    : null,
+        };
 
-            const attachment = this.localStreamAttachments.get(socketId);
-            if (!attachment) {
-                this.addStreamToPeer(socketId, stream);
-                return;
-            }
+        const serialized = JSON.stringify({
+            type: PEER_MESSAGE_TYPES.MEDIA_STATE,
+            payload,
+        } satisfies PeerMessage);
+        if (this.announcedMediaState.get(socketId) === serialized) return;
 
-            if (!newTrack) {
-                console.warn(
-                    "[multiplayer] new local stream has no audio track, leaving",
-                    socketId,
-                    "on its previous track"
-                );
-                return;
-            }
-
-            try {
-                // `attachment.senderStream`, not the new (or previous)
-                // stream: it's the exact object simple-peer's _senderMap
-                // keys this peer's sender by, invariant for the connection's
-                // lifetime regardless of how many times the track itself is
-                // swapped. Passing anything else here works for exactly one
-                // swap and then silently fails every one after (caught
-                // below, but the peer is left on a stale track).
-                peer.replaceTrack(
-                    attachment.track,
-                    newTrack,
-                    attachment.senderStream
-                );
-                this.localStreamAttachments.set(socketId, {
-                    senderStream: attachment.senderStream,
-                    track: newTrack,
-                });
-            } catch (error) {
-                console.error(
-                    "[multiplayer] failed to replace local stream track for",
-                    socketId,
-                    error
-                );
-            }
-        });
-    }
-
-    private detachStream(): void {
-        this.localStreamAttachments.forEach((attachment, socketId) => {
-            const peer = this.peers.get(socketId);
-            if (peer && !peer.destroyed) {
-                try {
-                    peer.removeStream(attachment.senderStream);
-                } catch (error) {
-                    console.error(
-                        "[multiplayer] failed to detach local stream from",
-                        socketId,
-                        error
-                    );
-                }
-            }
-        });
-        this.localStreamAttachments.clear();
-    }
-
-    // Centralizes every peer.addStream call: simple-peer throws
-    // synchronously for a peer that's already destroyed (a legitimate race
-    // with destroy() being in flight), so this is the one place that needs
-    // to guard against it and not let the throw escape into a React effect.
-    private addStreamToPeer(socketId: string, stream: MediaStream): void {
-        const peer = this.peers.get(socketId);
-        if (!peer || peer.destroyed) return;
-
-        const track = stream.getAudioTracks()[0];
-        if (!track) {
-            console.warn(
-                "[multiplayer] local stream has no audio track, skipping attach for",
-                socketId
-            );
-            return;
-        }
-
-        try {
-            peer.addStream(stream);
-            this.localStreamAttachments.set(socketId, {
-                senderStream: stream,
-                track,
-            });
-        } catch (error) {
-            console.error(
-                "[multiplayer] failed to attach local stream to",
-                socketId,
-                error
-            );
-        }
+        this.announcedMediaState.set(socketId, serialized);
+        link.send(serialized);
     }
 
     destroy(socketId: string): void {
         this.clearConnectTimeout(socketId);
-        this.peers.get(socketId)?.destroy();
+        // close() reports through onClose, which does the map cleanup, but
+        // the entries are also dropped here in case the link was already
+        // closed and will not report again.
+        this.peers.get(socketId)?.close();
         this.peers.delete(socketId);
-        this.localStreamAttachments.delete(socketId);
+        this.policies.delete(socketId);
+        this.announcedMediaState.delete(socketId);
     }
 
     destroyAll(): void {
-        this.peers.forEach((peer) => peer.destroy());
-        this.peers.clear();
-        this.localStreamAttachments.clear();
+        [...this.peers.keys()].forEach((socketId) => this.destroy(socketId));
         this.connectTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
         this.connectTimeouts.clear();
     }

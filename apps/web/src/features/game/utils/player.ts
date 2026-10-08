@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { isGameInputLocked, subscribeToGameInputLock } from "./inputLock";
 import {
     MAP_OBJECT_ACTIONS,
     PLAYER_DIRECTIONS,
@@ -46,7 +47,7 @@ export const resolveMovementKeys = (scene: Phaser.Scene): MovementKeys => {
 export const isAnyKeyDown = (keys: Phaser.Input.Keyboard.Key[]): boolean =>
     keys.some((key) => key.isDown);
 
-const isEditableElement = (element: Element | null): boolean => {
+export const isEditableElement = (element: Element | null): boolean => {
     if (!element) return false;
     if (
         EDITABLE_ELEMENT_TAG_NAMES.includes(
@@ -59,14 +60,15 @@ const isEditableElement = (element: Element | null): boolean => {
     return (element as HTMLElement).isContentEditable;
 };
 
-// Authoritative, synchronous source of truth for "is the user typing right
-// now". `bindKeyboardFocusGuard` mirrors this into `keyboard.enabled` on
+// Authoritative, synchronous source of truth for "should the game ignore the
+// keyboard right now": the user is typing in an editable element, or an
+// overlay holds the input lock (see inputLock.ts). `bindKeyboardFocusGuard` mirrors this into `keyboard.enabled` on
 // focusin/focusout so the DOM-level capture is disabled promptly, but
 // per-frame consumers (PlayerController, InteractionController) also check
 // this directly so a missed or out-of-order focus event can never leave
 // movement/interaction unguarded.
-export const isTypingInEditableElement = (): boolean =>
-    isEditableElement(document.activeElement);
+export const isGameInputSuspended = (): boolean =>
+    isGameInputLocked() || isEditableElement(document.activeElement);
 
 // Lets clicking the game canvas return focus (and therefore movement) to the
 // game while the user was typing in a chat input elsewhere on the page.
@@ -94,8 +96,25 @@ export const bindKeyboardFocusGuard = (scene: Phaser.Scene): void => {
     const keyboard = scene.input.keyboard;
     if (!keyboard) return;
 
-    const syncEnabled = (): void => {
-        const isTyping = isEditableElement(document.activeElement);
+    let unsubscribeFromLock = (): void => {};
+
+    const unbind = (): void => {
+        document.removeEventListener(FOCUS_TRACKING_EVENTS.IN, syncEnabled);
+        document.removeEventListener(FOCUS_TRACKING_EVENTS.OUT, syncEnabled);
+        unsubscribeFromLock();
+    };
+
+    function syncEnabled(): void {
+        // A destroyed scene (the game was torn down, the map reloaded)
+        // nulls the plugin's manager, and toggling capture on it throws.
+        // It can still be called for a while: these listeners live on the
+        // document, and the input lock is app-wide.
+        if (!keyboard?.manager) {
+            unbind();
+            return;
+        }
+
+        const isTyping = isGameInputSuspended();
 
         // A key held down when focus moves to an editable element never
         // gets its matching keyup: the plugin stops processing events while
@@ -111,7 +130,7 @@ export const bindKeyboardFocusGuard = (scene: Phaser.Scene): void => {
         } else {
             keyboard.enableGlobalCapture();
         }
-    };
+    }
 
     // Covers the case where an editable element is already focused when the
     // scene starts (e.g. the chat input was focused before the map loaded).
@@ -119,11 +138,10 @@ export const bindKeyboardFocusGuard = (scene: Phaser.Scene): void => {
 
     document.addEventListener(FOCUS_TRACKING_EVENTS.IN, syncEnabled);
     document.addEventListener(FOCUS_TRACKING_EVENTS.OUT, syncEnabled);
+    unsubscribeFromLock = subscribeToGameInputLock(syncEnabled);
 
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-        document.removeEventListener(FOCUS_TRACKING_EVENTS.IN, syncEnabled);
-        document.removeEventListener(FOCUS_TRACKING_EVENTS.OUT, syncEnabled);
-    });
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, unbind);
+    scene.events.once(Phaser.Scenes.Events.DESTROY, unbind);
 };
 
 export const resolveAxis = (

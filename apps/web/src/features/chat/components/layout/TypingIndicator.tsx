@@ -39,10 +39,11 @@ export const TypingIndicator = ({ conversationId }: Props) => {
                 >
                     <div className="flex items-center gap-2 px-4 pt-1 pb-2">
                         <AvatarGroup>
-                            {visibleUsers.map(({ userId }) => (
+                            {visibleUsers.map(({ userId, userName }) => (
                                 <UserAvatar
                                     key={userId}
                                     id={userId}
+                                    name={userName}
                                     avatar={avatarLookup.get(userId) ?? null}
                                     size="xs"
                                 />

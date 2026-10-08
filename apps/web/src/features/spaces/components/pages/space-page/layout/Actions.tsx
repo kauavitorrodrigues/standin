@@ -20,12 +20,12 @@ export const Actions = ({ space }: { space: Pick<Space, "id" | "name"> }) => {
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger
-                    render={<Button variant="secondary" size="icon" />}
+                    render={<Button variant="outline" size="icon-lg" />}
                 >
                     <EllipsisVerticalIcon />
                     <span className="sr-only">Ações do espaço</span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" side="top">
                     <DropdownMenuItem onClick={() => setAction("update")}>
                         <PencilIcon />
                         Editar

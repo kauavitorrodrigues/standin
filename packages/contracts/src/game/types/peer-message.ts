@@ -58,6 +58,18 @@ export type PeerConfirmPayload = {
     message: PeerMessagePayload;
 };
 
+// Sent per peer (not broadcast), because what a peer is currently sending
+// to you depends on your proximity to them. Each field is the id of the
+// MediaStream the sender attached that video to (see PeerLink), or null
+// when nothing of that kind is being sent to this particular peer. The
+// receiver uses the id to tell a camera track from a screen track, since
+// both arrive as plain video tracks.
+export type PeerMediaStatePayload = {
+    userId: string;
+    cameraStreamId: string | null;
+    screenStreamId: string | null;
+};
+
 export type PeerMessage =
     | { type: typeof PEER_MESSAGE_TYPES.POSITION; payload: PlayerPosition }
     | { type: typeof PEER_MESSAGE_TYPES.CHAT; payload: PeerChatPayload }
@@ -68,4 +80,8 @@ export type PeerMessage =
       }
     | { type: typeof PEER_MESSAGE_TYPES.EDIT; payload: PeerEditPayload }
     | { type: typeof PEER_MESSAGE_TYPES.DELETE; payload: PeerDeletePayload }
-    | { type: typeof PEER_MESSAGE_TYPES.CONFIRM; payload: PeerConfirmPayload };
+    | { type: typeof PEER_MESSAGE_TYPES.CONFIRM; payload: PeerConfirmPayload }
+    | {
+          type: typeof PEER_MESSAGE_TYPES.MEDIA_STATE;
+          payload: PeerMediaStatePayload;
+      };

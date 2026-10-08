@@ -5,6 +5,7 @@ import {
     type PeerConfirmPayload,
     type PeerDeletePayload,
     type PeerEditPayload,
+    type PeerMediaStatePayload,
     type PeerMessage,
     type PeerReactionPayload,
     type PeerTypingPayload,
@@ -86,6 +87,22 @@ const isPeerConfirmPayload = (data: unknown): data is PeerConfirmPayload => {
     );
 };
 
+const isNullableString = (value: unknown): value is string | null =>
+    value === null || typeof value === "string";
+
+const isPeerMediaStatePayload = (
+    data: unknown
+): data is PeerMediaStatePayload => {
+    if (typeof data !== "object" || data === null) return false;
+
+    const candidate = data as Record<string, unknown>;
+    return (
+        typeof candidate.userId === "string" &&
+        isNullableString(candidate.cameraStreamId) &&
+        isNullableString(candidate.screenStreamId)
+    );
+};
+
 // Messages arrive over the raw WebRTC data channel, never validated
 // server-side (the server never inspects peer traffic by design). A
 // malicious or buggy peer can send anything, so guard the envelope and its
@@ -126,6 +143,13 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
         return isPeerConfirmPayload(candidate.payload)
             ? { type: PEER_MESSAGE_TYPES.CONFIRM, payload: candidate.payload }
             : null;
+    case PEER_MESSAGE_TYPES.MEDIA_STATE:
+        return isPeerMediaStatePayload(candidate.payload)
+            ? {
+                type: PEER_MESSAGE_TYPES.MEDIA_STATE,
+                payload: candidate.payload,
+            }
+            : null;
     default:
         return null;
     }
@@ -152,7 +176,23 @@ export const getClaimedUserId = (
         return message.payload.userId;
     case PEER_MESSAGE_TYPES.CONFIRM:
         return message.payload.message.senderId;
+    case PEER_MESSAGE_TYPES.MEDIA_STATE:
+        return message.payload.userId;
     }
+};
+
+// Whether a peer message may be believed, given the userId the server says
+// owns the socket it came from. A peer can put anyone's id in a payload, so
+// anything that speaks for a user must match the server's record. An unknown
+// socket (knownUserId undefined) never matches, so nothing from a peer the
+// server has not announced gets through. POSITION carries no identity claim.
+export const isMessageFromKnownSender = (
+    message: PeerMessage,
+    knownUserId: string | undefined
+): boolean => {
+    if (message.type === PEER_MESSAGE_TYPES.POSITION) return true;
+
+    return getClaimedUserId(message) === knownUserId;
 };
 
 export const addPeerId = (peerIds: string[], socketId: string): string[] =>

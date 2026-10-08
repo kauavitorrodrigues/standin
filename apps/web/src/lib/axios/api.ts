@@ -1,8 +1,9 @@
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/api/url";
 import { queryClient } from "@/lib/tanstack/queryClient";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_BASE_API_URL,
+    baseURL: API_BASE_URL,
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",

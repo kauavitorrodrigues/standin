@@ -10,7 +10,7 @@
 ![pnpm](https://img.shields.io/badge/pnpm-11%2B-101418?style=for-the-badge&labelColor=101418&color=FFFFFF)
 ![TypeScript](https://img.shields.io/badge/typescript-6.x-101418?style=for-the-badge&labelColor=101418&color=FFFFFF)
 
-A 2D top-down virtual space for small teams, with customizable maps, real-time presence over WebRTC/P2P, text/attachment chat, and proximity voice.
+A 2D top-down virtual space for small teams, with customizable maps, real-time presence over WebRTC/P2P, text/attachment chat, proximity voice, and proximity camera and screen sharing.
 
 [Overview](#overview) • [Features](#features) • [How It Works](#how-it-works) • [Architecture](#architecture) • [Storage](#storage) • [Getting Started](#getting-started) • [Scripts](#scripts) • [Deployment](#deployment)
 
@@ -35,6 +35,7 @@ The product goal is to give a small team a navigable "virtual office" — a cust
 - **Own auth**: password-based sign-up/login (bcrypt) and JWT, with no external provider dependency.
 - **Chat messaging**: text and attachment messages, in two conversation shapes — a `DIRECT` conversation between two members, or a `SPACE` conversation shared by every member of that space (both scoped to the organization).
 - **Proximity voice chat**: peer-to-peer voice over WebRTC that unlocks automatically between two users when their avatars get close enough inside a space, on top of the same mesh P2P connection used for presence.
+- **Proximity camera and screen sharing**: the same rule as voice, applied to video. Turn your camera on, or press the share-screen button that appears once someone is close enough, and only the people in range receive it. Videos render centered over the map.
 
 ## How It Works
 
@@ -69,6 +70,12 @@ At scale, the target is 2 to 10 concurrent people per room — small enough for 
 ### Proximity voice chat
 
 Each user's avatar carries a proximity radius; when two avatars in the same space come within range, the game scene unlocks a live P2P voice channel between them over the same WebRTC mesh used for presence — move apart and the channel closes. No SFU, no manual "join call" step.
+
+### Proximity camera and screen sharing
+
+Camera and screen share ride the same mesh as voice, so there is still no media server. What is sent is decided per peer, on every position update: a peer inside the enter radius receives your audio and video, and one beyond the (slightly larger) exit radius stops receiving it, so standing at the edge does not flicker. At most four peers receive your video at once, and the bitrate per receiver shrinks as more of them are watching. Someone out of range receives no media at all, not just a lowered volume.
+
+Because each sender uploads its video once per receiver, this fits the 2 to 10 people target as long as most of them are not clustered in one spot. A large audience for one screen share would need an SFU, which is deliberately not part of this setup. The camera starts off and is opened only when you turn it on.
 
 ### Chat (spaces and DMs)
 
@@ -243,6 +250,9 @@ Standin is meant to be self-hosted: the only hard requirement is a server (VPS, 
 4. **Run the API** (`apps/api/dist/server.js`) as a long-lived Node process behind a process manager (PM2, systemd, Docker — your choice) and a reverse proxy (nginx, Caddy) for TLS. Required env vars: `DATABASE_URL`, `SERVER_PORT`, `SERVER_URL` (the API's own public URL — used to build links to locally-stored files), `JWT_SECRET`, `FRONTEND_URL` (used for CORS), and `STORAGE_DRIVER` (see [Storage](#storage)).
 5. **Serve the web build** (`apps/web/dist`, a static bundle) from any static host or the same reverse proxy, with `VITE_BASE_API_URL` pointed at the API's public URL at build time.
 6. **Pick a storage strategy**: `local` works out of the box on a single server but ties uploads to that machine's disk; an S3-compatible provider (Cloudflare R2, etc.) is the better fit once you're running more than one API instance or want uploads decoupled from the app server.
+
+7. **(Recommended) Run your own STUN/TURN relay.** Peers behind a strict NAT or a corporate firewall cannot reach each other directly and need a relay, and video makes that traffic noticeable. `compose.yml` ships a `coturn` service behind the `turn` profile: set `TURN_HOST` (your domain or public IP), `TURN_SECRET` (`openssl rand -hex 32`) and optionally `TURN_PORT`/`TURN_TTL_SECONDS` in `.env`, then `docker compose --profile turn up -d coturn`. The API reads the same variables and hands each signed-in user short-lived credentials from `GET /ice-servers`, so there is no fixed username or password. The secret is handed to coturn through a private file inside the container, never on its command line, and the container refuses to start if `TURN_SECRET` is empty. Open `3478` (UDP and TCP) and the relay range `49160-49200/udp` in the host firewall and, on most VPS providers, in the provider's own firewall as well. Without `TURN_HOST` and `TURN_SECRET` the API returns no ICE servers and peers connect only over direct paths, which is enough on a local network.
+8. **Use HTTPS.** Browsers only allow microphone, camera and screen capture in a secure context, and the reverse proxy in front of the API must forward WebSocket upgrades for Socket.IO.
 
 None of this requires a paid third-party service — a single small VPS running Postgres, the API process, and the static web build is enough for a small team.
 

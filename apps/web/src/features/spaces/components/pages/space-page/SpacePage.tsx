@@ -1,10 +1,18 @@
-import { useCallback, useMemo, useRef, useState, type Ref } from "react";
+import {
+    useCallback,
+    useMemo,
+    useRef,
+    useState,
+    type ReactNode,
+    type Ref,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { MessageWithDetails, SpaceDetails } from "@standin/contracts";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SpacesQueries } from "@/features/spaces/queries";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { OrganizationsQueries } from "@/features/organizations/queries";
 import { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 import { SocketProvider } from "@/features/game/multiplayer/contexts/SocketContext";
 import { useSocket } from "@/features/game/multiplayer/hooks/useSocket";
@@ -48,9 +56,22 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { MessageCircleIcon, UsersIcon } from "lucide-react";
 import {
     CameraToggleButton,
+    CameraUnavailableIndicator,
     MicToggleButton,
     MicUnavailableIndicator,
 } from "@/features/media-devices/components";
+import { ScreenShareButton } from "@/features/video/components/instances/ScreenShareButton";
+import { useStopShareWithoutViewers } from "@/features/media-devices/hooks/useStopShareWithoutViewers";
+import { ScreenShareMessages } from "@/features/spaces/components/forms/Messages";
+import { toast } from "@/components/ui/toast";
+import { SelfPreview } from "@/features/video/components/instances/SelfPreview";
+import { VideoStage } from "@/features/video/components/instances/VideoStage";
+import {
+    buildNameLookup,
+    buildStageTiles,
+} from "@/features/video/utils/buildStageTiles";
+import { ClipboardCopyButton } from "@/components/layout/ClipboardCopyDisplay";
+import { Actions } from "@/features/spaces/components/pages/space-page/layout/Actions";
 import { Logo } from "@/components/layout/Logo";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 import { GameCanvas } from "@/features/game/components/GameCanvas";
@@ -68,6 +89,7 @@ type ContentProps = {
     space: SpaceDetails | undefined;
     containerRef: Ref<HTMLDivElement>;
     handle: GameEngineHandle | null;
+    videoStage: ReactNode;
 };
 
 function Content({
@@ -77,6 +99,7 @@ function Content({
     space,
     containerRef,
     handle,
+    videoStage,
 }: ContentProps) {
     if (isDuplicateSession) return <SpaceDuplicateSessionState />;
     if (isLoading) return <SpaceLoadingState />;
@@ -86,6 +109,7 @@ function Content({
         <>
             <GameCanvas ref={containerRef} />
             <GameControls handle={handle} />
+            {videoStage}
         </>
     );
 }
@@ -165,6 +189,7 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
 
     const {
         localAudioError,
+        video,
         broadcastChatMessage,
         broadcastTyping,
         broadcastReaction,
@@ -309,6 +334,59 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
         },
     });
 
+    // Names come from the organization's members, not from the space
+    // conversation's participants: that list is a snapshot from when the
+    // space was created, so it would not know anyone who joined the
+    // organization afterwards.
+    const { members } = OrganizationsQueries.useMembers();
+    const { screenShare } = video;
+    // Our own tile is always in the bottom bar (SelfPreview), but our live
+    // camera is only ever rendered in one place. Alone, it is the bar's
+    // preview. As soon as someone is nearby (or sending video), everyone,
+    // ourselves included, goes to the stage strip (a camera when there is
+    // one, an avatar otherwise) and the bar falls back to our avatar.
+    const isOnStage =
+        video.nearbyUserIds.length > 0 || video.remoteVideos.length > 0;
+    const stageTiles = useMemo(
+        () =>
+            buildStageTiles({
+                remoteVideos: video.remoteVideos,
+                localCameraStream: video.localCameraStream,
+                nearbyUserIds: video.nearbyUserIds,
+                selfUserId: user.id,
+                includeSelf: isOnStage,
+                localScreenStream: screenShare.stream,
+                names: buildNameLookup(members),
+            }),
+        [
+            video.remoteVideos,
+            video.localCameraStream,
+            video.nearbyUserIds,
+            user.id,
+            isOnStage,
+            screenShare.stream,
+            members,
+        ]
+    );
+    // Sharing needs someone to share with, so the button is disabled until a
+    // peer is close enough to receive it. It stays usable while a share is
+    // running, otherwise walking away would leave no way to stop it.
+    const canShareScreen =
+        screenShare.isSharing || video.nearbyUserIds.length > 0;
+
+    // A share nobody can receive is only a capture running for nothing, so it
+    // ends after a while without anyone nearby.
+    useStopShareWithoutViewers({
+        isSharing: screenShare.isSharing,
+        hasViewers: video.nearbyUserIds.length > 0,
+        stop: screenShare.stop,
+        onStopped: () =>
+            toast.add({
+                title: ScreenShareMessages.stoppedNoViewers,
+                type: "info",
+            }),
+    });
+
     const peerChatValue = useMemo(
         () => ({
             broadcastChatMessage: (
@@ -401,7 +479,6 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
     return (
         <SidebarProvider open={open} onOpenChange={setOpen}>
             <SpacePageRoot>
-                <LayoutPrimitive.Header />
                 <Tabs
                     value={tab}
                     onValueChange={(value) => setTab(value as typeof tab)}
@@ -416,6 +493,7 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
                                 space={space}
                                 containerRef={containerRef}
                                 handle={handle}
+                                videoStage={<VideoStage tiles={stageTiles} />}
                             />
                         </LayoutPrimitive.Content>
                         <LayoutPrimitive.Sidebar>
@@ -450,14 +528,36 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
                                 orientation="vertical"
                                 className="h-5 my-auto"
                             />
+                            <ClipboardCopyButton
+                                text={window.location.href}
+                                copyLabel="Copiar URL"
+                                copiedLabel="URL copiada!"
+                            />
                             <UserWidget />
                         </LayoutPrimitive.ControlGroup>
                         <LayoutPrimitive.ControlGroup className="w-full max-w-96">
                             <MicToggleButton />
                             <CameraToggleButton />
+                            <SelfPreview
+                                userId={user.id}
+                                name={user.name}
+                                stream={isOnStage ? null : video.localCameraStream}
+                            />
+                            <ScreenShareButton
+                                isSharing={screenShare.isSharing}
+                                disabled={!canShareScreen}
+                                error={screenShare.error}
+                                onStart={screenShare.start}
+                                onStop={screenShare.stop}
+                            />
                             {localAudioError && (
                                 <MicUnavailableIndicator
                                     error={localAudioError}
+                                />
+                            )}
+                            {video.localCameraError && (
+                                <CameraUnavailableIndicator
+                                    error={video.localCameraError}
                                 />
                             )}
                         </LayoutPrimitive.ControlGroup>
@@ -479,6 +579,7 @@ function SpacePageContent({ spaceId }: { spaceId: string }) {
                                 />
                             </SpaceSidebar.TriggerGroup>
                             <LeaveSpaceButton />
+                            {space && <Actions space={space} />}
                         </LayoutPrimitive.ControlGroup>
                     </LayoutPrimitive.Controls>
                 </Tabs>

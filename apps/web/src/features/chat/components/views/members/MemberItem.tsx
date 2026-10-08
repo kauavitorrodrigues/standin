@@ -9,7 +9,12 @@ export const MemberItem = ({ member, onSelect }: Props) => (
         onClick={() => onSelect(member)}
         className="flex items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-muted"
     >
-        <UserAvatar id={member.id} avatar={member.avatarUrl} size="default" />
+        <UserAvatar
+            id={member.id}
+            name={member.name}
+            avatar={member.avatarUrl}
+            size="default"
+        />
         <span className="truncate text-sm font-medium">{member.name}</span>
     </button>
 );

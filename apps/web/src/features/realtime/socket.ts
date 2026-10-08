@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import { SOCKET_PATH_OPTIONS, SOCKET_URL } from "@/lib/api/url";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -11,7 +12,8 @@ import type {
 // the whole signed-in session so notifications (e.g. chat unread counts)
 // reach the client even when it isn't on any space page.
 export const realtimeSocket: Socket<ServerToClientEvents, ClientToServerEvents> =
-    io(import.meta.env.VITE_BASE_API_URL, {
+    io(SOCKET_URL, {
+        ...SOCKET_PATH_OPTIONS,
         withCredentials: true,
         autoConnect: false,
         transports: ["websocket"],

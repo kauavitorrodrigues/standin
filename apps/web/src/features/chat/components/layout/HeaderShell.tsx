@@ -19,6 +19,7 @@ export const HeaderShell = ({ title, avatar, onBack, children }: Props) => {
             {avatar && (
                 <UserAvatar
                     id={avatar.id}
+                    name={title}
                     avatar={avatar.avatarUrl}
                     size="sm"
                 />
