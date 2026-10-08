@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/lib/api/url";
+
 type ResolveAttachmentUrlParams = {
     organizationId: string;
     conversationId: string;
@@ -14,4 +16,4 @@ export const resolveAttachmentUrl = ({
     messageId,
     attachmentId,
 }: ResolveAttachmentUrlParams) =>
-    `${import.meta.env.VITE_BASE_API_URL}/organizations/${organizationId}/conversations/${conversationId}/messages/${messageId}/attachments/${attachmentId}`;
+    `${API_BASE_URL}/organizations/${organizationId}/conversations/${conversationId}/messages/${messageId}/attachments/${attachmentId}`;

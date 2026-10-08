@@ -18,7 +18,10 @@ export const Root = ({ children, className }: Props) => {
                 position="contained"
                 collapsible="offcanvas"
                 side="right"
-                className="pointer-events-auto"
+                // The sidebar container has a 1px left border but no background of
+                // its own (only the inner panel has one), so the game used to show
+                // through that border as a bright line.
+                className="pointer-events-auto bg-sidebar"
             >
                 <div
                     className={cn(

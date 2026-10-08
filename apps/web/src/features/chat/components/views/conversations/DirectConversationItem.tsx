@@ -14,7 +14,12 @@ export const DirectConversationItem = ({ conversation, onSelect }: Props) => {
             onClick={onSelect}
             className="flex items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-muted"
         >
-            <UserAvatar id={other.id} avatar={other.avatarUrl} size="md" />
+            <UserAvatar
+                id={other.id}
+                name={other.name}
+                avatar={other.avatarUrl}
+                size="md"
+            />
             <span className="flex-1 truncate text-sm font-medium">
                 {other.name}
             </span>

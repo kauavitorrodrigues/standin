@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import FallbackAvatar from "@/components/ui/fallback-avatar";
 import { cn } from "@/lib/utils";
+import { getInitial } from "../utils/getInitial";
+import { getAvatarHue } from "../utils/getAvatarHue";
 
 export type UserAvatarSize = "xs" | "sm" | "default" | "md" | "lg" | "xl";
 
@@ -13,25 +14,29 @@ const AVATAR_SIZE_CLASSES: Record<UserAvatarSize, string> = {
     xl: "h-24 w-24",
 };
 
-const AVATAR_PIXEL_SIZES: Record<UserAvatarSize, number> = {
-    xs: 20,
-    sm: 28,
-    default: 32,
-    md: 36,
-    lg: 64,
-    xl: 96,
+const INITIAL_TEXT_CLASSES: Record<UserAvatarSize, string> = {
+    xs: "text-[0.6rem]",
+    sm: "text-xs",
+    default: "text-sm",
+    md: "text-sm",
+    lg: "text-2xl",
+    xl: "text-4xl",
 };
 
 type Props = {
     id: string;
+    name: string;
     avatar?: string | null;
     size?: UserAvatarSize;
     className?: string;
     fallbackClassName?: string;
 };
 
+// Without a picture the avatar is the person's first initial on a flat color
+// derived from their id: plain DOM, nothing to render or animate.
 export const UserAvatar = ({
     id,
+    name,
     avatar,
     size = "md",
     className,
@@ -39,12 +44,15 @@ export const UserAvatar = ({
 }: Props) => (
     <Avatar className={cn(AVATAR_SIZE_CLASSES[size], className)}>
         <AvatarImage src={avatar ?? undefined} alt="" />
-        <AvatarFallback className={cn("bg-transparent", fallbackClassName)}>
-            <FallbackAvatar
-                name={id}
-                size={AVATAR_PIXEL_SIZES[size]}
-                className="size-full"
-            />
+        <AvatarFallback
+            className={cn(
+                "font-medium text-white",
+                INITIAL_TEXT_CLASSES[size],
+                fallbackClassName
+            )}
+            style={{ backgroundColor: `hsl(${getAvatarHue(id)} 45% 40%)` }}
+        >
+            {getInitial(name)}
         </AvatarFallback>
     </Avatar>
 );

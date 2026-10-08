@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { rebaseAssetUrl } from "@/lib/api/assetUrl";
+import { API_BASE_URL } from "@/lib/api/url";
 import {
     buildMapAssetKey,
     buildTilesetAssetKey,
@@ -21,11 +23,14 @@ export const loadMapAssets = (
             }
         );
 
-    loader.tilemapTiledJSON(buildMapAssetKey(map.id), map.mapJsonUrl);
+    loader.tilemapTiledJSON(
+        buildMapAssetKey(map.id),
+        rebaseAssetUrl(map.mapJsonUrl, API_BASE_URL)
+    );
     map.tilesets.forEach((tileset) => {
         loader.image(
             buildTilesetAssetKey(map.id, tileset.tilesetName),
-            tileset.url
+            rebaseAssetUrl(tileset.url, API_BASE_URL)
         );
     });
 };
