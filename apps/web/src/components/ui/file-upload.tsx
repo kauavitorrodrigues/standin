@@ -634,6 +634,7 @@ const FileUploadDropzone = React.forwardRef<
         defaultTagName: "div",
         ref: forwardedRef,
         props: mergeProps<"div">(
+            // eslint-disable-next-line react-hooks/refs -- false positive: the ref is forwarded to useRender, never read during render
             {
                 role: "region",
                 id: context.dropzoneId,
@@ -683,6 +684,7 @@ const FileUploadTrigger = React.forwardRef<
         defaultTagName: "button",
         ref: forwardedRef,
         props: mergeProps<"button">(
+            // eslint-disable-next-line react-hooks/refs -- false positive: the ref is forwarded to useRender, never read during render
             {
                 type: "button",
                 "aria-controls": context.inputId,
@@ -893,6 +895,7 @@ const FileUploadItemDelete = React.forwardRef<
         ref: forwardedRef,
         enabled: !!itemContext.fileState,
         props: mergeProps<"button">(
+            // eslint-disable-next-line react-hooks/refs -- false positive: the ref is forwarded to useRender, never read during render
             {
                 type: "button",
                 "aria-controls": itemContext.id,
