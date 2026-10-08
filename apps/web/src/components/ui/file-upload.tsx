@@ -823,48 +823,48 @@ const FileUploadItemPreview = React.forwardRef<
     HTMLDivElement,
     React.ComponentPropsWithoutRef<"div"> & {
         render?: (file: File) => React.ReactNode;
-    }
->((props, forwardedRef) => {
-    const { render, children, className, ...previewProps } = props;
-    const itemContext = useFileUploadItemContext(ITEM_PREVIEW_NAME);
-    const isImage = itemContext.fileState?.file.type.startsWith("image/");
-    const onPreviewRender = React.useCallback(
-        (file: File) => {
-            if (render) return render(file);
-            if (isImage)
-                return (
-                    <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        className="size-full rounded object-cover"
-                        onLoad={(e) => {
-                            if (e.target instanceof HTMLImageElement)
-                                URL.revokeObjectURL(e.target.src);
-                        }}
-                    />
+            }
+            >((props, forwardedRef) => {
+                const { render, children, className, ...previewProps } = props;
+                const itemContext = useFileUploadItemContext(ITEM_PREVIEW_NAME);
+                const isImage = itemContext.fileState?.file.type.startsWith("image/");
+                const onPreviewRender = React.useCallback(
+                    (file: File) => {
+                        if (render) return render(file);
+                        if (isImage)
+                            return (
+                                <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={file.name}
+                                    className="size-full rounded object-cover"
+                                    onLoad={(e) => {
+                                        if (e.target instanceof HTMLImageElement)
+                                            URL.revokeObjectURL(e.target.src);
+                                    }}
+                                />
+                            );
+                        return getFileIcon(file);
+                    },
+                    [isImage, render]
                 );
-            return getFileIcon(file);
-        },
-        [isImage, render]
-    );
-    if (!itemContext.fileState) return null;
-    return (
-        <div
-            aria-labelledby={itemContext.nameId}
-            data-slot="file-upload-preview"
-            {...previewProps}
-            ref={forwardedRef}
-            className={cn(
-                "relative flex size-10 shrink-0 items-center justify-center rounded-md",
-                isImage ? "object-cover" : "bg-accent/50 [&>svg]:size-7",
-                className
-            )}
-        >
-            {onPreviewRender(itemContext.fileState.file)}
-            {children}
-        </div>
-    );
-});
+                if (!itemContext.fileState) return null;
+                return (
+                    <div
+                        aria-labelledby={itemContext.nameId}
+                        data-slot="file-upload-preview"
+                        {...previewProps}
+                        ref={forwardedRef}
+                        className={cn(
+                            "relative flex size-10 shrink-0 items-center justify-center rounded-md",
+                            isImage ? "object-cover" : "bg-accent/50 [&>svg]:size-7",
+                            className
+                        )}
+                    >
+                        {onPreviewRender(itemContext.fileState.file)}
+                        {children}
+                    </div>
+                );
+            });
 FileUploadItemPreview.displayName = ITEM_PREVIEW_NAME;
 
 const FileUploadItemDelete = React.forwardRef<
