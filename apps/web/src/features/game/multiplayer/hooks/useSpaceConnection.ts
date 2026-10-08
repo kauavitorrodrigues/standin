@@ -13,7 +13,6 @@ import {
 } from "@standin/contracts";
 import type Phaser from "phaser";
 import { socket } from "../socket";
-import type { SignalData } from "simple-peer";
 import { useSocketEvent } from "./useSocketEvent";
 import { JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getMapScene } from "@/features/game/utils/map";
@@ -23,11 +22,17 @@ import { RemoteAudioManager } from "../lib/RemoteAudioManager";
 import { SpeakingDetector } from "../lib/SpeakingDetector";
 import {
     addPeerId,
-    getClaimedUserId,
+    isMessageFromKnownSender,
     parsePeerMessage,
     removePeerId,
 } from "../utils/peer";
 import { useLocalAudioStream } from "@/features/media-devices/hooks/useLocalAudioStream";
+import { useLocalCameraStream } from "@/features/media-devices/hooks/useLocalCameraStream";
+import { useLocalScreenShare } from "@/features/media-devices/hooks/useLocalScreenShare";
+import { useIceServers } from "./useIceServers";
+import { useRemoteVideos } from "./useRemoteVideos";
+import { MEDIA_SLOTS, type PeerSignal } from "../types/transport";
+import { getPeerMediaPolicies } from "../utils/mediaPolicy";
 import {
     getPreferredDeviceId,
     subscribeToPreferredDeviceId,
@@ -73,6 +78,28 @@ export function useSpaceConnection({
         error: localAudioError,
         setProximityGate,
     } = useLocalAudioStream();
+    const { stream: localCameraStream, error: localCameraError } =
+        useLocalCameraStream();
+    const screenShare = useLocalScreenShare();
+    // Users currently close enough to receive the local video, sorted so the
+    // list is stable between ticks. Drives the stage (everyone nearby is
+    // shown there, with an avatar until they turn a camera on) and whether
+    // the "share screen" button is offered at all.
+    const [nearbyUserIds, setNearbyUserIds] = useState<string[]>([]);
+
+    const iceServersQuery = useIceServers();
+    // A failed request must not block joining: without ICE servers, peers
+    // still connect over direct candidates.
+    const iceReady = iceServersQuery.isSuccess || iceServersQuery.isError;
+    // Read from a ref inside the join effect so a background refetch of the
+    // list (new credentials) does not tear the whole session down and rejoin.
+    // Declared before the join effect on purpose: effects of one commit run
+    // in order, so the ref is already current when that effect reads it.
+    const iceServersRef = useRef<RTCIceServer[]>([]);
+    const iceServers = iceServersQuery.data;
+    useEffect(() => {
+        iceServersRef.current = iceServers ?? [];
+    }, [iceServers]);
 
     // Raw ("is the mic/peer's stream actually detecting speech") state,
     // kept apart from whether anyone is currently in range: the ring only
@@ -96,6 +123,18 @@ export function useSpaceConnection({
     // payload.
     const peerUserIdsRef = useRef<Record<string, string>>({});
 
+    const getPeerUserId = useCallback(
+        (socketId: string) => peerUserIdsRef.current[socketId],
+        []
+    );
+    const {
+        remoteVideos,
+        addTrack: addRemoteVideoTrack,
+        setState: setRemoteMediaState,
+        removePeer: removeRemoteVideoPeer,
+        clear: clearRemoteVideos,
+    } = useRemoteVideos(getPeerUserId);
+
     // Lazy useState initializer instead of a ref: refs can't be read during
     // render, and this needs to be constructed exactly once per mount. Given
     // a harmless placeholder for events. The real handlers (which close over
@@ -108,9 +147,16 @@ export function useSpaceConnection({
                 onPeerConnected: () => {},
                 onPeerClosed: () => {},
                 onPeerData: () => {},
-                onRemoteStream: () => {},
+                onRemoteTrack: () => {},
             })
     );
+
+    // Keeps the manager on the freshest credentials as the list is refetched:
+    // links created later use them, and so do the ICE restarts of links that
+    // already exist (see PeerLink's getIceServers).
+    useEffect(() => {
+        manager.setIceServers(iceServers ?? []);
+    }, [manager, iceServers]);
 
     // One RemoteAudioManager per Space session, mirroring `manager` above.
     const [remoteAudioManager] = useState(() => new RemoteAudioManager());
@@ -149,8 +195,17 @@ export function useSpaceConnection({
                 remoteAudioManager.remove(socketId);
                 remoteSpeakingDetectorsRef.current.get(socketId)?.stop();
                 remoteSpeakingDetectorsRef.current.delete(socketId);
+                removeRemoteVideoPeer(socketId);
             },
-            onRemoteStream: (socketId, stream) => {
+            onRemoteTrack: (socketId, remote) => {
+                // Video is routed by the stream id the sender announced, see
+                // useRemoteVideos. Only audio continues below.
+                if (remote.track.kind !== "audio") {
+                    addRemoteVideoTrack(socketId, remote);
+                    return;
+                }
+
+                const stream = new MediaStream([remote.track]);
                 remoteAudioManager.attach(socketId, stream);
 
                 remoteSpeakingDetectorsRef.current.get(socketId)?.stop();
@@ -178,25 +233,19 @@ export function useSpaceConnection({
                     return;
                 }
 
-                if (message.type !== PEER_MESSAGE_TYPES.POSITION) {
-                    const claimedUserId = getClaimedUserId(message);
-                    const knownUserId = peerUserIdsRef.current[socketId];
-
-                    if (claimedUserId !== knownUserId) {
-                        if (import.meta.env.DEV) {
-                            console.warn(
-                                "[multiplayer] dropped",
-                                message.type,
-                                "from",
-                                socketId,
-                                "claiming to be",
-                                claimedUserId,
-                                "but the server knows it as",
-                                knownUserId
-                            );
-                        }
-                        return;
+                const knownUserId = peerUserIdsRef.current[socketId];
+                if (!isMessageFromKnownSender(message, knownUserId)) {
+                    if (import.meta.env.DEV) {
+                        console.warn(
+                            "[multiplayer] dropped",
+                            message.type,
+                            "from",
+                            socketId,
+                            "which the server knows as",
+                            knownUserId
+                        );
                     }
+                    return;
                 }
 
                 switch (message.type) {
@@ -224,19 +273,37 @@ export function useSpaceConnection({
                 case PEER_MESSAGE_TYPES.CONFIRM:
                     onConfirm?.(socketId, message.payload);
                     return;
+                case PEER_MESSAGE_TYPES.MEDIA_STATE:
+                    setRemoteMediaState(socketId, {
+                        cameraStreamId: message.payload.cameraStreamId,
+                        screenStreamId: message.payload.screenStreamId,
+                    });
+                    return;
                 }
             },
         });
     });
 
-    // The manager is the single source of truth for the outgoing stream
-    // (see PeerConnectionManager.setLocalStream): this both attaches it to
-    // peers that connected before it became available, and reconciles
-    // already-attached peers (via replaceTrack) when it changes later, e.g.
-    // the input device was switched after the mesh was already up.
+    // The manager is the single source of truth for what is sent (see
+    // PeerConnectionManager.setLocalTrack): each track is attached to, or
+    // withheld from, every peer according to that peer's own range, and a
+    // changed track (the input device was switched, the camera or a screen
+    // share started or stopped) is reconciled against all of them.
+    const localAudioTrack = localStream?.getAudioTracks()[0] ?? null;
+    const localCameraTrack = localCameraStream?.getVideoTracks()[0] ?? null;
+    const localScreenTrack = screenShare.stream?.getVideoTracks()[0] ?? null;
+
     useEffect(() => {
-        manager.setLocalStream(localStream);
-    }, [localStream, manager]);
+        manager.setLocalTrack(MEDIA_SLOTS.AUDIO, localAudioTrack);
+    }, [localAudioTrack, manager]);
+
+    useEffect(() => {
+        manager.setLocalTrack(MEDIA_SLOTS.CAMERA, localCameraTrack);
+    }, [localCameraTrack, manager]);
+
+    useEffect(() => {
+        manager.setLocalTrack(MEDIA_SLOTS.SCREEN, localScreenTrack);
+    }, [localScreenTrack, manager]);
 
     // Mirrors the speaker device preference onto every remote <audio>
     // element, live: useMediaDeviceControl (a separate hook instance, owning
@@ -275,6 +342,8 @@ export function useSpaceConnection({
         // the server once the socket reconnects with a new id.
         manager.destroyAll();
         setConnectedPeerIds([]);
+        clearRemoteVideos();
+        manager.setLocalIdentity({ socketId: socket.id ?? "", userId });
 
         peerUserIdsRef.current = Object.fromEntries(
             peers.map((peer) => [peer.socketId, peer.userId])
@@ -297,8 +366,8 @@ export function useSpaceConnection({
     useSocketEvent("webrtc:signal", ({ fromSocketId, signal }) => {
         // The server relays this opaquely by design (it never inspects
         // WebRTC payloads); PeerConnectionManager.handleSignal validates it
-        // defensively before handing it to simple-peer.
-        manager.handleSignal(fromSocketId, signal as SignalData);
+        // defensively before handing it to the peer link.
+        manager.handleSignal(fromSocketId, signal as PeerSignal);
     });
 
     useSocketEvent("space:peer-left", ({ socketId }) => {
@@ -309,6 +378,7 @@ export function useSpaceConnection({
         remoteAudioManager.remove(socketId);
         remoteSpeakingDetectorsRef.current.get(socketId)?.stop();
         remoteSpeakingDetectorsRef.current.delete(socketId);
+        removeRemoteVideoPeer(socketId);
     });
 
     // Separate from the connection effect below on purpose: this only wires
@@ -342,6 +412,27 @@ export function useSpaceConnection({
                 setProximityGate(anyPeerAudible);
                 syncLocalSpeakingRing();
             });
+            // Decides, per peer, whether it may receive our audio and video
+            // (see getPeerMediaPolicies). The previous set of video
+            // receivers is fed back in so the boundary has hysteresis.
+            scene?.setPeerDistanceListener((distances) => {
+                const policies = getPeerMediaPolicies(
+                    distances,
+                    manager.getReceivingVideoPeers()
+                );
+                manager.setMediaPolicies(policies);
+
+                const nearby = [...manager.getReceivingVideoPeers()]
+                    .map(getPeerUserId)
+                    .filter((id): id is string => id !== undefined)
+                    .sort();
+                setNearbyUserIds((previous) =>
+                    previous.length === nearby.length &&
+                    previous.every((id, index) => id === nearby[index])
+                        ? previous
+                        : nearby
+                );
+            });
         };
 
         applyBroadcaster();
@@ -353,16 +444,24 @@ export function useSpaceConnection({
             scene?.setPositionBroadcaster(null);
             scene?.setVolumeUpdater(null);
             scene?.setProximityListener(null);
+            scene?.setPeerDistanceListener(null);
         };
     }, [
         game,
         manager,
         remoteAudioManager,
+        getPeerUserId,
         setProximityGate,
         syncLocalSpeakingRing,
     ]);
 
     useEffect(() => {
+        // Waits for the ICE server list (or its failure) so every peer link
+        // is created with it from the very first offer.
+        if (!iceReady) return;
+
+        manager.setIceServers(iceServersRef.current);
+
         // Joining on "connect" (rather than right after calling connect())
         // also re-joins automatically if the socket ever reconnects after a
         // drop, not just on the initial handshake.
@@ -409,7 +508,15 @@ export function useSpaceConnection({
             remoteAudioManager.removeAll();
             socket.disconnect();
         };
-    }, [manager, remoteAudioManager, organizationId, spaceId, userId]);
+    }, [
+        manager,
+        remoteAudioManager,
+        organizationId,
+        spaceId,
+        userId,
+        iceReady,
+        clearRemoteVideos,
+    ]);
 
     const broadcastChatMessage = useCallback(
         (payload: PeerChatPayload) => manager.broadcastChatMessage(payload),
@@ -439,6 +546,13 @@ export function useSpaceConnection({
     return {
         connectedPeerIds,
         localAudioError,
+        video: {
+            remoteVideos,
+            localCameraStream,
+            localCameraError,
+            nearbyUserIds,
+            screenShare,
+        },
         broadcastChatMessage,
         broadcastTyping,
         broadcastReaction,

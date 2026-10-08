@@ -57,6 +57,8 @@ export class MapScene extends Phaser.Scene {
     private anyPeerAudible = false;
     private proximityListener: ((anyPeerAudible: boolean) => void) | null =
         null;
+    private peerDistanceListener:
+        ((distances: ReadonlyMap<string, number>) => void) | null = null;
 
     cameraController: MapCameraController | null = null;
     player: Player | null = null;
@@ -216,6 +218,15 @@ export class MapScene extends Phaser.Scene {
         this.proximityListener = listener;
     }
 
+    // Fed the distance to every remote avatar on the same throttled tick as
+    // the volume update, so per-peer decisions (which peers receive audio
+    // and video) never run more often than positions actually change.
+    setPeerDistanceListener(
+        listener: ((distances: ReadonlyMap<string, number>) => void) | null
+    ): void {
+        this.peerDistanceListener = listener;
+    }
+
     private applyRemoteSpeakingRing(socketId: string): void {
         const avatar = this.remoteAvatars.get(socketId);
         if (!avatar) return;
@@ -247,6 +258,7 @@ export class MapScene extends Phaser.Scene {
         this.lastVolumeUpdateAt = time;
 
         let anyAudible = false;
+        const distances = new Map<string, number>();
 
         this.remoteAvatars.forEach((avatar, socketId) => {
             const distance = Phaser.Math.Distance.Between(
@@ -255,6 +267,7 @@ export class MapScene extends Phaser.Scene {
                 avatar.gameObject.x,
                 avatar.gameObject.y
             );
+            distances.set(socketId, distance);
             const volume = calculateVolumeFromDistance(
                 distance,
                 MAX_AUDIBLE_RADIUS
@@ -266,6 +279,8 @@ export class MapScene extends Phaser.Scene {
             updateRemoteVolume(socketId, volume);
             this.applyRemoteSpeakingRing(socketId);
         });
+
+        this.peerDistanceListener?.(distances);
 
         // Edge-triggered on purpose (only fired on an actual flip), same as
         // SpeakingDetector: the listener drives things like the local mic's
