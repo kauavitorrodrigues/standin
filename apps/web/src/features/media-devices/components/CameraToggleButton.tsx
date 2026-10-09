@@ -1,8 +1,13 @@
-import { VideoIcon, VideoOffIcon } from "lucide-react";
+import { VideoIcon } from "lucide-react";
 import { DeviceToggleButton } from "@/features/media-devices/components/DeviceToggleButton";
+import type { LocalAudioStreamError } from "@/features/media-devices/consts/audioError";
+import { LOCAL_CAMERA_ERROR_LABEL } from "@/features/media-devices/consts/videoError";
+import { CAMERA_SHORTCUT } from "@/features/media-devices/consts/shortcuts";
 import { useMediaDeviceControl } from "@/features/media-devices/hooks/useMediaDeviceControl";
 
-export const CameraToggleButton = () => {
+type Props = { error: LocalAudioStreamError | null };
+
+export const CameraToggleButton = ({ error }: Props) => {
     const {
         enabled,
         pending,
@@ -16,11 +21,12 @@ export const CameraToggleButton = () => {
 
     return (
         <DeviceToggleButton
+            shortcut={CAMERA_SHORTCUT}
+            errorLabel={error && LOCAL_CAMERA_ERROR_LABEL[error]}
             pressed={enabled}
             pending={pending}
             onPressedChange={toggle}
             activeIcon={<VideoIcon />}
-            inactiveIcon={<VideoOffIcon />}
             activeLabel="Desativar câmera"
             inactiveLabel="Ativar câmera"
             menuLabel="Selecionar câmera"
