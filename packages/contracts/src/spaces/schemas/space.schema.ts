@@ -5,4 +5,5 @@ import { SpaceDataSchema } from "./space.data.schema";
 export const SpaceSchema = SpaceDataSchema.extend({
     id: z.string({ error: SpaceErrorMessages.id.invalid }),
     organizationId: z.string(),
+    createdAt: z.iso.datetime(),
 });
