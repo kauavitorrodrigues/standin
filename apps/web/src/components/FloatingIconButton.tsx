@@ -16,6 +16,7 @@ type FloatingIconButtonProps = {
     className?: string;
     tooltipSide?: TooltipSide;
     disabled?: boolean;
+    shortcut?: string;
 };
 
 export const FloatingIconButton = ({
@@ -25,6 +26,7 @@ export const FloatingIconButton = ({
     className,
     tooltipSide = "left",
     disabled = false,
+    shortcut,
 }: FloatingIconButtonProps) => (
     <Tooltip>
         <TooltipTrigger
@@ -45,6 +47,8 @@ export const FloatingIconButton = ({
         >
             {icon}
         </TooltipTrigger>
-        <TooltipContent side={tooltipSide}>{label}</TooltipContent>
+        <TooltipContent side={tooltipSide} shortcut={shortcut}>
+            {label}
+        </TooltipContent>
     </Tooltip>
 );
