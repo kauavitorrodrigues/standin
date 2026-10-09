@@ -68,6 +68,9 @@ export type PeerMediaStatePayload = {
     userId: string;
     cameraStreamId: string | null;
     screenStreamId: string | null;
+    // The sender's mic is switched off. Not derivable from the audio track:
+    // a muted track just arrives silent, so it is announced explicitly.
+    isMicMuted: boolean;
 };
 
 export type PeerMessage =

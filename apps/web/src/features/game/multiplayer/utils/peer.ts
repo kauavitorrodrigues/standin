@@ -99,7 +99,8 @@ const isPeerMediaStatePayload = (
     return (
         typeof candidate.userId === "string" &&
         isNullableString(candidate.cameraStreamId) &&
-        isNullableString(candidate.screenStreamId)
+        isNullableString(candidate.screenStreamId) &&
+        typeof candidate.isMicMuted === "boolean"
     );
 };
 

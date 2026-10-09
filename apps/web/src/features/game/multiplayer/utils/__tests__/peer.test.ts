@@ -14,6 +14,7 @@ describe("parsePeerMessage for MEDIA_STATE", () => {
                 userId: "u1",
                 cameraStreamId: "cam-1",
                 screenStreamId: null,
+                isMicMuted: false,
             })
         );
 
@@ -22,6 +23,7 @@ describe("parsePeerMessage for MEDIA_STATE", () => {
                 userId: "u1",
                 cameraStreamId: "cam-1",
                 screenStreamId: null,
+                isMicMuted: false,
             })
         );
     });
@@ -57,6 +59,21 @@ describe("parsePeerMessage for MEDIA_STATE", () => {
         ).toBeNull();
     });
 
+    it("rejects a missing or non-boolean isMicMuted", () => {
+        for (const bad of ["true", 1, null, undefined]) {
+            expect(
+                parsePeerMessage(
+                    mediaState({
+                        userId: "u1",
+                        cameraStreamId: null,
+                        screenStreamId: null,
+                        isMicMuted: bad,
+                    })
+                )
+            ).toBeNull();
+        }
+    });
+
     it("rejects a payload that is not an object", () => {
         expect(parsePeerMessage(mediaState(null))).toBeNull();
         expect(parsePeerMessage(mediaState("u1"))).toBeNull();
@@ -81,7 +98,12 @@ describe("isMessageFromKnownSender", () => {
     });
     const media = (userId: string): PeerMessage => ({
         type: PEER_MESSAGE_TYPES.MEDIA_STATE,
-        payload: { userId, cameraStreamId: null, screenStreamId: null },
+        payload: {
+            userId,
+            cameraStreamId: null,
+            screenStreamId: null,
+            isMicMuted: false,
+        },
     });
 
     it("accepts a message whose claimed user is the one the server knows", () => {

@@ -369,6 +369,7 @@ describe("PeerConnectionManager media state announcements", () => {
                 userId: "user-me",
                 cameraStreamId: "camera-stream",
                 screenStreamId: null,
+                isMicMuted: false,
             },
         ]);
     });
@@ -416,8 +417,28 @@ describe("PeerConnectionManager media state announcements", () => {
         manager.setMediaPolicies(new Map());
 
         expect(link.mediaStates()).toEqual([
-            { userId: "user-me", cameraStreamId: null, screenStreamId: null },
+            {
+                userId: "user-me",
+                cameraStreamId: null,
+                screenStreamId: null,
+                isMicMuted: false,
+            },
         ]);
+    });
+
+    it("announces a mic mute to connected peers and to later ones", () => {
+        const { manager, connect } = setup();
+        const first = connect("a");
+        first.open();
+
+        manager.setLocalMicMuted(true);
+        const second = connect("b");
+        second.open();
+
+        expect(first.mediaStates().at(-1)).toMatchObject({ isMicMuted: true });
+        expect(second.mediaStates().at(-1)).toMatchObject({
+            isMicMuted: true,
+        });
     });
 
     it("never claims a stream that has no local track behind it", () => {
