@@ -25,7 +25,7 @@ export const getUnreadCounts = async (req: ExtendedRequest, res: Response) => {
     } catch (error) {
         return sendError({
             res,
-            resource: "conversation",
+            resource: "message",
             action: "read",
             plural: true,
             reportError: error,

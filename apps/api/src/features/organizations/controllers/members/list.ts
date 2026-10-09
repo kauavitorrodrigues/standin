@@ -23,7 +23,7 @@ export const listMembers = async (req: ExtendedRequest, res: Response) => {
     } catch (error) {
         return sendError({
             res,
-            resource: "member",
+            resource: "user",
             action: "read",
             plural: true,
             reportError: error,

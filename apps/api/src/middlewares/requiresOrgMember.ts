@@ -1,4 +1,5 @@
 import type { NextFunction, Response } from "express";
+import { USER_ROLES } from "@standin/contracts";
 import { OrganizationService } from "@standin/core";
 import type { ExtendedRequest } from "@/types/request";
 import { sendForbiddenError } from "@/utils/sendError";
@@ -8,7 +9,7 @@ import { paramsSchema } from "@/utils/paramsSchema";
 export const RequiresOrgMember = async (
     req: ExtendedRequest,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
 ) => {
     if (!req.user) return;
 
@@ -17,25 +18,14 @@ export const RequiresOrgMember = async (
 
     const membership = await OrganizationService.findMembership(
         req.user.id,
-        params.organizationId,
+        params.organizationId
     );
 
-    if (!membership) return sendForbiddenError(res);
-
-    req.organizationMembership = membership;
-    next();
-};
-
-export const RequiresOrgOwner = async (
-    req: ExtendedRequest,
-    res: Response,
-    next: NextFunction,
-) => {
-    if (!req.organizationMembership) return;
-
-    if (!OrganizationService.isOwner(req.organizationMembership)) {
+    // Admins manage every organization, with or without a membership.
+    if (!membership && req.user.role !== USER_ROLES.ADMIN) {
         return sendForbiddenError(res);
     }
 
+    req.organizationMembership = membership ?? undefined;
     next();
 };

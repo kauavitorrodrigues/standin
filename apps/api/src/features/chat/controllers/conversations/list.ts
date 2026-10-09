@@ -27,7 +27,7 @@ export const listConversations = async (
     } catch (error) {
         return sendError({
             res,
-            resource: "conversation",
+            resource: "message",
             action: "read",
             plural: true,
             reportError: error,
