@@ -45,10 +45,18 @@ const INITIAL_STATE: State = {
 // message was deleted and another added in the same render (same length),
 // and it also broke once the previous last message itself got deleted,
 // silently suppressing newMessageIds for every message after it.
+//
+// While the conversation's first page is still loading nothing is flagged and
+// no snapshot is taken: whatever arrives once it finishes is the baseline,
+// not a batch of new messages, so opening a chat never plays the entrance
+// animation for its existing history.
 export const useMessageAnimationFlags = (
-    messages: MessageSnapshot[]
+    messages: MessageSnapshot[],
+    isLoading: boolean
 ): MessageAnimationFlags => {
     const [state, setState] = useState<State>(INITIAL_STATE);
+
+    if (isLoading) return INITIAL_STATE.flags;
 
     if (state.messages === messages) {
         return state.flags;

@@ -1,2 +1,1 @@
-export { ChatSidebar } from "./instances/ChatSidebar";
-export { PeopleSidebar } from "./instances/PeopleSidebar";
+export { ChatPage } from "./pages/chat-page/ChatPage";

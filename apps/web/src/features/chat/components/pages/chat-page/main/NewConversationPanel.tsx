@@ -1,11 +1,18 @@
 import type { UserSummary } from "@standin/contracts";
+import { HeaderShell } from "@/features/chat/components/layout/HeaderShell";
 import { NewConversationPicker } from "@/features/chat/components/instances/NewConversationPicker";
 import { ChatMutations } from "@/features/chat/mutations";
-import type { SidebarBodyProps } from "@/features/chat/components/layout/SidebarBodyProps";
+import type { SelectConversation } from "@/features/chat/types/chatPage";
 
-export const NewConversationBody = ({
+type Props = {
+    onSelectConversation: SelectConversation;
+    onBack: () => void;
+};
+
+export const NewConversationPanel = ({
     onSelectConversation,
-}: SidebarBodyProps) => {
+    onBack,
+}: Props) => {
     const { mutate: createDirectConversation, isPending } =
         ChatMutations.createDirectConversation();
 
@@ -16,13 +23,14 @@ export const NewConversationBody = ({
         if (isPending) return;
 
         createDirectConversation(member.id, {
-            onSuccess: (conversation) =>
-                onSelectConversation(conversation.id, member.name, {
-                    id: member.id,
-                    avatarUrl: member.avatarUrl,
-                }),
+            onSuccess: (conversation) => onSelectConversation(conversation.id),
         });
     };
 
-    return <NewConversationPicker onSelect={handleSelect} />;
+    return (
+        <>
+            <HeaderShell title="Nova conversa" onBack={onBack} />
+            <NewConversationPicker onSelect={handleSelect} />
+        </>
+    );
 };

@@ -10,7 +10,7 @@ export const ParticipantsButton = ({ count, onClick }: Props) => (
         size="icon-sm"
         aria-label={`Ver participantes (${count})`}
         onClick={onClick}
-        className="px-4"
+        className="h-auto w-auto gap-1.5 rounded-none px-3"
     >
         <UserIcon />
         <span className="text-xs tabular-nums">{count}</span>
