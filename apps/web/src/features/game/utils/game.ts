@@ -16,6 +16,10 @@ const syncGameSize = (game: Phaser.Game, container: HTMLElement): void => {
     const width = container.clientWidth;
     const height = container.clientHeight;
 
+    // In RESIZE mode Phaser sizes the canvas from its cached parent bounds,
+    // which only refresh on a window resize. Without this the canvas keeps
+    // its old width when the container grows (the people panel closing).
+    game.scale.getParentBounds();
     game.scale.setGameSize(width, height);
 
     const scene = getMapScene(game);

@@ -26,12 +26,16 @@ import {
     parsePeerMessage,
     removePeerId,
 } from "../utils/peer";
+import { useMicEnabled } from "@/features/media-devices/hooks/useMicEnabled";
 import { useLocalAudioStream } from "@/features/media-devices/hooks/useLocalAudioStream";
 import { useLocalCameraStream } from "@/features/media-devices/hooks/useLocalCameraStream";
 import { useLocalScreenShare } from "@/features/media-devices/hooks/useLocalScreenShare";
+import { useOutputVolumePreference } from "@/features/media-devices/hooks/useOutputVolumePreference";
 import { useIceServers } from "./useIceServers";
 import { useRemoteVideos } from "./useRemoteVideos";
 import { MEDIA_SLOTS, type PeerSignal } from "../types/transport";
+import { getMaxVideoPeers } from "@/features/settings/performance/lib/performanceValues";
+import { performanceSettingsPreference } from "@/features/settings/performance/lib/performanceSettingsPreferences";
 import { getPeerMediaPolicies } from "../utils/mediaPolicy";
 import {
     getPreferredDeviceId,
@@ -122,6 +126,12 @@ export function useSpaceConnection({
     // another by putting someone else's id in a chat/edit/delete/reaction
     // payload.
     const peerUserIdsRef = useRef<Record<string, string>>({});
+    // Same data as the ref above, as state, so the UI can show who is here.
+    const [onlineUserIds, setOnlineUserIds] = useState<string[]>([userId]);
+    const syncOnlineUserIds = () =>
+        setOnlineUserIds([
+            ...new Set([userId, ...Object.values(peerUserIdsRef.current)]),
+        ]);
 
     const getPeerUserId = useCallback(
         (socketId: string) => peerUserIdsRef.current[socketId],
@@ -134,6 +144,22 @@ export function useSpaceConnection({
         removePeer: removeRemoteVideoPeer,
         clear: clearRemoteVideos,
     } = useRemoteVideos(getPeerUserId);
+
+    const [mutedUserIds, setMutedUserIds] = useState<ReadonlySet<string>>(
+        () => new Set()
+    );
+    const setRemoteMicMuted = useCallback(
+        (remoteUserId: string, isMuted: boolean) =>
+            setMutedUserIds((previous) => {
+                if (previous.has(remoteUserId) === isMuted) return previous;
+
+                const next = new Set(previous);
+                if (isMuted) next.add(remoteUserId);
+                else next.delete(remoteUserId);
+                return next;
+            }),
+        []
+    );
 
     // Lazy useState initializer instead of a ref: refs can't be read during
     // render, and this needs to be constructed exactly once per mount. Given
@@ -274,6 +300,10 @@ export function useSpaceConnection({
                     onConfirm?.(socketId, message.payload);
                     return;
                 case PEER_MESSAGE_TYPES.MEDIA_STATE:
+                    setRemoteMicMuted(
+                        message.payload.userId,
+                        message.payload.isMicMuted
+                    );
                     setRemoteMediaState(socketId, {
                         cameraStreamId: message.payload.cameraStreamId,
                         screenStreamId: message.payload.screenStreamId,
@@ -289,6 +319,11 @@ export function useSpaceConnection({
     // withheld from, every peer according to that peer's own range, and a
     // changed track (the input device was switched, the camera or a screen
     // share started or stopped) is reconciled against all of them.
+    const isMicEnabled = useMicEnabled();
+    useEffect(() => {
+        manager.setLocalMicMuted(!isMicEnabled);
+    }, [isMicEnabled, manager]);
+
     const localAudioTrack = localStream?.getAudioTracks()[0] ?? null;
     const localCameraTrack = localCameraStream?.getVideoTracks()[0] ?? null;
     const localScreenTrack = screenShare.stream?.getVideoTracks()[0] ?? null;
@@ -314,6 +349,13 @@ export function useSpaceConnection({
             remoteAudioManager.setSinkId(deviceId);
         });
     }, [remoteAudioManager]);
+
+    // The output volume from the settings, live, on top of the distance
+    // volume of every peer.
+    const outputVolume = useOutputVolumePreference();
+    useEffect(() => {
+        remoteAudioManager.setMasterVolume(outputVolume);
+    }, [remoteAudioManager, outputVolume]);
 
     // Local counterpart to the per-peer SpeakingDetector above: this client
     // seeing its own avatar "speak", driven by the same local stream
@@ -348,6 +390,7 @@ export function useSpaceConnection({
         peerUserIdsRef.current = Object.fromEntries(
             peers.map((peer) => [peer.socketId, peer.userId])
         );
+        syncOnlineUserIds();
 
         const scene = game ? getMapScene(game) : null;
         scene?.clearRemoteAvatars();
@@ -359,6 +402,7 @@ export function useSpaceConnection({
 
     useSocketEvent("space:peer-joined", (peer) => {
         peerUserIdsRef.current[peer.socketId] = peer.userId;
+        syncOnlineUserIds();
         manager.createConnection(peer.socketId, false);
         (game ? getMapScene(game) : null)?.spawnRemoteAvatar(peer.socketId);
     });
@@ -372,6 +416,7 @@ export function useSpaceConnection({
 
     useSocketEvent("space:peer-left", ({ socketId }) => {
         delete peerUserIdsRef.current[socketId];
+        syncOnlineUserIds();
         manager.destroy(socketId);
         setConnectedPeerIds((peerIds) => removePeerId(peerIds, socketId));
         (game ? getMapScene(game) : null)?.removeRemoteAvatar(socketId);
@@ -418,7 +463,8 @@ export function useSpaceConnection({
             scene?.setPeerDistanceListener((distances) => {
                 const policies = getPeerMediaPolicies(
                     distances,
-                    manager.getReceivingVideoPeers()
+                    manager.getReceivingVideoPeers(),
+                    getMaxVideoPeers(performanceSettingsPreference.get())
                 );
                 manager.setMediaPolicies(policies);
 
@@ -545,6 +591,7 @@ export function useSpaceConnection({
 
     return {
         connectedPeerIds,
+        onlineUserIds,
         localAudioError,
         video: {
             remoteVideos,
@@ -552,6 +599,7 @@ export function useSpaceConnection({
             localCameraError,
             nearbyUserIds,
             screenShare,
+            mutedUserIds,
         },
         broadcastChatMessage,
         broadcastTyping,

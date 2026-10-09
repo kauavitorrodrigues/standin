@@ -84,6 +84,7 @@ export class PeerConnectionManager {
     private iceServers: RTCIceServer[] = [];
     private localSocketId: string | null = null;
     private localUserId: string | null = null;
+    private localMicMuted = false;
 
     constructor(
         events: PeerConnectionEvents,
@@ -267,6 +268,16 @@ export class PeerConnectionManager {
         this.peers.forEach((_link, socketId) => this.applyMedia(socketId));
     }
 
+    // Called whenever the local mic is switched on or off. Peers learn it
+    // through the same announcement as the video streams, which also covers
+    // peers that connect later.
+    setLocalMicMuted(muted: boolean): void {
+        if (this.localMicMuted === muted) return;
+
+        this.localMicMuted = muted;
+        this.peers.forEach((_link, socketId) => this.sendMediaState(socketId));
+    }
+
     // Replaces the whole picture of who may receive what. Peers missing from
     // the map are treated as out of range.
     setMediaPolicies(policies: ReadonlyMap<string, PeerMediaPolicy>): void {
@@ -335,6 +346,7 @@ export class PeerConnectionManager {
                 policy.video && this.localTracks[MEDIA_SLOTS.SCREEN]
                     ? link.getStreamId(MEDIA_SLOTS.SCREEN)
                     : null,
+            isMicMuted: this.localMicMuted,
         };
 
         const serialized = JSON.stringify({

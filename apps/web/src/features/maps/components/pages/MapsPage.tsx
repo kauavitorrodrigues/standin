@@ -12,12 +12,11 @@ export function MapsPage() {
                 controls={
                     <PageContainer.Controls>
                         <Button
-                            variant="outline"
                             size="lg"
                             render={<Link to="/maps/new" />}
                         >
                             <PlusIcon />
-                            Criar mapa
+                            Novo mapa
                         </Button>
                     </PageContainer.Controls>
                 }

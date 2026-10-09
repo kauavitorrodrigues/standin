@@ -29,7 +29,7 @@ export const MessageList = ({ conversationId, hasSingleViewer }: Props) => {
 
     const groups = useMessageGroups(messages);
     const { newMessageIds, editedMessageIds } =
-        useMessageAnimationFlags(messages);
+        useMessageAnimationFlags(messages, isLoading);
 
     // Only one message can ever be mid-delete at a time for this client, so
     // its confirmation dialog is a single instance here instead of one

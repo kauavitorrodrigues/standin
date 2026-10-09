@@ -1,6 +1,16 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
+import { flushSync } from "react-dom";
 
-type Theme = "dark" | "light" | "system";
+export type Theme = "dark" | "light" | "system";
+
+// Where the reveal circle grows from, in viewport pixels.
+export type ThemeOrigin = { x: number; y: number };
 
 type ThemeProviderProps = {
     children: React.ReactNode;
@@ -10,7 +20,7 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
     theme: Theme;
-    setTheme: (theme: Theme) => void;
+    setTheme: (theme: Theme, origin?: ThemeOrigin) => void;
 };
 
 const initialState: ThemeProviderState = {
@@ -26,36 +36,70 @@ export function ThemeProvider({
     storageKey = "theme",
     ...props
 }: ThemeProviderProps) {
-    const [theme, setTheme] = useState<Theme>(
+    const [theme, setThemeState] = useState<Theme>(
         () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
     );
 
     useEffect(() => {
         const root = window.document.documentElement;
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
 
-        root.classList.remove("light", "dark");
+        const apply = () => {
+            root.classList.remove("light", "dark");
+            root.classList.add(
+                theme === "system" ? (media.matches ? "dark" : "light") : theme
+            );
+        };
 
-        if (theme === "system") {
-            const systemTheme = window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            ).matches
-                ? "dark"
-                : "light";
+        apply();
+        if (theme !== "system") return;
 
-            root.classList.add(systemTheme);
-            return;
-        }
-
-        root.classList.add(theme);
+        // Follows the operating system while "system" is selected.
+        media.addEventListener("change", apply);
+        return () => media.removeEventListener("change", apply);
     }, [theme]);
 
-    const value = {
-        theme,
-        setTheme: (theme: Theme) => {
-            localStorage.setItem(storageKey, theme);
-            setTheme(theme);
+    const setTheme = useCallback(
+        (next: Theme, origin?: ThemeOrigin) => {
+            localStorage.setItem(storageKey, next);
+
+            const supportsViewTransition =
+                "startViewTransition" in document &&
+                !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            if (!supportsViewTransition) {
+                setThemeState(next);
+                return;
+            }
+
+            const { x, y } = origin ?? {
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2,
+            };
+            const radius = Math.hypot(
+                Math.max(x, window.innerWidth - x),
+                Math.max(y, window.innerHeight - y)
+            );
+
+            const root = document.documentElement;
+            root.style.setProperty("--theme-toggle-x", `${x}px`);
+            root.style.setProperty("--theme-toggle-y", `${y}px`);
+            root.style.setProperty("--theme-toggle-r", `${radius}px`);
+            // Scopes the reveal styles to this transition: the page also uses
+            // view transitions for other things (see index.css).
+            root.dataset.themeTransition = "";
+
+            const transition = document.startViewTransition(() => {
+                flushSync(() => setThemeState(next));
+            });
+            void transition.finished.finally(() => {
+                delete root.dataset.themeTransition;
+            });
         },
-    };
+        [storageKey]
+    );
+
+    const value = { theme, setTheme };
 
     return (
         <ThemeProviderContext.Provider {...props} value={value}>

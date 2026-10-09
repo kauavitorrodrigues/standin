@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LOCAL_SCREEN_CONSTRAINTS } from "@/features/media-devices/consts/videoConstraints";
 import type { ScreenShareError } from "@/features/media-devices/consts/videoError";
+import { getScreenConstraints } from "@/features/media-devices/lib/screenConstraints";
+import { screenShareSettingsPreference } from "@/features/media-devices/lib/streamingSettingsPreferences";
 import { classifyScreenShareError } from "@/features/media-devices/lib/classifyScreenShareError";
 
 // Screen capture is always started by an explicit click (browsers require a
@@ -28,10 +29,13 @@ export function useLocalScreenShare() {
 
         isPickingRef.current = true;
         setError(null);
+        // Read when the share starts: a change in the settings applies to
+        // the next share, not to the one already running.
+        const settings = screenShareSettingsPreference.get();
 
         try {
             const displayStream = await navigator.mediaDevices.getDisplayMedia({
-                video: LOCAL_SCREEN_CONSTRAINTS,
+                video: getScreenConstraints(settings),
                 audio: false,
             });
 
@@ -47,10 +51,11 @@ export function useLocalScreenShare() {
             if (!track) return;
 
             // "detail" tells the browser to keep resolution and let the frame
-            // rate collapse under load, which is what made the share crawl.
-            // "motion" does the opposite: it holds the frame rate and lowers
-            // resolution first when the machine or the network is short.
-            track.contentHint = "motion";
+            // rate collapse under load. "motion" does the opposite: it holds
+            // the frame rate and lowers resolution first when the machine or
+            // the network is short. The default is "motion", because the
+            // detail hint is what made the share crawl.
+            track.contentHint = settings.contentHint;
             // The browser's own "Stop sharing" bar ends the track without
             // going through stop(), so the app state has to follow it.
             track.addEventListener("ended", stop, { once: true });

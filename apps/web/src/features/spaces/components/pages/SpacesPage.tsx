@@ -12,12 +12,11 @@ export function SpacesPage() {
                 controls={
                     <PageContainer.Controls>
                         <Button
-                            variant="outline"
                             size="lg"
                             render={<Link to="/spaces/new" />}
                         >
                             <PlusIcon />
-                            Criar espaço
+                            Novo espaço
                         </Button>
                     </PageContainer.Controls>
                 }

@@ -5,4 +5,5 @@ export const spaceSelect = {
     name: spacesTable.name,
     organizationId: spacesTable.organizationId,
     mapId: spacesTable.mapId,
+    createdAt: spacesTable.createdAt,
 };

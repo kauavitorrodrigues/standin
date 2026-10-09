@@ -17,3 +17,7 @@ export const ScreenShareMessages = {
     stoppedNoViewers:
         "Compartilhamento de tela encerrado: não havia ninguém por perto",
 };
+
+export const InviteMessages = {
+    copied: "Link de convite copiado!",
+};

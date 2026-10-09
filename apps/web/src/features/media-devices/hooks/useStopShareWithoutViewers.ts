@@ -6,7 +6,8 @@ type Options = {
     hasViewers: boolean;
     stop: () => void;
     onStopped?: () => void;
-    graceMs?: number;
+    // Null never stops the share.
+    graceMs?: number | null;
 };
 
 // Ends the screen share once it has had nobody in range for the grace
@@ -26,7 +27,7 @@ export function useStopShareWithoutViewers({
     });
 
     useEffect(() => {
-        if (!isSharing || hasViewers) return;
+        if (!isSharing || hasViewers || graceMs === null) return;
 
         const timer = setTimeout(() => {
             callbacksRef.current.stop();

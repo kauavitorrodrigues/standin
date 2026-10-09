@@ -1,5 +1,5 @@
-import { Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Copy, type LucideIcon } from "lucide-react";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import {
     Tooltip,
     TooltipContent,
@@ -7,25 +7,16 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState } from "react";
+import { useClipboardCopy } from "@/hooks/useClipboardCopy";
 import { cn } from "@/lib/utils";
-
-function useClipboardCopy(text: string) {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-    };
-
-    return { copied, handleCopy };
-}
 
 type ClipboardCopyButtonProps = {
     text: string;
     copyLabel?: string;
     copiedLabel?: string;
     className?: string;
+    variant?: ButtonProps["variant"];
+    icon?: LucideIcon;
 };
 
 export function ClipboardCopyButton({
@@ -33,31 +24,29 @@ export function ClipboardCopyButton({
     className,
     copiedLabel = "Copiado!",
     copyLabel = "Copiar",
+    variant = "secondary",
+    icon: Icon = Copy,
 }: ClipboardCopyButtonProps) {
     const [tooltipOpen, setTooltipOpen] = useState(false);
     const { copied, handleCopy } = useClipboardCopy(text);
 
     return (
-        <TooltipProvider>
-            <Tooltip open={copied || tooltipOpen} onOpenChange={setTooltipOpen}>
-                <TooltipTrigger
-                    render={
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="icon"
-                            className={className}
-                            onClick={handleCopy}
-                        >
-                            <Copy className="h-4 w-4" />
-                        </Button>
-                    }
-                />
-                <TooltipContent>
-                    {copied ? copiedLabel : copyLabel}
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+        <Tooltip open={copied || tooltipOpen} onOpenChange={setTooltipOpen}>
+            <TooltipTrigger
+                render={
+                    <Button
+                        type="button"
+                        variant={variant}
+                        size="icon"
+                        className={className}
+                        onClick={handleCopy}
+                    >
+                        <Icon />
+                    </Button>
+                }
+            />
+            <TooltipContent>{copied ? copiedLabel : copyLabel}</TooltipContent>
+        </Tooltip>
     );
 }
 

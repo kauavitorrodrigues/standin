@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { RemoteVideo } from "@/features/video/types/remoteVideo";
+import type { RemoteVideo } from "@/features/game/multiplayer/types/remoteVideo";
 import {
     areRemoteVideosEqual,
     NO_REMOTE_MEDIA_STATE,

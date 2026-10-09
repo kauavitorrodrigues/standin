@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    clearPreferredDeviceId,
     getDeviceEnabledPreference,
     getPreferredDeviceId,
     subscribeToMicrophoneEnabledPreference,
     subscribeToPreferredDeviceId,
 } from "@/features/media-devices/lib/mediaDevicePreferences";
-import {
-    classifyMediaError,
-    isOverconstrainedError,
-} from "@/features/media-devices/lib/classifyMediaError";
+import { classifyMediaError } from "@/features/media-devices/lib/classifyMediaError";
+import { acquireMicStream } from "@/features/media-devices/lib/acquireMicStream";
 import type { LocalAudioStreamError } from "@/features/media-devices/consts/audioError";
-import { LOCAL_AUDIO_PROCESSING_CONSTRAINTS } from "@/features/media-devices/consts/audioConstraints";
+import { useAudioProcessingPreference } from "@/features/media-devices/hooks/useAudioProcessingPreference";
 
 export function useLocalAudioStream() {
     const [stream, setStream] = useState<MediaStream | null>(null);
@@ -53,34 +50,15 @@ export function useLocalAudioStream() {
         []
     );
 
+    // Same for the processing switches in the settings: a new stream is
+    // acquired with the new constraints.
+    const audioProcessing = useAudioProcessingPreference();
+
     useEffect(() => {
         let cancelled = false;
         let unsubscribe: (() => void) | null = null;
 
-        // A persisted deviceId preference can go stale (the device was
-        // unplugged, or permissions/available devices changed elsewhere) -
-        // without a fallback, `{ exact: deviceId }` makes getUserMedia
-        // reject with OverconstrainedError on every future mount even
-        // though a usable microphone exists. One retry against any mic,
-        // and drop the bad preference so this doesn't repeat next time.
-        const acquireStream = (): Promise<MediaStream> =>
-            navigator.mediaDevices
-                .getUserMedia({
-                    audio: {
-                        ...LOCAL_AUDIO_PROCESSING_CONSTRAINTS,
-                        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-                    },
-                })
-                .catch((err: unknown) => {
-                    if (!deviceId || !isOverconstrainedError(err)) throw err;
-
-                    clearPreferredDeviceId("microphone");
-                    return navigator.mediaDevices.getUserMedia({
-                        audio: LOCAL_AUDIO_PROCESSING_CONSTRAINTS,
-                    });
-                });
-
-        acquireStream()
+        acquireMicStream(deviceId, audioProcessing)
             .then((mediaStream) => {
                 if (cancelled) {
                     mediaStream.getTracks().forEach((track) => track.stop());
@@ -117,7 +95,7 @@ export function useLocalAudioStream() {
             streamRef.current?.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
         };
-    }, [deviceId, applyEnabled]);
+    }, [deviceId, audioProcessing, applyEnabled]);
 
     return { stream, error, setProximityGate };
 }

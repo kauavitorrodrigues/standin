@@ -1,4 +1,5 @@
 import type { UserSummary } from "@standin/contracts";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ParticipantItem } from "@/features/chat/components/views/participants/ParticipantItem";
 import {
     ParticipantsErrorState,
@@ -16,13 +17,15 @@ export const Content = ({ participants, isLoading, isError }: Props) => {
     if (isError) return <ParticipantsErrorState />;
 
     return (
-        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-            {participants.map((participant) => (
-                <ParticipantItem
-                    key={participant.id}
-                    participant={participant}
-                />
-            ))}
-        </div>
+        <ScrollArea className="min-h-0 flex-1">
+            <div className="flex flex-col gap-1">
+                {participants.map((participant) => (
+                    <ParticipantItem
+                        key={participant.id}
+                        participant={participant}
+                    />
+                ))}
+            </div>
+        </ScrollArea>
     );
 };

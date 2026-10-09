@@ -3,6 +3,8 @@ import {
     GAME_PHYSICS_CONFIG,
     GAME_RENDER_CONFIG,
 } from "@/features/game/consts/game-config";
+import { getFpsLimit } from "@/features/settings/performance/lib/performanceValues";
+import { performanceSettingsPreference } from "@/features/settings/performance/lib/performanceSettingsPreferences";
 import { GAME_SCENE_KEYS } from "@/features/game/consts/scene-keys";
 import { MapScene } from "@/features/game/scenes/MapScene";
 import {
@@ -32,6 +34,9 @@ export const createGameEngine = ({
         pixelArt: GAME_RENDER_CONFIG.PIXEL_ART,
         backgroundColor: GAME_RENDER_CONFIG.BACKGROUND_COLOR,
         disableContextMenu: GAME_RENDER_CONFIG.DISABLE_CONTEXT_MENU,
+        fps: {
+            limit: getFpsLimit(performanceSettingsPreference.get()),
+        },
         scale: {
             mode: Phaser.Scale.RESIZE,
         },

@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLogout } from "@/features/auth/hooks/useLogout";
+import { UserAvatar } from "./UserAvatar";
 import { UserAvatarInfo } from "./UserAvatarInfo";
 
 export function UserWidget() {
@@ -18,13 +19,19 @@ export function UserWidget() {
         <DropdownMenu>
             <DropdownMenuTrigger
                 render={
-                    <Button variant="outline" className="p-3 rounded-xl h-10">
-                        <UserAvatarInfo
+                    <Button
+                        variant="ghost"
+                        size="icon-lg"
+                        className="relative size-9 rounded-xl p-0"
+                        aria-label="Menu do usuário"
+                    >
+                        <UserAvatar
                             id={user.id}
                             name={user.name}
-                            size="xs"
-                            nameClassName="text-white"
+                            className="size-9 rounded-xl after:rounded-xl"
+                            fallbackClassName="rounded-xl text-sm"
                         />
+                        <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-muted bg-emerald-500" />
                     </Button>
                 }
             />

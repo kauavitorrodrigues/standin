@@ -165,3 +165,30 @@ describe("getVideoEncoding", () => {
         expect(getVideoEncoding("screen", 4).scaleResolutionDownBy).toBe(1);
     });
 });
+
+describe("selectVideoPeers with a lower limit", () => {
+    it("keeps only the closest peers up to the chosen limit", () => {
+        const near = new Map([
+            ["a", 10],
+            ["b", 20],
+            ["c", 30],
+        ]);
+
+        expect(selectVideoPeers(near, new Set(), 2)).toEqual(
+            new Set(["a", "b"])
+        );
+    });
+
+    it("never goes above MAX_VIDEO_PEERS", () => {
+        const many = new Map(
+            Array.from({ length: MAX_VIDEO_PEERS + 3 }, (_, index) => [
+                `p${index}`,
+                index,
+            ])
+        );
+
+        expect(selectVideoPeers(many, new Set(), 99).size).toBe(
+            MAX_VIDEO_PEERS
+        );
+    });
+});

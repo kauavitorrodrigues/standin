@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { Space } from "@standin/contracts";
 import { getSpaceGradient } from "@/features/spaces/utils/gradient";
+import { formatCreatedAgo } from "@/features/spaces/utils/formatCreatedAgo";
 import { SpaceActions } from "@/features/spaces/components/SpaceActions";
 
 export function SpaceCard({ space }: { space: Space }) {
@@ -21,7 +22,14 @@ export function SpaceCard({ space }: { space: Space }) {
                     <SpaceActions space={space} />
                 </div>
             </Link>
-            <span className="px-1 text-sm font-medium">{space.name}</span>
+            <div className="flex items-baseline justify-between gap-2 px-1">
+                <span className="min-w-0 truncate text-sm font-medium">
+                    {space.name}
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                    {formatCreatedAgo(space.createdAt)}
+                </span>
+            </div>
         </div>
     );
 }

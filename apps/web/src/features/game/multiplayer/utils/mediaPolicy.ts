@@ -22,10 +22,11 @@ export const NO_MEDIA: PeerMediaPolicy = { audio: false, video: false };
 // * a peer joins when inside VIDEO_ENTER_RADIUS
 // * a peer that already receives video stays until beyond VIDEO_EXIT_RADIUS
 //   (hysteresis, so the boundary does not flicker)
-// * at most MAX_VIDEO_PEERS, closest first
+// * at most maxVideoPeers (never above MAX_VIDEO_PEERS), closest first
 export const selectVideoPeers = (
     distances: ReadonlyMap<string, number>,
-    currentlyReceiving: ReadonlySet<string>
+    currentlyReceiving: ReadonlySet<string>,
+    maxVideoPeers: number = MAX_VIDEO_PEERS
 ): Set<string> => {
     const eligible = [...distances.entries()]
         .filter(([socketId, distance]) =>
@@ -34,7 +35,7 @@ export const selectVideoPeers = (
                 : distance <= VIDEO_ENTER_RADIUS
         )
         .sort(([, first], [, second]) => first - second)
-        .slice(0, MAX_VIDEO_PEERS);
+        .slice(0, Math.min(maxVideoPeers, MAX_VIDEO_PEERS));
 
     return new Set(eligible.map(([socketId]) => socketId));
 };
@@ -43,9 +44,14 @@ export const selectVideoPeers = (
 // exactly when the linear volume would be above zero.
 export const getPeerMediaPolicies = (
     distances: ReadonlyMap<string, number>,
-    currentlyReceivingVideo: ReadonlySet<string>
+    currentlyReceivingVideo: ReadonlySet<string>,
+    maxVideoPeers: number = MAX_VIDEO_PEERS
 ): Map<string, PeerMediaPolicy> => {
-    const videoPeers = selectVideoPeers(distances, currentlyReceivingVideo);
+    const videoPeers = selectVideoPeers(
+        distances,
+        currentlyReceivingVideo,
+        maxVideoPeers
+    );
     const policies = new Map<string, PeerMediaPolicy>();
 
     distances.forEach((distance, socketId) => {

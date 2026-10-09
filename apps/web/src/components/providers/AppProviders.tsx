@@ -2,10 +2,13 @@ import type { ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/tanstack/queryClient";
 import { ThemeProvider } from "./ThemeProvider";
+import { useApplyReduceMotion } from "@/features/settings/performance/hooks/useApplyReduceMotion";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
+    useApplyReduceMotion();
+
     return (
         <QueryClientProvider client={queryClient}>
             <ThemeProvider defaultTheme="system">

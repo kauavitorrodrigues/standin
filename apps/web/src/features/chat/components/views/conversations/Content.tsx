@@ -1,6 +1,7 @@
-import { BuildingIcon } from "lucide-react";
 import type { ConversationSummary } from "@standin/contracts";
 import { ConversationItem } from "@/features/chat/components/views/conversations/ConversationItem";
+import { Section } from "@/features/chat/components/views/conversations/Section";
+import { SearchField } from "@/features/chat/components/views/conversations/SearchField";
 import { DirectConversationItem } from "@/features/chat/components/views/conversations/DirectConversationItem";
 import {
     DirectMessagesEmptyState,
@@ -11,6 +12,8 @@ import {
 type Props = {
     spaceName: string;
     spaceUnreadCount: number;
+    selectedConversationId: string;
+    spaceConversationId: string;
     directConversations: ConversationSummary[];
     isLoading: boolean;
     isError: boolean;
@@ -21,6 +24,8 @@ type Props = {
 export const Content = ({
     spaceName,
     spaceUnreadCount,
+    selectedConversationId,
+    spaceConversationId,
     directConversations,
     isLoading,
     isError,
@@ -45,6 +50,7 @@ export const Content = ({
                 <DirectConversationItem
                     key={conversation.id}
                     conversation={conversation}
+                    selected={conversation.id === selectedConversationId}
                     onSelect={() => onSelectDirectConversation(conversation)}
                 />
             );
@@ -52,21 +58,19 @@ export const Content = ({
     }
 
     return (
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-            <ConversationItem
-                icon={BuildingIcon}
-                name={spaceName}
-                unreadCount={spaceUnreadCount}
-                onSelect={onSelectSpaceConversation}
-            />
+        <div className="flex flex-col gap-3">
+            <SearchField />
 
-            <div className="flex flex-col gap-1">
-                <span className="px-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                    Mensagens diretas
-                </span>
+            <Section title="Canais">
+                <ConversationItem
+                    name={spaceName}
+                    unreadCount={spaceUnreadCount}
+                    selected={selectedConversationId === spaceConversationId}
+                    onSelect={onSelectSpaceConversation}
+                />
+            </Section>
 
-                {directMessagesContent}
-            </div>
+            <Section title="Mensagens diretas">{directMessagesContent}</Section>
         </div>
     );
 };

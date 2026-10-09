@@ -1,18 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import {
-    clearPreferredDeviceId,
     getDeviceEnabledPreference,
     getPreferredDeviceId,
     subscribeToDeviceEnabledPreference,
     subscribeToPreferredDeviceId,
 } from "@/features/media-devices/lib/mediaDevicePreferences";
-import {
-    classifyMediaError,
-    isOverconstrainedError,
-} from "@/features/media-devices/lib/classifyMediaError";
+import { classifyMediaError } from "@/features/media-devices/lib/classifyMediaError";
 import { LOCAL_AUDIO_STREAM_ERRORS } from "@/features/media-devices/consts/audioError";
 import type { LocalAudioStreamError } from "@/features/media-devices/consts/audioError";
-import { LOCAL_CAMERA_CONSTRAINTS } from "@/features/media-devices/consts/videoConstraints";
+import { useCameraResolutionPreference } from "@/features/media-devices/hooks/useCameraResolutionPreference";
+import { useCameraPreviewLock } from "@/features/media-devices/hooks/useCameraPreviewLock";
+import { acquireCameraStream } from "@/features/media-devices/lib/acquireCameraStream";
 
 // Camera counterpart of useLocalAudioStream. The device is only opened
 // while the camera toggle is on, and released the moment it is turned off,
@@ -34,9 +32,13 @@ export function useLocalCameraStream() {
 
     useEffect(() => subscribeToDeviceEnabledPreference("camera", setEnabled), []);
     useEffect(() => subscribeToPreferredDeviceId("camera", setDeviceId), []);
+    // A new resolution in the settings acquires the camera again.
+    const resolution = useCameraResolutionPreference();
+    // The settings preview takes the device over while it runs.
+    const isPreviewing = useCameraPreviewLock();
 
     useEffect(() => {
-        if (!enabled) return;
+        if (!enabled || isPreviewing) return;
 
         let cancelled = false;
 
@@ -45,27 +47,7 @@ export function useLocalCameraStream() {
             streamRef.current = null;
         };
 
-        // Same stale-preference recovery as the microphone: an unplugged
-        // device would otherwise make every future attempt fail with
-        // OverconstrainedError.
-        const acquireStream = (): Promise<MediaStream> =>
-            navigator.mediaDevices
-                .getUserMedia({
-                    video: {
-                        ...LOCAL_CAMERA_CONSTRAINTS,
-                        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-                    },
-                })
-                .catch((err: unknown) => {
-                    if (!deviceId || !isOverconstrainedError(err)) throw err;
-
-                    clearPreferredDeviceId("camera");
-                    return navigator.mediaDevices.getUserMedia({
-                        video: LOCAL_CAMERA_CONSTRAINTS,
-                    });
-                });
-
-        acquireStream()
+        acquireCameraStream(deviceId, resolution)
             .then((mediaStream) => {
                 if (cancelled) {
                     mediaStream.getTracks().forEach((track) => track.stop());
@@ -99,7 +81,7 @@ export function useLocalCameraStream() {
             releaseStream();
             setStream(null);
         };
-    }, [enabled, deviceId]);
+    }, [enabled, isPreviewing, deviceId, resolution]);
 
-    return { stream: enabled ? stream : null, error, enabled };
+    return { stream: enabled && !isPreviewing ? stream : null, error, enabled };
 }

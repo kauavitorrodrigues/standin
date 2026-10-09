@@ -1,8 +1,15 @@
-import { MicIcon, MicOffIcon } from "lucide-react";
+import { MicIcon } from "lucide-react";
 import { DeviceToggleButton } from "@/features/media-devices/components/DeviceToggleButton";
+import {
+    LOCAL_AUDIO_STREAM_ERROR_LABEL,
+    type LocalAudioStreamError,
+} from "@/features/media-devices/consts/audioError";
+import { MIC_SHORTCUT } from "@/features/media-devices/consts/shortcuts";
 import { useMediaDeviceControl } from "@/features/media-devices/hooks/useMediaDeviceControl";
 
-export const MicToggleButton = () => {
+type Props = { error: LocalAudioStreamError | null };
+
+export const MicToggleButton = ({ error }: Props) => {
     const {
         enabled,
         pending,
@@ -19,11 +26,12 @@ export const MicToggleButton = () => {
 
     return (
         <DeviceToggleButton
+            shortcut={MIC_SHORTCUT}
+            errorLabel={error && LOCAL_AUDIO_STREAM_ERROR_LABEL[error]}
             pressed={enabled}
             pending={pending}
             onPressedChange={toggle}
             activeIcon={<MicIcon />}
-            inactiveIcon={<MicOffIcon />}
             activeLabel="Silenciar microfone"
             inactiveLabel="Ativar microfone"
             menuLabel="Selecionar microfone"

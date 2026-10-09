@@ -7,7 +7,7 @@ export const CloseSidebarButton = ({ onClick }: Props) => (
     <Button
         variant="ghost"
         size="icon-sm"
-        aria-label="Fechar painel lateral"
+        aria-label="Fechar chat"
         onClick={onClick}
     >
         <XIcon />
