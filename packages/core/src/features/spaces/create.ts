@@ -3,6 +3,7 @@ import { db, spacesTable } from "@standin/database";
 import type { Space, SpaceDataSchemaType } from "@standin/contracts";
 import { OrganizationMemberService } from "../organizations/members";
 import { ConversationService } from "../conversations";
+import { serializeSpace } from "./utils/serializeSpace";
 
 export const createSpace = async (
     organizationId: string,
@@ -32,6 +33,6 @@ export const createSpace = async (
             tx
         );
 
-        return space;
+        return serializeSpace(space);
     });
 };

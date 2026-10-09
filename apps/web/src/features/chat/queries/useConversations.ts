@@ -4,7 +4,7 @@ import { api } from "@/lib/axios/api";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
 import { conversationsQueryKey } from "@/features/chat/queries/queryKey";
 
-const fetchConversations = async (
+export const fetchConversations = async (
     organizationId: string
 ): Promise<ConversationsListResponse> => {
     const res = await api.get(`/organizations/${organizationId}/conversations`);

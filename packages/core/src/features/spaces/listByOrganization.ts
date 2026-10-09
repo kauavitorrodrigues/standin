@@ -1,3 +1,4 @@
+import { serializeSpace } from "./utils/serializeSpace";
 import { spaceSelect } from "./consts/select";
 import { db, spacesTable, eq, and, isNull } from "@standin/database";
 import type { Space } from "@standin/contracts";
@@ -16,5 +17,5 @@ export const listSpacesByOrganization = async (
         )
         .orderBy(spacesTable.createdAt);
 
-    return spaces;
+    return spaces.map(serializeSpace);
 };

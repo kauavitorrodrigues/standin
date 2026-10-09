@@ -1,4 +1,5 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { Loader2Icon, type LucideIcon } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
@@ -40,7 +41,13 @@ const buttonVariants = cva(
     }
 );
 
-export type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants>;
+export type ButtonProps = ButtonPrimitive.Props &
+    VariantProps<typeof buttonVariants> & {
+        icon?: LucideIcon;
+        iconPosition?: "start" | "end";
+        // Replaces the icon with a spinner and blocks clicks while it is on.
+        isLoading?: boolean;
+    };
 
 function Button({
     className,
@@ -48,16 +55,35 @@ function Button({
     size = "default",
     render,
     nativeButton = !render,
+    icon: Icon,
+    iconPosition = "start",
+    isLoading = false,
+    disabled,
+    children,
     ...props
 }: ButtonProps) {
+    const StartIcon = isLoading ? Loader2Icon : Icon;
+
     return (
         <ButtonPrimitive
             data-slot="button"
             render={render}
             nativeButton={nativeButton}
             className={cn(buttonVariants({ variant, size, className }))}
+            disabled={disabled || isLoading}
             {...props}
-        />
+        >
+            {StartIcon && (isLoading || iconPosition === "start") && (
+                <StartIcon
+                    data-icon="inline-start"
+                    className={cn(isLoading && "animate-spin")}
+                />
+            )}
+            {children}
+            {Icon && !isLoading && iconPosition === "end" && (
+                <Icon data-icon="inline-end" />
+            )}
+        </ButtonPrimitive>
     );
 }
 

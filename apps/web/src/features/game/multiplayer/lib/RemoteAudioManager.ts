@@ -15,6 +15,10 @@ export class RemoteAudioManager {
     private readonly blockedAudioElements = new Set<HTMLAudioElement>();
     private gestureRetryAttached = false;
     private sinkId: string | null = null;
+    // What the distance falloff asked for, per peer, before the master volume
+    // is applied on top.
+    private readonly proximityVolumes = new Map<string, number>();
+    private masterVolume = 1;
     // play() is async: its rejection can land after remove()/removeAll()
     // already ran (e.g. on unmount). Without this, that late rejection
     // would re-insert the (already torn down) element into
@@ -41,6 +45,7 @@ export class RemoteAudioManager {
         // means either case fails safe instead of leaving the peer audible
         // from anywhere on the map.
         audio.volume = 0;
+        this.proximityVolumes.set(socketId, 0);
         this.applySinkId(audio);
 
         this.audioElements.set(socketId, audio);
@@ -54,6 +59,7 @@ export class RemoteAudioManager {
         audio.pause();
         audio.srcObject = null;
         this.audioElements.delete(socketId);
+        this.proximityVolumes.delete(socketId);
         this.blockedAudioElements.delete(audio);
     }
 
@@ -78,7 +84,17 @@ export class RemoteAudioManager {
         const audio = this.audioElements.get(socketId);
         if (!audio) return;
 
-        audio.volume = volume;
+        this.proximityVolumes.set(socketId, volume);
+        audio.volume = volume * this.masterVolume;
+    }
+
+    // The user's own output volume, applied on top of every peer's distance
+    // volume right away and to the ones created afterwards.
+    setMasterVolume(volume: number): void {
+        this.masterVolume = volume;
+        this.audioElements.forEach((audio, socketId) => {
+            audio.volume = (this.proximityVolumes.get(socketId) ?? 0) * volume;
+        });
     }
 
     // Applied to every current audio element immediately, and to every one

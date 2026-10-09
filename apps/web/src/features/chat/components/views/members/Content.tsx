@@ -1,4 +1,5 @@
 import type { UserSummary } from "@standin/contracts";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { MemberItem } from "@/features/chat/components/views/members/MemberItem";
 import {
     MembersEmptyState,
@@ -19,10 +20,16 @@ export const Content = ({ members, isLoading, isError, onSelect }: Props) => {
     if (members.length === 0) return <MembersEmptyState />;
 
     return (
-        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-            {members.map((member) => (
-                <MemberItem key={member.id} member={member} onSelect={onSelect} />
-            ))}
-        </div>
+        <ScrollArea className="min-h-0 flex-1">
+            <div className="flex flex-col gap-1">
+                {members.map((member) => (
+                    <MemberItem
+                        key={member.id}
+                        member={member}
+                        onSelect={onSelect}
+                    />
+                ))}
+            </div>
+        </ScrollArea>
     );
 };

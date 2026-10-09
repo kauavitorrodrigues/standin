@@ -2,6 +2,7 @@ import { spaceSelect } from "./consts/select";
 import { db, spacesTable, eq, and, isNull } from "@standin/database";
 import { SpaceNotFoundError } from "@standin/contracts";
 import type { Space } from "@standin/contracts";
+import { serializeSpace } from "./utils/serializeSpace";
 import { ConversationService } from "../conversations";
 
 export const deleteSpace = async (
@@ -25,6 +26,6 @@ export const deleteSpace = async (
 
         await ConversationService.deleteBySpaceIds([space.id], tx);
 
-        return space;
+        return serializeSpace(space);
     });
 };

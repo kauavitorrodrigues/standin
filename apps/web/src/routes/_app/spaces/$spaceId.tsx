@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { spaceDetailsQueryOptions } from "@/features/spaces/queries/useDetails";
+import { spaceSearchSchema } from "@/features/spaces/schemas/spaceSearch";
 import { SpacePage } from "@/features/spaces/components/pages/space-page/SpacePage";
 
 export const Route = createFileRoute("/_app/spaces/$spaceId")({
+    validateSearch: spaceSearchSchema,
     beforeLoad: async ({ context, params }) => {
         const organizationId = context.organization?.id;
         if (organizationId) {

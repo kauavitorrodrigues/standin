@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
-import { SIDEBAR_WIDTH_CSS_VALUE } from "@/features/spaces/components/pages/space-page/layout/sidebarWidth";
+import { RAIL_WIDTH_CSS_VALUE } from "@/features/spaces/consts/rail";
 
 type Props = { children?: ReactNode; className?: string };
 export const Body = ({ children, className }: Props) => {
@@ -12,7 +12,7 @@ export const Body = ({ children, className }: Props) => {
             )}
             style={
                 {
-                    "--sidebar-width": SIDEBAR_WIDTH_CSS_VALUE,
+                    "--rail-width": RAIL_WIDTH_CSS_VALUE,
                 } as React.CSSProperties
             }
         >
