@@ -1,589 +1,175 @@
-import {
-    useCallback,
-    useMemo,
-    useRef,
-    useState,
-    type ReactNode,
-    type Ref,
-} from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import type { MessageWithDetails, SpaceDetails } from "@standin/contracts";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { SpacesQueries } from "@/features/spaces/queries";
-import { useOrganization } from "@/features/organizations/hooks/useOrganization";
+import type { SpaceDetails } from "@standin/contracts";
+import { useOrganizationId } from "@/features/organizations/hooks/useOrganizationId";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { OrganizationsQueries } from "@/features/organizations/queries";
 import { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 import { SocketProvider } from "@/features/game/multiplayer/contexts/SocketContext";
-import { useSocket } from "@/features/game/multiplayer/hooks/useSocket";
-import { PeerChatContext } from "@/features/chat/contexts/PeerChatContext";
-import { PeerTypingContext } from "@/features/chat/contexts/PeerTypingContext";
-import {
-    ChatQueries,
-    messagesQueryKey,
-    unreadCountsQueryKey,
-    conversationsQueryKey,
-} from "@/features/chat/queries";
-import {
-    prependMessage,
-    removeMessage,
-    updateMessage,
-    type MessagesData,
-} from "@/features/chat/utils/messagesCache";
-import { applyRemoteReactionToggle } from "@/features/chat/utils/toggleReactionSummary";
-import {
-    addTypingUser,
-    removeTypingUser,
-    type TypingByConversation,
-} from "@/features/chat/utils/typingByConversation";
-import { TYPING_EXPIRY_MS } from "@/features/chat/consts/typing";
-import {
-    SpaceDuplicateSessionState,
-    SpaceErrorState,
-    SpaceLoadingState,
-    SpaceNotFoundState,
-} from "@/features/spaces/components/pages/space-page/ContentStates";
-import { SpacePageRoot } from "@/features/spaces/components/pages/space-page/Root";
-import { SpacePageLayout as LayoutPrimitive } from "@/features/spaces/components/pages/space-page/layout";
-import {
-    SpaceSidebar,
-    useSpacePageSidebarState,
-} from "@/features/spaces/components/pages/space-page/layout/sidebar";
-import { SPACE_SIDEBAR_TABS } from "@/features/spaces/consts/sidebar";
-import { LeaveSpaceButton } from "@/features/spaces/components/pages/space-page/layout/LeaveSpaceButton";
-import { ChatSidebar, PeopleSidebar } from "@/features/chat/components";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { MessageCircleIcon, UsersIcon } from "lucide-react";
-import {
-    CameraToggleButton,
-    CameraUnavailableIndicator,
-    MicToggleButton,
-    MicUnavailableIndicator,
-} from "@/features/media-devices/components";
-import { ScreenShareButton } from "@/features/video/components/instances/ScreenShareButton";
-import { useStopShareWithoutViewers } from "@/features/media-devices/hooks/useStopShareWithoutViewers";
-import { ScreenShareMessages } from "@/features/spaces/components/forms/Messages";
-import { toast } from "@/components/ui/toast";
-import { SelfPreview } from "@/features/video/components/instances/SelfPreview";
-import { VideoStage } from "@/features/video/components/instances/VideoStage";
-import {
-    buildNameLookup,
-    buildStageTiles,
-} from "@/features/video/utils/buildStageTiles";
-import { ClipboardCopyButton } from "@/components/layout/ClipboardCopyDisplay";
-import { Actions } from "@/features/spaces/components/pages/space-page/layout/Actions";
-import { Logo } from "@/components/layout/Logo";
-import { useGameEngine } from "@/features/game/hooks/useGameEngine";
+import { usePeerChatSync } from "@/features/chat/hooks/usePeerChatSync";
+import { usePeerChatContextValues } from "@/features/chat/hooks/usePeerChatContextValues";
+import { SpaceUnavailable } from "@/features/spaces/components/pages/space-page/Unavailable";
 import { GameCanvas } from "@/features/game/components/GameCanvas";
 import { GameControls } from "@/features/game/components/GameControls";
-import type { GameEngineHandle } from "@/features/game/types/game";
-import { UserWidget } from "@/features/users/components/UserWidget";
-import { Separator } from "@/components/ui/separator";
-import { SIDEBAR_WIDTH_PX } from "@/features/spaces/components/pages/space-page/layout/sidebarWidth";
-import { CountBadge } from "@/components/ui/count-badge";
-
-type ContentProps = {
-    isDuplicateSession: boolean;
-    isLoading: boolean;
-    isError: boolean;
-    space: SpaceDetails | undefined;
-    containerRef: Ref<HTMLDivElement>;
-    handle: GameEngineHandle | null;
-    videoStage: ReactNode;
-};
-
-function Content({
-    isDuplicateSession,
-    isLoading,
-    isError,
-    space,
-    containerRef,
-    handle,
-    videoStage,
-}: ContentProps) {
-    if (isDuplicateSession) return <SpaceDuplicateSessionState />;
-    if (isLoading) return <SpaceLoadingState />;
-    if (isError) return <SpaceErrorState />;
-    if (!space) return <SpaceNotFoundState />;
-    return (
-        <>
-            <GameCanvas ref={containerRef} />
-            <GameControls handle={handle} />
-            {videoStage}
-        </>
-    );
-}
+import { SpacePageRoot } from "@/features/spaces/components/pages/space-page/Root";
+import { SpacePageLayout as LayoutPrimitive } from "@/features/spaces/components/pages/space-page/layout";
+import { SpaceSidebar } from "@/features/spaces/components/pages/space-page/sidebar";
+import {
+    ChatFooter,
+    MediaControlGroup,
+} from "@/features/spaces/components/pages/space-page/controls";
+import { SpacePeoplePanel } from "@/features/spaces/components/pages/space-page/people";
+import { useSpaceAvailability } from "@/features/spaces/hooks/useSpaceAvailability";
+import { SPACE_AVAILABILITY_STATUS } from "@/features/spaces/consts/availability";
+import { useSpaceSearch } from "@/features/spaces/hooks/useSpaceSearch";
+import { usePeoplePanel } from "@/features/spaces/hooks/usePeoplePanel";
+import { useSpacePageLayout } from "@/features/spaces/hooks/useSpacePageLayout";
+import { useSpaceMediaControls } from "@/features/spaces/hooks/useSpaceMediaControls";
+import { RAIL_WIDTH_PX } from "@/features/spaces/consts/rail";
+import {
+    StageViewToggle,
+    VideoStage,
+} from "@/features/spaces/components/pages/space-page/stage";
+import { useNearbyNotifications } from "@/features/notifications/hooks/useNearbyNotifications";
+import { OrganizationsQueries } from "@/features/organizations/queries";
+import { buildNameLookup } from "@/features/spaces/utils/buildStageTiles";
+import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
+import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
+import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
     return (
         <SocketProvider>
-            <SpacePageContent spaceId={spaceId} />
+            <SpaceGate spaceId={spaceId} />
         </SocketProvider>
     );
 }
 
-function SpacePageContent({ spaceId }: { spaceId: string }) {
-    const { isDuplicateSession } = useSocket();
-    const { open, setOpen, tab, setTab, selectTab } =
-        useSpacePageSidebarState();
+// Everything past this point can rely on the space being loaded.
+function SpaceGate({ spaceId }: { spaceId: string }) {
+    const availability = useSpaceAvailability(spaceId);
+    if (availability.status === SPACE_AVAILABILITY_STATUS.UNAVAILABLE)
+        return <SpaceUnavailable reason={availability.reason} />;
+    return <SpacePageContent space={availability.space} />;
+}
 
-    const organizationId = useOrganization().organization?.id ?? "";
+function SpacePageContent({ space }: { space: SpaceDetails }) {
+    const {
+        view,
+        conversationId,
+        chatMode,
+        selectView,
+        selectConversation,
+        selectChatMode,
+        getConversationLink,
+    } = useSpaceSearch();
+
     const { user } = useAuth();
-    const queryClient = useQueryClient();
+    const organizationId = useOrganizationId();
 
-    const { space, isLoading, isError } = SpacesQueries.useDetails(
-        organizationId,
-        spaceId
-    );
+    const peoplePanel = usePeoplePanel({ view, selectView });
 
     const { containerRef, handle } = useGameEngine(
-        space?.map ?? null,
-        open ? SIDEBAR_WIDTH_PX / 2 : 0
+        space.map,
+        -RAIL_WIDTH_PX / 2
     );
 
-    // Shares the query cache with PeopleSidebar/ChatSidebar (same
-    // queryKey), so this doesn't cost an extra request beyond what's already
-    // fetched once either sidebar tab has been opened.
-    const { participants } = ChatQueries.useParticipants(
-        space?.conversationId ?? ""
-    );
+    const { handlers: peerChatHandlers, typingByConversation } =
+        usePeerChatSync({ organizationId, userId: user.id });
 
-    const { total: unreadTotal } = ChatQueries.useUnreadCounts();
+    const { localAudioError, onlineUserIds, video, ...broadcasts } =
+        useSpaceConnection({
+            organizationId,
+            spaceId: space.id,
+            userId: user.id,
+            game: handle?.game ?? null,
+            ...peerChatHandlers,
+        });
 
-    const [typingByConversation, setTypingByConversation] =
-        useState<TypingByConversation>({});
+    const stageTiles = useStageTiles({ video, selfUserId: user.id });
 
-    // Keyed by `${conversationId}:${userId}`. Tracks the fallback timer that
-    // clears a typing indicator if the matching typing:false is ever lost.
-    const typingTimeoutsRef = useRef<
-        Record<string, ReturnType<typeof setTimeout>>
-    >({});
-
-    const setUserTyping = useCallback(
-        (
-            conversationId: string,
-            userId: string,
-            userName: string,
-            isTyping: boolean
-        ) => {
-            const key = `${conversationId}:${userId}`;
-            clearTimeout(typingTimeoutsRef.current[key]);
-            delete typingTimeoutsRef.current[key];
-
-            if (isTyping) {
-                typingTimeoutsRef.current[key] = setTimeout(() => {
-                    setTypingByConversation((state) =>
-                        removeTypingUser(state, conversationId, userId)
-                    );
-                }, TYPING_EXPIRY_MS);
-            }
-
-            setTypingByConversation((state) =>
-                isTyping
-                    ? addTypingUser(state, conversationId, userId, userName)
-                    : removeTypingUser(state, conversationId, userId)
-            );
-        },
-        []
-    );
+    const { members } = OrganizationsQueries.useMembers();
+    const names = buildNameLookup(members);
+    useNearbyNotifications({
+        nearbyUserIds: video.nearbyUserIds,
+        getName: (userId) => names.get(userId) ?? "Alguém",
+    });
 
     const {
-        localAudioError,
+        isGridOpen,
+        gridTileId,
+        openGrid,
+        closeGrid,
+        stageView,
+        changeStageView,
+    } = useVideoGrid(stageTiles.length);
+
+    const layout = useSpacePageLayout({
+        view,
+        stageTileCount: stageTiles.length,
+        isPeoplePanelMounted: peoplePanel.isMounted,
+    });
+
+    const media = useSpaceMediaControls({
         video,
-        broadcastChatMessage,
-        broadcastTyping,
-        broadcastReaction,
-        broadcastEdit,
-        broadcastDelete,
-        broadcastConfirm,
-    } = useSpaceConnection({
-        organizationId,
-        spaceId,
-        userId: user.id,
-        game: handle?.game ?? null,
-        onChatMessage: (_socketId, { conversationId, message, senderName }) => {
-            // Our own message is already applied optimistically by the
-            // send mutation, so only other peers' messages need to be
-            // merged here.
-            if (message.senderId === user.id) return;
-
-            queryClient.setQueryData<MessagesData>(
-                messagesQueryKey(conversationId),
-                (data) =>
-                    // seenBy never travels over the peer mesh (see
-                    // broadcastChatMessage) — a message arriving this way
-                    // hasn't been seen by anyone in this client's cache yet.
-                    prependMessage(
-                        data,
-                        { ...message, seenBy: [] },
-                        {
-                            id: message.senderId,
-                            name: senderName,
-                            avatarUrl: null,
-                        }
-                    )
-            );
-            queryClient.invalidateQueries({
-                queryKey: unreadCountsQueryKey(organizationId),
-            });
-            // Keeps the per-conversation badge in the DM list current too:
-            // it reads unreadCount off this query, not off
-            // unreadCountsQueryKey.
-            queryClient.invalidateQueries({
-                queryKey: conversationsQueryKey(organizationId),
-            });
-        },
-        onTyping: (
-            _socketId,
-            { conversationId, userId, userName, isTyping }
-        ) => {
-            if (userId === user.id) return;
-            setUserTyping(conversationId, userId, userName, isTyping);
-        },
-        onReaction: (
-            _socketId,
-            { conversationId, messageId, emoji, userId, added }
-        ) => {
-            // Our own toggle is already applied optimistically by the
-            // reaction mutation, so only other peers' toggles need to be
-            // merged here.
-            if (userId === user.id) return;
-
-            queryClient.setQueryData<MessagesData>(
-                messagesQueryKey(conversationId),
-                (data) =>
-                    data
-                        ? updateMessage(data, messageId, (message) => ({
-                            ...message,
-                            reactions: applyRemoteReactionToggle(
-                                message.reactions,
-                                emoji,
-                                added
-                            ),
-                        }))
-                        : data
-            );
-        },
-        onEdit: (
-            _socketId,
-            { conversationId, messageId, userId, content, editedAt }
-        ) => {
-            // Our own edit is already applied optimistically by the
-            // update mutation, so only other peers' edits need to be
-            // merged here.
-            if (userId === user.id) return;
-
-            queryClient.setQueryData<MessagesData>(
-                messagesQueryKey(conversationId),
-                (data) =>
-                    data
-                        ? updateMessage(data, messageId, (message) =>
-                        // Only the message's own sender may edit it,
-                        // same rule the API enforces: a peer claiming
-                        // someone else's userId already got filtered
-                        // out earlier, but this also stops a peer
-                        // editing a message that isn't theirs.
-                            message.senderId === userId
-                                ? { ...message, content, editedAt }
-                                : message
-                        )
-                        : data
-            );
-        },
-        onDelete: (_socketId, { conversationId, messageId, userId }) => {
-            // Our own deletion is already applied optimistically by the
-            // delete mutation, so only other peers' deletions need to be
-            // merged here.
-            if (userId === user.id) return;
-
-            queryClient.setQueryData<MessagesData>(
-                messagesQueryKey(conversationId),
-                (data) =>
-                    data
-                        ? removeMessage(
-                            data,
-                            messageId,
-                            (message) => message.senderId === userId
-                        )
-                        : data
-            );
-        },
-        onConfirm: (_socketId, { conversationId, tempId, message }) => {
-            // Swaps the temporary peer-*-id entry (see broadcastChatMessage)
-            // for the real persisted row, so reacting/editing/deleting a
-            // message received over the mesh targets an id the backend
-            // actually knows about. The temp id is kept on the merged row
-            // (see messageRenderKey) purely so the row's React key stays
-            // stable across the swap: without it, this id change reads to
-            // React as the temp row being removed and the real one being
-            // added, which replays the entrance animation a second time.
-            queryClient.setQueryData<MessagesData>(
-                messagesQueryKey(conversationId),
-                (data) =>
-                    data
-                        ? updateMessage(data, tempId, () => ({
-                            // seenBy never travels over the peer mesh (see
-                            // broadcastConfirm); this is always our own just-sent
-                            // message, so nobody else has seen it yet either way.
-                            ...message,
-                            seenBy: [],
-                            tempId,
-                        }))
-                        : data
-            );
-        },
+        micError: localAudioError,
     });
 
-    // Names come from the organization's members, not from the space
-    // conversation's participants: that list is a snapshot from when the
-    // space was created, so it would not know anyone who joined the
-    // organization afterwards.
-    const { members } = OrganizationsQueries.useMembers();
-    const { screenShare } = video;
-    // Our own tile is always in the bottom bar (SelfPreview), but our live
-    // camera is only ever rendered in one place. Alone, it is the bar's
-    // preview. As soon as someone is nearby (or sending video), everyone,
-    // ourselves included, goes to the stage strip (a camera when there is
-    // one, an avatar otherwise) and the bar falls back to our avatar.
-    const isOnStage =
-        video.nearbyUserIds.length > 0 || video.remoteVideos.length > 0;
-    const stageTiles = useMemo(
-        () =>
-            buildStageTiles({
-                remoteVideos: video.remoteVideos,
-                localCameraStream: video.localCameraStream,
-                nearbyUserIds: video.nearbyUserIds,
-                selfUserId: user.id,
-                includeSelf: isOnStage,
-                localScreenStream: screenShare.stream,
-                names: buildNameLookup(members),
-            }),
-        [
-            video.remoteVideos,
-            video.localCameraStream,
-            video.nearbyUserIds,
-            user.id,
-            isOnStage,
-            screenShare.stream,
-            members,
-        ]
-    );
-    // Sharing needs someone to share with, so the button is disabled until a
-    // peer is close enough to receive it. It stays usable while a share is
-    // running, otherwise walking away would leave no way to stop it.
-    const canShareScreen =
-        screenShare.isSharing || video.nearbyUserIds.length > 0;
-
-    // A share nobody can receive is only a capture running for nothing, so it
-    // ends after a while without anyone nearby.
-    useStopShareWithoutViewers({
-        isSharing: screenShare.isSharing,
-        hasViewers: video.nearbyUserIds.length > 0,
-        stop: screenShare.stop,
-        onStopped: () =>
-            toast.add({
-                title: ScreenShareMessages.stoppedNoViewers,
-                type: "info",
-            }),
+    const { peerChat, peerTyping, chatPage } = usePeerChatContextValues({
+        ...broadcasts,
+        user,
+        typingByConversation,
+        onlineUserIds,
+        getConversationLink,
     });
-
-    const peerChatValue = useMemo(
-        () => ({
-            broadcastChatMessage: (
-                conversationId: string,
-                message: MessageWithDetails
-            ) => {
-                // seenBy never travels over the peer mesh (read receipts are
-                // API-only) — stripped here, the one place that turns a
-                // cached MessageWithDetails into a wire payload.
-                const { seenBy: _seenBy, ...peerMessage } = message;
-                broadcastChatMessage({
-                    conversationId,
-                    message: peerMessage,
-                    senderName: user.name,
-                });
-            },
-            broadcastTyping: (conversationId: string, isTyping: boolean) =>
-                broadcastTyping({
-                    conversationId,
-                    userId: user.id,
-                    userName: user.name,
-                    isTyping,
-                }),
-            broadcastReaction: (
-                conversationId: string,
-                messageId: string,
-                emoji: string,
-                added: boolean
-            ) =>
-                broadcastReaction({
-                    conversationId,
-                    messageId,
-                    emoji,
-                    userId: user.id,
-                    added,
-                }),
-            broadcastEdit: (
-                conversationId: string,
-                messageId: string,
-                content: string,
-                editedAt: string
-            ) =>
-                broadcastEdit({
-                    conversationId,
-                    messageId,
-                    userId: user.id,
-                    content,
-                    editedAt,
-                }),
-            broadcastDelete: (conversationId: string, messageId: string) =>
-                broadcastDelete({ conversationId, messageId, userId: user.id }),
-            broadcastConfirm: (
-                conversationId: string,
-                tempId: string,
-                message: MessageWithDetails
-            ) => {
-                const { seenBy: _seenBy, ...peerMessage } = message;
-                broadcastConfirm({
-                    conversationId,
-                    tempId,
-                    message: peerMessage,
-                });
-            },
-        }),
-        [
-            broadcastChatMessage,
-            broadcastTyping,
-            broadcastReaction,
-            broadcastEdit,
-            broadcastDelete,
-            broadcastConfirm,
-            user.id,
-            user.name,
-        ]
-    );
-
-    // Kept out of peerChatValue (see PeerTypingContext) so a peer's typing
-    // activity only re-renders TypingIndicator, not every message-list
-    // consumer of PeerChatContext.
-    const peerTypingValue = useMemo(
-        () => ({
-            getTypingUsers: (conversationId: string) =>
-                Object.entries(typingByConversation[conversationId] ?? {}).map(
-                    ([userId, userName]) => ({ userId, userName })
-                ),
-        }),
-        [typingByConversation]
-    );
 
     return (
-        <SidebarProvider open={open} onOpenChange={setOpen}>
-            <SpacePageRoot>
-                <Tabs
-                    value={tab}
-                    onValueChange={(value) => setTab(value as typeof tab)}
-                    className="flex min-h-0 w-full flex-1 flex-col gap-0"
-                >
-                    <LayoutPrimitive.Body>
-                        <LayoutPrimitive.Content>
-                            <Content
-                                isDuplicateSession={isDuplicateSession}
-                                isLoading={isLoading}
-                                isError={isError}
-                                space={space}
-                                containerRef={containerRef}
-                                handle={handle}
-                                videoStage={<VideoStage tiles={stageTiles} />}
-                            />
-                        </LayoutPrimitive.Content>
-                        <LayoutPrimitive.Sidebar>
-                            <TabsContent
-                                value={SPACE_SIDEBAR_TABS.CHAT}
-                                className="flex min-h-0 flex-1 flex-col"
-                            >
-                                {space && (
-                                    <PeerChatContext.Provider
-                                        value={peerChatValue}
-                                    >
-                                        <PeerTypingContext.Provider
-                                            value={peerTypingValue}
-                                        >
-                                            <ChatSidebar space={space} />
-                                        </PeerTypingContext.Provider>
-                                    </PeerChatContext.Provider>
-                                )}
-                            </TabsContent>
-                            <TabsContent
-                                value={SPACE_SIDEBAR_TABS.PEOPLE}
-                                className="flex min-h-0 flex-1 flex-col"
-                            >
-                                {space && <PeopleSidebar space={space} />}
-                            </TabsContent>
-                        </LayoutPrimitive.Sidebar>
-                    </LayoutPrimitive.Body>
-                    <LayoutPrimitive.Controls>
-                        <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-start">
-                            <Logo />
-                            <Separator
-                                orientation="vertical"
-                                className="h-5 my-auto"
-                            />
-                            <ClipboardCopyButton
-                                text={window.location.href}
-                                copyLabel="Copiar URL"
-                                copiedLabel="URL copiada!"
-                            />
-                            <UserWidget />
-                        </LayoutPrimitive.ControlGroup>
-                        <LayoutPrimitive.ControlGroup className="w-full max-w-96">
-                            <MicToggleButton />
-                            <CameraToggleButton />
-                            <SelfPreview
-                                userId={user.id}
-                                name={user.name}
-                                stream={isOnStage ? null : video.localCameraStream}
-                            />
-                            <ScreenShareButton
-                                isSharing={screenShare.isSharing}
-                                disabled={!canShareScreen}
-                                error={screenShare.error}
-                                onStart={screenShare.start}
-                                onStop={screenShare.stop}
-                            />
-                            {localAudioError && (
-                                <MicUnavailableIndicator
-                                    error={localAudioError}
-                                />
-                            )}
-                            {video.localCameraError && (
-                                <CameraUnavailableIndicator
-                                    error={video.localCameraError}
-                                />
-                            )}
-                        </LayoutPrimitive.ControlGroup>
-                        <LayoutPrimitive.ControlGroup className="w-full max-w-96 justify-end">
-                            <SpaceSidebar.TriggerGroup>
-                                <SpaceSidebar.Trigger
-                                    tab={SPACE_SIDEBAR_TABS.CHAT}
-                                    icon={MessageCircleIcon}
-                                    label="Abrir o chat"
-                                    onSelect={selectTab}
-                                    badge={<CountBadge count={unreadTotal} />}
-                                />
-                                <SpaceSidebar.Trigger
-                                    tab={SPACE_SIDEBAR_TABS.PEOPLE}
-                                    icon={UsersIcon}
-                                    label="Ver participantes"
-                                    onSelect={selectTab}
-                                    count={participants.length}
-                                />
-                            </SpaceSidebar.TriggerGroup>
-                            <LeaveSpaceButton />
-                            {space && <Actions space={space} />}
-                        </LayoutPrimitive.ControlGroup>
+        <SpacePageRoot>
+            <LayoutPrimitive.Body>
+                <SpaceSidebar
+                    space={space}
+                    view={view}
+                    onSelectView={selectView}
+                    conversationId={conversationId}
+                    chatMode={chatMode}
+                    onSelectConversation={selectConversation}
+                    onChatModeChange={selectChatMode}
+                    peerChat={peerChat}
+                    peerTyping={peerTyping}
+                    chatPage={chatPage}
+                    isPeopleOpen={peoplePanel.isVisible}
+                    onTogglePeople={peoplePanel.toggle}
+                    chatFooter={<ChatFooter tiles={stageTiles} media={media} />}
+                />
+                <SpacePeoplePanel
+                    isMounted={peoplePanel.isMounted}
+                    isClosing={peoplePanel.isClosing}
+                    spaceName={space.name}
+                    onlineUserIds={onlineUserIds}
+                    onClose={peoplePanel.close}
+                />
+                <LayoutPrimitive.Content style={layout.contentStyle}>
+                    <GameCanvas ref={containerRef} />
+                    <GameControls handle={handle} />
+                    <VideoStage
+                        tiles={stageTiles}
+                        isGridOpen={isGridOpen}
+                        gridTileId={gridTileId}
+                        onOpenGrid={openGrid}
+                        onCloseGrid={closeGrid}
+                    />
+                    <LayoutPrimitive.TopControls
+                        visible={layout.isStageToggleVisible}
+                    >
+                        <StageViewToggle
+                            view={stageView}
+                            onViewChange={changeStageView}
+                        />
+                    </LayoutPrimitive.TopControls>
+                    <LayoutPrimitive.Controls
+                        visible={layout.isControlsVisible}
+                    >
+                        <MediaControlGroup {...media} isMeetingContext />
                     </LayoutPrimitive.Controls>
-                </Tabs>
-            </SpacePageRoot>
-        </SidebarProvider>
+                </LayoutPrimitive.Content>
+            </LayoutPrimitive.Body>
+        </SpacePageRoot>
     );
 }
