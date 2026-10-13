@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rebaseAssetUrl } from "../assetUrl";
+import { rebaseAssetUrl, resolveFileUrl } from "../assetUrl";
 
 describe("rebaseAssetUrl", () => {
     it("leaves the url alone when the API is addressed by origin", () => {
@@ -31,5 +31,23 @@ describe("rebaseAssetUrl", () => {
 
     it("leaves something that is not an absolute url alone", () => {
         expect(rebaseAssetUrl("/public/t.png", "/api")).toBe("/public/t.png");
+    });
+});
+
+describe("resolveFileUrl", () => {
+    it("puts a file path behind the API origin", () => {
+        expect(
+            resolveFileUrl("/files/abc", "http://localhost:3001/")
+        ).toBe("http://localhost:3001/files/abc");
+    });
+
+    it("puts a file path behind the proxy prefix", () => {
+        expect(resolveFileUrl("/files/abc", "/api")).toBe("/api/files/abc");
+    });
+
+    it("rebases an absolute url like the tileset urls", () => {
+        expect(
+            resolveFileUrl("http://localhost:3001/public/t.png", "/api")
+        ).toBe("/api/public/t.png");
     });
 });

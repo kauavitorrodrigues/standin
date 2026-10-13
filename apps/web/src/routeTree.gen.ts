@@ -11,12 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppAdminRouteImport } from './routes/_app/_admin'
 import { Route as AppDefaultRouteImport } from './routes/_app/_default'
 import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
 import { Route as AppSpacesNewRouteImport } from './routes/_app/spaces/new'
 import { Route as AppDefaultMapsIndexRouteImport } from './routes/_app/_default/maps/index'
 import { Route as AppDefaultMapsNewRouteImport } from './routes/_app/_default/maps/new'
+import { Route as AppAdminAdminAssetsIndexRouteImport } from './routes/_app/_admin/admin/assets/index'
+import { Route as AppAdminAdminAssetsNewRouteImport } from './routes/_app/_admin/admin/assets/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -26,6 +29,10 @@ const IndexRoute = IndexRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppDefaultRoute = AppDefaultRouteImport.update({
   id: '/_default',
@@ -56,6 +63,17 @@ const AppDefaultMapsNewRoute = AppDefaultMapsNewRouteImport.update({
   path: '/maps/new',
   getParentRoute: () => AppDefaultRoute,
 } as any)
+const AppAdminAdminAssetsIndexRoute =
+  AppAdminAdminAssetsIndexRouteImport.update({
+    id: '/admin/assets/',
+    path: '/admin/assets/',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
+const AppAdminAdminAssetsNewRoute = AppAdminAdminAssetsNewRouteImport.update({
+  id: '/admin/assets/new',
+  path: '/admin/assets/new',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -64,6 +82,8 @@ export interface FileRoutesByFullPath {
   '/spaces/new': typeof AppSpacesNewRoute
   '/maps/new': typeof AppDefaultMapsNewRoute
   '/maps/': typeof AppDefaultMapsIndexRoute
+  '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -72,34 +92,57 @@ export interface FileRoutesByTo {
   '/spaces/new': typeof AppSpacesNewRoute
   '/maps/new': typeof AppDefaultMapsNewRoute
   '/maps': typeof AppDefaultMapsIndexRoute
+  '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/admin/assets': typeof AppAdminAdminAssetsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/_app/_admin': typeof AppAdminRouteWithChildren
   '/_app/_default': typeof AppDefaultRouteWithChildren
   '/_app/_default/home': typeof AppDefaultHomeRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spaces/new': typeof AppSpacesNewRoute
   '/_app/_default/maps/new': typeof AppDefaultMapsNewRoute
   '/_app/_default/maps/': typeof AppDefaultMapsIndexRoute
+  '/_app/_admin/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/_app/_admin/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/home' | '/spaces/$spaceId' | '/spaces/new' | '/maps/new' | '/maps/'
+    | '/'
+    | '/home'
+    | '/spaces/$spaceId'
+    | '/spaces/new'
+    | '/maps/new'
+    | '/maps/'
+    | '/admin/assets/new'
+    | '/admin/assets/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/spaces/$spaceId' | '/spaces/new' | '/maps/new' | '/maps'
+  to:
+    | '/'
+    | '/home'
+    | '/spaces/$spaceId'
+    | '/spaces/new'
+    | '/maps/new'
+    | '/maps'
+    | '/admin/assets/new'
+    | '/admin/assets'
   id:
     | '__root__'
     | '/'
     | '/_app'
+    | '/_app/_admin'
     | '/_app/_default'
     | '/_app/_default/home'
     | '/_app/spaces/$spaceId'
     | '/_app/spaces/new'
     | '/_app/_default/maps/new'
     | '/_app/_default/maps/'
+    | '/_app/_admin/admin/assets/new'
+    | '/_app/_admin/admin/assets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -122,6 +165,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/_admin': {
+      id: '/_app/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/_default': {
       id: '/_app/_default'
@@ -165,8 +215,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDefaultMapsNewRouteImport
       parentRoute: typeof AppDefaultRoute
     }
+    '/_app/_admin/admin/assets/': {
+      id: '/_app/_admin/admin/assets/'
+      path: '/admin/assets'
+      fullPath: '/admin/assets/'
+      preLoaderRoute: typeof AppAdminAdminAssetsIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/assets/new': {
+      id: '/_app/_admin/admin/assets/new'
+      path: '/admin/assets/new'
+      fullPath: '/admin/assets/new'
+      preLoaderRoute: typeof AppAdminAdminAssetsNewRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
   }
 }
+
+interface AppAdminRouteChildren {
+  AppAdminAdminAssetsNewRoute: typeof AppAdminAdminAssetsNewRoute
+  AppAdminAdminAssetsIndexRoute: typeof AppAdminAdminAssetsIndexRoute
+}
+
+const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminAdminAssetsNewRoute: AppAdminAdminAssetsNewRoute,
+  AppAdminAdminAssetsIndexRoute: AppAdminAdminAssetsIndexRoute,
+}
+
+const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
+  AppAdminRouteChildren,
+)
 
 interface AppDefaultRouteChildren {
   AppDefaultHomeRoute: typeof AppDefaultHomeRoute
@@ -185,12 +263,14 @@ const AppDefaultRouteWithChildren = AppDefaultRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRouteWithChildren
   AppDefaultRoute: typeof AppDefaultRouteWithChildren
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpacesNewRoute: typeof AppSpacesNewRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRouteWithChildren,
   AppDefaultRoute: AppDefaultRouteWithChildren,
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpacesNewRoute: AppSpacesNewRoute,

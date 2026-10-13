@@ -9,6 +9,7 @@ import {
 } from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
+import { FieldHint } from "./FieldHint";
 
 export type GenericFormFieldProps<
     TFieldValues extends FieldValues,
@@ -18,6 +19,8 @@ export type GenericFormFieldProps<
     name: TName;
     label?: string;
     required?: boolean;
+    // Explains the field in a tooltip beside the label.
+    hint?: string;
     className?: string;
     render: (
         field: ControllerRenderProps<TFieldValues, TName>,
@@ -33,6 +36,7 @@ export function GenericFormField<
     name,
     label,
     required,
+    hint,
     className,
     render,
 }: GenericFormFieldProps<TFieldValues, TName>) {
@@ -46,9 +50,12 @@ export function GenericFormField<
                     className={cn(className)}
                 >
                     {label && (
-                        <FieldLabel htmlFor={name}>
-                            {label} {required && <span aria-hidden>*</span>}
-                        </FieldLabel>
+                        <div className="flex items-center gap-1.5">
+                            <FieldLabel htmlFor={name} className="w-auto">
+                                {label} {required && <span aria-hidden>*</span>}
+                            </FieldLabel>
+                            {hint && <FieldHint>{hint}</FieldHint>}
+                        </div>
                     )}
                     {render(field, fieldState)}
                     <FieldError

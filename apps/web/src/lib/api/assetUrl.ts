@@ -23,3 +23,11 @@ export const rebaseAssetUrl = (url: string, apiBaseUrl: string): string => {
         return url;
     }
 };
+
+// Library assets come as a path of the API (`/files/:id`). The path is put
+// behind the API address, and any absolute url goes through the rebase above.
+export const resolveFileUrl = (url: string, apiBaseUrl: string): string => {
+    if (!url.startsWith("/")) return rebaseAssetUrl(url, apiBaseUrl);
+
+    return `${apiBaseUrl.replace(/\/+$/, "")}${url}`;
+};

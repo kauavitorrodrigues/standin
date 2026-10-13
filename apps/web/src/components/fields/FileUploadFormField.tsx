@@ -1,6 +1,8 @@
 import { UploadIcon, XIcon } from "lucide-react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { FieldHint } from "./FieldHint";
 import {
     FileUpload,
     FileUploadDropzone,
@@ -13,6 +15,7 @@ type Props = {
     id: string;
     label: string;
     required?: boolean;
+    hint?: string;
     placeholder: string;
     value: File[];
     onValueChange: (files: File[]) => void;
@@ -23,12 +26,15 @@ type Props = {
     error?: string;
     renderPreview?: (file: File) => React.ReactNode;
     hideDropzoneWhenFilled?: boolean;
+    compact?: boolean;
+    dropzoneClassName?: string;
 };
 
 export const FileUploadFormField = ({
     id,
     label,
     required,
+    hint,
     placeholder,
     value,
     onValueChange,
@@ -39,14 +45,19 @@ export const FileUploadFormField = ({
     error,
     renderPreview,
     hideDropzoneWhenFilled,
+    compact,
+    dropzoneClassName,
 }: Props) => {
     const showDropzone = !hideDropzoneWhenFilled || value.length === 0;
 
     return (
         <Field data-invalid={!!error}>
-            <FieldLabel htmlFor={id}>
-                {label} {required && <span aria-hidden>*</span>}
-            </FieldLabel>
+            <div className="flex items-center gap-1.5">
+                <FieldLabel htmlFor={id} className="w-auto">
+                    {label} {required && <span aria-hidden>*</span>}
+                </FieldLabel>
+                {hint && <FieldHint>{hint}</FieldHint>}
+            </div>
             <FileUpload
                 id={id}
                 value={value}
@@ -57,9 +68,24 @@ export const FileUploadFormField = ({
                 disabled={disabled}
             >
                 {showDropzone && (
-                    <FileUploadDropzone>
-                        <UploadIcon className="size-6 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground text-center">
+                    <FileUploadDropzone
+                        className={cn(
+                            compact && "min-h-16 flex-row gap-2 p-3",
+                            dropzoneClassName
+                        )}
+                    >
+                        <UploadIcon
+                            className={cn(
+                                "size-6 text-muted-foreground",
+                                compact && "size-4 shrink-0"
+                            )}
+                        />
+                        <p
+                            className={cn(
+                                "text-sm text-muted-foreground text-center",
+                                compact && "text-xs"
+                            )}
+                        >
                             {placeholder}
                         </p>
                     </FileUploadDropzone>
