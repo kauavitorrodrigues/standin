@@ -49,7 +49,7 @@ function SelectContent({
     return (
         <SelectPrimitive.Portal>
             <SelectPrimitive.Positioner
-                className="isolate z-50 outline-none"
+                className="isolate z-100 outline-none"
                 sideOffset={4}
                 alignItemWithTrigger={false}
             >
