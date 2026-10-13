@@ -21,7 +21,7 @@ export type GenericFormFieldProps<
     className?: string;
     render: (
         field: ControllerRenderProps<TFieldValues, TName>,
-        fieldState: ControllerFieldState,
+        fieldState: ControllerFieldState
     ) => ReactNode;
 };
 
