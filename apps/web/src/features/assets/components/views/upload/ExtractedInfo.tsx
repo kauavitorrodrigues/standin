@@ -1,9 +1,11 @@
+import { cn } from "@/lib/utils";
 import type { ExtractedGroup } from "../../../types/extractedInfo";
 import { ExtractedRowItem } from "./ExtractedRowItem";
 
 type Props = {
     groups: ExtractedGroup[];
-    // Narrower labels, to leave the values more room beside an editor.
+    // Everything on one line and loose, with no box around, to fit the narrow
+    // panel of an editor.
     compact?: boolean;
 };
 
@@ -11,12 +13,18 @@ type Props = {
 // other fields. Each row has an icon and a color, and the groups are
 // separated, so it reads at a glance.
 export const ExtractedInfo = ({ groups, compact = false }: Props) => (
-    <div className="bg-muted/30 flex flex-col divide-y rounded-lg border">
-        {groups.map(({ title, rows }) => (
-            <section key={title} className="flex flex-col gap-2 p-3">
-                <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    {title}
-                </h4>
+    <div
+        className={cn(
+            "flex flex-col",
+            compact ? "gap-4" : "bg-muted/30 divide-y rounded-lg border"
+        )}
+    >
+        {groups.map(({ title, rows }, index) => (
+            <section
+                key={title ?? index}
+                className={cn("flex flex-col gap-2", !compact && "p-3")}
+            >
+                <ExtractedTitle title={title} />
                 <dl className="flex flex-col gap-2">
                     {rows.map((row) => (
                         <ExtractedRowItem
@@ -30,3 +38,13 @@ export const ExtractedInfo = ({ groups, compact = false }: Props) => (
         ))}
     </div>
 );
+
+const ExtractedTitle = ({ title }: { title?: string }) => {
+    if (!title) return null;
+
+    return (
+        <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            {title}
+        </h4>
+    );
+};
