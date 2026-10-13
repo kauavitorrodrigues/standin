@@ -4,10 +4,10 @@ import { getFpsLimit } from "@/features/settings/performance/lib/performanceValu
 import { applyFpsLimit } from "@/features/game/utils/fpsLimit";
 import { createGameEngine } from "@/features/game/lib/Engine";
 import type { GameEngineHandle } from "@/features/game/types/game";
-import type { MapAssetManifest } from "@/features/game/types/tilemap";
+import type { GameMapData } from "@/features/game/types/tilemap";
 
 export const useGameEngine = (
-    map: MapAssetManifest | null,
+    map: GameMapData | null,
     initialCameraOffsetX: number
 ) => {
     const [handle, setHandle] = useState<GameEngineHandle | null>(null);

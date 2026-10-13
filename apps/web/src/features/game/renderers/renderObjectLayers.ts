@@ -36,6 +36,5 @@ export const renderObjectLayers = (
     resolveObjectRecords(tilemap)
         .map((record) => createObjectMarker(scene, record))
         .filter(
-            (marker): marker is Phaser.GameObjects.Rectangle =>
-                marker !== null
+            (marker): marker is Phaser.GameObjects.Rectangle => marker !== null
         );

@@ -4,7 +4,7 @@ import {
     buildTilesetAssetKey,
 } from "@/features/game/utils/map";
 import { GAME_DIAGNOSTIC_MESSAGES } from "@/features/game/consts/diagnostics";
-import type { MapAssetManifest } from "@/features/game/types/tilemap";
+import type { GameMapData } from "@/features/game/types/tilemap";
 
 export type BuiltTilemap = {
     tilemap: Phaser.Tilemaps.Tilemap;
@@ -14,7 +14,7 @@ export type BuiltTilemap = {
 const addTilesetImage = (
     tilemap: Phaser.Tilemaps.Tilemap,
     mapId: string,
-    tileset: MapAssetManifest["tilesets"][number]
+    tileset: GameMapData["tilesets"][number]
 ): Phaser.Tilemaps.Tileset | null => {
     const addedTileset = tilemap.addTilesetImage(
         tileset.tilesetName,
@@ -32,7 +32,7 @@ const addTilesetImage = (
 
 export const buildTilemap = (
     scene: Phaser.Scene,
-    map: MapAssetManifest
+    map: GameMapData
 ): BuiltTilemap => {
     const tilemap = scene.make.tilemap({ key: buildMapAssetKey(map.id) });
 

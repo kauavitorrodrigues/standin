@@ -6,7 +6,7 @@ export function CreateSpacePage() {
         <PageContainer.Root>
             <PageContainer.Header
                 title="Criar espaço"
-                description="Dê um nome ao seu espaço e escolha um mapa abaixo."
+                description="Dê um nome ao seu espaço."
             />
             <PageContainer.Content>
                 <CreateSpaceForm />

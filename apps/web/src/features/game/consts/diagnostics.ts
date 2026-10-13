@@ -1,6 +1,8 @@
 export const GAME_DIAGNOSTIC_MESSAGES = {
     assetLoadFailed: (assetKey: string): string =>
         `[game] Failed to load asset "${assetKey}". Check the map's file URLs.`,
+    assetTextureMissing: (assetId: string): string =>
+        `[game] Texture of asset "${assetId}" is missing, a placeholder was drawn in its place.`,
     tilesetImageMissing: (tilesetName: string): string =>
         `[game] Tileset "${tilesetName}" is not referenced by the map JSON and was skipped.`,
     tileLayerMissing: (layerName: string): string =>

@@ -15,9 +15,7 @@ const createTileLayer = (
     );
 
     if (!layer) {
-        console.warn(
-            GAME_DIAGNOSTIC_MESSAGES.tileLayerMissing(layerData.name)
-        );
+        console.warn(GAME_DIAGNOSTIC_MESSAGES.tileLayerMissing(layerData.name));
     }
 
     return layer;
