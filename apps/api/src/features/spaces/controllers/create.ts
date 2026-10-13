@@ -25,7 +25,7 @@ export const createSpace = async (req: ExtendedRequest, res: Response) => {
             req.user.id,
             data
         );
-        res.status(201).json({ space });
+        res.status(201).json({ space, mapId: space.mapId });
     } catch (error) {
         return sendError({
             res,

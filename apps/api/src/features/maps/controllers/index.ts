@@ -1,11 +1,13 @@
-import { listMaps } from "./list";
-import { createMap } from "./create";
-import { updateMap } from "./update";
-import { deleteMap } from "./delete";
+import { renderMap } from "./render";
+import { exportMap } from "./exportTiled";
+import { applyLayoutOps } from "./layoutOps";
+import { getMapLibrary } from "./library";
+import { MapAssetController } from "./assets";
 
 export const MapController = {
-    list: listMaps,
-    create: createMap,
-    update: updateMap,
-    delete: deleteMap,
+    render: renderMap,
+    export: exportMap,
+    layoutOps: applyLayoutOps,
+    library: getMapLibrary,
+    assets: MapAssetController,
 };
