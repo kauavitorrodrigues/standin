@@ -9,6 +9,7 @@ import { getLibraryFamily } from "./getFamily";
 import { listLibraryFamilies } from "./listFamilies";
 import { listLibraryFamilyFacets } from "./listFamilyFacets";
 import { getLibraryOverview } from "./overview";
+import { seedLibrary } from "./seed/seedLibrary";
 import { createLibraryTileset } from "./tilesets/createTileset";
 import { getLibraryTileset } from "./tilesets/getTileset";
 import { listLibraryTilesets } from "./tilesets/listTilesets";
@@ -36,8 +37,15 @@ export const AssetService = {
     replaceAssetImage: replaceLibraryAssetImage,
     deleteAsset: deleteLibraryAsset,
     setParts: setLibraryAssetParts,
+    seed: seedLibrary,
 };
 
-export { buildColorSprite, buildColorTileset, encodePng } from "./library";
+export {
+    DEFAULT_LIBRARY_SEED,
+    buildColorSprite,
+    buildColorTileset,
+    encodePng,
+} from "./library";
 export type { UpdatedLibraryAssets } from "./assets/updateAsset";
 export type { LibraryContext, UploadedImage } from "./types";
+export type { LibrarySeed, LibrarySeedResult } from "./seed/types";

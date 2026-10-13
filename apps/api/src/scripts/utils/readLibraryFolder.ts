@@ -1,0 +1,42 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import type { LibrarySeed } from "@standin/core";
+import { LibrarySeedFileSchema } from "./librarySeedFileSchema";
+
+const LIBRARY_FILE = "library.json";
+
+/**
+ * Reads `library.json` and the PNGs it points to (paths relative to the
+ * folder). The entries carry the same fields as the `data` part of the HTTP
+ * endpoints, so the seed and the API accept the same input.
+ */
+export const readLibraryFolder = async (
+    folder: string
+): Promise<LibrarySeed> => {
+    const text = await readFile(path.join(folder, LIBRARY_FILE), "utf8");
+    const parsed = LibrarySeedFileSchema.parse(JSON.parse(text));
+    const readImage = (file: string) => readFile(path.join(folder, file));
+
+    return {
+        tilesets: await Promise.all(
+            parsed.tilesets.map(async ({ file, ...tileset }) => ({
+                ...tileset,
+                image: await readImage(file),
+            }))
+        ),
+        assets: await Promise.all(
+            parsed.assets.map(async ({ file, variants, ...asset }) => ({
+                ...asset,
+                image: await readImage(file),
+                variants: await Promise.all(
+                    (variants ?? []).map(
+                        async ({ file: variantFile, ...variant }) => ({
+                            ...variant,
+                            image: await readImage(variantFile),
+                        })
+                    )
+                ),
+            }))
+        ),
+    };
+};
