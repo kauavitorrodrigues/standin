@@ -20,6 +20,9 @@ import { Route as AppDefaultMapsIndexRouteImport } from './routes/_app/_default/
 import { Route as AppDefaultMapsNewRouteImport } from './routes/_app/_default/maps/new'
 import { Route as AppAdminAdminAssetsIndexRouteImport } from './routes/_app/_admin/admin/assets/index'
 import { Route as AppAdminAdminAssetsNewRouteImport } from './routes/_app/_admin/admin/assets/new'
+import { Route as AppAdminAdminTilesetsIndexRouteImport } from './routes/_app/_admin/admin/tilesets/index'
+import { Route as AppAdminAdminTilesetsTilesetIdRouteImport } from './routes/_app/_admin/admin/tilesets/$tilesetId'
+import { Route as AppAdminAdminTilesetsNewRouteImport } from './routes/_app/_admin/admin/tilesets/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -74,6 +77,24 @@ const AppAdminAdminAssetsNewRoute = AppAdminAdminAssetsNewRouteImport.update({
   path: '/admin/assets/new',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminAdminTilesetsIndexRoute =
+  AppAdminAdminTilesetsIndexRouteImport.update({
+    id: '/admin/tilesets/',
+    path: '/admin/tilesets/',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
+const AppAdminAdminTilesetsTilesetIdRoute =
+  AppAdminAdminTilesetsTilesetIdRouteImport.update({
+    id: '/admin/tilesets/$tilesetId',
+    path: '/admin/tilesets/$tilesetId',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
+const AppAdminAdminTilesetsNewRoute =
+  AppAdminAdminTilesetsNewRouteImport.update({
+    id: '/admin/tilesets/new',
+    path: '/admin/tilesets/new',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -83,7 +104,10 @@ export interface FileRoutesByFullPath {
   '/maps/new': typeof AppDefaultMapsNewRoute
   '/maps/': typeof AppDefaultMapsIndexRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
+  '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
+  '/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,7 +117,10 @@ export interface FileRoutesByTo {
   '/maps/new': typeof AppDefaultMapsNewRoute
   '/maps': typeof AppDefaultMapsIndexRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
+  '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/admin/assets': typeof AppAdminAdminAssetsIndexRoute
+  '/admin/tilesets': typeof AppAdminAdminTilesetsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,7 +134,10 @@ export interface FileRoutesById {
   '/_app/_default/maps/new': typeof AppDefaultMapsNewRoute
   '/_app/_default/maps/': typeof AppDefaultMapsIndexRoute
   '/_app/_admin/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/_app/_admin/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
+  '/_app/_admin/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/_app/_admin/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
+  '/_app/_admin/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,7 +149,10 @@ export interface FileRouteTypes {
     | '/maps/new'
     | '/maps/'
     | '/admin/assets/new'
+    | '/admin/tilesets/$tilesetId'
+    | '/admin/tilesets/new'
     | '/admin/assets/'
+    | '/admin/tilesets/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,7 +162,10 @@ export interface FileRouteTypes {
     | '/maps/new'
     | '/maps'
     | '/admin/assets/new'
+    | '/admin/tilesets/$tilesetId'
+    | '/admin/tilesets/new'
     | '/admin/assets'
+    | '/admin/tilesets'
   id:
     | '__root__'
     | '/'
@@ -142,7 +178,10 @@ export interface FileRouteTypes {
     | '/_app/_default/maps/new'
     | '/_app/_default/maps/'
     | '/_app/_admin/admin/assets/new'
+    | '/_app/_admin/admin/tilesets/$tilesetId'
+    | '/_app/_admin/admin/tilesets/new'
     | '/_app/_admin/admin/assets/'
+    | '/_app/_admin/admin/tilesets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -229,17 +268,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdminAssetsNewRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/_admin/admin/tilesets/': {
+      id: '/_app/_admin/admin/tilesets/'
+      path: '/admin/tilesets'
+      fullPath: '/admin/tilesets/'
+      preLoaderRoute: typeof AppAdminAdminTilesetsIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/tilesets/$tilesetId': {
+      id: '/_app/_admin/admin/tilesets/$tilesetId'
+      path: '/admin/tilesets/$tilesetId'
+      fullPath: '/admin/tilesets/$tilesetId'
+      preLoaderRoute: typeof AppAdminAdminTilesetsTilesetIdRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/tilesets/new': {
+      id: '/_app/_admin/admin/tilesets/new'
+      path: '/admin/tilesets/new'
+      fullPath: '/admin/tilesets/new'
+      preLoaderRoute: typeof AppAdminAdminTilesetsNewRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
   }
 }
 
 interface AppAdminRouteChildren {
   AppAdminAdminAssetsNewRoute: typeof AppAdminAdminAssetsNewRoute
+  AppAdminAdminTilesetsTilesetIdRoute: typeof AppAdminAdminTilesetsTilesetIdRoute
+  AppAdminAdminTilesetsNewRoute: typeof AppAdminAdminTilesetsNewRoute
   AppAdminAdminAssetsIndexRoute: typeof AppAdminAdminAssetsIndexRoute
+  AppAdminAdminTilesetsIndexRoute: typeof AppAdminAdminTilesetsIndexRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminAdminAssetsNewRoute: AppAdminAdminAssetsNewRoute,
+  AppAdminAdminTilesetsTilesetIdRoute: AppAdminAdminTilesetsTilesetIdRoute,
+  AppAdminAdminTilesetsNewRoute: AppAdminAdminTilesetsNewRoute,
   AppAdminAdminAssetsIndexRoute: AppAdminAdminAssetsIndexRoute,
+  AppAdminAdminTilesetsIndexRoute: AppAdminAdminTilesetsIndexRoute,
 }
 
 const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(

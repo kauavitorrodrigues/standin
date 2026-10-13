@@ -3,7 +3,7 @@ import { useAsRef } from "@/hooks/useAsRef";
 
 type Options = { enabled?: boolean };
 
-const isTypingTarget = (target: EventTarget | null): boolean => {
+export const isTypingTarget = (target: EventTarget | null): boolean => {
     if (!(target instanceof HTMLElement)) return false;
     return (
         target.isContentEditable ||

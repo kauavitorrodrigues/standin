@@ -1,4 +1,4 @@
-import { BoxIcon } from "lucide-react";
+import { BoxIcon, Grid2x2Icon } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { LogoGlyph } from "@/components/logos";
 import {
@@ -56,6 +56,14 @@ export const AdminSidebar = () => {
                                 icon={BoxIcon}
                                 label="Biblioteca de recursos"
                                 active={section === ADMIN_SECTION_VALUES.ASSETS}
+                            />
+                            <AdminSidebarLink
+                                section={ADMIN_SECTION_VALUES.TILESETS}
+                                icon={Grid2x2Icon}
+                                label="Tilesets"
+                                active={
+                                    section === ADMIN_SECTION_VALUES.TILESETS
+                                }
                             />
                         </SidebarMenu>
                     </SidebarGroupContent>

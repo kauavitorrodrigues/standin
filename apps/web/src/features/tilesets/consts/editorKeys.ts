@@ -1,0 +1,20 @@
+// The keys of the tile editor, matched against `event.key` in lower case.
+export const TILE_EDITOR_KEYS = {
+    SELECT_TOOL: ["v"],
+    PAINT_TOOL: ["p"],
+    ERASE_TOOL: ["e"],
+    LINE_TOOL: ["l"],
+    RECT_TOOL: ["r"],
+    BUCKET_TOOL: ["g"],
+    PICKER_TOOL: ["i"],
+    WAND_TOOL: ["w"],
+    SAME_TOOL: ["s"],
+    DEFAULT_TOOL: ["d"],
+    TOP_TOOL: ["t"],
+    PAN_TOOL: ["m"],
+    TOGGLE_SOLID: ["q"],
+    TOGGLE_PROPERTIES: ["h"],
+    NEXT_UNTAGGED: ["n"],
+    CLEAR_CATEGORY: ["delete", "backspace"],
+    ESCAPE: ["escape"],
+} as const;

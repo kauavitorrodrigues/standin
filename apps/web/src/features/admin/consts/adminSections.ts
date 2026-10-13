@@ -1,5 +1,6 @@
 export const ADMIN_SECTION_VALUES = {
     ASSETS: "assets",
+    TILESETS: "tilesets",
 } as const;
 
 export type AdminSection =
@@ -9,7 +10,8 @@ export const DEFAULT_ADMIN_SECTION: AdminSection = ADMIN_SECTION_VALUES.ASSETS;
 
 export const ADMIN_SECTIONS: {
     value: AdminSection;
-    to: "/admin/assets";
+    to: "/admin/assets" | "/admin/tilesets";
 }[] = [
     { value: ADMIN_SECTION_VALUES.ASSETS, to: "/admin/assets" },
+    { value: ADMIN_SECTION_VALUES.TILESETS, to: "/admin/tilesets" },
 ];
