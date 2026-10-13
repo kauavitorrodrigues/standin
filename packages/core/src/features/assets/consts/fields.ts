@@ -26,3 +26,4 @@ export const ROTATION_ASSET_FIELDS = ["footprint", "actionParams"] as const;
 export const VARIATION_ASSET_FIELDS = ["rotation", "color"] as const;
 
 export const ASSET_KEY_FALLBACK = "asset";
+export const TILESET_KEY_FALLBACK = "tileset";

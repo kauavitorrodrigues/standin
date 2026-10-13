@@ -1,3 +1,29 @@
+export const TilesetErrorMessages = {
+    id: { invalid: "The tileset id is invalid." },
+    key: { invalid: "The tileset key is invalid." },
+    name: { invalid: "The tileset name is invalid." },
+    url: { invalid: "The tileset URL is invalid." },
+    widthPx: { invalid: "The tileset width is invalid." },
+    heightPx: { invalid: "The tileset height is invalid." },
+    columns: { invalid: "The tileset column count is invalid." },
+    tileCount: { invalid: "The tileset tile count is invalid." },
+    margin: { invalid: "The tileset margin is invalid." },
+    spacing: { invalid: "The tileset spacing is invalid." },
+    tileMeta: { invalid: "The tile metadata of the tileset is invalid." },
+    grid: { invalid: "The tileset margin and spacing are invalid." },
+};
+
+export const TileMetaErrorMessages = {
+    meta: { invalid: "The tile metadata is invalid." },
+    index: { invalid: "The tile index must be an integer." },
+    category: { invalid: "The tile category is invalid." },
+    solid: { invalid: 'The tile field "solid" is invalid.' },
+    top: { invalid: "The top tile of the wall is invalid." },
+    blankDefault: {
+        invalid: 'The tile field "blankDefault" is invalid.',
+    },
+};
+
 export const ActionParamsErrorMessages = {
     seats: {
         invalid: "The seats of the asset are invalid.",
@@ -73,4 +99,10 @@ export const LibraryFamilyQueryErrorMessages = {
     sort: { invalid: "The sort option is invalid." },
     page: { invalid: "The page must be a positive integer." },
     pageSize: { invalid: "The page size is invalid." },
+};
+
+export const LibraryTilesetQueryErrorMessages = {
+    search: { invalid: "The search text is invalid." },
+    inUse: { invalid: "The in use filter must be true or false." },
+    progress: { invalid: "The progress filter is invalid." },
 };

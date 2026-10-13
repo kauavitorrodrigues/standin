@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { assetAnimationSchema } from "../asset-animation.schema";
 import {
     CreateAssetDataSchema,
+    CreateTilesetDataSchema,
     CreateVariantDataSchema,
     DeleteAssetQuerySchema,
     UpdateLibraryAssetSchema,
@@ -36,6 +37,27 @@ describe("assetAnimationSchema", () => {
                 repeat: 0,
             }).success
         ).toBe(true);
+    });
+});
+
+describe("CreateTilesetDataSchema", () => {
+    it("needs only a name", () => {
+        expect(
+            CreateTilesetDataSchema.safeParse({ name: "Pisos" }).success
+        ).toBe(true);
+        expect(CreateTilesetDataSchema.safeParse({}).success).toBe(false);
+    });
+
+    it("rejects a negative margin and a bad tile index", () => {
+        expect(
+            CreateTilesetDataSchema.safeParse({ name: "a", margin: -1 }).success
+        ).toBe(false);
+        expect(
+            CreateTilesetDataSchema.safeParse({
+                name: "a",
+                tileMeta: { x: { category: "FLOOR" } },
+            }).success
+        ).toBe(false);
     });
 });
 

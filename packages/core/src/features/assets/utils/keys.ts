@@ -1,15 +1,16 @@
 import {
     db,
     assetsTable,
+    tilesetsTable,
     and,
     eq,
     like,
 } from "@standin/database";
-import { AssetKeyTakenError } from "@standin/contracts";
+import { AssetKeyTakenError, TilesetKeyTakenError } from "@standin/contracts";
 import type { DbExecutor } from "../../../lib/types";
-import { ASSET_KEY_FALLBACK } from "../consts/fields";
+import { ASSET_KEY_FALLBACK, TILESET_KEY_FALLBACK } from "../consts/fields";
 import { pickFreeKey, slugifyKey } from "./deriveKey";
-import { liveAssetInScope } from "./scope";
+import { liveAssetInScope, liveTilesetInScope } from "./scope";
 
 /**
  * The key of a new asset: the one sent (409 when it is taken), or the slug of
@@ -40,6 +41,40 @@ export const resolveAssetKey = async (
             and(
                 liveAssetInScope(organizationId),
                 like(assetsTable.key, `${base}%`)
+            )
+        );
+    return pickFreeKey(base, new Set(rows.map(({ key }) => key)));
+};
+
+/** Same rules as `resolveAssetKey`, for tilesets. */
+export const resolveTilesetKey = async (
+    sent: string | undefined,
+    name: string,
+    organizationId: string | null,
+    executor: DbExecutor = db
+): Promise<string> => {
+    if (sent !== undefined) {
+        const [taken] = await executor
+            .select({ id: tilesetsTable.id })
+            .from(tilesetsTable)
+            .where(
+                and(
+                    liveTilesetInScope(organizationId),
+                    eq(tilesetsTable.key, sent)
+                )
+            );
+        if (taken) throw new TilesetKeyTakenError();
+        return sent;
+    }
+
+    const base = slugifyKey(name, TILESET_KEY_FALLBACK);
+    const rows = await executor
+        .select({ key: tilesetsTable.key })
+        .from(tilesetsTable)
+        .where(
+            and(
+                liveTilesetInScope(organizationId),
+                like(tilesetsTable.key, `${base}%`)
             )
         );
     return pickFreeKey(base, new Set(rows.map(({ key }) => key)));
