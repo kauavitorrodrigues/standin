@@ -6,7 +6,8 @@ export const AuthErrorMessages = {
     },
     password: {
         required: "A senha é obrigatória.",
-        invalid: "A senha deve conter ao menos 3 tipos: letras minúsculas, maiúsculas, números e símbolos.",
+        invalid:
+            "A senha deve conter ao menos 3 tipos: letras minúsculas, maiúsculas, números e símbolos.",
         min: `A senha deve ter no mínimo ${MIN_PASSWORD_LENGTH} caracteres.`,
         max: `A senha não pode ter mais de ${MAX_PASSWORD_LENGTH} caracteres.`,
         sequential: "A senha não pode conter sequências óbvias.",
