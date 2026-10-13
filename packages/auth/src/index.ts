@@ -1,6 +1,6 @@
 // Lib
 export * from "./lib/can";
-export * from "./lib/resolveRole";
+export * from "./lib/resolveRoles";
 
 // Types
 export * from "./types/permission";
