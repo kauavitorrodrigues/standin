@@ -2,12 +2,11 @@ import { useForm } from "react-hook-form";
 import { toast } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-    MAX_ORGANIZATION_NAME_LENGTH,
     OrganizationDataSchema,
     type OrganizationDataSchemaType,
 } from "@standin/contracts";
-import { TextFormField } from "@/components/fields/TextFormField";
 import { FormDialogControls } from "@/components/FormDialogControls";
+import { OrganizationFormFields } from "../fields/FormFields";
 import { OrganizationMutations } from "../../mutations";
 import { OrganizationsQueries } from "../../queries";
 import { useOrganization } from "../../hooks/useOrganization";
@@ -43,15 +42,7 @@ export const CreateOrganizationForm = ({ onShowDialog }: Props) => {
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <TextFormField
-                control={form.control}
-                name="name"
-                label="Nome"
-                required
-                placeholder="Nome da organização"
-                disabled={isSubmitting}
-                maxLength={MAX_ORGANIZATION_NAME_LENGTH}
-            />
+            <OrganizationFormFields form={form} disabled={isSubmitting} />
             <FormDialogControls
                 onClose={() => {
                     form.reset();
