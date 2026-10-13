@@ -1,5 +1,4 @@
 import type { NextFunction, Response } from "express";
-import { USER_ROLES } from "@standin/contracts";
 import { OrganizationService } from "@standin/core";
 import type { ExtendedRequest } from "@/types/request";
 import { sendForbiddenError } from "@/utils/sendError";
@@ -21,11 +20,9 @@ export const RequiresOrgMember = async (
         params.organizationId
     );
 
-    // Admins manage every organization, with or without a membership.
-    if (!membership && req.user.role !== USER_ROLES.ADMIN) {
-        return sendForbiddenError(res);
-    }
+    // The admin has no implicit access to organizations, only members do.
+    if (!membership) return sendForbiddenError(res);
 
-    req.organizationMembership = membership ?? undefined;
+    req.organizationMembership = membership;
     next();
 };
