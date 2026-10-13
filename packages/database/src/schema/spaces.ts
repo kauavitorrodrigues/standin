@@ -1,11 +1,11 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
     createdAtColumn,
     deletedAtColumn,
     updatedAtColumn,
     uuidPrimaryKeyColumn,
 } from "./common";
-import { text, varchar, pgTable, index } from "drizzle-orm/pg-core";
+import { text, varchar, pgTable, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { organizationsTable } from "./organizations";
 import { mapsTable } from "./maps";
 import { usersTable } from "./users";
@@ -36,7 +36,11 @@ export const spacesTable = pgTable(
     },
     (table) => [
         index("spaces_organization_id_index").on(table.organizationId),
-        index("spaces_map_id_index").on(table.mapId),
+        // One map per space.
+        uniqueIndex("spaces_map_id_unique")
+            .on(table.mapId)
+            .where(sql`${table.deletedAt} IS NULL`),
+        index("spaces_created_by_index").on(table.createdBy),
     ]
 );
 

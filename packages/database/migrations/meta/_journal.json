@@ -29,6 +29,13 @@
       "when": 1791562020140,
       "tag": "0003_add_user_role",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791821405104,
+      "tag": "0004_add_templates_assets_and_map_layout",
+      "breakpoints": true
     }
   ]
 }

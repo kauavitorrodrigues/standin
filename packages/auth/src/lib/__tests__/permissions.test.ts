@@ -52,4 +52,15 @@ describe("hasPermission", () => {
             true
         );
     });
+
+    it("lets only the admin manage templates, and the admin or an owner write the asset library", () => {
+        expect(
+            hasPermission([ROLES.ADMIN, ROLES.MEMBER], "create", "template")
+        ).toBe(true);
+        expect(hasPermission([ROLES.OWNER], "create", "template")).toBe(false);
+        expect(hasPermission([ROLES.OWNER], "read", "template")).toBe(true);
+        expect(hasPermission([ROLES.OWNER], "update", "asset")).toBe(true);
+        expect(hasPermission([ROLES.ADMIN], "update", "asset")).toBe(true);
+        expect(hasPermission([ROLES.MEMBER], "update", "asset")).toBe(false);
+    });
 });
