@@ -1,9 +1,11 @@
+import { ToolbarButton } from "@/components/editor/ToolbarButton";
+import { ToolbarDivider } from "@/components/editor/ToolbarDivider";
+import { ToolOptionsPanel } from "@/components/editor/ToolOptionsPanel";
+import { LockIcon } from "lucide-react";
 import { TILE_CATEGORY_META } from "../../../../consts/categoryMeta";
+import { TILE_EDITOR_KEYS } from "../../../../consts/editorKeys";
 import type { TileBrush, TileTool } from "../../../../types/sheet";
 import { usesBrush } from "../../../../utils/editor/toolRules";
-import { FloatingPanel } from "../../../layout/FloatingPanel";
-import { TileBrushButton } from "./Button";
-import { TileSolidToggle } from "./SolidToggle";
 
 type Props = {
     tool: TileTool;
@@ -14,9 +16,8 @@ type Props = {
     onSolidChange: (solid: boolean) => void;
 };
 
-// The panel on the right of the sheet, beside the tools (in the column that
-// holds it), that shows up with the tools that paint: the category and whether it is solid, one over
-// the other. They are the brush.
+// The panel that shows up with the tools that paint, beside the tool: the
+// category and whether it is solid, one over the other. They are the brush.
 export const TileBrushRail = ({
     tool,
     brush,
@@ -24,27 +25,27 @@ export const TileBrushRail = ({
     disabled,
     onBrushChange,
     onSolidChange,
-}: Props) => {
-    return (
-        <FloatingPanel
-            open={usesBrush(tool)}
-            className="static flex max-h-[calc(100vh-14rem)] flex-col items-center gap-1 overflow-y-auto p-1"
-        >
-            {TILE_CATEGORY_META.map((meta) => (
-                <TileBrushButton
-                    key={meta.value}
-                    meta={meta}
-                    active={brush === meta.value}
-                    disabled={disabled}
-                    onClick={() => onBrushChange(meta.value)}
-                />
-            ))}
-            <div className="bg-border my-0.5 h-px w-6" />
-            <TileSolidToggle
-                solid={solid}
+}: Props) => (
+    <ToolOptionsPanel open={usesBrush(tool)}>
+        {TILE_CATEGORY_META.map(({ value, ...meta }) => (
+            <ToolbarButton
+                key={value}
+                {...meta}
+                active={brush === value}
                 disabled={disabled}
-                onSolidChange={onSolidChange}
+                onClick={() => onBrushChange(value)}
             />
-        </FloatingPanel>
-    );
-};
+        ))}
+        <ToolbarDivider />
+        <ToolbarButton
+            label="Sólido"
+            description="O avatar não passa pelo que for pintado"
+            icon={LockIcon}
+            shortcut={TILE_EDITOR_KEYS.TOGGLE_SOLID[0].toUpperCase()}
+            active={solid}
+            activeLook="toggle"
+            disabled={disabled}
+            onClick={() => onSolidChange(!solid)}
+        />
+    </ToolOptionsPanel>
+);

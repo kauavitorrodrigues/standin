@@ -16,11 +16,11 @@ type Props = {
 // The less frequent actions of the editor of a tileset: rename and delete.
 export const TilesetEditorMenu = ({ onRename, onDelete }: Props) => (
     <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
             <EllipsisVerticalIcon />
             <span className="sr-only">Ações do tileset</span>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuContent align="start" className="w-40">
             <DropdownMenuItem onClick={onRename}>
                 <PencilIcon />
                 Renomear

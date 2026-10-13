@@ -57,38 +57,42 @@ export const TilesetGridForm = ({
             <TilesetInfo
                 tileset={tileset}
                 gridValue={
-                    <TilesetGridPicker
-                        suggestions={suggestions}
-                        margin={margin}
-                        spacing={spacing}
-                        disabled={isSaving}
-                        open={pickerOpen}
-                        onOpenChange={setPickerOpen}
-                        typing={typing}
-                        onTypingChange={setTyping}
-                        onPick={pick}
-                        notice={
-                            <TilesetGridMismatch show={draftGrid === null} />
-                        }
-                        customFields={
-                            editable ? (
-                                <TilesetGridCustomFields
-                                    control={form.control}
-                                    disabled={isSaving}
+                    <div className="flex items-center justify-end gap-1">
+                        <TilesetGridHint
+                            show={changed}
+                            fits={draftGrid !== null}
+                        />
+                        <TilesetGridPicker
+                            suggestions={suggestions}
+                            margin={margin}
+                            spacing={spacing}
+                            disabled={isSaving}
+                            open={pickerOpen}
+                            onOpenChange={setPickerOpen}
+                            typing={typing}
+                            onTypingChange={setTyping}
+                            onPick={pick}
+                            notice={
+                                <TilesetGridMismatch
+                                    show={draftGrid === null}
                                 />
-                            ) : undefined
-                        }
-                    >
-                        {grid.columns} × {grid.rows} ({grid.tileCount} tiles)
-                    </TilesetGridPicker>
+                            }
+                            customFields={
+                                editable ? (
+                                    <TilesetGridCustomFields
+                                        control={form.control}
+                                        disabled={isSaving}
+                                    />
+                                ) : undefined
+                            }
+                        >
+                            {grid.columns} × {grid.rows} ({grid.tileCount}{" "}
+                            tiles)
+                        </TilesetGridPicker>
+                    </div>
                 }
                 grid={grid}
                 taggedCount={taggedCount}
-            />
-            <TilesetGridHint
-                show={changed}
-                fits={draftGrid !== null}
-                pickerOpen={pickerOpen}
             />
         </div>
     );

@@ -9,6 +9,7 @@ type Props = {
     onCancel: () => void;
 };
 
+// Cancel and create. The one that places them decides how they sit.
 export const TilesetFormFooter = ({
     show,
     canCreate,
@@ -18,7 +19,7 @@ export const TilesetFormFooter = ({
     if (!show) return null;
 
     return (
-        <div className="flex justify-end gap-2">
+        <>
             <Button
                 type="button"
                 variant="outline"
@@ -31,6 +32,6 @@ export const TilesetFormFooter = ({
                 <SparklesIcon />
                 Criar tileset
             </Button>
-        </div>
+        </>
     );
 };

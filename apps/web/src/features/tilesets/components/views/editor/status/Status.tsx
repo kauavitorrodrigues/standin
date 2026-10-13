@@ -1,9 +1,14 @@
 import type { TileMeta } from "@standin/contracts";
-import type { TileZoom } from "../../../../consts/sheetZoom";
+import { FloatingPanel } from "@/components/editor/FloatingPanel";
+import { ZoomControls } from "@/components/editor/ZoomControls";
+import {
+    DEFAULT_TILE_ZOOM,
+    TILE_ZOOMS,
+    type TileZoom,
+} from "../../../../consts/sheetZoom";
 import type { TileSheetGrid } from "../../../../types/sheet";
-import { FloatingPanel } from "../../../layout/FloatingPanel";
+import { getNextTileZoom } from "../../../../utils/editor/getNextTileZoom";
 import { TileInfoChip } from "./Chip";
-import { TileZoomControls } from "../tools/Zoom";
 
 type Props = {
     grid: TileSheetGrid;
@@ -14,8 +19,8 @@ type Props = {
     onZoomChange: (zoom: TileZoom) => void;
 };
 
-// What the old status bar said, floating over the bottom of the sheet: the
-// tile under the pointer and the selection on the left, the zoom on the right.
+// What floats over the bottom of the sheet: the tile under the pointer and
+// the selection on the left, the zoom on the right.
 export const TileStatusOverlay = ({
     grid,
     meta,
@@ -32,7 +37,15 @@ export const TileStatusOverlay = ({
             selectedCount={selectedCount}
         />
         <FloatingPanel className="text-muted-foreground right-3 bottom-3 p-1 text-xs">
-            <TileZoomControls zoom={zoom} onZoomChange={onZoomChange} />
+            <ZoomControls
+                zoom={zoom}
+                canZoomIn={zoom !== TILE_ZOOMS[TILE_ZOOMS.length - 1]}
+                canZoomOut={zoom !== TILE_ZOOMS[0]}
+                onZoomIn={() => onZoomChange(getNextTileZoom(zoom, 1))}
+                onZoomOut={() => onZoomChange(getNextTileZoom(zoom, -1))}
+                onReset={() => onZoomChange(DEFAULT_TILE_ZOOM)}
+                resetLabel="Voltar ao zoom padrão"
+            />
         </FloatingPanel>
     </>
 );
