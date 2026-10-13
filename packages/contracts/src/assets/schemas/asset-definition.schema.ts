@@ -7,6 +7,7 @@ import { ASSET_TYPES } from "../enums/asset-type";
 import { assetAnimationSchema } from "./asset-animation.schema";
 import { assetColorHexSchema, assetColorKeySchema } from "./asset-color.schema";
 import { AssetErrorMessages as Messages } from "./consts/error-messages";
+import { TilesetSchema } from "./tileset.schema";
 
 const int = (message: string) =>
     z.number({ error: message }).int({ error: message });
@@ -72,3 +73,8 @@ export const AssetDefinitionSchema = z
             });
         }
     });
+
+export const AssetLibrarySchema = z.object({
+    tilesets: z.array(TilesetSchema, { error: Messages.tilesets.invalid }),
+    assets: z.array(AssetDefinitionSchema, { error: Messages.assets.invalid }),
+});

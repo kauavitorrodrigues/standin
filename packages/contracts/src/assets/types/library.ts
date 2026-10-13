@@ -1,6 +1,6 @@
 import type { AssetCategory } from "../enums/asset-category";
 import type { TileMeta } from "../schemas/tile-meta.schema";
-import type { AssetDefinition } from "./index";
+import type { AssetDefinition, Tileset } from "./index";
 
 export type LibraryTilesetSummary = {
     id: string;
@@ -47,6 +47,23 @@ export type LibraryAssetPart = {
 export type LibraryAsset = AssetDefinition & {
     inUse: boolean;
     parts: LibraryAssetPart[];
+};
+
+// A palette tab, ready to render: label, icon and order come from the
+// category meta, and `families` are the base assets sorted by name.
+export type LibraryPaletteCategory = {
+    category: AssetCategory;
+    label: string;
+    icon: string;
+    order: number;
+    families: AssetDefinition[];
+};
+
+export type LibraryPalette = {
+    tilesets: Tileset[];
+    assets: AssetDefinition[];
+    // Only the categories that have at least one family, in tab order.
+    categories: LibraryPaletteCategory[];
 };
 
 // What a card of the library shows: one family, already grouped and counted.

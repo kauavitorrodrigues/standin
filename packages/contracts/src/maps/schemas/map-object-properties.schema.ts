@@ -8,22 +8,20 @@ const BaseMapObjectPropertiesSchema = z.object({
         .default(false),
 });
 
-export const SitActionPropertiesSchema = BaseMapObjectPropertiesSchema.extend(
-    {
-        interactable: z.literal(true, {
-            error: MapObjectPropertiesErrorMessages.interactable.invalid,
-        }),
-        action: z.literal(MAP_OBJECT_ACTIONS.SIT, {
-            error: MapObjectPropertiesErrorMessages.action.invalid,
-        }),
-        seatX: z.number({
-            error: MapObjectPropertiesErrorMessages.seatX.required,
-        }),
-        seatY: z.number({
-            error: MapObjectPropertiesErrorMessages.seatY.required,
-        }),
-    },
-);
+export const SitActionPropertiesSchema = BaseMapObjectPropertiesSchema.extend({
+    interactable: z.literal(true, {
+        error: MapObjectPropertiesErrorMessages.interactable.invalid,
+    }),
+    action: z.literal(MAP_OBJECT_ACTIONS.SIT, {
+        error: MapObjectPropertiesErrorMessages.action.invalid,
+    }),
+    seatX: z.number({
+        error: MapObjectPropertiesErrorMessages.seatX.required,
+    }),
+    seatY: z.number({
+        error: MapObjectPropertiesErrorMessages.seatY.required,
+    }),
+});
 
 export const TeleportActionPropertiesSchema =
     BaseMapObjectPropertiesSchema.extend({
