@@ -1,4 +1,5 @@
 import type { UserSummary } from "@standin/contracts";
+import { PeopleEmptyState } from "@/features/spaces/components/pages/space-page/people/ContentStates";
 import { PeopleSection } from "@/features/spaces/components/pages/space-page/people/PeopleSection";
 
 type Props = {
@@ -9,11 +10,7 @@ type Props = {
 
 export const PeopleList = ({ online, offline, selfUserId }: Props) => {
     if (online.length === 0 && offline.length === 0) {
-        return (
-            <p className="px-1 py-6 text-center text-sm text-muted-foreground">
-                Ninguém encontrado
-            </p>
-        );
+        return <PeopleEmptyState />;
     }
 
     return (
