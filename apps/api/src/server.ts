@@ -1,26 +1,13 @@
 import { createServer } from "node:http";
-import path from "node:path";
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import router from "./router";
+import { createApp } from "./app";
 import { validateEnv } from "@/utils/validateEnv";
 import { createSocketServer } from "@/lib/socket/createSocketServer";
 import { SocketManager } from "@/lib/socket/socketManager";
 import { ShutdownError, ShutdownTimeoutError } from "@/errors/ShutdownError";
-import { httpCorsOptions } from "@/consts/server";
 
 validateEnv(["JWT_SECRET", "DATABASE_URL", "FRONTEND_URL"]);
 
-const app = express();
-
-app.use(cors(httpCorsOptions));
-app.use(express.json());
-app.use(cookieParser());
-app.use("/public", express.static(path.join(process.cwd(), "public")));
-app.use(router);
-
-const server = createServer(app);
+const server = createServer(createApp());
 
 createSocketServer(server);
 
