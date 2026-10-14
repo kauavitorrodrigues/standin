@@ -25,3 +25,4 @@ export * from "./can-replace-asset-result";
 export * from "./replace-alternatives";
 export * from "./replay-ops-result";
 export * from "./stamp";
+export * from "./build-stamp-ops-result";

@@ -24,3 +24,5 @@ export * from "./getReplaceAlternatives";
 export * from "./resolveModelVariant";
 export * from "./ops/diffTileLayers";
 export * from "./replayOps";
+export * from "./buildBlankEditorModel";
+export * from "./buildStampOps";
