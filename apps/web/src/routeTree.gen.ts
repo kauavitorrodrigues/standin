@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppAdminRouteImport } from './routes/_app/_admin'
 import { Route as AppDefaultRouteImport } from './routes/_app/_default'
 import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
+import { Route as AppDefaultLibraryRouteImport } from './routes/_app/_default/library'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
 import { Route as AppSpacesNewRouteImport } from './routes/_app/spaces/new'
 import { Route as AppSpacesSpaceIdEditRouteImport } from './routes/_app/spaces/$spaceId_.edit'
@@ -25,8 +26,16 @@ import { Route as AppAdminAdminMapsIndexRouteImport } from './routes/_app/_admin
 import { Route as AppAdminAdminTilesetsIndexRouteImport } from './routes/_app/_admin/admin/tilesets/index'
 import { Route as AppAdminAdminTilesetsTilesetIdRouteImport } from './routes/_app/_admin/admin/tilesets/$tilesetId'
 import { Route as AppAdminAdminTilesetsNewRouteImport } from './routes/_app/_admin/admin/tilesets/new'
+import { Route as AppDefaultLibraryAreasIndexRouteImport } from './routes/_app/_default/library/areas/index'
+import { Route as AppDefaultLibraryAreasNewRouteImport } from './routes/_app/_default/library/areas/new'
+import { Route as AppDefaultLibraryAssetsIndexRouteImport } from './routes/_app/_default/library/assets/index'
+import { Route as AppDefaultLibraryAssetsNewRouteImport } from './routes/_app/_default/library/assets/new'
+import { Route as AppDefaultLibraryTilesetsIndexRouteImport } from './routes/_app/_default/library/tilesets/index'
+import { Route as AppDefaultLibraryTilesetsTilesetIdRouteImport } from './routes/_app/_default/library/tilesets/$tilesetId'
+import { Route as AppDefaultLibraryTilesetsNewRouteImport } from './routes/_app/_default/library/tilesets/new'
 import { Route as AppAdminAdminAreasAreaIdEditRouteImport } from './routes/_app/_admin/admin/areas/$areaId.edit'
 import { Route as AppAdminAdminMapsTemplateIdEditRouteImport } from './routes/_app/_admin/admin/maps/$templateId.edit'
+import { Route as AppDefaultLibraryAreasAreaIdEditRouteImport } from './routes/_app/_default/library/areas/$areaId.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -48,6 +57,11 @@ const AppDefaultRoute = AppDefaultRouteImport.update({
 const AppDefaultHomeRoute = AppDefaultHomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => AppDefaultRoute,
+} as any)
+const AppDefaultLibraryRoute = AppDefaultLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
   getParentRoute: () => AppDefaultRoute,
 } as any)
 const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
@@ -109,6 +123,48 @@ const AppAdminAdminTilesetsNewRoute =
     path: '/admin/tilesets/new',
     getParentRoute: () => AppAdminRoute,
   } as any)
+const AppDefaultLibraryAreasIndexRoute =
+  AppDefaultLibraryAreasIndexRouteImport.update({
+    id: '/areas/',
+    path: '/areas/',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
+const AppDefaultLibraryAreasNewRoute =
+  AppDefaultLibraryAreasNewRouteImport.update({
+    id: '/areas/new',
+    path: '/areas/new',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
+const AppDefaultLibraryAssetsIndexRoute =
+  AppDefaultLibraryAssetsIndexRouteImport.update({
+    id: '/assets/',
+    path: '/assets/',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
+const AppDefaultLibraryAssetsNewRoute =
+  AppDefaultLibraryAssetsNewRouteImport.update({
+    id: '/assets/new',
+    path: '/assets/new',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
+const AppDefaultLibraryTilesetsIndexRoute =
+  AppDefaultLibraryTilesetsIndexRouteImport.update({
+    id: '/tilesets/',
+    path: '/tilesets/',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
+const AppDefaultLibraryTilesetsTilesetIdRoute =
+  AppDefaultLibraryTilesetsTilesetIdRouteImport.update({
+    id: '/tilesets/$tilesetId',
+    path: '/tilesets/$tilesetId',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
+const AppDefaultLibraryTilesetsNewRoute =
+  AppDefaultLibraryTilesetsNewRouteImport.update({
+    id: '/tilesets/new',
+    path: '/tilesets/new',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
 const AppAdminAdminAreasAreaIdEditRoute =
   AppAdminAdminAreasAreaIdEditRouteImport.update({
     id: '/admin/areas/$areaId/edit',
@@ -121,10 +177,17 @@ const AppAdminAdminMapsTemplateIdEditRoute =
     path: '/admin/maps/$templateId/edit',
     getParentRoute: () => AppAdminRoute,
   } as any)
+const AppDefaultLibraryAreasAreaIdEditRoute =
+  AppDefaultLibraryAreasAreaIdEditRouteImport.update({
+    id: '/areas/$areaId/edit',
+    path: '/areas/$areaId/edit',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/home': typeof AppDefaultHomeRoute
+  '/library': typeof AppDefaultLibraryRouteWithChildren
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
@@ -132,16 +195,25 @@ export interface FileRoutesByFullPath {
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
+  '/library/areas/new': typeof AppDefaultLibraryAreasNewRoute
+  '/library/assets/new': typeof AppDefaultLibraryAssetsNewRoute
+  '/library/tilesets/$tilesetId': typeof AppDefaultLibraryTilesetsTilesetIdRoute
+  '/library/tilesets/new': typeof AppDefaultLibraryTilesetsNewRoute
   '/admin/areas/': typeof AppAdminAdminAreasIndexRoute
   '/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
   '/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
+  '/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
+  '/library/assets/': typeof AppDefaultLibraryAssetsIndexRoute
+  '/library/tilesets/': typeof AppDefaultLibraryTilesetsIndexRoute
   '/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
+  '/library/areas/$areaId/edit': typeof AppDefaultLibraryAreasAreaIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/home': typeof AppDefaultHomeRoute
+  '/library': typeof AppDefaultLibraryRouteWithChildren
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
@@ -149,12 +221,20 @@ export interface FileRoutesByTo {
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
+  '/library/areas/new': typeof AppDefaultLibraryAreasNewRoute
+  '/library/assets/new': typeof AppDefaultLibraryAssetsNewRoute
+  '/library/tilesets/$tilesetId': typeof AppDefaultLibraryTilesetsTilesetIdRoute
+  '/library/tilesets/new': typeof AppDefaultLibraryTilesetsNewRoute
   '/admin/areas': typeof AppAdminAdminAreasIndexRoute
   '/admin/assets': typeof AppAdminAdminAssetsIndexRoute
   '/admin/maps': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets': typeof AppAdminAdminTilesetsIndexRoute
+  '/library/areas': typeof AppDefaultLibraryAreasIndexRoute
+  '/library/assets': typeof AppDefaultLibraryAssetsIndexRoute
+  '/library/tilesets': typeof AppDefaultLibraryTilesetsIndexRoute
   '/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
+  '/library/areas/$areaId/edit': typeof AppDefaultLibraryAreasAreaIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -163,6 +243,7 @@ export interface FileRoutesById {
   '/_app/_admin': typeof AppAdminRouteWithChildren
   '/_app/_default': typeof AppDefaultRouteWithChildren
   '/_app/_default/home': typeof AppDefaultHomeRoute
+  '/_app/_default/library': typeof AppDefaultLibraryRouteWithChildren
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spaces/new': typeof AppSpacesNewRoute
   '/_app/spaces/$spaceId_/edit': typeof AppSpacesSpaceIdEditRoute
@@ -170,18 +251,27 @@ export interface FileRoutesById {
   '/_app/_admin/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/_app/_admin/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/_app/_admin/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
+  '/_app/_default/library/areas/new': typeof AppDefaultLibraryAreasNewRoute
+  '/_app/_default/library/assets/new': typeof AppDefaultLibraryAssetsNewRoute
+  '/_app/_default/library/tilesets/$tilesetId': typeof AppDefaultLibraryTilesetsTilesetIdRoute
+  '/_app/_default/library/tilesets/new': typeof AppDefaultLibraryTilesetsNewRoute
   '/_app/_admin/admin/areas/': typeof AppAdminAdminAreasIndexRoute
   '/_app/_admin/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
   '/_app/_admin/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/_app/_admin/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
+  '/_app/_default/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
+  '/_app/_default/library/assets/': typeof AppDefaultLibraryAssetsIndexRoute
+  '/_app/_default/library/tilesets/': typeof AppDefaultLibraryTilesetsIndexRoute
   '/_app/_admin/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/_app/_admin/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
+  '/_app/_default/library/areas/$areaId/edit': typeof AppDefaultLibraryAreasAreaIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/home'
+    | '/library'
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
@@ -189,16 +279,25 @@ export interface FileRouteTypes {
     | '/admin/assets/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
+    | '/library/areas/new'
+    | '/library/assets/new'
+    | '/library/tilesets/$tilesetId'
+    | '/library/tilesets/new'
     | '/admin/areas/'
     | '/admin/assets/'
     | '/admin/maps/'
     | '/admin/tilesets/'
+    | '/library/areas/'
+    | '/library/assets/'
+    | '/library/tilesets/'
     | '/admin/areas/$areaId/edit'
     | '/admin/maps/$templateId/edit'
+    | '/library/areas/$areaId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/home'
+    | '/library'
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
@@ -206,12 +305,20 @@ export interface FileRouteTypes {
     | '/admin/assets/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
+    | '/library/areas/new'
+    | '/library/assets/new'
+    | '/library/tilesets/$tilesetId'
+    | '/library/tilesets/new'
     | '/admin/areas'
     | '/admin/assets'
     | '/admin/maps'
     | '/admin/tilesets'
+    | '/library/areas'
+    | '/library/assets'
+    | '/library/tilesets'
     | '/admin/areas/$areaId/edit'
     | '/admin/maps/$templateId/edit'
+    | '/library/areas/$areaId/edit'
   id:
     | '__root__'
     | '/'
@@ -219,6 +326,7 @@ export interface FileRouteTypes {
     | '/_app/_admin'
     | '/_app/_default'
     | '/_app/_default/home'
+    | '/_app/_default/library'
     | '/_app/spaces/$spaceId'
     | '/_app/spaces/new'
     | '/_app/spaces/$spaceId_/edit'
@@ -226,12 +334,20 @@ export interface FileRouteTypes {
     | '/_app/_admin/admin/assets/new'
     | '/_app/_admin/admin/tilesets/$tilesetId'
     | '/_app/_admin/admin/tilesets/new'
+    | '/_app/_default/library/areas/new'
+    | '/_app/_default/library/assets/new'
+    | '/_app/_default/library/tilesets/$tilesetId'
+    | '/_app/_default/library/tilesets/new'
     | '/_app/_admin/admin/areas/'
     | '/_app/_admin/admin/assets/'
     | '/_app/_admin/admin/maps/'
     | '/_app/_admin/admin/tilesets/'
+    | '/_app/_default/library/areas/'
+    | '/_app/_default/library/assets/'
+    | '/_app/_default/library/tilesets/'
     | '/_app/_admin/admin/areas/$areaId/edit'
     | '/_app/_admin/admin/maps/$templateId/edit'
+    | '/_app/_default/library/areas/$areaId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -274,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AppDefaultHomeRouteImport
+      parentRoute: typeof AppDefaultRoute
+    }
+    '/_app/_default/library': {
+      id: '/_app/_default/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AppDefaultLibraryRouteImport
       parentRoute: typeof AppDefaultRoute
     }
     '/_app/spaces/$spaceId': {
@@ -353,6 +476,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdminTilesetsNewRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/_default/library/areas/': {
+      id: '/_app/_default/library/areas/'
+      path: '/areas'
+      fullPath: '/library/areas/'
+      preLoaderRoute: typeof AppDefaultLibraryAreasIndexRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
+    '/_app/_default/library/areas/new': {
+      id: '/_app/_default/library/areas/new'
+      path: '/areas/new'
+      fullPath: '/library/areas/new'
+      preLoaderRoute: typeof AppDefaultLibraryAreasNewRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
+    '/_app/_default/library/assets/': {
+      id: '/_app/_default/library/assets/'
+      path: '/assets'
+      fullPath: '/library/assets/'
+      preLoaderRoute: typeof AppDefaultLibraryAssetsIndexRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
+    '/_app/_default/library/assets/new': {
+      id: '/_app/_default/library/assets/new'
+      path: '/assets/new'
+      fullPath: '/library/assets/new'
+      preLoaderRoute: typeof AppDefaultLibraryAssetsNewRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
+    '/_app/_default/library/tilesets/': {
+      id: '/_app/_default/library/tilesets/'
+      path: '/tilesets'
+      fullPath: '/library/tilesets/'
+      preLoaderRoute: typeof AppDefaultLibraryTilesetsIndexRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
+    '/_app/_default/library/tilesets/$tilesetId': {
+      id: '/_app/_default/library/tilesets/$tilesetId'
+      path: '/tilesets/$tilesetId'
+      fullPath: '/library/tilesets/$tilesetId'
+      preLoaderRoute: typeof AppDefaultLibraryTilesetsTilesetIdRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
+    '/_app/_default/library/tilesets/new': {
+      id: '/_app/_default/library/tilesets/new'
+      path: '/tilesets/new'
+      fullPath: '/library/tilesets/new'
+      preLoaderRoute: typeof AppDefaultLibraryTilesetsNewRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
     '/_app/_admin/admin/areas/$areaId/edit': {
       id: '/_app/_admin/admin/areas/$areaId/edit'
       path: '/admin/areas/$areaId/edit'
@@ -366,6 +538,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/maps/$templateId/edit'
       preLoaderRoute: typeof AppAdminAdminMapsTemplateIdEditRouteImport
       parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_default/library/areas/$areaId/edit': {
+      id: '/_app/_default/library/areas/$areaId/edit'
+      path: '/areas/$areaId/edit'
+      fullPath: '/library/areas/$areaId/edit'
+      preLoaderRoute: typeof AppDefaultLibraryAreasAreaIdEditRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
     }
   }
 }
@@ -400,12 +579,40 @@ const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
   AppAdminRouteChildren,
 )
 
+interface AppDefaultLibraryRouteChildren {
+  AppDefaultLibraryAreasNewRoute: typeof AppDefaultLibraryAreasNewRoute
+  AppDefaultLibraryAssetsNewRoute: typeof AppDefaultLibraryAssetsNewRoute
+  AppDefaultLibraryTilesetsTilesetIdRoute: typeof AppDefaultLibraryTilesetsTilesetIdRoute
+  AppDefaultLibraryTilesetsNewRoute: typeof AppDefaultLibraryTilesetsNewRoute
+  AppDefaultLibraryAreasIndexRoute: typeof AppDefaultLibraryAreasIndexRoute
+  AppDefaultLibraryAssetsIndexRoute: typeof AppDefaultLibraryAssetsIndexRoute
+  AppDefaultLibraryTilesetsIndexRoute: typeof AppDefaultLibraryTilesetsIndexRoute
+  AppDefaultLibraryAreasAreaIdEditRoute: typeof AppDefaultLibraryAreasAreaIdEditRoute
+}
+
+const AppDefaultLibraryRouteChildren: AppDefaultLibraryRouteChildren = {
+  AppDefaultLibraryAreasNewRoute: AppDefaultLibraryAreasNewRoute,
+  AppDefaultLibraryAssetsNewRoute: AppDefaultLibraryAssetsNewRoute,
+  AppDefaultLibraryTilesetsTilesetIdRoute:
+    AppDefaultLibraryTilesetsTilesetIdRoute,
+  AppDefaultLibraryTilesetsNewRoute: AppDefaultLibraryTilesetsNewRoute,
+  AppDefaultLibraryAreasIndexRoute: AppDefaultLibraryAreasIndexRoute,
+  AppDefaultLibraryAssetsIndexRoute: AppDefaultLibraryAssetsIndexRoute,
+  AppDefaultLibraryTilesetsIndexRoute: AppDefaultLibraryTilesetsIndexRoute,
+  AppDefaultLibraryAreasAreaIdEditRoute: AppDefaultLibraryAreasAreaIdEditRoute,
+}
+
+const AppDefaultLibraryRouteWithChildren =
+  AppDefaultLibraryRoute._addFileChildren(AppDefaultLibraryRouteChildren)
+
 interface AppDefaultRouteChildren {
   AppDefaultHomeRoute: typeof AppDefaultHomeRoute
+  AppDefaultLibraryRoute: typeof AppDefaultLibraryRouteWithChildren
 }
 
 const AppDefaultRouteChildren: AppDefaultRouteChildren = {
   AppDefaultHomeRoute: AppDefaultHomeRoute,
+  AppDefaultLibraryRoute: AppDefaultLibraryRouteWithChildren,
 }
 
 const AppDefaultRouteWithChildren = AppDefaultRoute._addFileChildren(
