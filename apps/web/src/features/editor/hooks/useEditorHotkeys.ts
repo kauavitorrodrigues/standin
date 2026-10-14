@@ -12,10 +12,20 @@ import { useEditorZoom } from "@/features/editor/hooks/useEditorZoom";
 import type { ArrowDirection } from "@/features/editor/types/arrow-direction";
 import { isEditable } from "@/features/editor/utils/isEditable";
 
+type Options = {
+    // Whether the zone tool has a key. An editor without zones turns it off.
+    zones?: boolean;
+    // What Ctrl+S does. By default it asks to publish.
+    onSave?: () => void;
+};
+
 // The keys of the editor. The tool keys, the panel, the grid, the zones, the zoom and the undo and redo combos work
 // now. The rest call actions of the store that the tools fill in later. Keys
 // are ignored while the user types in a field (the hooks check it).
-export const useEditorHotkeys = (onFit: () => void) => {
+export const useEditorHotkeys = (
+    onFit: () => void,
+    { zones = true, onSave }: Options = {}
+) => {
     const store = useEditorStore();
     const zoom = useEditorZoom();
     const draftStore = useDraftStore();
@@ -38,7 +48,7 @@ export const useEditorHotkeys = (onFit: () => void) => {
         [MAP_EDITOR_COMBOS.UNDO]: undo,
         [MAP_EDITOR_COMBOS.REDO]: redo,
         [MAP_EDITOR_COMBOS.REDO_ALT]: redo,
-        [MAP_EDITOR_COMBOS.PUBLISH]: store.requestPublish,
+        [MAP_EDITOR_COMBOS.PUBLISH]: onSave ?? store.requestPublish,
         [MAP_EDITOR_COMBOS.COPY]: copy,
         [MAP_EDITOR_COMBOS.PASTE]: paste,
     });
@@ -64,9 +74,9 @@ export const useEditorHotkeys = (onFit: () => void) => {
     useHotkey(MAP_TOOL_KEYS[EDITOR_TOOLS.PICKER], () =>
         store.setTool(EDITOR_TOOLS.PICKER)
     );
-    useHotkey(MAP_TOOL_KEYS[EDITOR_TOOLS.ZONE], () =>
-        store.setTool(EDITOR_TOOLS.ZONE)
-    );
+    useHotkey(MAP_TOOL_KEYS[EDITOR_TOOLS.ZONE], () => {
+        if (zones) store.setTool(EDITOR_TOOLS.ZONE);
+    });
 
     useHotkey(MAP_EDITOR_KEYS.TOGGLE_PANEL, store.togglePanel);
     useHotkey(MAP_EDITOR_KEYS.TOGGLE_GRID, store.toggleGrid);

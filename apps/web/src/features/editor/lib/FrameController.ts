@@ -90,8 +90,10 @@ export class FrameController implements PointerInterceptor {
         this.end();
     };
 
+    // The scene is going away, so there is no cursor left to put back.
     destroy = (): void => {
-        this.end();
+        this.drag = null;
+        this.options.onHint(null);
     };
 
     private end(): void {
