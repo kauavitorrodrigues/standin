@@ -140,6 +140,8 @@ const render = () => {
                             palette: {
                                 tilesets: [],
                                 categories: [],
+                                areas: [],
+                                fetchAreaStamp: vi.fn(),
                                 isLoading: false,
                                 isError: false,
                             },

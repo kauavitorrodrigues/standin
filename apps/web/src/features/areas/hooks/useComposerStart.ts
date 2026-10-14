@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { AreasQueries } from "../queries";
 import { buildComposerStart } from "../utils/buildComposerStart";
+import { fetchNoAreaStamp } from "../utils/fetchNoAreaStamp";
 
 // What the composer opens with, once the library (and the area, when editing)
 // arrived. `start` stays null while something loads, and `isError` says it
@@ -24,6 +25,8 @@ export const useComposerStart = (areaId?: string) => {
         palette: {
             tilesets: palette.tilesets,
             categories: palette.categories,
+            areas: [],
+            fetchAreaStamp: fetchNoAreaStamp,
             isLoading: palette.isLoading,
             isError: palette.isError,
         },
