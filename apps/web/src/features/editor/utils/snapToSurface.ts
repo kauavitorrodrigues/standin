@@ -1,4 +1,5 @@
 import type { AssetDefinition, Cell, PlacedAsset } from "@standin/contracts";
+import { findNearestSurfaceCell } from "@/features/editor/utils/findNearestSurfaceCell";
 
 const clamp = (value: number, min: number, max: number): number => {
     // An item bigger than the top has no spot that fits: keep the cell and
@@ -9,7 +10,8 @@ const clamp = (value: number, min: number, max: number): number => {
 
 // Moves the anchor of an item so its footprint stays inside the top of the
 // parent, as close to the cursor cell as it can. The anchor is the bottom left
-// cell of the footprint.
+// cell of the footprint. When the parent has a footprint mask, the item also
+// moves to the nearest cells the parent occupies.
 export const snapToSurface = (
     cell: Cell,
     item: AssetDefinition,
@@ -23,5 +25,7 @@ export const snapToSurface = (
         parent.tileX + parentAsset.footprint.w - item.footprint.w
     );
     const y = clamp(cell[1], top + item.footprint.h - 1, parent.tileY);
-    return [x, y];
+    if (!parentAsset.footprint.mask) return [x, y];
+
+    return findNearestSurfaceCell([x, y], item, parent, parentAsset) ?? [x, y];
 };
