@@ -6,7 +6,8 @@ import { REPLACE_INCOMPATIBLE_DETAILS as Detail } from "../consts/replace-incomp
 import type { CanReplaceAssetResult } from "../types/can-replace-asset-result";
 import type { EditorModel } from "../types/editor-model";
 import type { ReplaceIncompatibleDetail } from "../types/replace-incompatible-detail";
-import { isFootprintInside } from "./isFootprintInside";
+import { cellsInside } from "./cellsOverlap";
+import { getOccupiedCells } from "./getOccupiedCells";
 import { canPlaceAsset } from "./canPlaceAsset";
 import { listPlacedWithAsset } from "./placement/listPlacedWithAsset";
 import { placedFootprint } from "./placement/placedFootprint";
@@ -70,14 +71,15 @@ export const canReplaceAsset = (
         tileY: placed.tileY,
         width: targetAsset.footprint.w,
         height: targetAsset.footprint.h,
+        mask: targetAsset.footprint.mask ?? null,
     };
     const childOutside = listPlacedWithAsset(model).some(
         (child) =>
             child.placed.parentId === placed.id &&
             child.asset.placement === ASSET_PLACEMENTS.SURFACE &&
-            !isFootprintInside(
-                placedFootprint(child.placed, child.asset),
-                footprint
+            !cellsInside(
+                getOccupiedCells(placedFootprint(child.placed, child.asset)),
+                getOccupiedCells(footprint)
             )
     );
     if (childOutside) return refuse(Detail.CHILD_OUTSIDE_FOOTPRINT);

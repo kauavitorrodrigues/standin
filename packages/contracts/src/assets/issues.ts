@@ -162,6 +162,16 @@ export class FootprintInvalidIssue extends LibraryIssueItem {
     }
 }
 
+export class FootprintMaskAnimatedIssue extends LibraryIssueItem {
+    constructor() {
+        super(
+            CODES.ASSET_FOOTPRINT_MASK_ANIMATED,
+            "footprint.mask",
+            "An animated asset cannot have a footprint mask."
+        );
+    }
+}
+
 export class ActionParamsWithoutActionIssue extends LibraryIssueItem {
     constructor() {
         super(

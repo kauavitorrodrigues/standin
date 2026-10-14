@@ -99,6 +99,53 @@ describe("CreateAssetDataSchema", () => {
     });
 });
 
+describe("CreateAssetDataSchema footprint mask", () => {
+    const valid = {
+        name: "Mesa de canto",
+        type: "DESK",
+        footprint: {
+            w: 2,
+            h: 2,
+            mask: [
+                [true, true],
+                [true, false],
+            ],
+        },
+    };
+
+    it("accepts a mask that fits the footprint", () => {
+        expect(CreateAssetDataSchema.safeParse(valid).success).toBe(true);
+    });
+
+    it("accepts a null or absent mask", () => {
+        const base = { ...valid.footprint, mask: null };
+        expect(
+            CreateAssetDataSchema.safeParse({ ...valid, footprint: base })
+                .success
+        ).toBe(true);
+    });
+
+    it.each([
+        { mask: [[true, true]] },
+        { mask: [[true], [true]] },
+        {
+            mask: [
+                [false, false],
+                [false, false],
+            ],
+        },
+        { mask: [] },
+        { mask: [[]] },
+    ])("rejects %j", (override) => {
+        expect(
+            CreateAssetDataSchema.safeParse({
+                ...valid,
+                footprint: { ...valid.footprint, ...override },
+            }).success
+        ).toBe(false);
+    });
+});
+
 describe("CreateVariantDataSchema", () => {
     it("accepts a new color", () => {
         expect(

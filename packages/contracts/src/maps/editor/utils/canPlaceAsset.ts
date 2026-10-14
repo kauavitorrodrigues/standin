@@ -26,6 +26,7 @@ export const canPlaceAsset = (
         tileY,
         width: asset.footprint.w,
         height: asset.footprint.h,
+        mask: asset.footprint.mask ?? null,
     };
 
     if (!isFootprintInsideMap(footprint, model)) {
