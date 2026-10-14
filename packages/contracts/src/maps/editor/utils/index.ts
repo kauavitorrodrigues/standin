@@ -28,3 +28,5 @@ export * from "./buildBlankEditorModel";
 export * from "./buildStampOps";
 export * from "./validateStamp";
 export * from "./captureStamp";
+export * from "./stampToModel";
+export * from "./canPlaceStamp";

@@ -29,3 +29,5 @@ export * from "./build-stamp-ops-result";
 export * from "./stamp-rect";
 export * from "./capture-stamp-options";
 export * from "./capture-stamp-result";
+export * from "./stamp-to-model-result";
+export * from "./can-place-stamp-result";

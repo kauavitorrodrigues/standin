@@ -5,22 +5,10 @@ import type { BuildStampOpsResult } from "../types/build-stamp-ops-result";
 import type { EditorModel } from "../types/editor-model";
 import type { Stamp } from "../types/stamp";
 import { replayOps } from "./replayOps";
+import { isStampInsideMap } from "./stamp/isStampInsideMap";
 import { buildStampClearOps } from "./stamp/buildStampClearOps";
 import { buildStampObjectOps } from "./stamp/buildStampObjectOps";
 import { buildStampPaintOps } from "./stamp/buildStampPaintOps";
-
-const isInsideMap = (
-    model: EditorModel,
-    stamp: Stamp,
-    tileX: number,
-    tileY: number
-): boolean =>
-    Number.isInteger(tileX) &&
-    Number.isInteger(tileY) &&
-    tileX >= 0 &&
-    tileY >= 0 &&
-    tileX + stamp.width <= model.width &&
-    tileY + stamp.height <= model.height;
 
 /**
  * Operations that place a stamp with its top left corner at (tileX, tileY):
@@ -35,7 +23,7 @@ export const buildStampOps = (
     tileY: number,
     newTempId: () => string
 ): BuildStampOpsResult => {
-    if (!isInsideMap(model, stamp, tileX, tileY)) {
+    if (!isStampInsideMap(model, stamp, tileX, tileY)) {
         return {
             ok: false,
             errors: [
