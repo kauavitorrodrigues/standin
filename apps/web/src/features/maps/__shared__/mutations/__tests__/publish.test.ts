@@ -3,9 +3,9 @@ import { AxiosError } from "axios";
 import {
     PUBLISH_ERROR_KIND,
     PUBLISH_SESSION_HEADER,
-} from "../../consts/publish";
-import { PublishError } from "../../utils/PublishError";
-import { publishMap } from "../publish";
+} from "@/features/editor/consts/publish";
+import { PublishError } from "@/features/maps/__shared__/utils/PublishError";
+import { publishMap } from "@/features/maps/__shared__/mutations/publish";
 
 const post = vi.hoisted(() => vi.fn());
 

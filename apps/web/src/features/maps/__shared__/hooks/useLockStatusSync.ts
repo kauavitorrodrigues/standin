@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
-import type { LockStatus } from "@/features/maps/__shared__/types/lock-status";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
+import type { LockStatus } from "@/features/editor/types/lock-status";
 
 // Tells the EditorStore where the lock stands, so the tools, the keys, the
 // publish and the status badge follow it.

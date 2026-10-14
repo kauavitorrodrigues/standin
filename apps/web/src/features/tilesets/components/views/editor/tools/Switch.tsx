@@ -1,7 +1,7 @@
-import { HistoryButtons } from "@/components/editor/HistoryButtons";
-import { ToolbarButton } from "@/components/editor/ToolbarButton";
-import { ToolbarDivider } from "@/components/editor/ToolbarDivider";
-import { VerticalToolbar } from "@/components/editor/VerticalToolbar";
+import { HistoryButtons } from "@/features/editor/components/views/HistoryButtons";
+import { ToolbarButton } from "@/features/editor/components/views/ToolbarButton";
+import { ToolbarDivider } from "@/features/editor/components/layout/ToolbarDivider";
+import { VerticalToolbar } from "@/features/editor/components/layout/VerticalToolbar";
 import { TILE_TOOL_META } from "../../../../consts/toolMeta";
 import type { TileTool } from "../../../../types/sheet";
 import { TileToolHelp } from "../help/Help";

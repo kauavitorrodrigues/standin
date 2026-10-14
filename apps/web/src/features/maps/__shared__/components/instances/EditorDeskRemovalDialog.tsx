@@ -1,5 +1,5 @@
 import { DeskRemovalPrompt } from "@/features/maps/__shared__/components/instances/DeskRemovalPrompt";
-import { useEditorSelector } from "@/features/maps/__shared__/hooks/useEditorSelector";
+import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 
 // The confirmation of removing a desk that has an owner. Delete, the bar and
 // the eraser all end here through the pending request of the store. Cancel

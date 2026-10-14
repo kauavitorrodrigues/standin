@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { EDITOR_MESSAGES } from "@/features/maps/__shared__/consts/messages";
+import { EDITOR_MESSAGES } from "@/features/editor/consts/messages";
 import { RESUME_DECISION } from "@/features/maps/__shared__/consts/resume-decision";
-import { useDraftStore } from "@/features/maps/__shared__/hooks/useDraftStore";
+import { useDraftStore } from "@/features/editor/hooks/useDraftStore";
 import { clearDraft, getDraft } from "@/features/maps/__shared__/lib/draftDb";
 import type { ResumeDecision } from "@/features/maps/__shared__/types/ResumeDecision";
 import { getResumeDecision } from "@/features/maps/__shared__/utils/getResumeDecision";

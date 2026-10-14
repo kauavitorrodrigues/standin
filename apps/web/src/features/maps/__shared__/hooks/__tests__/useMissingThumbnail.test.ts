@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useMissingThumbnail } from "@/features/maps/__shared__/hooks/useMissingThumbnail";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 type ProbeProps = {
     thumbnail: EditorThumbnailTarget | undefined;

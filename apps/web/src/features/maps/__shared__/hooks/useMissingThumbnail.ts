@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { saveMapThumbnail } from "@/features/maps/__shared__/utils/saveMapThumbnail";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 type UseMissingThumbnailInput = {
     thumbnail: EditorThumbnailTarget | undefined;

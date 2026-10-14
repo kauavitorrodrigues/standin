@@ -1,5 +1,5 @@
 import type { ModelDesk, UserSummary } from "@standin/contracts";
-import { DESK_MESSAGES } from "@/features/maps/__shared__/consts/messages";
+import { DESK_MESSAGES } from "@/features/editor/consts/messages";
 import type { DeskRemovalPrompt } from "@/features/maps/__shared__/types/DeskRemovalPrompt";
 import { joinNames } from "@/features/maps/__shared__/utils/joinNames";
 

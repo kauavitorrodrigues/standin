@@ -1,5 +1,5 @@
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
-import { EDITOR_DIALOG } from "@/features/maps/__shared__/consts/editor-dialog";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
+import { EDITOR_DIALOG } from "@/features/editor/consts/editor-dialog";
 
 // The back button: leaves right away when nothing changed, otherwise asks
 // what to do with the changes.

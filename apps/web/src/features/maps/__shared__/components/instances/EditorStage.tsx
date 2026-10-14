@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { PublishResult } from "@standin/contracts";
 import { EditorContent } from "@/features/maps/__shared__/components/instances/EditorContent";
 import { EditorLockGate } from "@/features/maps/__shared__/components/instances/EditorLockGate";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 type EditorStageProps = {
     mapId: string;

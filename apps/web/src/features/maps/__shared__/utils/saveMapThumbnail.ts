@@ -1,5 +1,5 @@
-import { THUMBNAIL_MESSAGES } from "@/features/maps/__shared__/consts/messages";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import { THUMBNAIL_MESSAGES } from "@/features/editor/consts/messages";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 // Captures the map and hands the photo to `save`. Any failure is logged and
 // swallowed: the photo is a bonus and must never get in the way of editing.

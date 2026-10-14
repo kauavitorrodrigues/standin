@@ -1,6 +1,6 @@
 import { useForm, useWatch } from "react-hook-form";
 import type { AssetDefinition } from "@standin/contracts";
-import { SearchField } from "@/components/editor/SearchField";
+import { SearchField } from "@/features/editor/components/views/SearchField";
 import { useMapPalette } from "@/features/assets/queries/useMapPalette";
 import { PaletteBody } from "./PaletteBody";
 

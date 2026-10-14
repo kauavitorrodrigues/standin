@@ -5,7 +5,7 @@ import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublishResult } from "@standin/contracts";
 import { usePublishedThumbnail } from "@/features/maps/__shared__/hooks/usePublishedThumbnail";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 type Handler = (result: PublishResult) => void;
 

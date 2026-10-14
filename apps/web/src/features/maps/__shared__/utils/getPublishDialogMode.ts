@@ -1,11 +1,11 @@
 import {
     PUBLISH_DIALOG_MODE,
     PUBLISH_ERROR_KIND,
-} from "@/features/maps/__shared__/consts/publish";
-import { PUBLISH_PHASE } from "@/features/maps/__shared__/consts/publish-phase";
-import type { ClassifiedPublishError } from "@/features/maps/__shared__/types/publish-error";
+} from "@/features/editor/consts/publish";
+import { PUBLISH_PHASE } from "@/features/editor/consts/publish-phase";
+import type { ClassifiedPublishError } from "@/features/editor/types/publish-error";
 import type { PublishDialogMode } from "@/features/maps/__shared__/types/publish-dialog-mode";
-import type { PublishPhase } from "@/features/maps/__shared__/types/publish-phase";
+import type { PublishPhase } from "@/features/editor/types/publish-phase";
 
 const getFailureMode = (
     failure: ClassifiedPublishError | null

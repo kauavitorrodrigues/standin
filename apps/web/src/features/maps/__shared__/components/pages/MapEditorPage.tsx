@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import type { PublishResult } from "@standin/contracts";
-import { useIsSmallScreen } from "@/features/maps/__shared__/hooks/useIsSmallScreen";
-import { EditorStoreProvider } from "@/features/maps/__shared__/components/instances/EditorStoreProvider";
+import { useIsSmallScreen } from "@/features/editor/hooks/useIsSmallScreen";
+import { EditorStoreProvider } from "@/features/editor/components/instances/EditorStoreProvider";
 import { EditorStage } from "@/features/maps/__shared__/components/instances/EditorStage";
-import { SmallScreenNotice } from "@/features/maps/__shared__/components/views/SmallScreenNotice";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import { SmallScreenNotice } from "@/features/editor/components/views/SmallScreenNotice";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 type MapEditorPageProps = {
     mapId: string;

@@ -9,14 +9,14 @@ import type {
     LibraryPalette,
     MapLayout,
 } from "@standin/contracts";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
-import { PUBLISH_ERROR_KIND } from "@/features/maps/__shared__/consts/publish";
-import { DraftStoreContext } from "@/features/maps/__shared__/contexts/DraftStoreContext";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
+import { PUBLISH_ERROR_KIND } from "@/features/editor/consts/publish";
+import { DraftStoreContext } from "@/features/editor/contexts/DraftStoreContext";
 import { EditorLockContext } from "@/features/maps/__shared__/contexts/EditorLockContext";
-import { EditorStoreContext } from "@/features/maps/__shared__/contexts/EditorStoreContext";
+import { EditorStoreContext } from "@/features/editor/contexts/EditorStoreContext";
 import { useLockRecovery } from "@/features/maps/__shared__/hooks/useLockRecovery";
-import { createDraftStore } from "@/features/maps/__shared__/lib/DraftStore";
-import { createEditorStore } from "@/features/maps/__shared__/lib/EditorStore";
+import { createDraftStore } from "@/features/editor/lib/DraftStore";
+import { createEditorStore } from "@/features/editor/lib/EditorStore";
 import type { EditorLockControl } from "@/features/maps/__shared__/types/EditorLockControl";
 
 const mocks = vi.hoisted(() => ({

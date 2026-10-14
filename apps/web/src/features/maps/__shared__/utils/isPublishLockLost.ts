@@ -1,5 +1,5 @@
-import { PUBLISH_ERROR_KIND } from "@/features/maps/__shared__/consts/publish";
-import type { ClassifiedPublishError } from "@/features/maps/__shared__/types/publish-error";
+import { PUBLISH_ERROR_KIND } from "@/features/editor/consts/publish";
+import type { ClassifiedPublishError } from "@/features/editor/types/publish-error";
 
 // A 423 on publish means the lock is gone.
 export const isPublishLockLost = (

@@ -10,10 +10,10 @@ import type {
     MapLayout,
 } from "@standin/contracts";
 import { RESUME_DECISION } from "@/features/maps/__shared__/consts/resume-decision";
-import { DraftStoreContext } from "@/features/maps/__shared__/contexts/DraftStoreContext";
+import { DraftStoreContext } from "@/features/editor/contexts/DraftStoreContext";
 import { useResumeDraft } from "@/features/maps/__shared__/hooks/useResumeDraft";
-import { createDraftStore } from "@/features/maps/__shared__/lib/DraftStore";
-import type { DraftStore } from "@/features/maps/__shared__/lib/DraftStore";
+import { createDraftStore } from "@/features/editor/lib/DraftStore";
+import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import type { StoredDraft } from "@/features/maps/__shared__/types/StoredDraft";
 
 const db = vi.hoisted(() => ({

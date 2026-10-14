@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { DraftStore } from "@/features/maps/__shared__/lib/DraftStore";
+import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import { clearDraft, saveDraft } from "@/features/maps/__shared__/lib/draftDb";
 import type { StoredDraft } from "@/features/maps/__shared__/types/StoredDraft";
 import { createDraftSaver } from "@/features/maps/__shared__/utils/createDraftSaver";

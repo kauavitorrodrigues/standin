@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { AssetDefinition } from "@standin/contracts";
-import { PanelScroll } from "@/components/editor/PanelScroll";
+import { PanelScroll } from "@/features/editor/components/layout/PanelScroll";
 import { PaletteCategoryCarousel } from "@/features/assets/components/views/palette/PaletteCategoryCarousel";
 import { PaletteFamilies } from "@/features/assets/components/views/palette/PaletteFamilies";
 import { PaletteTilesContent } from "@/features/assets/components/views/palette/PaletteTilesContent";

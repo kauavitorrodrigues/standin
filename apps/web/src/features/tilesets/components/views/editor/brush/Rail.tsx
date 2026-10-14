@@ -1,6 +1,6 @@
-import { ToolbarButton } from "@/components/editor/ToolbarButton";
-import { ToolbarDivider } from "@/components/editor/ToolbarDivider";
-import { ToolOptionsPanel } from "@/components/editor/ToolOptionsPanel";
+import { ToolbarButton } from "@/features/editor/components/views/ToolbarButton";
+import { ToolbarDivider } from "@/features/editor/components/layout/ToolbarDivider";
+import { ToolOptionsPanel } from "@/features/editor/components/layout/ToolOptionsPanel";
 import { LockIcon } from "lucide-react";
 import { TILE_CATEGORY_META } from "../../../../consts/categoryMeta";
 import { TILE_EDITOR_KEYS } from "../../../../consts/editorKeys";

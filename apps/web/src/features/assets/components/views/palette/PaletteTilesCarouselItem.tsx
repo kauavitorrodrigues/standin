@@ -1,5 +1,5 @@
 import { LayersIcon } from "lucide-react";
-import { CarouselIconItem } from "@/components/editor/CarouselIconItem";
+import { CarouselIconItem } from "@/features/editor/components/views/CarouselIconItem";
 import { TILES_TAB } from "@/features/assets/consts/palette";
 
 type Props = {

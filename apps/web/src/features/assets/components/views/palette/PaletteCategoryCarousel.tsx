@@ -1,5 +1,5 @@
-import { CarouselIconItem } from "@/components/editor/CarouselIconItem";
-import { CarouselStrip } from "@/components/editor/CarouselStrip";
+import { CarouselIconItem } from "@/features/editor/components/views/CarouselIconItem";
+import { CarouselStrip } from "@/features/editor/components/views/CarouselStrip";
 import { CATEGORY_ICONS } from "@/features/assets/consts/categoryIcons";
 import type { PaletteCategories } from "@/features/assets/types/mapPalette";
 import { PaletteTilesCarouselItem } from "./PaletteTilesCarouselItem";

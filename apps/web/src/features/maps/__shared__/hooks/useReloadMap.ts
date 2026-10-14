@@ -5,9 +5,9 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { mapPaletteQueryOptions } from "@/features/assets/queries/useMapPalette";
 import { mapRenderQueryOptions } from "@/features/game/queries/useMapRender";
-import { EDITOR_MESSAGES } from "@/features/maps/__shared__/consts/messages";
-import { useDraftStore } from "@/features/maps/__shared__/hooks/useDraftStore";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
+import { EDITOR_MESSAGES } from "@/features/editor/consts/messages";
+import { useDraftStore } from "@/features/editor/hooks/useDraftStore";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { clearDraft } from "@/features/maps/__shared__/lib/draftDb";
 
 // Throws the draft away and brings the map as the server has it now: the

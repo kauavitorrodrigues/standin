@@ -1,5 +1,5 @@
-import type { LockStatus } from "@/features/maps/__shared__/types/lock-status";
-import type { PublishPhase } from "@/features/maps/__shared__/types/publish-phase";
+import type { LockStatus } from "@/features/editor/types/lock-status";
+import type { PublishPhase } from "@/features/editor/types/publish-phase";
 
 export type EditorStatusInput = {
     hasChanges: boolean;

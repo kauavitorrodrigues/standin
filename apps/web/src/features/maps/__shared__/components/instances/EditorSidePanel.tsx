@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
-import { SidePanelHeader } from "@/components/editor/SidePanelHeader";
+import { SidePanelHeader } from "@/features/editor/components/layout/SidePanelHeader";
 import { Tabs } from "@/components/ui/tabs";
-import { EditorLayout } from "@/features/maps/__shared__/components/layout";
-import { PanelTabList } from "@/features/maps/__shared__/components/views/panel/PanelTabList";
-import { PanelTabs } from "@/features/maps/__shared__/components/views/panel/PanelTabs";
-import { PanelToggle } from "@/features/maps/__shared__/components/views/panel/PanelToggle";
-import { UsageFooter } from "@/features/maps/__shared__/components/views/panel/UsageFooter";
-import { PANEL_TABS } from "@/features/maps/__shared__/consts/panelTabs";
-import { useEditorSelector } from "@/features/maps/__shared__/hooks/useEditorSelector";
+import { EditorLayout } from "@/features/editor/components/layout";
+import { PanelTabList } from "@/features/editor/components/views/panel/PanelTabList";
+import { PanelTabs } from "@/features/editor/components/views/panel/PanelTabs";
+import { PanelToggle } from "@/features/editor/components/views/panel/PanelToggle";
+import { UsageFooter } from "@/features/editor/components/views/panel/UsageFooter";
+import { PANEL_TABS } from "@/features/editor/consts/panelTabs";
+import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useRequestExit } from "@/features/maps/__shared__/hooks/useRequestExit";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 
 type EditorSidePanelProps = {
     mapId: string;

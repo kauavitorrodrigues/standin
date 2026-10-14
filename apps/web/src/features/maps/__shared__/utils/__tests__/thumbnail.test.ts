@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { MAX_THUMBNAIL_ASPECT_DRIFT } from "@standin/contracts";
-import { EDITOR_THUMBNAIL } from "@/features/maps/__shared__/consts/thumbnail";
-import { getThumbnailSize } from "@/features/maps/__shared__/utils/getThumbnailSize";
+import { EDITOR_THUMBNAIL } from "@/features/editor/consts/thumbnail";
+import { getThumbnailSize } from "@/features/editor/utils/getThumbnailSize";
 import { saveMapThumbnail } from "@/features/maps/__shared__/utils/saveMapThumbnail";
 
 describe("getThumbnailSize", () => {

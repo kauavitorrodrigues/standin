@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import type { PublishResult } from "@standin/contracts";
-import { DraftStoreProvider } from "@/features/maps/__shared__/components/instances/DraftStoreProvider";
+import { DraftStoreProvider } from "@/features/editor/components/instances/DraftStoreProvider";
 import { EditorWorkspace } from "@/features/maps/__shared__/components/instances/EditorWorkspace";
-import { EditorErrorState } from "@/features/maps/__shared__/components/views/EditorErrorState";
-import { EditorLoadingState } from "@/features/maps/__shared__/components/views/EditorLoadingState";
+import { EditorErrorState } from "@/features/editor/components/views/EditorErrorState";
+import { EditorLoadingState } from "@/features/editor/components/views/EditorLoadingState";
 import { useEditorMapData } from "@/features/maps/__shared__/hooks/useEditorMapData";
 import { useEditorModel } from "@/features/maps/__shared__/hooks/useEditorModel";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 type EditorContentProps = {
     mapId: string;

@@ -9,10 +9,10 @@ import type {
 import {
     PUBLISH_DIALOG_MODE,
     PUBLISH_ERROR_KIND,
-} from "@/features/maps/__shared__/consts/publish";
-import { PUBLISH_PHASE } from "@/features/maps/__shared__/consts/publish-phase";
-import { createDraftStore } from "@/features/maps/__shared__/lib/DraftStore";
-import { createEditorStore } from "@/features/maps/__shared__/lib/EditorStore";
+} from "@/features/editor/consts/publish";
+import { PUBLISH_PHASE } from "@/features/editor/consts/publish-phase";
+import { createDraftStore } from "@/features/editor/lib/DraftStore";
+import { createEditorStore } from "@/features/editor/lib/EditorStore";
 import type { PublishInput } from "@/features/maps/__shared__/types/publish-input";
 import { buildPublishedModel } from "@/features/maps/__shared__/utils/buildPublishedModel";
 import { getPublishAttempt } from "@/features/maps/__shared__/utils/getPublishAttempt";

@@ -2,10 +2,10 @@ import type { ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditorAcquiringState } from "@/features/maps/__shared__/components/views/EditorAcquiringState";
 import { EditorLockDeniedState } from "@/features/maps/__shared__/components/views/EditorLockDeniedState";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
 import { EditorLockContext } from "@/features/maps/__shared__/contexts/EditorLockContext";
 import { useEditorLock } from "@/features/maps/__shared__/hooks/useEditorLock";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { useLockStatusSync } from "@/features/maps/__shared__/hooks/useLockStatusSync";
 import { clearEditorQueries } from "@/features/maps/__shared__/utils/clearEditorQueries";
 

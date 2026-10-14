@@ -1,5 +1,5 @@
 import type { AssetDefinition } from "@standin/contracts";
-import { PanelScroll } from "@/components/editor/PanelScroll";
+import { PanelScroll } from "@/features/editor/components/layout/PanelScroll";
 import type {
     PaletteCategories,
     PaletteTilesets,

@@ -1,7 +1,7 @@
 import { getApiError } from "@/features/assets/utils/getApiError";
 import type { PublishIssue } from "@standin/contracts";
-import { PUBLISH_ERROR_KIND, PUBLISH_HTTP_STATUS } from "../consts/publish";
-import type { ClassifiedPublishError } from "../types/publish-error";
+import { PUBLISH_ERROR_KIND, PUBLISH_HTTP_STATUS } from "@/features/editor/consts/publish";
+import type { ClassifiedPublishError } from "@/features/editor/types/publish-error";
 
 // A request that never got an answer (network) has no status and is retried.
 // Any 5xx is retried too. Every other status is final.

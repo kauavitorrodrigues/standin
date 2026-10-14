@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { PanelToggleButton } from "@/components/editor/PanelToggleButton";
-import { SidePanel } from "@/components/editor/SidePanel";
-import { SidePanelHeader } from "@/components/editor/SidePanelHeader";
+import { PanelToggleButton } from "@/features/editor/components/views/PanelToggleButton";
+import { SidePanel } from "@/features/editor/components/layout/SidePanel";
+import { SidePanelHeader } from "@/features/editor/components/layout/SidePanelHeader";
 import { TILE_EDITOR_KEYS } from "../../../consts/editorKeys";
 import { useTileEditorContext } from "../../../hooks/editor/useEditorContext";
 

@@ -1,5 +1,5 @@
 import type { MapTemplate } from "@standin/contracts";
-import { useEditorSelector } from "@/features/maps/__shared__/hooks/useEditorSelector";
+import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useRunWithoutLock } from "@/features/maps/__shared__/hooks/useRunWithoutLock";
 import { DeleteTemplateDialog } from "../dialogs/DeleteDialog";
 

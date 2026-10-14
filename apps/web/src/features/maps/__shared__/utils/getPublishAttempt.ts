@@ -1,4 +1,4 @@
-import type { DraftState } from "@/features/maps/__shared__/types/DraftState";
+import type { DraftState } from "@/features/editor/types/DraftState";
 import type { PublishAttempt } from "@/features/maps/__shared__/types/publish-attempt";
 import { isSameOps } from "@/features/maps/__shared__/utils/isSameOps";
 

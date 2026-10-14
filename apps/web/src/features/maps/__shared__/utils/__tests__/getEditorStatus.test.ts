@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EDITOR_STATUS_KIND } from "@/features/maps/__shared__/consts/editor-status-kind";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
-import { PUBLISH_PHASE } from "@/features/maps/__shared__/consts/publish-phase";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
+import { PUBLISH_PHASE } from "@/features/editor/consts/publish-phase";
 import { getEditorStatus } from "@/features/maps/__shared__/utils/getEditorStatus";
 
 const base = {

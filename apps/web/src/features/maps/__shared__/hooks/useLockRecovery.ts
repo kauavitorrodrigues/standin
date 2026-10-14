@@ -5,11 +5,11 @@ import {
     LOCK_RECOVERY,
     LOCK_RECOVERY_DELAYS_MS,
 } from "@/features/maps/__shared__/consts/lock-recovery";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
-import { EDITOR_MESSAGES } from "@/features/maps/__shared__/consts/messages";
-import { useDraftStore } from "@/features/maps/__shared__/hooks/useDraftStore";
-import { useEditorSelector } from "@/features/maps/__shared__/hooks/useEditorSelector";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
+import { EDITOR_MESSAGES } from "@/features/editor/consts/messages";
+import { useDraftStore } from "@/features/editor/hooks/useDraftStore";
+import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { useLockControl } from "@/features/maps/__shared__/hooks/useLockControl";
 import { getLockRecovery } from "@/features/maps/__shared__/utils/getLockRecovery";
 import { getLockRecoveryDelay } from "@/features/maps/__shared__/utils/getLockRecoveryDelay";

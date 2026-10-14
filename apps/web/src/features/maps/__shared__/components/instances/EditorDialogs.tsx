@@ -5,7 +5,7 @@ import { EditorExitDialog } from "@/features/maps/__shared__/components/instance
 import { EditorPublishDialog } from "@/features/maps/__shared__/components/instances/EditorPublishDialog";
 import { EditorResumeDialog } from "@/features/maps/__shared__/components/instances/EditorResumeDialog";
 import type { ResumeDraft } from "@/features/maps/__shared__/types/ResumeDraft";
-import { useEditorSelector } from "@/features/maps/__shared__/hooks/useEditorSelector";
+import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useUnsavedChangesGuard } from "@/features/tilesets/hooks/useUnsavedChangesGuard";
 
 type EditorDialogsProps = {

@@ -1,7 +1,7 @@
 import { OrganizationsQueries } from "@/features/organizations/queries";
 import { DeskRemovalDialog } from "@/features/maps/__shared__/components/dialogs/DeskRemovalDialog";
-import { useDraftSelector } from "@/features/maps/__shared__/hooks/useDraftSelector";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
+import { useDraftSelector } from "@/features/editor/hooks/useDraftSelector";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { getDeskRemovalPrompt } from "@/features/maps/__shared__/utils/getDeskRemovalPrompt";
 
 type DeskRemovalPromptProps = {

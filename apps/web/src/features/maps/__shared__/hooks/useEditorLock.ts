@@ -4,7 +4,7 @@ import type { EditorAcquireAck } from "@standin/contracts";
 import { realtimeSocket } from "@/features/realtime/socket";
 import { useSocketEvent } from "@/features/realtime/hooks/useSocketEvent";
 import { LOCK_ACK_TIMEOUT_MS } from "@/features/maps/__shared__/consts/lock-recovery";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
 import type { EditorLockControl } from "@/features/maps/__shared__/types/EditorLockControl";
 import { acquireEditorLock } from "@/features/maps/__shared__/utils/acquireEditorLock";
 import { getLockStatus } from "@/features/maps/__shared__/utils/getLockStatus";

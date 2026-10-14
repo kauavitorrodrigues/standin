@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BottomBar } from "@/components/editor/BottomBar";
+import { BottomBar } from "@/features/editor/components/layout/BottomBar";
 import { useTileEditorContext } from "../../../hooks/editor/useEditorContext";
 
 type Props = { children: ReactNode };

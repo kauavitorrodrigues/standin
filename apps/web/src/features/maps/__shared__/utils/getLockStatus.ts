@@ -1,5 +1,5 @@
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
-import type { LockStatus } from "@/features/maps/__shared__/types/lock-status";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
+import type { LockStatus } from "@/features/editor/types/lock-status";
 import type { LockStatusInput } from "@/features/maps/__shared__/types/lock-status-input";
 
 export const getLockStatus = ({

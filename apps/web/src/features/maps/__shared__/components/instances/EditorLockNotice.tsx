@@ -1,8 +1,8 @@
 import { InfoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EDITOR_MESSAGES } from "@/features/maps/__shared__/consts/messages";
-import { useDismissable } from "@/features/maps/__shared__/hooks/useDismissable";
-import { useEditorSelector } from "@/features/maps/__shared__/hooks/useEditorSelector";
+import { EDITOR_MESSAGES } from "@/features/editor/consts/messages";
+import { useDismissable } from "@/features/editor/hooks/useDismissable";
+import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 
 // Tells, when the editor opens, that nobody else can edit or use the desks
 // until the user leaves. It floats above the bottom bar, centered in the room

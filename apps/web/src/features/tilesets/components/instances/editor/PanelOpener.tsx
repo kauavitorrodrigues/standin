@@ -1,4 +1,4 @@
-import { PanelOpener } from "@/components/editor/PanelOpener";
+import { PanelOpener } from "@/features/editor/components/views/PanelOpener";
 import { TILE_EDITOR_KEYS } from "../../../consts/editorKeys";
 import { useTileEditorContext } from "../../../hooks/editor/useEditorContext";
 

@@ -1,5 +1,5 @@
 import type { Cell, EditorOp, PublishIssue } from "@standin/contracts";
-import { getLayerLabel } from "@/features/maps/__shared__/utils/getLayerLabel";
+import { getLayerLabel } from "@/features/editor/utils/getLayerLabel";
 
 const describeOp = (op: EditorOp | undefined): string => {
     if (!op) return "Alteração";

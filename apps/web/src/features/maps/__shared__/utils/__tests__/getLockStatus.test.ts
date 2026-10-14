@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
 import { getLockStatus } from "@/features/maps/__shared__/utils/getLockStatus";
 
 describe("getLockStatus", () => {

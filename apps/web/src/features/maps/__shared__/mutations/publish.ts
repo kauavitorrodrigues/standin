@@ -5,11 +5,11 @@ import {
     PUBLISH_ERROR_KIND,
     PUBLISH_MAX_ATTEMPTS,
     PUBLISH_SESSION_HEADER,
-} from "../consts/publish";
-import type { PublishInput } from "../types/publish-input";
-import { classifyPublishError } from "../utils/classifyPublishError";
-import { getRetryDelay } from "../utils/getRetryDelay";
-import { PublishError } from "../utils/PublishError";
+} from "@/features/editor/consts/publish";
+import type { PublishInput } from "@/features/maps/__shared__/types/publish-input";
+import { classifyPublishError } from "@/features/maps/__shared__/utils/classifyPublishError";
+import { getRetryDelay } from "@/features/maps/__shared__/utils/getRetryDelay";
+import { PublishError } from "@/features/maps/__shared__/utils/PublishError";
 
 const wait = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));

@@ -11,8 +11,8 @@ import type {
 } from "@standin/contracts";
 import { DRAFT_SAVE_DELAY_MS } from "@/features/maps/__shared__/consts/draft";
 import { useDraftPersistence } from "@/features/maps/__shared__/hooks/useDraftPersistence";
-import { createDraftStore } from "@/features/maps/__shared__/lib/DraftStore";
-import type { DraftStore } from "@/features/maps/__shared__/lib/DraftStore";
+import { createDraftStore } from "@/features/editor/lib/DraftStore";
+import type { DraftStore } from "@/features/editor/lib/DraftStore";
 
 const db = vi.hoisted(() => ({
     saveDraft: vi.fn(async () => ({ ok: true, value: undefined })),

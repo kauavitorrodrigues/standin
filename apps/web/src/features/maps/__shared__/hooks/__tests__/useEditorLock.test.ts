@@ -4,10 +4,10 @@ import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LOCK_HEARTBEAT_MS } from "@standin/contracts";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
 import { useEditorLock } from "@/features/maps/__shared__/hooks/useEditorLock";
 import type { EditorLockControl } from "@/features/maps/__shared__/types/EditorLockControl";
-import type { LockStatus } from "@/features/maps/__shared__/types/lock-status";
+import type { LockStatus } from "@/features/editor/types/lock-status";
 
 type Handler = (...args: unknown[]) => void;
 

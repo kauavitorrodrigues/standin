@@ -1,6 +1,6 @@
 import { EDITOR_STATUS_KIND } from "@/features/maps/__shared__/consts/editor-status-kind";
-import { LOCK_STATUS } from "@/features/maps/__shared__/consts/lock-status";
-import { PUBLISH_PHASE } from "@/features/maps/__shared__/consts/publish-phase";
+import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
+import { PUBLISH_PHASE } from "@/features/editor/consts/publish-phase";
 import type { EditorBadgeStatus } from "@/features/maps/__shared__/types/editor-badge-status";
 import type { EditorStatusInput } from "@/features/maps/__shared__/types/editor-status-input";
 

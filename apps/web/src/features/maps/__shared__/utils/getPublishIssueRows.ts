@@ -1,5 +1,5 @@
 import type { EditorModel, EditorOp, PublishIssue } from "@standin/contracts";
-import type { PublishIssueRow } from "@/features/maps/__shared__/types/publish-issue-row";
+import type { PublishIssueRow } from "@/features/editor/types/publish-issue-row";
 import { describePublishIssue } from "@/features/maps/__shared__/utils/describePublishIssue";
 import { getOpFocusCell } from "@/features/maps/__shared__/utils/getOpFocusCell";
 

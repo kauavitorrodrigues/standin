@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useDiscardDraft } from "@/features/maps/__shared__/hooks/useDiscardDraft";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { useLockControl } from "@/features/maps/__shared__/hooks/useLockControl";
 import { runWithoutLock } from "@/features/maps/__shared__/utils/runWithoutLock";
 

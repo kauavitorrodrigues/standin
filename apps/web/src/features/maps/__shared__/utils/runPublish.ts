@@ -1,4 +1,4 @@
-import { PUBLISH_ERROR_KIND } from "@/features/maps/__shared__/consts/publish";
+import { PUBLISH_ERROR_KIND } from "@/features/editor/consts/publish";
 import type {
     RunPublishDeps,
     RunPublishParams,

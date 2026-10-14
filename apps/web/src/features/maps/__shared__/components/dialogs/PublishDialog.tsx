@@ -1,12 +1,12 @@
 import { AlertDialog, AlertDialogContent } from "@/components/ui/alert-dialog";
-import { PUBLISH_DIALOG_MODE } from "@/features/maps/__shared__/consts/publish";
-import { PublishConfirmBody } from "@/features/maps/__shared__/components/views/publish/PublishConfirmBody";
-import { PublishFailedBody } from "@/features/maps/__shared__/components/views/publish/PublishFailedBody";
-import { PublishIssuesBody } from "@/features/maps/__shared__/components/views/publish/PublishIssuesBody";
-import { PublishProgressBody } from "@/features/maps/__shared__/components/views/publish/PublishProgressBody";
-import { PublishStaleBody } from "@/features/maps/__shared__/components/views/publish/PublishStaleBody";
+import { PUBLISH_DIALOG_MODE } from "@/features/editor/consts/publish";
+import { PublishConfirmBody } from "@/features/editor/components/views/publish/PublishConfirmBody";
+import { PublishFailedBody } from "@/features/editor/components/views/publish/PublishFailedBody";
+import { PublishIssuesBody } from "@/features/editor/components/views/publish/PublishIssuesBody";
+import { PublishProgressBody } from "@/features/editor/components/views/publish/PublishProgressBody";
+import { PublishStaleBody } from "@/features/editor/components/views/publish/PublishStaleBody";
 import type { PublishDialogMode } from "@/features/maps/__shared__/types/publish-dialog-mode";
-import type { PublishIssueRow } from "@/features/maps/__shared__/types/publish-issue-row";
+import type { PublishIssueRow } from "@/features/editor/types/publish-issue-row";
 
 type PublishDialogProps = {
     open: boolean;

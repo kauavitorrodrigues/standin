@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { PublishResult } from "@standin/contracts";
 import { saveMapThumbnail } from "@/features/maps/__shared__/utils/saveMapThumbnail";
-import type { EditorThumbnailTarget } from "@/features/maps/__shared__/types/thumbnail";
+import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
 type UsePublishedThumbnailInput = {
     thumbnail: EditorThumbnailTarget | undefined;

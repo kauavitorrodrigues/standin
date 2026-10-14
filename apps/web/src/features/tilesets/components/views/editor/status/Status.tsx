@@ -1,6 +1,6 @@
 import type { TileMeta } from "@standin/contracts";
-import { FloatingPanel } from "@/components/editor/FloatingPanel";
-import { ZoomControls } from "@/components/editor/ZoomControls";
+import { FloatingPanel } from "@/features/editor/components/layout/FloatingPanel";
+import { ZoomControls } from "@/features/editor/components/views/ZoomControls";
 import {
     DEFAULT_TILE_ZOOM,
     TILE_ZOOMS,

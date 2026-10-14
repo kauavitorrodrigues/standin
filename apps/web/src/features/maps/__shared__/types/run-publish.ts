@@ -1,9 +1,9 @@
 import type { PublishResult } from "@standin/contracts";
-import type { DraftStore } from "@/features/maps/__shared__/lib/DraftStore";
-import type { EditorStore } from "@/features/maps/__shared__/lib/EditorStore";
+import type { DraftStore } from "@/features/editor/lib/DraftStore";
+import type { EditorStore } from "@/features/editor/lib/EditorStore";
 import type { PublishInput } from "@/features/maps/__shared__/types/publish-input";
 import type { PublishAttempt } from "@/features/maps/__shared__/types/publish-attempt";
-import type { ClassifiedPublishError } from "@/features/maps/__shared__/types/publish-error";
+import type { ClassifiedPublishError } from "@/features/editor/types/publish-error";
 
 export type RunPublishDeps = {
     editorStore: EditorStore;

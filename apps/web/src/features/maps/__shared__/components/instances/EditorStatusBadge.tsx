@@ -1,5 +1,5 @@
-import { useEditorSelector } from "@/features/maps/__shared__/hooks/useEditorSelector";
-import { useEditorStore } from "@/features/maps/__shared__/hooks/useEditorStore";
+import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
+import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { getEditorStatus } from "@/features/maps/__shared__/utils/getEditorStatus";
 import { StatusBadge } from "@/features/maps/__shared__/components/views/status/StatusBadge";
 

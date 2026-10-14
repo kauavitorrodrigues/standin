@@ -1,7 +1,7 @@
 import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { EditorLockHolder } from "@standin/contracts";
-import { EDITOR_MESSAGES } from "@/features/maps/__shared__/consts/messages";
+import { EDITOR_MESSAGES } from "@/features/editor/consts/messages";
 
 const getSinceTime = (since: string | undefined): string | null => {
     if (!since) return null;
