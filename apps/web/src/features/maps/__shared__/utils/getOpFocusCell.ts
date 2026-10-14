@@ -13,6 +13,8 @@ export const getOpFocusCell = (
         case "paint":
         case "erase":
             return op.cells[0] ?? null;
+        case "paint_tiles":
+            return op.tiles[0]?.cells[0] ?? null;
         case "place_asset":
         case "move_asset":
             return [op.tileX, op.tileY];
