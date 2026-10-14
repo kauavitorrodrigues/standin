@@ -8,7 +8,7 @@ type PaletteAsset = FamilyMember & {
 };
 
 // Lowercase and without accents, so "Cadeira" and "cadeira" are equal.
-const normalize = (text: string) =>
+export const normalizeSearchText = (text: string) =>
     text
         .normalize("NFD")
         .replace(/\p{Diacritic}/gu, "")
@@ -22,8 +22,9 @@ const representatives = <T extends PaletteAsset>(assets: T[]): T[] =>
     assets.filter((asset) => asset.baseAssetId === null);
 
 /**
- * Category to families (their representatives, by name). Categories without
- * any asset are left out, and the map follows `ASSET_CATEGORY_META` order.
+ * Category to families (their representatives, by name). Every category is
+ * present, empty ones with no families, and the map follows
+ * `ASSET_CATEGORY_META` order.
  */
 export const groupFamiliesByCategory = <T extends PaletteAsset>(
     assets: T[]
@@ -35,16 +36,13 @@ export const groupFamiliesByCategory = <T extends PaletteAsset>(
         byCategory.set(representative.category, group);
     }
 
-    const ordered = (Object.keys(ASSET_CATEGORY_META) as AssetCategory[])
-        .filter((category) => byCategory.has(category))
-        .sort(
-            (a, b) =>
-                ASSET_CATEGORY_META[a].order - ASSET_CATEGORY_META[b].order
-        );
+    const ordered = (Object.keys(ASSET_CATEGORY_META) as AssetCategory[]).sort(
+        (a, b) => ASSET_CATEGORY_META[a].order - ASSET_CATEGORY_META[b].order
+    );
     return new Map(
         ordered.map((category) => [
             category,
-            [...byCategory.get(category)!].sort(byName),
+            [...(byCategory.get(category) ?? [])].sort(byName),
         ])
     );
 };
@@ -54,9 +52,9 @@ export const searchFamilies = <T extends PaletteAsset>(
     assets: T[],
     query: string
 ): T[] => {
-    const term = normalize(query.trim());
+    const term = normalizeSearchText(query.trim());
     if (term === "") return [];
     return representatives(assets)
-        .filter(({ name }) => normalize(name).includes(term))
+        .filter(({ name }) => normalizeSearchText(name).includes(term))
         .sort(byName);
 };

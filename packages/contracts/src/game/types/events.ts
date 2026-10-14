@@ -5,6 +5,12 @@ import type {
     SpaceJoinSchema,
     WebrtcSignalSchema,
 } from "../schemas/space";
+import type {
+    EditorAcquireAck,
+    EditorAck,
+    EditorLockLostPayload,
+    EditorLockPayload,
+} from "../../maps/editor/types";
 import type { z } from "zod/v4";
 import type {
     ChatMessageSeenPayload,
@@ -19,6 +25,15 @@ export const SpaceEvents = {
     SPACE_DUPLICATE_SESSION: "space:duplicate-session",
     WEBRTC_SIGNAL: "webrtc:signal",
 } as const;
+
+export const EditorEvents = {
+    EDITOR_ACQUIRE: "editor:acquire",
+    EDITOR_HEARTBEAT: "editor:heartbeat",
+    EDITOR_RELEASE: "editor:release",
+    EDITOR_LOCK_LOST: "editor:lock_lost",
+} as const;
+
+export type EditorEvent = (typeof EditorEvents)[keyof typeof EditorEvents];
 
 export type SpaceEvent = (typeof SpaceEvents)[keyof typeof SpaceEvents];
 
@@ -47,6 +62,18 @@ export type ClientToServerEvents = {
     "webrtc:signal": (payload: WebrtcSignalInput) => void;
     // Joins the room of a template map, the only map without a space room.
     "map:join": (payload: MapJoinPayload) => void;
+    "editor:acquire": (
+        payload: EditorLockPayload,
+        ack: (response: EditorAcquireAck) => void,
+    ) => void;
+    "editor:heartbeat": (
+        payload: EditorLockPayload,
+        ack: (response: EditorAck) => void,
+    ) => void;
+    "editor:release": (
+        payload: EditorLockPayload,
+        ack: (response: EditorAck) => void,
+    ) => void;
 };
 
 export type ServerToClientEvents = {
@@ -61,4 +88,7 @@ export type ServerToClientEvents = {
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
     "chat:unread-changed": (payload: ChatUnreadChangedPayload) => void;
     "chat:message-seen": (payload: ChatMessageSeenPayload) => void;
+    // Sent to the editing session that lost its lock (expired, or taken over
+    // by another session of the same person).
+    "editor:lock_lost": (payload: EditorLockLostPayload) => void;
 } & MapServerEvents;

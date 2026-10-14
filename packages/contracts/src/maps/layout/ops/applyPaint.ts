@@ -5,7 +5,8 @@ import {
 } from "../../schemas/layout.schema";
 import { LAYER_BY_CATEGORY } from "../consts/layer-by-category";
 import { LAYOUT_ISSUE_MESSAGES as Messages } from "../consts/issue-messages";
-import { getNextFirstGid } from "../gid";
+import { computeGid } from "../../editor/utils/computeGid";
+import { ensureTileset } from "../../editor/utils/ensureTileset";
 import {
     LAYOUT_ISSUE_CODES as Code,
     createIssue,
@@ -47,22 +48,15 @@ export const applyPaint = (
     if (outside) return [outside];
 
     // A tileset is added after the last one, never reordered or removed.
-    let tileset = layout.tilesets.find(({ name }) => name === op.tilesetId);
-    if (!tileset) {
-        tileset = {
-            name: op.tilesetId,
-            firstgid: getNextFirstGid(layout, library),
-        };
-        layout.tilesets.push(tileset);
-    }
+    layout.tilesets = ensureTileset(layout, op.tilesetId, library).tilesets;
 
     const target = findTileLayer(layout, op.layer);
     if (!target) return [];
 
-    const gid = tileset.firstgid + op.tileIndex;
+    const gid = computeGid(layout, op.tilesetId, op.tileIndex, library);
     const topGid =
         tile.category === TILE_CATEGORIES.WALL && tile.top !== undefined
-            ? tileset.firstgid + tile.top
+            ? computeGid(layout, op.tilesetId, tile.top, library)
             : null;
     const foreground = findTileLayer(layout, LAYOUT_LAYER_NAMES.FOREGROUND);
 
