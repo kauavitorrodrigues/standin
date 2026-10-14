@@ -23,6 +23,10 @@ import { EditorTileRenderer } from "@/features/editor/lib/EditorTileRenderer";
 import { GridOverlay } from "@/features/editor/lib/GridOverlay";
 import { SelectionAnchorTracker } from "@/features/editor/lib/SelectionAnchorTracker";
 import { SelectionOverlay } from "@/features/editor/lib/SelectionOverlay";
+import { FrameController } from "@/features/editor/lib/FrameController";
+import { FrameOverlay } from "@/features/editor/lib/FrameOverlay";
+import { isEditable } from "@/features/editor/utils/isEditable";
+import type { FrameConfig } from "@/features/editor/types/FrameConfig";
 import { ZoneOverlay } from "@/features/editor/lib/ZoneOverlay";
 import { TOOL_REGISTRY } from "@/features/editor/consts/toolRegistry";
 import { bindEditorCameraInput } from "@/features/editor/utils/bindEditorCameraInput";
@@ -52,12 +56,14 @@ export class EditorScene extends Phaser.Scene {
     private mapData!: GameMapData;
     private store!: EditorStore;
     private draftStore!: DraftStore;
+    private frameConfig: FrameConfig | null = null;
     private toolRouter: EditorToolRouter | null = null;
     private objectRenderer: EditorObjectRenderer | null = null;
     private tileRenderer: EditorTileRenderer | null = null;
     private zoneOverlay: ZoneOverlay | null = null;
     private selectionOverlay: SelectionOverlay | null = null;
     private anchorTracker: SelectionAnchorTracker | null = null;
+    private frameOverlay: FrameOverlay | null = null;
     private mapSizePx: ThumbnailSize = { width: 0, height: 0 };
 
     constructor() {
@@ -68,6 +74,7 @@ export class EditorScene extends Phaser.Scene {
         this.mapData = data.map;
         this.store = data.store;
         this.draftStore = data.draftStore;
+        this.frameConfig = data.frame ?? null;
     }
 
     preload(): void {
@@ -203,6 +210,8 @@ export class EditorScene extends Phaser.Scene {
             this.store.getState().layerVisibility
         );
 
+        const frameController = this.createFrame(tilemap.width, tilemap.height);
+
         const panState = { spaceHeld: false };
         const unbindInput = bindEditorCameraInput(
             this,
@@ -217,6 +226,7 @@ export class EditorScene extends Phaser.Scene {
             env: { scene: this, store: this.store },
             columns: tilemap.width,
             rows: tilemap.height,
+            interceptor: frameController ?? undefined,
             isSpaceHeld: () => panState.spaceHeld,
             getModel: () => this.draftStore.getState().draft,
             dispatch: this.draftStore.dispatchGesture,
@@ -240,6 +250,9 @@ export class EditorScene extends Phaser.Scene {
             this.toolRouter = null;
             unbindInput();
             unsubscribeStore();
+            frameController?.destroy();
+            this.frameOverlay?.destroy();
+            this.frameOverlay = null;
             this.input.off(
                 Phaser.Input.Events.POINTER_MOVE,
                 refreshHoverAfterDraw
@@ -269,6 +282,31 @@ export class EditorScene extends Phaser.Scene {
         });
 
         this.game.events.emit(EDITOR_EVENTS.SCENE_READY);
+    }
+
+    // The frame of an area, when the shell asked for one: its overlay and the
+    // controller that drags it.
+    private createFrame(columns: number, rows: number): FrameController | null {
+        const config = this.frameConfig;
+        if (!config) return null;
+
+        this.frameOverlay = new FrameOverlay(
+            this,
+            config.store,
+            this.draftStore,
+            columns,
+            rows
+        );
+        return new FrameController({
+            scene: this,
+            store: config.store,
+            limits: config.limits,
+            columns,
+            rows,
+            isEditable: () => isEditable(this.store.getState()),
+            onHint: (text) =>
+                this.game.events.emit(EDITOR_EVENTS.HINT_CHANGED, text),
+        });
     }
 
     // Brings the drawn objects to `placed`, touching only the ones that

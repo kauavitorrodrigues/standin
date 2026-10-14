@@ -6,12 +6,14 @@ import type { EditorStore } from "@/features/editor/lib/EditorStore";
 import type { TileRect } from "@/features/editor/types/tile-rect";
 import type { ScreenRect } from "@/features/editor/types/screen-rect";
 import type { ZoneNameRequest } from "@/features/editor/types/zone-name-request";
+import type { FrameConfig } from "@/features/editor/types/FrameConfig";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 
 export type EditorSceneInitData = {
     map: GameMapData;
     store: EditorStore;
     draftStore: DraftStore;
+    frame?: FrameConfig;
 };
 
 export type EditorEngineOptions = {
@@ -19,6 +21,8 @@ export type EditorEngineOptions = {
     map: GameMapData;
     store: EditorStore;
     draftStore: DraftStore;
+    // The frame of an area over the canvas. Without it the editor draws none.
+    frame?: FrameConfig;
     // Called when the cell under the cursor changes. Meant to write to the DOM
     // directly, not to set state.
     onHoverCell: (cell: Cell | null) => void;

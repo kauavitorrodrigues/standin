@@ -104,3 +104,9 @@ export const AREA_PLACEMENT_MESSAGES = {
     PLACE_FAILED: "Não foi possível colocar a área neste lugar",
     LOAD_FAILED: "Não foi possível carregar a área",
 } as const;
+
+// The hint under the canvas while the frame of an area is dragged.
+export const FRAME_MESSAGES = {
+    size: (width: number, height: number): string =>
+        `${width} x ${height} tiles`,
+} as const;

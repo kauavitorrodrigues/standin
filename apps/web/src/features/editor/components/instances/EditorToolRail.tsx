@@ -11,11 +11,16 @@ import type { EditorToolMeta } from "@/features/editor/types/tool-meta";
 
 type EditorToolRailProps = {
     tools: readonly EditorToolMeta[];
+    // An editor without zones leaves their toggle out.
+    withZones?: boolean;
 };
 
 // The tools given by the shell: one over the other, then the clear button, then
 // undo and redo, then the grid and the zones.
-export const EditorToolRail = ({ tools }: EditorToolRailProps) => {
+export const EditorToolRail = ({
+    tools,
+    withZones = true,
+}: EditorToolRailProps) => {
     const store = useEditorStore();
     const draftStore = useDraftStore();
     const tool = useEditorSelector((state) => state.tool);
@@ -52,6 +57,7 @@ export const EditorToolRail = ({ tools }: EditorToolRailProps) => {
                 zonesVisible={zonesVisible}
                 onToggleGrid={store.toggleGrid}
                 onToggleZones={store.toggleZones}
+                withZones={withZones}
             />
         </VerticalToolbar>
     );
