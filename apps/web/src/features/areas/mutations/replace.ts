@@ -11,7 +11,6 @@ export const useReplace = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        // The size cannot change, so the server refuses another one.
         mutationFn: async ({
             areaId,
             image,
