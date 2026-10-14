@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { WALL_IMAGE_ID } from "../../../layout/__tests__/fixtures";
 import { LAYOUT_ISSUE_CODES as Code } from "../../../layout/issues";
-import { STAMP_MAX_OBJECTS } from "../../consts/limits";
+import {
+    STAMP_MAX_HEIGHT,
+    STAMP_MAX_OBJECTS,
+    STAMP_MAX_WIDTH,
+} from "../../consts/limits";
 import type { EditorModel } from "../../types/editor-model";
 import { applyEditorOp } from "../applyEditorOp";
 import { captureStamp } from "../captureStamp";
@@ -137,12 +141,17 @@ describe("captureStamp", () => {
             model = placeObject(model, {
                 tempId: `chair-${index}`,
                 assetId: "chair",
-                tileX: index % 40,
-                tileY: Math.floor(index / 40),
+                tileX: index % STAMP_MAX_WIDTH,
+                tileY: Math.floor(index / STAMP_MAX_WIDTH),
             });
         }
 
-        const result = capture(model, { x: 0, y: 0, w: 40, h: 30 });
+        const result = capture(model, {
+            x: 0,
+            y: 0,
+            w: STAMP_MAX_WIDTH,
+            h: STAMP_MAX_HEIGHT,
+        });
 
         expect(errorCodes(result)).toEqual([Code.STAMP_TOO_MANY_OBJECTS]);
     });
