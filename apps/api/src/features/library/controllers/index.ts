@@ -1,3 +1,4 @@
+import { LibraryAreaController } from "./areas";
 import { getLibraryOverview } from "./overview";
 import { getLibraryPalette } from "./palette";
 import { createLibraryTileset } from "./tilesets/create";
@@ -21,6 +22,7 @@ import { setLibraryAssetParts } from "./assets/setParts";
 export const LibraryController = {
     overview: getLibraryOverview,
     palette: getLibraryPalette,
+    areas: LibraryAreaController,
     tilesets: {
         create: createLibraryTileset,
         list: listLibraryTilesets,

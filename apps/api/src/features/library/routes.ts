@@ -120,4 +120,39 @@ router.delete(
     LibraryController.assets.delete
 );
 
+router.post(
+    "/areas",
+    RequiresPermission("create", "asset"),
+    uploadLibraryParts,
+    handleLibraryUploadError,
+    LibraryController.areas.create
+);
+router.get(
+    "/areas",
+    RequiresPermission("read", "asset"),
+    LibraryController.areas.list
+);
+router.get(
+    "/areas/:areaId",
+    RequiresPermission("read", "asset"),
+    LibraryController.areas.details
+);
+router.put(
+    "/areas/:areaId",
+    RequiresPermission("update", "asset"),
+    uploadLibraryParts,
+    handleLibraryUploadError,
+    LibraryController.areas.replace
+);
+router.patch(
+    "/areas/:areaId",
+    RequiresPermission("update", "asset"),
+    LibraryController.areas.rename
+);
+router.delete(
+    "/areas/:areaId",
+    RequiresPermission("delete", "asset"),
+    LibraryController.areas.remove
+);
+
 export const libraryRouter = router;
