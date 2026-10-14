@@ -51,6 +51,7 @@ export const SpaceSidebar = ({
     return (
         <>
             <Rail
+                space={space}
                 view={view}
                 onSelectView={onSelectView}
                 isPeopleOpen={isPeopleOpen}

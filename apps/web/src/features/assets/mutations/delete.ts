@@ -15,6 +15,10 @@ export const useDeleteAsset = () => {
             );
             return data;
         },
-        onSuccess: () => invalidateLibrary(queryClient),
+        // Not returned on purpose: returning the promise makes mutateAsync
+        // wait for every refetch before the dialog can confirm and close.
+        onSuccess: () => {
+            invalidateLibrary(queryClient);
+        },
     });
 };

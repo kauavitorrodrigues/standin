@@ -24,7 +24,7 @@ export type PlacedLayout = {
 
 type PlacedRef = Pick<
     PlacedAsset,
-    "id" | "assetId" | "tileX" | "tileY" | "parentId"
+    "id" | "assetId" | "tileX" | "tileY" | "offsetX" | "offsetY" | "parentId"
 >;
 type AssetRef = Pick<
     AssetDefinition,
@@ -48,6 +48,8 @@ const getGroundDepth = (bottomY: number, mapHeightPx: number): number => {
  * footprint: the sprite starts `footprint.offsetX` tiles left of it and its
  * base sits at the bottom of that cell. An item on a desk rests on the top of
  * its parent, `surfaceHeightPx` above the cell, and draws just over the parent.
+ * The pixel offset shifts the sprite and the solid footprint from the anchor
+ * cell. Ground depth follows the shifted base, so draw order stays right.
  */
 export const resolvePlacedLayout = (
     placed: PlacedRef,
@@ -58,7 +60,8 @@ export const resolvePlacedLayout = (
     const asset = assetsById.get(placed.assetId);
     if (!asset) return null;
 
-    const x = (placed.tileX - asset.footprint.offsetX) * TILE_SIZE;
+    const x =
+        (placed.tileX - asset.footprint.offsetX) * TILE_SIZE + placed.offsetX;
 
     if (asset.placement === ASSET_PLACEMENTS.SURFACE) {
         const parent = placed.parentId ? placedById.get(placed.parentId) : null;
@@ -68,7 +71,10 @@ export const resolvePlacedLayout = (
         const parentBottomY = getGroundBottomY(parent);
         return {
             x,
-            bottomY: getGroundBottomY(placed) - parentAsset.surfaceHeightPx,
+            bottomY:
+                getGroundBottomY(placed) -
+                parentAsset.surfaceHeightPx +
+                placed.offsetY,
             depth:
                 getGroundDepth(parentBottomY, mapHeightPx) +
                 PLACED_ASSET_DEPTH.CHILD_STEP,
@@ -76,7 +82,7 @@ export const resolvePlacedLayout = (
         };
     }
 
-    const bottomY = getGroundBottomY(placed);
+    const bottomY = getGroundBottomY(placed) + placed.offsetY;
     const { w, h } = asset.footprint;
 
     return {
@@ -85,8 +91,8 @@ export const resolvePlacedLayout = (
         depth: getGroundDepth(bottomY, mapHeightPx),
         solidRect: asset.solid
             ? {
-                x: placed.tileX * TILE_SIZE,
-                y: (placed.tileY - h + 1) * TILE_SIZE,
+                x: placed.tileX * TILE_SIZE + placed.offsetX,
+                y: (placed.tileY - h + 1) * TILE_SIZE + placed.offsetY,
                 width: w * TILE_SIZE,
                 height: h * TILE_SIZE,
             }

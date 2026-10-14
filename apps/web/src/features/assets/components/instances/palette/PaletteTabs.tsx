@@ -1,14 +1,9 @@
-import { LayersIcon } from "lucide-react";
+import { useState } from "react";
 import type { AssetDefinition } from "@standin/contracts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { PanelScroll } from "@/components/editor/PanelScroll";
+import { PaletteCategoryCarousel } from "@/features/assets/components/views/palette/PaletteCategoryCarousel";
 import { PaletteFamilies } from "@/features/assets/components/views/palette/PaletteFamilies";
-import { CATEGORY_ICONS } from "@/features/assets/consts/categoryIcons";
-import { TILES_TAB } from "@/features/assets/consts/palette";
+import { PaletteTilesContent } from "@/features/assets/components/views/palette/PaletteTilesContent";
 import type {
     PaletteCategories,
     PaletteTilesets,
@@ -19,43 +14,46 @@ type Props = {
     categories: PaletteCategories;
     tilesets: PaletteTilesets;
     onPick: (asset: AssetDefinition) => void;
+    // The family to show as picked.
+    selectedId?: string | null;
+    // Leaves the library's own Tiles tab out.
+    hideTilesTab?: boolean;
 };
 
-// One tab per category that has assets, and a separate Tiles tab.
-export const PaletteTabs = ({ categories, tilesets, onPick }: Props) => (
-    <Tabs defaultValue={getDefaultPaletteTab(categories)}>
-        <TabsList>
-            {categories.map(({ category, label, icon }) => (
-                <Tooltip key={category}>
-                    <TooltipTrigger
-                        render={
-                            <TabsTrigger
-                                value={category}
-                                icon={CATEGORY_ICONS[icon]}
-                                aria-label={label}
-                            />
-                        }
-                    />
-                    <TooltipContent>{label}</TooltipContent>
-                </Tooltip>
-            ))}
-            <TabsTrigger value={TILES_TAB} icon={LayersIcon}>
-                Tiles
-            </TabsTrigger>
-        </TabsList>
-        {categories.map(({ category, families }) => (
-            <TabsContent key={category} value={category}>
-                <PaletteFamilies families={families} onPick={onPick} />
-            </TabsContent>
-        ))}
-        <TabsContent value={TILES_TAB}>
-            <ul className="flex flex-col gap-1">
-                {tilesets.map(({ id, name, tileCount }) => (
-                    <li key={id} className="text-sm">
-                        {name} ({tileCount} tiles)
-                    </li>
-                ))}
-            </ul>
-        </TabsContent>
-    </Tabs>
-);
+// A carousel with every category, fixed at the top, and the families of the
+// one picked under it, which are what scrolls. The library's own Tiles entry comes last.
+export const PaletteTabs = ({
+    categories,
+    tilesets,
+    onPick,
+    selectedId,
+    hideTilesTab = false,
+}: Props) => {
+    const [selected, setSelected] = useState(getDefaultPaletteTab(categories));
+    const current = categories.find(({ category }) => category === selected);
+
+    return (
+        <div className="flex min-h-0 flex-1 flex-col">
+            <div className="px-3">
+                <PaletteCategoryCarousel
+                    categories={categories}
+                    selected={selected}
+                    onSelect={setSelected}
+                    hideTilesTab={hideTilesTab}
+                />
+            </div>
+            <PanelScroll>
+                <PaletteFamilies
+                    families={current?.families ?? []}
+                    onPick={onPick}
+                    selectedId={selectedId}
+                />
+                <PaletteTilesContent
+                    tilesets={tilesets}
+                    selected={selected}
+                    hidden={hideTilesTab}
+                />
+            </PanelScroll>
+        </div>
+    );
+};
