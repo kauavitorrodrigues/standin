@@ -1,11 +1,15 @@
 import { useForm, useWatch } from "react-hook-form";
 import type { AssetDefinition } from "@standin/contracts";
 import { SearchField } from "@/features/editor/components/views/SearchField";
-import { useMapPalette } from "@/features/assets/queries/useMapPalette";
+import type {
+    PaletteCategories,
+    PaletteTilesets,
+} from "@/features/assets/types/mapPalette";
 import { PaletteBody } from "./PaletteBody";
 
 type Props = {
-    mapId: string;
+    tilesets: PaletteTilesets;
+    categories: PaletteCategories;
     onPick: (asset: AssetDefinition) => void;
     // The family to show as picked.
     selectedId?: string | null;
@@ -20,12 +24,12 @@ type SearchValues = { search: string };
 // name), a separate Tiles group, and a search that crosses every category
 // and hides the tabs while there is text.
 export function MapPalette({
-    mapId,
+    tilesets,
+    categories,
     onPick,
     selectedId,
     hideTilesTab = false,
 }: Props) {
-    const { tilesets, categories } = useMapPalette(mapId);
     const { register, control } = useForm<SearchValues>({
         defaultValues: { search: "" },
     });

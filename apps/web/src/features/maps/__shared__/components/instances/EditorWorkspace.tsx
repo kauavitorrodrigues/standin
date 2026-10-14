@@ -25,6 +25,7 @@ import { useEditorHotkeys } from "@/features/editor/hooks/useEditorHotkeys";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useMissingThumbnail } from "@/features/maps/__shared__/hooks/useMissingThumbnail";
 import { usePublishedThumbnail } from "@/features/maps/__shared__/hooks/usePublishedThumbnail";
+import { MAP_TOOL_META } from "@/features/editor/consts/toolMeta";
 import { EDITOR_STATUS } from "@/features/editor/consts/status";
 import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
 
@@ -82,7 +83,7 @@ export const EditorWorkspace = ({
     });
 
     return (
-        <EditorLayout.Frame mapId={mapId}>
+        <EditorLayout.Frame>
             <EditorLayout.Body>
                 <EditorLayout.Canvas>
                     <EditorCanvas
@@ -97,7 +98,7 @@ export const EditorWorkspace = ({
                         onExit={onExit}
                     />
                     <EditorPanelToggle />
-                    <EditorToolRail />
+                    <EditorToolRail tools={MAP_TOOL_META} />
                     <ZoneToolOptions />
                     <ZoneNamePopover
                         request={zoneNameRequest}

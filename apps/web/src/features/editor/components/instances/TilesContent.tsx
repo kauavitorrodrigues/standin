@@ -1,19 +1,19 @@
 import type { ReactNode } from "react";
-import { useMapPalette } from "@/features/assets/queries/useMapPalette";
 import { PanelEmptyState } from "@/features/editor/components/views/panel/PanelEmptyState";
 import { PanelLoadingState } from "@/features/editor/components/views/panel/PanelLoadingState";
 import { TilesPicker } from "@/features/editor/components/instances/TilesPicker";
+import type { EditorPalette } from "@/features/editor/types/editor-palette";
 
 type TilesContentProps = {
-    mapId: string;
+    palette: EditorPalette;
     // Passed on to the picker.
     layers?: ReactNode;
 };
 
 // The tilesets of the map's library. It waits for the palette, then shows the
 // picker, or says there is no tileset.
-export const TilesContent = ({ mapId, layers }: TilesContentProps) => {
-    const { tilesets, isLoading, isError } = useMapPalette(mapId);
+export const TilesContent = ({ palette, layers }: TilesContentProps) => {
+    const { tilesets, isLoading, isError } = palette;
 
     if (isLoading) {
         return (

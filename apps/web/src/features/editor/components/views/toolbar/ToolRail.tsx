@@ -1,9 +1,10 @@
 import { ToolbarButton } from "@/features/editor/components/views/ToolbarButton";
-import { MAP_TOOL_META } from "@/features/editor/consts/toolMeta";
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
 import type { EditorTool } from "@/features/editor/types/tool";
+import type { EditorToolMeta } from "@/features/editor/types/tool-meta";
 
 type ToolRailProps = {
+    tools: readonly EditorToolMeta[];
     tool: EditorTool;
     // Without the lock only the hand works.
     locked: boolean;
@@ -11,9 +12,14 @@ type ToolRailProps = {
 };
 
 // The tools one over the other. One is always on.
-export const ToolRail = ({ tool, locked, onToolChange }: ToolRailProps) => (
+export const ToolRail = ({
+    tools,
+    tool,
+    locked,
+    onToolChange,
+}: ToolRailProps) => (
     <>
-        {MAP_TOOL_META.map(({ value, ...meta }) => (
+        {tools.map(({ value, ...meta }) => (
             <ToolbarButton
                 key={value}
                 {...meta}
