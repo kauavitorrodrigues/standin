@@ -1,5 +1,4 @@
-import { EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PencilIcon, Trash2Icon } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,16 +8,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type Props = {
+    name: string;
     onRename: () => void;
     onDelete: () => void;
 };
 
-// The less frequent actions of the editor of a tileset: rename and delete.
-export const TilesetEditorMenu = ({ onRename, onDelete }: Props) => (
+// The name of the tileset in the title bar. It opens rename and delete.
+export const TilesetEditorMenu = ({ name, onRename, onDelete }: Props) => (
     <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
-            <EllipsisVerticalIcon />
-            <span className="sr-only">Ações do tileset</span>
+        <DropdownMenuTrigger
+            aria-label="Ações do tileset"
+            className="hover:bg-accent min-w-0 cursor-pointer truncate rounded-md px-1.5 py-1"
+        >
+            {name}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-40">
             <DropdownMenuItem onClick={onRename}>
