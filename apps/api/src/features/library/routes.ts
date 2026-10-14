@@ -19,6 +19,12 @@ router.get(
     LibraryController.overview
 );
 
+router.get(
+    "/palette",
+    RequiresPermission("read", "asset"),
+    LibraryController.palette
+);
+
 router.post(
     "/tilesets",
     RequiresPermission("create", "asset"),

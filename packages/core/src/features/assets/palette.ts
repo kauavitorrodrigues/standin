@@ -1,5 +1,6 @@
 import {
     db,
+    areasTable,
     assetsTable,
     filesTable,
     tilesetsTable,
@@ -36,6 +37,14 @@ const visibleTilesets = (organizationId: string | null) =>
               eq(tilesetsTable.organizationId, organizationId)
           );
 
+const visibleAreas = (organizationId: string | null) =>
+    organizationId === null
+        ? isNull(areasTable.organizationId)
+        : or(
+              isNull(areasTable.organizationId),
+              eq(areasTable.organizationId, organizationId)
+          );
+
 const visibleAssets = (organizationId: string | null) =>
     organizationId === null
         ? isNull(assetsTable.organizationId)
@@ -62,23 +71,27 @@ export const getMapPaletteVersion = async (
         .from(assetsTable)
         .where(visibleAssets(organizationId));
 
+    const [areas] = await db
+        .select({ latest: max(areasTable.updatedAt), total: count() })
+        .from(areasTable)
+        .where(visibleAreas(organizationId));
+
     const latest = Math.max(
         tilesets?.latest?.getTime() ?? 0,
-        assets?.latest?.getTime() ?? 0
+        assets?.latest?.getTime() ?? 0,
+        areas?.latest?.getTime() ?? 0
     );
-    return `W/"${latest}-${tilesets?.total ?? 0}-${assets?.total ?? 0}"`;
+    return `W/"${latest}-${tilesets?.total ?? 0}-${assets?.total ?? 0}-${areas?.total ?? 0}"`;
 };
 
 /**
- * What the editor needs to build its palette for one map: the live tilesets,
- * and every live asset row (a base and its variations), plus the tabs ready
- * to render. Deleted rows are left out.
+ * The live palette of one scope: the live tilesets, and every live asset row
+ * (a base and its variations), plus the tabs ready to render. Deleted rows are
+ * left out. A null scope is the global library alone.
  */
-export const buildMapPalette = async (
-    access: MapAccess
+export const buildPalette = async (
+    organizationId: string | null
 ): Promise<LibraryPalette> => {
-    const organizationId = paletteScopeOf(access);
-
     const tilesetRows = await db
         .select(tilesetSelect)
         .from(tilesetsTable)
@@ -111,3 +124,11 @@ export const buildMapPalette = async (
         areas: [],
     };
 };
+
+/** What the editor needs to build its palette for one map. */
+export const buildMapPalette = (access: MapAccess): Promise<LibraryPalette> =>
+    buildPalette(paletteScopeOf(access));
+
+/** The global library, for the area composer, which has no map. */
+export const buildGlobalPalette = (): Promise<LibraryPalette> =>
+    buildPalette(null);

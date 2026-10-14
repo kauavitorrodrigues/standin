@@ -1156,6 +1156,86 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
         });
     });
 
+    describe("palette", () => {
+        it("serves the global palette to the admin only", async () => {
+            const admin = await call("admin", "GET", "/library/palette");
+
+            expect(admin.status).toBe(200);
+            expect(admin.body.library.tilesets.length).toBeGreaterThan(0);
+            expect(admin.body.library.areas).toEqual([]);
+
+            expect(
+                (await call("owner", "GET", "/library/palette")).status
+            ).toBe(403);
+            expect((await call(null, "GET", "/library/palette")).status).toBe(
+                401
+            );
+        });
+
+        it("moves the palette version when an area is created or deleted", async () => {
+            const { db, areasTable, filesTable, eq } = database;
+            const route = `/maps/${template.mapId}/library`;
+            const first = await call("admin", "GET", route);
+            const etag = first.headers.get("etag") ?? "";
+
+            const cached = await fetch(`${baseUrl}${route}`, {
+                headers: {
+                    cookie: `token=${createToken(users.admin)}`,
+                    "if-none-match": etag,
+                },
+            });
+            expect(cached.status).toBe(304);
+
+            const [file] = await db
+                .insert(filesTable)
+                .values({
+                    originalName: `area-${RUN}.png`,
+                    fileName: `area-${RUN}.png`,
+                    extension: "png",
+                    mimeType: "image/png",
+                    sizeInBytes: 1,
+                })
+                .returning({ id: filesTable.id });
+            const [area] = await db
+                .insert(areasTable)
+                .values({
+                    name: `Area ${RUN}`,
+                    width: 2,
+                    height: 2,
+                    objectCount: 0,
+                    stamp: {
+                        version: 1,
+                        width: 2,
+                        height: 2,
+                        palette: [],
+                        layers: {},
+                        objects: [],
+                        zone: null,
+                    },
+                    thumbnailFileId: file!.id,
+                })
+                .returning({ id: areasTable.id });
+
+            const created = await fetch(`${baseUrl}${route}`, {
+                headers: {
+                    cookie: `token=${createToken(users.admin)}`,
+                    "if-none-match": etag,
+                },
+            });
+            expect(created.status).toBe(200);
+            const createdEtag = created.headers.get("etag");
+            expect(createdEtag).not.toBe(etag);
+
+            // A deleted area still counts, so the version moves again.
+            await db
+                .update(areasTable)
+                .set({ deletedAt: new Date(), updatedAt: new Date() })
+                .where(eq(areasTable.id, area!.id));
+            const deleted = await call("admin", "GET", route);
+            expect(deleted.headers.get("etag")).not.toBe(createdEtag);
+        });
+    });
+
     describe("files", () => {
         it("serves a file by id with an immutable cache", async () => {
             const asset = (
