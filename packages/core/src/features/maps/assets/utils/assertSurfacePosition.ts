@@ -11,8 +11,8 @@ import { acceptsSurfaceItems } from "./acceptsSurfaceItems";
 import { toPlacementModel } from "./toPlacementModel";
 
 /**
- * SURFACE: the parent accepts items on top, the item sits inside the parent's
- * footprint, and no other SURFACE item of that parent uses the same cells. The
+ * SURFACE: the parent accepts items on top, the item sits on cells the parent
+ * occupies, and no other SURFACE item of that parent uses the same cells. The
  * pure rule from the contracts answers both "not on top" cases with one reason,
  * so the routes keep their own error for a parent that takes no items.
  */
