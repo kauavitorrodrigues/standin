@@ -47,5 +47,8 @@ export type EditorEngineHandle = {
     // The whole map as a PNG, without grid, highlight or zones. Rejects when
     // the scene is not up.
     captureThumbnail: () => Promise<Blob>;
+    // The same picture at the exact size of the map (width * 32 by height * 32),
+    // without scaling.
+    captureNativeSnapshot: () => Promise<Blob>;
     destroy: () => void;
 };

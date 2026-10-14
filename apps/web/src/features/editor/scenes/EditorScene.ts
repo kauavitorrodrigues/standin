@@ -10,6 +10,7 @@ import {
 import { EDITOR_EVENTS } from "@/features/editor/consts/events";
 import { EDITOR_SCENE_KEYS } from "@/features/editor/consts/scene-keys";
 import { captureMapThumbnail } from "@/features/editor/lib/captureMapThumbnail";
+import { captureNativeSnapshot } from "@/features/editor/lib/captureNativeSnapshot";
 import { showsCellHighlight } from "@/features/editor/utils/showsCellHighlight";
 import { CellHighlight } from "@/features/editor/lib/CellHighlight";
 import { EditorCameraController } from "@/features/editor/lib/EditorCameraController";
@@ -37,7 +38,10 @@ import type {
 } from "@standin/contracts";
 import type { GameMapData } from "@/features/game/types/tilemap";
 import type { EditorSceneInitData } from "@/features/editor/types/editor";
-import type { ThumbnailSize } from "@/features/editor/types/thumbnail";
+import type {
+    ThumbnailDrawable,
+    ThumbnailSize,
+} from "@/features/editor/types/thumbnail";
 import { THUMBNAIL_MESSAGES } from "@/features/editor/consts/messages";
 
 // Draws the map for editing: no avatar, no player physics, no interaction and
@@ -295,7 +299,22 @@ export class EditorScene extends Phaser.Scene {
 
     // The whole map as a PNG, whatever the zoom and the camera. Only tiles and
     // objects are drawn, so the grid, the highlight and the zones stay out.
-    async captureThumbnail(): Promise<Blob> {
+    captureThumbnail(): Promise<Blob> {
+        return this.captureWith(captureMapThumbnail);
+    }
+
+    // The same picture at the exact size of the map, without scaling.
+    captureNativeSnapshot(): Promise<Blob> {
+        return this.captureWith(captureNativeSnapshot);
+    }
+
+    private async captureWith(
+        capture: (
+            scene: Phaser.Scene,
+            drawables: readonly ThumbnailDrawable[],
+            mapSize: ThumbnailSize
+        ) => Promise<Blob>
+    ): Promise<Blob> {
         const tileRenderer = this.tileRenderer;
         const objectRenderer = this.objectRenderer;
         if (!tileRenderer || !objectRenderer) {
@@ -308,7 +327,7 @@ export class EditorScene extends Phaser.Scene {
         // The photo shows every layer, whatever the user hid to work.
         tileRenderer.setLayersVisible({});
         try {
-            return await captureMapThumbnail(
+            return await capture(
                 this,
                 [...tileRenderer.getLayers(), ...objectRenderer.getDisplays()],
                 this.mapSizePx
