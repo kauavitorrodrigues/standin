@@ -6,6 +6,8 @@ import { setTemplateThumbnail } from "./setThumbnail";
 import { publishTemplate } from "./publish";
 import { retireTemplate } from "./retire";
 import { deleteTemplate } from "./delete";
+import { previewTemplate } from "./preview";
+import { previewBlankMap } from "./previewBlank";
 
 export const TemplateController = {
     list: listTemplates,
@@ -16,4 +18,6 @@ export const TemplateController = {
     publish: publishTemplate,
     retire: retireTemplate,
     delete: deleteTemplate,
+    preview: previewTemplate,
+    previewBlank: previewBlankMap,
 };

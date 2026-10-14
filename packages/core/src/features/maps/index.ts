@@ -6,6 +6,7 @@ import { exportMapAsTiled } from "./exportTiled";
 import { findMapOwner } from "./findOwner";
 import { findResolvedMapById } from "./findResolvedById";
 import { getMapAccess } from "./getAccess";
+import { previewBlankMap } from "./previewBlank";
 import { loadLayoutLibrary } from "./utils/loadLayoutLibrary";
 
 export type { MapAccess } from "./types/map-access";
@@ -13,6 +14,7 @@ export type { MapOwner } from "./types/map-owner";
 
 export const MapService = {
     createBlank: createBlankMap,
+    previewBlank: previewBlankMap,
     copy: copyMap,
     deleteByIds: deleteMapsByIds,
     findResolvedById: findResolvedMapById,

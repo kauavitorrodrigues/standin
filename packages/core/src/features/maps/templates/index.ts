@@ -8,6 +8,7 @@ import { publishTemplate } from "./publish";
 import { retireTemplate } from "./retire";
 import { deleteTemplate } from "./delete";
 import { findAvailableTemplate } from "./findAvailable";
+import { previewTemplate } from "./preview";
 
 export const MapTemplateService = {
     create: createTemplate,
@@ -20,4 +21,5 @@ export const MapTemplateService = {
     retire: retireTemplate,
     delete: deleteTemplate,
     findAvailable: findAvailableTemplate,
+    preview: previewTemplate,
 };
