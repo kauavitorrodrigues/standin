@@ -3,6 +3,7 @@ import type { Cell } from "@standin/contracts";
 import type { GameMapData } from "@/features/game/types/tilemap";
 import type { SceneSyncTarget } from "@/features/editor/types/SceneSyncTarget";
 import type { EditorStore } from "@/features/editor/lib/EditorStore";
+import type { TileRect } from "@/features/editor/types/tile-rect";
 import type { ScreenRect } from "@/features/editor/types/screen-rect";
 import type { ZoneNameRequest } from "@/features/editor/types/zone-name-request";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
@@ -48,7 +49,7 @@ export type EditorEngineHandle = {
     // the scene is not up.
     captureThumbnail: () => Promise<Blob>;
     // The same picture at the exact size of the map (width * 32 by height * 32),
-    // without scaling.
-    captureNativeSnapshot: () => Promise<Blob>;
+    // without scaling. With a rectangle in tiles, only that region.
+    captureNativeSnapshot: (rect?: TileRect) => Promise<Blob>;
     destroy: () => void;
 };

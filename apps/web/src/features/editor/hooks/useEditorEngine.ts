@@ -1,3 +1,4 @@
+import type { TileRect } from "@/features/editor/types/tile-rect";
 import { useCallback, useRef, useState } from "react";
 import type { Cell } from "@standin/contracts";
 import { createEditorEngine } from "@/features/editor/lib/EditorEngine";
@@ -89,12 +90,17 @@ export const useEditorEngine = (map: GameMapData, sceneLink?: SceneLink) => {
         return engine.captureThumbnail();
     }, []);
 
-    const captureNativeSnapshot = useCallback((): Promise<Blob> => {
-        const engine = engineRef.current;
-        if (!engine)
-            return Promise.reject(new Error(THUMBNAIL_MESSAGES.CAPTURE_FAILED));
-        return engine.captureNativeSnapshot();
-    }, []);
+    const captureNativeSnapshot = useCallback(
+        (rect?: TileRect): Promise<Blob> => {
+            const engine = engineRef.current;
+            if (!engine)
+                return Promise.reject(
+                    new Error(THUMBNAIL_MESSAGES.CAPTURE_FAILED)
+                );
+            return engine.captureNativeSnapshot(rect);
+        },
+        []
+    );
 
     return {
         containerRef,

@@ -11,6 +11,7 @@ import { EDITOR_EVENTS } from "@/features/editor/consts/events";
 import { EDITOR_SCENE_KEYS } from "@/features/editor/consts/scene-keys";
 import { captureMapThumbnail } from "@/features/editor/lib/captureMapThumbnail";
 import { captureNativeSnapshot } from "@/features/editor/lib/captureNativeSnapshot";
+import type { TileRect } from "@/features/editor/types/tile-rect";
 import { showsCellHighlight } from "@/features/editor/utils/showsCellHighlight";
 import { CellHighlight } from "@/features/editor/lib/CellHighlight";
 import { EditorCameraController } from "@/features/editor/lib/EditorCameraController";
@@ -303,9 +304,12 @@ export class EditorScene extends Phaser.Scene {
         return this.captureWith(captureMapThumbnail);
     }
 
-    // The same picture at the exact size of the map, without scaling.
-    captureNativeSnapshot(): Promise<Blob> {
-        return this.captureWith(captureNativeSnapshot);
+    // The same picture at the exact size of the map, without scaling. With a
+    // rectangle in tiles, only that region, also at native resolution.
+    captureNativeSnapshot(rect?: TileRect): Promise<Blob> {
+        return this.captureWith((scene, drawables, mapSize) =>
+            captureNativeSnapshot(scene, drawables, mapSize, rect)
+        );
     }
 
     private async captureWith(
