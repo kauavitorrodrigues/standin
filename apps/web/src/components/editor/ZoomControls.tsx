@@ -69,7 +69,7 @@ export const ZoomControls = ({
                     />
                 }
             >
-                {zoom * 100}%
+                {Math.round(zoom * 100)}%
             </TooltipTrigger>
             <TooltipContent side="top" shortcut={resetShortcut}>
                 {resetLabel}

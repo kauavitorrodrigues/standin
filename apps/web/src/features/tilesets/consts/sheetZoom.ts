@@ -1,8 +1,8 @@
-// The zooms of the sheet, whole numbers only so the pixels stay sharp. The
-// wheel steps through them.
+// The levels the zoom buttons step through. The first and the last are also
+// the limits of the wheel, which zooms continuously between them.
 export const TILE_ZOOMS = [1, 2, 3, 4, 6, 8] as const;
 
-export type TileZoom = (typeof TILE_ZOOMS)[number];
+export type TileZoom = number;
 
 export const DEFAULT_TILE_ZOOM: TileZoom = 3;
 

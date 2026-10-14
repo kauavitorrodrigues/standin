@@ -35,6 +35,8 @@ type Props = {
     anchorId?: string;
     // Where the tooltip opens, away from the edge the button sits on.
     side?: "top" | "bottom" | "left" | "right";
+    // The gap in px between the button and the tooltip. Leave out for the default.
+    sideOffset?: number;
 };
 
 const ToolbarDescription = ({ description }: { description?: string }) => {
@@ -76,6 +78,7 @@ export const ToolbarButton = ({
     color,
     anchorId,
     side = "left",
+    sideOffset,
 }: Props) => {
     const on = active ?? false;
     const variant = getVariant({ activeLook, on, color });
@@ -99,7 +102,11 @@ export const ToolbarButton = ({
             >
                 <Icon style={{ color }} />
             </TooltipTrigger>
-            <TooltipContent side={side} shortcut={shortcut}>
+            <TooltipContent
+                side={side}
+                sideOffset={sideOffset}
+                shortcut={shortcut}
+            >
                 <span className="flex flex-col">
                     <span className="font-medium">{label}</span>
                     <ToolbarDescription description={description} />

@@ -39,8 +39,8 @@ export const TileStatusOverlay = ({
         <FloatingPanel className="text-muted-foreground right-3 bottom-3 p-1 text-xs">
             <ZoomControls
                 zoom={zoom}
-                canZoomIn={zoom !== TILE_ZOOMS[TILE_ZOOMS.length - 1]}
-                canZoomOut={zoom !== TILE_ZOOMS[0]}
+                canZoomIn={zoom < TILE_ZOOMS[TILE_ZOOMS.length - 1]!}
+                canZoomOut={zoom > TILE_ZOOMS[0]}
                 onZoomIn={() => onZoomChange(getNextTileZoom(zoom, 1))}
                 onZoomOut={() => onZoomChange(getNextTileZoom(zoom, -1))}
                 onReset={() => onZoomChange(DEFAULT_TILE_ZOOM)}
