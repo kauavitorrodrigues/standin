@@ -25,6 +25,7 @@ export const createEditorEngine = ({
     map,
     store,
     draftStore,
+    frame,
     onHoverCell,
     onHint,
     onSelectionAnchor,
@@ -90,6 +91,7 @@ export const createEditorEngine = ({
         map,
         store,
         draftStore,
+        frame,
     });
 
     const unbindResize = bindGameResize(game, container);

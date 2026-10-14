@@ -9,6 +9,7 @@ import { applyToolbarAnchor } from "@/features/editor/utils/applyToolbarAnchor";
 import { formatCell } from "@/features/editor/utils/formatCell";
 import type { GameMapData } from "@/features/game/types/tilemap";
 import type { ZoneNameRequest } from "@/features/editor/types/zone-name-request";
+import type { FrameConfig } from "@/features/editor/types/FrameConfig";
 import type { SceneLink } from "@/features/editor/types/SceneLink";
 import type { EditorEngineHandle } from "@/features/editor/types/editor";
 
@@ -17,7 +18,11 @@ import type { EditorEngineHandle } from "@/features/editor/types/editor";
  * goes away or the map changes, so no canvas is left behind. The cell under
  * the cursor is written straight into the readout element, never into state.
  */
-export const useEditorEngine = (map: GameMapData, sceneLink?: SceneLink) => {
+export const useEditorEngine = (
+    map: GameMapData,
+    sceneLink?: SceneLink,
+    frame?: FrameConfig
+) => {
     const store = useEditorStore();
     const draftStore = useDraftStore();
     const engineRef = useRef<EditorEngineHandle | null>(null);
@@ -40,6 +45,7 @@ export const useEditorEngine = (map: GameMapData, sceneLink?: SceneLink) => {
                 map,
                 store,
                 draftStore,
+                frame,
                 onHint: (text: string | null) => {
                     if (!hintRef.current) return;
                     hintRef.current.textContent = text ?? "";
@@ -63,7 +69,7 @@ export const useEditorEngine = (map: GameMapData, sceneLink?: SceneLink) => {
                 engine.destroy();
             };
         },
-        [map, store, draftStore, sceneLink]
+        [map, store, draftStore, sceneLink, frame]
     );
 
     const fitCamera = useCallback(() => engineRef.current?.fitCamera(), []);

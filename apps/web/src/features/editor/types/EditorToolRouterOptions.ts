@@ -4,6 +4,7 @@ import type { EditorTool } from "@/features/editor/types/tool";
 import type { EditabilityState } from "@/features/editor/types/EditabilityState";
 import type { ToolEnv } from "@/features/editor/types/ToolEnv";
 import type { ToolInputSource } from "@/features/editor/types/ToolInput";
+import type { PointerInterceptor } from "@/features/editor/types/PointerInterceptor";
 import type { ToolRegistry } from "@/features/editor/types/ToolRegistry";
 
 export type EditorToolRouterOptions = {
@@ -22,6 +23,9 @@ export type EditorToolRouterOptions = {
     isSpaceHeld: () => boolean;
     getModel: () => Readonly<EditorModel>;
     dispatch: (ops: readonly EditorOp[]) => DraftGestureResult;
+    // Takes a press before the active tool does, when there is one (the frame
+    // of an area).
+    interceptor?: PointerInterceptor;
     // Writes the footer hint. Meant for the DOM, not for state.
     onHint: (text: string | null) => void;
 };

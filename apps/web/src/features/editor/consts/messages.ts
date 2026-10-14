@@ -90,3 +90,9 @@ export const SELECTION_MESSAGES = {
 export const DESK_MESSAGES = {
     OWNER_FALLBACK: "outra pessoa",
 } as const;
+
+// The hint under the canvas while the frame of an area is dragged.
+export const FRAME_MESSAGES = {
+    size: (width: number, height: number): string =>
+        `${width} x ${height} tiles`,
+} as const;
