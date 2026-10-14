@@ -424,7 +424,12 @@ export class PeerLink {
         parameters.encodings[0] = { ...parameters.encodings[0], ...encoding };
         sender.setParameters(parameters).catch((error) => {
             state.appliedEncoding = null;
-            console.warn("[multiplayer] failed to set", slot, "encoding", error);
+            console.warn(
+                "[multiplayer] failed to set",
+                slot,
+                "encoding",
+                error
+            );
         });
     }
 }

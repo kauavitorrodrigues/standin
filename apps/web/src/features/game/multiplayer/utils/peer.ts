@@ -113,46 +113,58 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
 
     const candidate = data as Record<string, unknown>;
     switch (candidate.type) {
-    case PEER_MESSAGE_TYPES.POSITION:
-        return isPlayerPosition(candidate.payload)
-            ? { type: PEER_MESSAGE_TYPES.POSITION, payload: candidate.payload }
-            : null;
-    case PEER_MESSAGE_TYPES.CHAT:
-        return isPeerChatPayload(candidate.payload)
-            ? { type: PEER_MESSAGE_TYPES.CHAT, payload: candidate.payload }
-            : null;
-    case PEER_MESSAGE_TYPES.TYPING:
-        return isPeerTypingPayload(candidate.payload)
-            ? { type: PEER_MESSAGE_TYPES.TYPING, payload: candidate.payload }
-            : null;
-    case PEER_MESSAGE_TYPES.REACTION:
-        return isPeerReactionPayload(candidate.payload)
-            ? {
-                type: PEER_MESSAGE_TYPES.REACTION,
-                payload: candidate.payload,
-            }
-            : null;
-    case PEER_MESSAGE_TYPES.EDIT:
-        return isPeerEditPayload(candidate.payload)
-            ? { type: PEER_MESSAGE_TYPES.EDIT, payload: candidate.payload }
-            : null;
-    case PEER_MESSAGE_TYPES.DELETE:
-        return isPeerDeletePayload(candidate.payload)
-            ? { type: PEER_MESSAGE_TYPES.DELETE, payload: candidate.payload }
-            : null;
-    case PEER_MESSAGE_TYPES.CONFIRM:
-        return isPeerConfirmPayload(candidate.payload)
-            ? { type: PEER_MESSAGE_TYPES.CONFIRM, payload: candidate.payload }
-            : null;
-    case PEER_MESSAGE_TYPES.MEDIA_STATE:
-        return isPeerMediaStatePayload(candidate.payload)
-            ? {
-                type: PEER_MESSAGE_TYPES.MEDIA_STATE,
-                payload: candidate.payload,
-            }
-            : null;
-    default:
-        return null;
+        case PEER_MESSAGE_TYPES.POSITION:
+            return isPlayerPosition(candidate.payload)
+                ? {
+                    type: PEER_MESSAGE_TYPES.POSITION,
+                    payload: candidate.payload,
+                }
+                : null;
+        case PEER_MESSAGE_TYPES.CHAT:
+            return isPeerChatPayload(candidate.payload)
+                ? { type: PEER_MESSAGE_TYPES.CHAT, payload: candidate.payload }
+                : null;
+        case PEER_MESSAGE_TYPES.TYPING:
+            return isPeerTypingPayload(candidate.payload)
+                ? {
+                    type: PEER_MESSAGE_TYPES.TYPING,
+                    payload: candidate.payload,
+                }
+                : null;
+        case PEER_MESSAGE_TYPES.REACTION:
+            return isPeerReactionPayload(candidate.payload)
+                ? {
+                    type: PEER_MESSAGE_TYPES.REACTION,
+                    payload: candidate.payload,
+                }
+                : null;
+        case PEER_MESSAGE_TYPES.EDIT:
+            return isPeerEditPayload(candidate.payload)
+                ? { type: PEER_MESSAGE_TYPES.EDIT, payload: candidate.payload }
+                : null;
+        case PEER_MESSAGE_TYPES.DELETE:
+            return isPeerDeletePayload(candidate.payload)
+                ? {
+                    type: PEER_MESSAGE_TYPES.DELETE,
+                    payload: candidate.payload,
+                }
+                : null;
+        case PEER_MESSAGE_TYPES.CONFIRM:
+            return isPeerConfirmPayload(candidate.payload)
+                ? {
+                    type: PEER_MESSAGE_TYPES.CONFIRM,
+                    payload: candidate.payload,
+                }
+                : null;
+        case PEER_MESSAGE_TYPES.MEDIA_STATE:
+            return isPeerMediaStatePayload(candidate.payload)
+                ? {
+                    type: PEER_MESSAGE_TYPES.MEDIA_STATE,
+                    payload: candidate.payload,
+                }
+                : null;
+        default:
+            return null;
     }
 };
 
@@ -165,20 +177,20 @@ export const getClaimedUserId = (
     message: Exclude<PeerMessage, { type: typeof PEER_MESSAGE_TYPES.POSITION }>
 ): string => {
     switch (message.type) {
-    case PEER_MESSAGE_TYPES.CHAT:
-        return message.payload.message.senderId;
-    case PEER_MESSAGE_TYPES.TYPING:
-        return message.payload.userId;
-    case PEER_MESSAGE_TYPES.REACTION:
-        return message.payload.userId;
-    case PEER_MESSAGE_TYPES.EDIT:
-        return message.payload.userId;
-    case PEER_MESSAGE_TYPES.DELETE:
-        return message.payload.userId;
-    case PEER_MESSAGE_TYPES.CONFIRM:
-        return message.payload.message.senderId;
-    case PEER_MESSAGE_TYPES.MEDIA_STATE:
-        return message.payload.userId;
+        case PEER_MESSAGE_TYPES.CHAT:
+            return message.payload.message.senderId;
+        case PEER_MESSAGE_TYPES.TYPING:
+            return message.payload.userId;
+        case PEER_MESSAGE_TYPES.REACTION:
+            return message.payload.userId;
+        case PEER_MESSAGE_TYPES.EDIT:
+            return message.payload.userId;
+        case PEER_MESSAGE_TYPES.DELETE:
+            return message.payload.userId;
+        case PEER_MESSAGE_TYPES.CONFIRM:
+            return message.payload.message.senderId;
+        case PEER_MESSAGE_TYPES.MEDIA_STATE:
+            return message.payload.userId;
     }
 };
 

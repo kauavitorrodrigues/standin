@@ -96,6 +96,8 @@ export class InteractionController {
 
         const target = resolveActionTarget(this.activeProperties);
         this.player.teleportTo(target.x, target.y);
-        this.player.setSitting(this.activeProperties.action === MAP_OBJECT_ACTIONS.SIT);
+        this.player.setSitting(
+            this.activeProperties.action === MAP_OBJECT_ACTIONS.SIT
+        );
     }
 }
