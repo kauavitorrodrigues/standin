@@ -95,7 +95,7 @@ describe("canPlaceStamp", () => {
         expect(canPlaceStamp(model, buildStamp(), 0, 0)).toEqual({ ok: true });
     });
 
-    it("replaces tiles and accepts area zones in the way", () => {
+    it("answers STAMP_OVERLAPS_AREA when another area is in the way", () => {
         const model = buildMapModel();
         const zoned = applyEditorOp(model, {
             type: "set_zone",
@@ -108,7 +108,8 @@ describe("canPlaceStamp", () => {
         if (!zoned.ok) throw new Error("zone");
 
         expect(canPlaceStamp(zoned.model, buildStamp(), 0, 0)).toEqual({
-            ok: true,
+            ok: false,
+            reason: Code.STAMP_OVERLAPS_AREA,
         });
     });
 

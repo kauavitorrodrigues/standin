@@ -4,14 +4,15 @@ import type { EditorModel } from "../types/editor-model";
 import type { Stamp } from "../types/stamp";
 import { findUnavailableStampItems } from "./stamp/findUnavailableStampItems";
 import { isStampInsideMap } from "./stamp/isStampInsideMap";
+import { overlapsAreaZone } from "./stamp/overlapsAreaZone";
 import { overlapsObject } from "./stamp/overlapsObject";
 import { overlapsSpawn } from "./stamp/overlapsSpawn";
 
 /**
  * Cheap check for the placement ghost, without building any operation: the
  * rectangle fits in the map, no object is in the way, the spawn is not
- * covered, the objects fit under the limit and the library lists every
- * tileset and asset. Existing tiles and area zones do not block.
+ * covered, no other area is in the way, the objects fit under the limit and
+ * the library lists every tileset and asset. Existing tiles do not block.
  */
 export const canPlaceStamp = (
     model: EditorModel,
@@ -30,6 +31,9 @@ export const canPlaceStamp = (
     }
     if (overlapsSpawn(model, rect)) {
         return { ok: false, reason: Code.STAMP_COVERS_SPAWN };
+    }
+    if (overlapsAreaZone(model, rect)) {
+        return { ok: false, reason: Code.STAMP_OVERLAPS_AREA };
     }
 
     const used = model.limits.objectsUsed + stamp.objects.length;
