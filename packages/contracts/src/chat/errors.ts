@@ -2,20 +2,20 @@ import { BaseError } from "../errors/base";
 
 export class ConversationNotFoundError extends BaseError {
     constructor() {
-        super("Conversa não encontrada.", "CONVERSATION_NOT_FOUND", 404);
+        super("Conversation not found.", "CONVERSATION_NOT_FOUND", 404);
     }
 }
 
 export class MessageNotFoundError extends BaseError {
     constructor() {
-        super("Mensagem não encontrada.", "MESSAGE_NOT_FOUND", 404);
+        super("Message not found.", "MESSAGE_NOT_FOUND", 404);
     }
 }
 
 export class MessageAccessDeniedError extends BaseError {
     constructor() {
         super(
-            "Você só pode gerenciar suas próprias mensagens.",
+            "You can only manage your own messages.",
             "MESSAGE_ACCESS_DENIED",
             403
         );
@@ -24,14 +24,14 @@ export class MessageAccessDeniedError extends BaseError {
 
 export class AttachmentNotFoundError extends BaseError {
     constructor() {
-        super("Anexo não encontrado.", "ATTACHMENT_NOT_FOUND", 404);
+        super("Attachment not found.", "ATTACHMENT_NOT_FOUND", 404);
     }
 }
 
 export class SelfConversationNotAllowedError extends BaseError {
     constructor() {
         super(
-            "Não é possível iniciar uma conversa consigo mesmo.",
+            "You cannot start a conversation with yourself.",
             "SELF_CONVERSATION_NOT_ALLOWED",
             400
         );
@@ -41,7 +41,7 @@ export class SelfConversationNotAllowedError extends BaseError {
 export class ConversationRecipientAccessDeniedError extends BaseError {
     constructor() {
         super(
-            "O destinatário não é membro ativo desta organização.",
+            "The recipient is not an active member of this organization.",
             "CONVERSATION_RECIPIENT_ACCESS_DENIED",
             403
         );

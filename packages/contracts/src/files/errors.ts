@@ -20,7 +20,7 @@ export class FileDownloadError extends BaseError {
 
 export class FileNotFoundError extends BaseError {
     constructor() {
-        super("Arquivo não encontrado.", "FILE_NOT_FOUND", 404);
+        super("File not found.", "FILE_NOT_FOUND", 404);
     }
 }
 
@@ -33,7 +33,7 @@ export class MissingFileError extends BaseError {
 export class UnsupportedFileTypeError extends BaseError {
     constructor() {
         super(
-            "Formato de arquivo não permitido para este tipo de upload.",
+            "File format is not allowed for this upload type.",
             "FILE_UNSUPPORTED_TYPE",
             400
         );
@@ -43,7 +43,7 @@ export class UnsupportedFileTypeError extends BaseError {
 export class FileTooLargeError extends BaseError {
     constructor() {
         super(
-            "O arquivo excede o tamanho máximo permitido.",
+            "The file exceeds the maximum allowed size.",
             "FILE_TOO_LARGE",
             400
         );
@@ -59,7 +59,7 @@ export class UnknownStorageDriverError extends BaseError {
 export class StorageDriverNotImplementedError extends BaseError {
     constructor() {
         super(
-            "Este driver de storage ainda não foi implementado.",
+            "This storage driver is not implemented yet.",
             "STORAGE_DRIVER_NOT_IMPLEMENTED",
             501
         );
@@ -69,7 +69,7 @@ export class StorageDriverNotImplementedError extends BaseError {
 export class MissingEnvironmentVariableError extends BaseError {
     constructor(name: string) {
         super(
-            `A variável de ambiente "${name}" é obrigatória.`,
+            `The environment variable "${name}" is required.`,
             "MISSING_ENVIRONMENT_VARIABLE",
             500
         );

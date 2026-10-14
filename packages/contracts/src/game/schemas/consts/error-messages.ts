@@ -1,23 +1,23 @@
 export const GameErrorMessages = {
     spaceJoin: {
         organizationId: {
-            required: "O identificador da organização é obrigatório.",
+            required: "The organization identifier is required.",
         },
         spaceId: {
-            required: "O identificador do space é obrigatório.",
+            required: "The space identifier is required.",
         },
         userId: {
-            required: "O identificador do usuário é obrigatório.",
+            required: "The user identifier is required.",
         },
     },
     mapJoin: {
         mapId: {
-            required: "O identificador do mapa é obrigatório.",
+            required: "The map identifier is required.",
         },
     },
     webrtcSignal: {
         targetSocketId: {
-            required: "O socket de destino é obrigatório.",
+            required: "The target socket is required.",
         },
     },
 } as const;

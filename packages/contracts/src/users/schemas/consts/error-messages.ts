@@ -2,14 +2,14 @@ import { MAX_USER_EMAIL_LENGTH, MAX_USER_NAME_LENGTH } from "./fields";
 
 export const UserErrorMessages = {
     id: {
-        invalid: "O ID do usuário é inválido.",
+        invalid: "The user ID is invalid.",
     },
     name: {
-        required: "O nome do usuário é obrigatório.",
-        max: `O nome do usuário não pode ter mais de ${MAX_USER_NAME_LENGTH} caracteres.`,
+        required: "The user name is required.",
+        max: `The user name cannot be longer than ${MAX_USER_NAME_LENGTH} characters.`,
     },
     email: {
-        invalid: "O e-mail do usuário é inválido.",
-        max: `O e-mail não pode ter mais de ${MAX_USER_EMAIL_LENGTH} caracteres.`,
+        invalid: "The user email is invalid.",
+        max: `The email cannot be longer than ${MAX_USER_EMAIL_LENGTH} characters.`,
     },
 };

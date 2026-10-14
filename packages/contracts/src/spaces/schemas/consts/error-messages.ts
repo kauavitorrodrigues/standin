@@ -2,28 +2,28 @@ import { MAX_SPACE_NAME_LENGTH } from "./fields";
 
 export const SpaceErrorMessages = {
     id: {
-        invalid: "O ID do espaço é inválido.",
+        invalid: "The space ID is invalid.",
     },
     conversationId: {
-        invalid: "O ID da conversa do espaço é inválido.",
+        invalid: "The space conversation ID is invalid.",
     },
     name: {
-        required: "O nome do espaço é obrigatório.",
-        max: `O nome do espaço não pode ter mais de ${MAX_SPACE_NAME_LENGTH} caracteres.`,
+        required: "The space name is required.",
+        max: `The space name cannot be longer than ${MAX_SPACE_NAME_LENGTH} characters.`,
     },
     organizationId: {
-        invalid: "O ID da organização do espaço é inválido.",
+        invalid: "The space organization ID is invalid.",
     },
     mapId: {
-        invalid: "O ID do mapa do espaço é inválido.",
+        invalid: "The space map ID is invalid.",
     },
     templateId: {
-        invalid: "O ID do template do espaço é inválido.",
+        invalid: "The space template ID is invalid.",
     },
     createdAt: {
-        invalid: "A data de criação do espaço é inválida.",
+        invalid: "The space creation date is invalid.",
     },
     source: {
-        required: "Escolha um template ou um tamanho para o espaço.",
+        required: "Choose a template or a size for the space.",
     },
 };
