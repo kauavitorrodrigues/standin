@@ -1,3 +1,5 @@
+import { AreaPlacementController } from "@/features/editor/lib/AreaPlacementController";
+import { AreaPlacementGhost } from "@/features/editor/lib/AreaPlacementGhost";
 import { SELECTION_PROVIDERS } from "@/features/editor/consts/selectionProviders";
 import { HoverOutline } from "@/features/editor/lib/HoverOutline";
 import { PlacementController } from "@/features/editor/lib/PlacementController";
@@ -11,16 +13,21 @@ import type {
 } from "@/features/editor/types/ToolController";
 import type { ToolEnv } from "@/features/editor/types/ToolEnv";
 
-// The controller registered on the SELECT tool. It joins two jobs that share
-// the tool: placing the asset the palette picked and selecting what is on the
-// map. While the store has an asset in `placing` the pointer goes to the
-// placement; otherwise it goes to the selection. A press stays with the
+// The controller registered on the SELECT tool. It joins three jobs that share
+// the tool: placing the asset the palette picked, placing the area it picked
+// and selecting what is on the map. While the store has an asset in `placing`
+// the pointer goes to the placement, while it has an area in `placingArea` it
+// goes to the area placement; otherwise it goes to the selection. A press stays with the
 // controller it started on until the button goes up, so a change of `placing`
 // in the middle of it cannot split a gesture.
 export const createSelectController = (env: ToolEnv): ToolController => {
     const placement = new PlacementController(
         env,
         new PlacementGhost(env.scene)
+    );
+    const areaPlacement = new AreaPlacementController(
+        env,
+        new AreaPlacementGhost(env.scene)
     );
     const select = new SelectController(
         env,
@@ -31,11 +38,15 @@ export const createSelectController = (env: ToolEnv): ToolController => {
     );
     let pressed: ToolController | null = null;
 
-    const current = (): ToolController =>
-        env.store.getState().placing === null ? select : placement;
+    const current = (): ToolController => {
+        const { placing, placingArea } = env.store.getState();
+        if (placing !== null) return placement;
+        if (placingArea !== null) return areaPlacement;
+        return select;
+    };
 
     const handleStore = () => {
-        if (env.store.getState().placing === null) return;
+        if (current() === select) return;
         select.onCancel();
     };
     let unsubscribe: (() => void) | null = null;
@@ -43,6 +54,7 @@ export const createSelectController = (env: ToolEnv): ToolController => {
     return {
         onActivate: () => {
             placement.onActivate();
+            areaPlacement.onActivate();
             unsubscribe = env.store.subscribe(handleStore);
         },
         onDeactivate: () => {
@@ -50,6 +62,7 @@ export const createSelectController = (env: ToolEnv): ToolController => {
             unsubscribe = null;
             pressed = null;
             placement.onDeactivate();
+            areaPlacement.onDeactivate();
             select.onDeactivate();
         },
         onPointerDown: (context: ToolContext) => {
@@ -66,11 +79,13 @@ export const createSelectController = (env: ToolEnv): ToolController => {
         },
         onPointerLeave: () => {
             placement.onPointerLeave?.();
+            areaPlacement.onPointerLeave?.();
             select.onPointerLeave?.();
         },
         onCancel: () => {
             pressed = null;
             placement.onCancel?.();
+            areaPlacement.onCancel?.();
             select.onCancel?.();
         },
     };

@@ -90,3 +90,17 @@ export const SELECTION_MESSAGES = {
 export const DESK_MESSAGES = {
     OWNER_FALLBACK: "outra pessoa",
 } as const;
+
+// What the footer says while an area is being placed: the nudge when the spot
+// is fine and the reason when it is refused. pt-BR, because the user reads it.
+export const AREA_PLACEMENT_MESSAGES = {
+    READY: "Clique para colocar a área. Esc para sair",
+    OUT_OF_BOUNDS: "A área não cabe no mapa neste lugar",
+    NOT_EMPTY: "Há objetos neste lugar, a área só substitui tiles",
+    COVERS_SPAWN: "A área cobriria o ponto de entrada do mapa",
+    LIMIT_REACHED: "Esta área passaria do limite de objetos do mapa",
+    TILESET_UNAVAILABLE: "Esta área usa um tileset que não está disponível",
+    ASSET_UNAVAILABLE: "Esta área usa um objeto que não está disponível",
+    PLACE_FAILED: "Não foi possível colocar a área neste lugar",
+    LOAD_FAILED: "Não foi possível carregar a área",
+} as const;

@@ -21,6 +21,14 @@ vi.mock("@/features/editor/lib/PlacementGhost", () => ({
     },
 }));
 
+vi.mock("@/features/editor/lib/AreaPlacementGhost", () => ({
+    AreaPlacementGhost: class {
+        show = ghost.show;
+        hide = ghost.hide;
+        destroy = ghost.destroy;
+    },
+}));
+
 vi.mock("@/features/editor/lib/ZonePreview", () => ({
     ZonePreview: class {
         showArea = vi.fn();
@@ -30,8 +38,35 @@ vi.mock("@/features/editor/lib/ZonePreview", () => ({
     },
 }));
 
-const setup = (placing: string | null) => {
-    let state = { placing, selection: [] as string[] };
+const stamp = {
+    version: 1,
+    width: 2,
+    height: 2,
+    palette: [],
+    layers: {},
+    objects: [
+        {
+            assetId: "crate",
+            dx: 0,
+            dy: 0,
+            offsetX: 0,
+            offsetY: 0,
+            parentIndex: null,
+        },
+    ],
+    zone: null,
+};
+const placingArea = {
+    area: { id: "area-1", version: 1 },
+    stamp,
+};
+
+const setup = (placing: string | null, withArea = false) => {
+    let state = {
+        placing,
+        placingArea: withArea ? placingArea : null,
+        selection: [] as string[],
+    };
     const listeners = new Set<() => void>();
     const store = {
         getState: () => state,
@@ -40,7 +75,11 @@ const setup = (placing: string | null) => {
             return () => listeners.delete(listener);
         },
         cancelPlacing: vi.fn(() => {
-            state = { placing: null, selection: [] };
+            state = { placing: null, placingArea: null, selection: [] };
+            listeners.forEach((listener) => listener());
+        }),
+        cancelPlacingArea: vi.fn(() => {
+            state = { ...state, placingArea: null };
             listeners.forEach((listener) => listener());
         }),
         setSelection: vi.fn(),
@@ -79,6 +118,26 @@ describe("createSelectController", () => {
             expect.objectContaining({ type: "place_asset", assetId: "crate" }),
         ]);
         expect(store.clearSelection).not.toHaveBeenCalled();
+    });
+
+    it("places the area when one is picked", () => {
+        const { controller, dispatch, context, store } = setup(null, true);
+
+        controller.onPointerDown?.(context);
+        controller.onPointerUp?.(context);
+
+        expect(dispatch).toHaveBeenCalledWith([
+            expect.objectContaining({ type: "place_asset", assetId: "crate" }),
+        ]);
+        expect(store.setSelection).not.toHaveBeenCalled();
+    });
+
+    it("Esc leaves the area placing mode", () => {
+        const { controller, store } = setup(null, true);
+
+        controller.onCancel?.();
+
+        expect(store.cancelPlacingArea).toHaveBeenCalled();
     });
 
     it("selects when nothing is being placed", () => {
