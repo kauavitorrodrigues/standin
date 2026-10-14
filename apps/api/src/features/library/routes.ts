@@ -1,17 +1,16 @@
 import { Router } from "express";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { LibraryController } from "./controllers";
-import { RequiresLibraryAdmin } from "./middleware/requiresLibraryAdmin";
 import {
     handleLibraryUploadError,
     uploadLibraryParts,
 } from "./middleware/uploadLibraryMiddleware";
 
-// The library is built here, by the admin, on the global library. Reading it
-// for a map goes through the maps routes.
+// The library is built here: by the admin on the global library, and by the
+// owner of an organization on its own. The mount decides the scope (see
+// `RequiresLibraryAdmin` and `RequiresLibraryOwner`), so both share these
+// routes. Reading it for a map goes through the maps routes.
 const router = Router();
-
-router.use(RequiresLibraryAdmin);
 
 router.get(
     "/overview",

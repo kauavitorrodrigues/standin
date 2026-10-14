@@ -5,6 +5,8 @@ import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { OrganizationController } from "./controllers";
 import { spacesRouter } from "../spaces/routes";
 import { conversationsRouter } from "../chat/routes";
+import { libraryRouter } from "../library/routes";
+import { RequiresLibraryOwner } from "../library/middleware/requiresLibraryOwner";
 
 const router = Router();
 
@@ -40,6 +42,14 @@ router.get(
 );
 
 router.use("/:organizationId/spaces", RequiresOrgMember, spacesRouter);
+
+// The library of the organization, built by its owner.
+router.use(
+    "/:organizationId/library",
+    RequiresOrgMember,
+    RequiresLibraryOwner,
+    libraryRouter
+);
 
 router.use(
     "/:organizationId/conversations",

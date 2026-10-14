@@ -10,9 +10,10 @@ const scopeQuerySchema = z.object({
 });
 
 /**
- * The library is written by the admin, on the global library. The role comes
- * from the database on every request. An `organizationId` is refused with
- * 403 `SCOPE_FORBIDDEN` until the library of the organization exists.
+ * The global library is written by the admin. The role comes from the
+ * database on every request. The scope is never chosen by the client: an
+ * `organizationId` is refused with 403 `SCOPE_FORBIDDEN`, since the library of
+ * an organization has its own mount (see `RequiresLibraryOwner`).
  */
 export const RequiresLibraryAdmin = (
     req: ExtendedRequest,
