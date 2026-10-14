@@ -43,6 +43,8 @@ const item = (overrides: Partial<Item>): Item => ({
     colorKey: null,
     tileX: 5,
     tileY: 5,
+    offsetX: 0,
+    offsetY: 0,
     parentId: null,
     type: ASSET_TYPES.DESK,
     placement: ASSET_PLACEMENTS.GROUND,

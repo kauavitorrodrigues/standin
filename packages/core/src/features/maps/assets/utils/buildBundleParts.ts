@@ -64,6 +64,8 @@ export const buildBundleParts = async ({
             rowId: partId,
             assetId: partAsset.id,
             ...position,
+            offsetX: root.offsetX,
+            offsetY: root.offsetY,
             parentId: root.rowId,
         });
         rows.push({
@@ -71,6 +73,8 @@ export const buildBundleParts = async ({
             mapId: map.id,
             assetId: partAsset.id,
             ...position,
+            offsetX: root.offsetX,
+            offsetY: root.offsetY,
             parentId: root.rowId,
         });
     }

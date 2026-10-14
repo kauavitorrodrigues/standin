@@ -26,6 +26,8 @@ const current: Item = {
     assetId: "mug-red",
     tileX: 3,
     tileY: 4,
+    offsetX: 0,
+    offsetY: 0,
     parentId: "desk",
 };
 

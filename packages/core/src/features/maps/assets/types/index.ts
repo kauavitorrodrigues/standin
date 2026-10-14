@@ -1,4 +1,3 @@
-export * from "./footprint";
 export * from "./asset-def";
 export * from "./item";
 export * from "./map-info";

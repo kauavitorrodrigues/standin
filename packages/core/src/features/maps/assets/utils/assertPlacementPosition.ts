@@ -1,6 +1,5 @@
-import { ASSET_PLACEMENTS } from "@standin/contracts";
+import { ASSET_PLACEMENTS, type Footprint } from "@standin/contracts";
 import type { AssetDef } from "../types/asset-def";
-import type { Footprint } from "../types/footprint";
 import type { Item } from "../types/item";
 import type { MapInfo } from "../types/map-info";
 import { assertGroundPosition } from "./assertGroundPosition";

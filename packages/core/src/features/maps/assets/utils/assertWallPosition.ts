@@ -1,11 +1,11 @@
 import {
     MapAssetNotOnWallError,
     MapAssetOutOfBoundsError,
+    isFootprintInsideMap,
+    getFootprintCells,
+    type Footprint,
 } from "@standin/contracts";
-import type { Footprint } from "../types/footprint";
 import type { MapInfo } from "../types/map-info";
-import { getFootprintCells } from "./getFootprintCells";
-import { isFootprintInsideMap } from "./isFootprintInsideMap";
 import { isWallCell } from "./isWallCell";
 
 /** WALL: inside the map, and over wall cells. */

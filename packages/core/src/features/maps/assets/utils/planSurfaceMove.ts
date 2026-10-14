@@ -1,8 +1,8 @@
 import {
     MapAssetFloorNotAllowedError,
     MapAssetTargetDeskNotFoundError,
+    type Footprint,
 } from "@standin/contracts";
-import type { Footprint } from "../types/footprint";
 import type { Item } from "../types/item";
 import { assertSurfacePosition } from "./assertSurfacePosition";
 

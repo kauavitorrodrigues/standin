@@ -1,4 +1,3 @@
-import { applyLayoutOps } from "./applyLayoutOps";
 import { buildMapRenderPayload } from "./buildRenderPayload";
 import { copyMap } from "./copy";
 import { createBlankMap } from "./createBlank";
@@ -18,13 +17,14 @@ export const MapService = {
     deleteByIds: deleteMapsByIds,
     findResolvedById: findResolvedMapById,
     buildRenderPayload: buildMapRenderPayload,
-    applyLayoutOps,
     exportTiled: exportMapAsTiled,
     getAccess: getMapAccess,
     findOwner: findMapOwner,
     loadLibrary: loadLayoutLibrary,
 };
 
-export * from "./assets";
-export * from "./desks";
-export * from "./templates";
+export { MapAssetService } from "./assets";
+export { DeskService } from "./desks";
+export { MapLockService } from "./lock";
+export { MapPublishService } from "./publish";
+export { MapTemplateService } from "./templates";

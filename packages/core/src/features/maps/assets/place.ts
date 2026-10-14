@@ -58,6 +58,8 @@ export const placeMapAsset = async (
             assetId: asset.id,
             tileX: input.tileX,
             tileY: input.tileY,
+            offsetX: input.offsetX ?? 0,
+            offsetY: input.offsetY ?? 0,
             parentId: parent?.rowId ?? null,
         };
         const parts = await buildBundleParts({
@@ -77,6 +79,8 @@ export const placeMapAsset = async (
                     assetId: asset.id,
                     tileX: input.tileX,
                     tileY: input.tileY,
+                    offsetX: root.offsetX,
+                    offsetY: root.offsetY,
                     parentId: root.parentId,
                 },
                 ...parts,

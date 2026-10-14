@@ -1,12 +1,12 @@
 import {
     ASSET_PLACEMENTS,
     MapAssetModelTooSmallError,
+    isFootprintInside,
+    type Footprint,
 } from "@standin/contracts";
 import type { AssetDef } from "../types/asset-def";
-import type { Footprint } from "../types/footprint";
 import type { Item } from "../types/item";
 import { acceptsSurfaceItems } from "./acceptsSurfaceItems";
-import { isFootprintInside } from "./isFootprintInside";
 import { itemFootprint } from "./itemFootprint";
 
 /** Replacing a desk model: the items on top must still fit on the new one. */
