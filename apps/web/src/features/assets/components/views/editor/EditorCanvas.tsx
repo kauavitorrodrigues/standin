@@ -6,8 +6,18 @@ import {
     CHECKER_LIGHT,
     GRID_LINE_COLOR,
 } from "../../../consts/editorColors";
+import type { EditorMode } from "../../../consts/editorModes";
 import type { Zoom } from "../../../consts/editorZoom";
 import type { ImageSize } from "../../../queries/useImageSize";
+import type {
+    FootprintMaskValue,
+    FootprintTile,
+    SolidCell,
+    SolidMaskValue,
+} from "../../../types/footprintMask";
+import { GAME_RENDER_CONFIG } from "@/features/game/consts/game-config";
+import { SCROLL_AREA_ATTRIBUTE } from "../../../hooks/useWheelZoom";
+import { getCanvasCursor } from "../../../utils/getCanvasCursor";
 import type { Crop, Footprint } from "../../../types/spriteGeometry";
 import { CropOverlay } from "./CropOverlay";
 import { EditorImage } from "./EditorImage";
@@ -19,14 +29,25 @@ type Props = {
     crop: Crop;
     frame: Crop;
     footprint: Footprint;
+    mask: FootprintMaskValue;
     solid: boolean;
+    // The tiles of the footprint can be clicked to free or occupy them.
+    paintable?: boolean;
+    // The tile under the pointer, which a click would free or occupy.
+    hoveredTile?: FootprintTile | null;
+    // The layer being edited, drawn in full over the others, and whether the
+    // collision can be drawn.
+    mode?: EditorMode;
+    collisionAvailable?: boolean;
+    solidMask?: SolidMaskValue;
+    hoveredCell?: SolidCell | null;
     // Drawn over the image, like the markers of another editor.
     children?: ReactNode;
     // Lets an editor stretch the canvas to the room it has.
     className?: string;
     pointerHandlers: Pick<
         HTMLAttributes<HTMLDivElement>,
-        "onPointerDown" | "onPointerMove" | "onPointerUp"
+        "onPointerDown" | "onPointerMove" | "onPointerUp" | "onPointerLeave"
     >;
 };
 
@@ -39,7 +60,14 @@ export const EditorCanvas = ({
     crop,
     frame,
     footprint,
+    mask,
     solid,
+    paintable = false,
+    hoveredTile = null,
+    mode,
+    collisionAvailable = false,
+    solidMask = null,
+    hoveredCell = null,
     children,
     className,
     pointerHandlers,
@@ -48,13 +76,20 @@ export const EditorCanvas = ({
 
     return (
         <div
+            {...{ [SCROLL_AREA_ATTRIBUTE]: "" }}
             className={cn(
-                "bg-muted/30 flex max-h-[32rem] justify-center overflow-auto rounded-xl border p-4",
+                "flex justify-center overflow-auto rounded-xl border p-4",
                 className
             )}
+            // The color the map editor draws on, so the image stands out from
+            // the panels around it.
+            style={{ backgroundColor: GAME_RENDER_CONFIG.BACKGROUND_COLOR }}
         >
             <div
-                className="relative my-auto shrink-0 cursor-crosshair touch-none select-none"
+                className={cn(
+                    "relative my-auto shrink-0 touch-none select-none",
+                    getCanvasCursor(hoveredTile, hoveredCell)
+                )}
                 style={{
                     width: px(size?.w ?? 0),
                     height: px(size?.h ?? 0),
@@ -80,7 +115,14 @@ export const EditorCanvas = ({
                     crop={crop}
                     frame={frame}
                     footprint={footprint}
+                    mask={mask}
                     solid={solid}
+                    paintable={paintable}
+                    hoveredTile={hoveredTile}
+                    mode={mode}
+                    collisionAvailable={collisionAvailable}
+                    solidMask={solidMask}
+                    hoveredCell={hoveredCell}
                 />
                 {children}
             </div>

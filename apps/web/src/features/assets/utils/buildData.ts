@@ -1,6 +1,8 @@
 import type { CreateAssetData } from "@standin/contracts";
+import { ASSET_ACTION_BEHAVIOR } from "../consts/actionBehavior";
 import type { CreateAssetFormValues } from "../types/createForm";
 import { getEffectiveCategory } from "./getEffectiveCategory";
+import { buildFootprintMasks } from "./buildFootprintMasks";
 
 const INFINITE_REPEAT = -1;
 
@@ -53,7 +55,17 @@ export const buildAssetData = (
             w: values.footprintW ?? 1,
             h: values.footprintH ?? 1,
             offsetX: values.footprintOffsetX ?? 0,
+            ...buildFootprintMasks({
+                w: values.footprintW ?? 1,
+                h: values.footprintH ?? 1,
+                offsetX: values.footprintOffsetX ?? 0,
+                mask: values.footprintMask,
+                solidMask: values.footprintSolidMask,
+                solid: values.solid,
+                isAnimated: values.isAnimated,
+            }),
         },
+        ...ASSET_ACTION_BEHAVIOR[values.action].build(values),
         color: buildColor(values),
         animation: buildAnimation(values),
     };

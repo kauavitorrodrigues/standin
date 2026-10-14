@@ -1,6 +1,8 @@
 import {
     ASSET_ACTIONS,
     getFamilyBase,
+    isFootprintMaskFitting,
+    isFootprintSolidMaskFitting,
     type AssetDefinition,
     type LibraryFamilyDetail,
 } from "@standin/contracts";
@@ -51,8 +53,26 @@ const validateNewRotation = (
     if (!values.footprintH || values.footprintH <= 0) {
         errors.footprintH = REQUIRED;
     }
-    const { action } = getFamilyBase(family.variants);
-    return { ...errors, ...validateActionParams(action, values) };
+    const fitsMask = isFootprintMaskFitting({
+        w: values.footprintW ?? 0,
+        h: values.footprintH ?? 0,
+        mask: values.footprintMask,
+    });
+    if (!fitsMask) {
+        errors.footprintMask = VARIANT_VALIDATION_MESSAGES.MASK_NOT_FITTING;
+    }
+    const base = getFamilyBase(family.variants);
+    const fitsSolidMask = isFootprintSolidMaskFitting({
+        w: values.footprintW ?? 0,
+        h: values.footprintH ?? 0,
+        mask: values.footprintMask,
+        solidMask: values.footprintSolidMask,
+    });
+    if (base.solid && base.animation === null && !fitsSolidMask) {
+        errors.footprintSolidMask =
+            VARIANT_VALIDATION_MESSAGES.SOLID_MASK_NOT_FITTING;
+    }
+    return { ...errors, ...validateActionParams(base.action, values) };
 };
 
 // The color of a family that has color: the key and the hex are both needed.

@@ -1,12 +1,15 @@
 import { useWatch, type UseFormReturn } from "react-hook-form";
+import { BrickWallIcon, FilmIcon } from "lucide-react";
 import { SelectFormField } from "@/components/fields/SelectFormField";
-import { SwitchFormField } from "@/components/fields/SwitchFormField";
+import { SwitchCardField } from "@/components/fields/SwitchCardField";
 import { TextFormField } from "@/components/fields/TextFormField";
 import {
+    ACTION_OPTIONS,
     PLACEMENT_OPTIONS,
     TYPE_OPTIONS,
 } from "@/features/assets/consts/createForm";
 import { ColorFields } from "@/features/assets/components/fields/ColorFields";
+import { AnimationFields } from "@/features/assets/components/fields/asset/AnimationFields";
 import { CategoryField } from "@/features/assets/components/fields/asset/CategoryField";
 import type { CreateAssetFormValues } from "@/features/assets/types/createForm";
 
@@ -17,7 +20,8 @@ type Props = {
 
 // The fields of a new base asset. The crop and the footprint are marked on
 // the image in the editor, so here there are only the name, the behavior, the
-// color and, for an animated asset, how the strip plays.
+// color, whether it blocks the way and, for an animated asset, how the strip
+// plays, which opens inside the switch of the animation.
 export const FormFields = ({ form, disabled }: Props) => {
     const type = useWatch({ control: form.control, name: "type" });
     return (
@@ -51,28 +55,45 @@ export const FormFields = ({ form, disabled }: Props) => {
                     options={PLACEMENT_OPTIONS}
                     disabled={disabled}
                 />
+                <SelectFormField
+                    control={form.control}
+                    name="action"
+                    label="Ação"
+                    hint="O que acontece quando alguém usa a peça. Sentar: o avatar senta na peça, e você marca onde direto na imagem."
+                    options={ACTION_OPTIONS}
+                    disabled={disabled}
+                />
+            </div>
+            {/* Half of the row, as wide as the column above it. */}
+            <div className="grid grid-cols-2 items-start gap-2">
                 <ColorFields
                     control={form.control}
                     disabled={disabled}
                     hint="Preenchida a partir da cor predominante da imagem, e você pode trocar. Só peças com cor aceitam variações de cor. A chave identifica a cor (vermelho, azul) e o tom é a cor do círculo na paleta."
                 />
             </div>
-            <div className="grid grid-cols-2 items-start gap-2">
-                <SwitchFormField
+            <SwitchCardField
+                control={form.control}
+                name="solid"
+                icon={BrickWallIcon}
+                title="Bloqueia a passagem"
+                description="Ligado, os avatares não atravessam o espaço que a peça ocupa (a pegada). Desligado, a peça ocupa o lugar, mas dá para andar por cima."
+                disabled={disabled}
+            />
+            <SwitchCardField
+                control={form.control}
+                name="isAnimated"
+                icon={FilmIcon}
+                title="Animada"
+                description="O PNG é uma faixa horizontal com os frames da animação, lado a lado, da esquerda para a direita."
+                disabled={disabled}
+            >
+                <AnimationFields
                     control={form.control}
-                    name="solid"
-                    label="Bloqueia a passagem"
-                    hint="Ligado: os avatares não atravessam o espaço que a peça ocupa (a pegada). Desligado: a peça ocupa o lugar, mas dá para andar por cima."
+                    showFrameCount
                     disabled={disabled}
                 />
-                <SwitchFormField
-                    control={form.control}
-                    name="isAnimated"
-                    label="Animada"
-                    hint="Ligado: o PNG é uma faixa horizontal com os frames da animação, lado a lado, da esquerda para a direita."
-                    disabled={disabled}
-                />
-            </div>
+            </SwitchCardField>
         </div>
     );
 };

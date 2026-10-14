@@ -1,8 +1,11 @@
 import { TILE_SIZE } from "@standin/contracts";
-import { DEFAULT_FOOTPRINT } from "../consts/spriteGeometry";
 import type { Cell, Crop, Footprint } from "../types/spriteGeometry";
 
 export const hasCrop = (crop: Crop) => crop.w > 0 && crop.h > 0;
+
+// The footprint was marked, as opposed to the empty one before that.
+export const hasFootprint = (footprint: Footprint) =>
+    footprint.w > 0 && footprint.h > 0;
 
 // The crop, in px, that covers both cells and everything between them.
 export const getCropFromCells = (start: Cell, end: Cell): Crop => ({
@@ -10,13 +13,6 @@ export const getCropFromCells = (start: Cell, end: Cell): Crop => ({
     y: Math.min(start.row, end.row) * TILE_SIZE,
     w: (Math.abs(end.col - start.col) + 1) * TILE_SIZE,
     h: (Math.abs(end.row - start.row) + 1) * TILE_SIZE,
-});
-
-// What a new crop suggests for the footprint: as wide as the art and one tile
-// deep, which is right for tables, chairs and shelves. The user adjusts it.
-export const suggestFootprint = (crop: Crop): Footprint => ({
-    ...DEFAULT_FOOTPRINT,
-    w: Math.max(Math.round(crop.w / TILE_SIZE), 1),
 });
 
 // The footprint marked by dragging between two cells. It stays inside the

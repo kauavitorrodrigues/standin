@@ -14,9 +14,15 @@ export const useVariantGeometry = (
     frameCount: number
 ) => {
     const { data: size } = useImageSize(file);
-    const [footprintW, footprintH, offsetX] = useWatch({
+    const [footprintW, footprintH, offsetX, mask, solidMask] = useWatch({
         control: form.control,
-        name: ["footprintW", "footprintH", "footprintOffsetX"],
+        name: [
+            "footprintW",
+            "footprintH",
+            "footprintOffsetX",
+            "footprintMask",
+            "footprintSolidMask",
+        ],
     });
 
     const crop: Crop = { x: 0, y: 0, w: size?.w ?? 0, h: size?.h ?? 0 };
@@ -26,5 +32,12 @@ export const useVariantGeometry = (
         offsetX: offsetX ?? DEFAULT_FOOTPRINT.offsetX,
     };
 
-    return { size, crop, frame: getFrameCrop(crop, frameCount), footprint };
+    return {
+        size,
+        crop,
+        frame: getFrameCrop(crop, frameCount),
+        footprint,
+        mask,
+        solidMask,
+    };
 };
