@@ -18,13 +18,14 @@ import {
 import type { LibraryPalette } from "@standin/contracts";
 import { MAP_OWNER_KINDS } from "../maps/consts/owner";
 import type { MapAccess } from "../maps/types/map-access";
+import { buildFileUrl } from "../../lib/buildFileUrl";
 import { tilesetSelect } from "./consts/select";
 import { loadAssetRows } from "./utils/loadRows";
 import { toAssetDefinitions, toTilesets } from "./utils/toDefinitions";
 
 // A template map only sees the global library (a template is published to
 // every organization). A space map also sees the library of its organization.
-const paletteScopeOf = (access: MapAccess): string | null =>
+export const paletteScopeOf = (access: MapAccess): string | null =>
     access.owner.kind === MAP_OWNER_KINDS.TEMPLATE
         ? null
         : access.owner.organizationId;
@@ -37,7 +38,7 @@ const visibleTilesets = (organizationId: string | null) =>
               eq(tilesetsTable.organizationId, organizationId)
           );
 
-const visibleAreas = (organizationId: string | null) =>
+export const visibleAreas = (organizationId: string | null) =>
     organizationId === null
         ? isNull(areasTable.organizationId)
         : or(
@@ -117,11 +118,31 @@ export const buildPalette = async (
         })
     );
 
+    const areaRows = await db
+        .select({
+            id: areasTable.id,
+            name: areasTable.name,
+            width: areasTable.width,
+            height: areasTable.height,
+            objectCount: areasTable.objectCount,
+            thumbnailFileId: areasTable.thumbnailFileId,
+            updatedAt: areasTable.updatedAt,
+        })
+        .from(areasTable)
+        .where(
+            and(isNull(areasTable.deletedAt), visibleAreas(organizationId))
+        )
+        .orderBy(areasTable.name);
+
     return {
         tilesets: await toTilesets(tilesetRows),
         assets,
         categories,
-        areas: [],
+        areas: areaRows.map(({ thumbnailFileId, updatedAt, ...area }) => ({
+            ...area,
+            thumbnailUrl: buildFileUrl(thumbnailFileId),
+            version: updatedAt.getTime(),
+        })),
     };
 };
 
