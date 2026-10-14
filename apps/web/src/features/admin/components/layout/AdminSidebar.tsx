@@ -1,35 +1,22 @@
 import { BoxIcon, Grid2x2Icon, LayoutGridIcon, MapIcon } from "lucide-react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { LogoGlyph } from "@/components/logos";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
+import { SectionSidebar } from "@/features/library/components/layout/SectionSidebar";
+import { SectionSidebarLink } from "@/features/library/components/layout/SectionSidebarLink";
 import { UserMenu } from "@/features/users/components/UserMenu";
-import { ADMIN_SECTION_VALUES } from "../../consts/adminSections";
-import { resolveAdminSection } from "../../utils/resolveAdminSection";
-import { AdminSidebarLink } from "./AdminSidebarLink";
 
-// Always an icon rail on desktop (the provider keeps it collapsed) and a
-// sheet on mobile.
-// The section lives in the URL: each one is a page, so a reload or a shared
-// link lands on the same one.
 export const AdminSidebar = () => {
-    const pathname = useLocation({ select: (location) => location.pathname });
-    const section = resolveAdminSection(pathname);
     const { state, isMobile, setOpenMobile } = useSidebar();
 
     return (
-        <Sidebar collapsible="icon">
-            <SidebarHeader className="p-2.5 group-data-[collapsible=icon]:items-center">
+        <SectionSidebar
+            header={
                 <SidebarMenu className="gap-2">
                     <SidebarMenuItem>
                         <SidebarMenuButton
@@ -46,48 +33,31 @@ export const AdminSidebar = () => {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-            </SidebarHeader>
-            <SidebarContent>
-                <SidebarGroup className="p-2.5 group-data-[collapsible=icon]:items-center">
-                    <SidebarGroupContent>
-                        <SidebarMenu className="gap-2">
-                            <AdminSidebarLink
-                                section={ADMIN_SECTION_VALUES.ASSETS}
-                                icon={BoxIcon}
-                                label="Biblioteca de recursos"
-                                active={section === ADMIN_SECTION_VALUES.ASSETS}
-                            />
-                            <AdminSidebarLink
-                                section={ADMIN_SECTION_VALUES.TILESETS}
-                                icon={Grid2x2Icon}
-                                label="Tilesets"
-                                active={
-                                    section === ADMIN_SECTION_VALUES.TILESETS
-                                }
-                            />
-                            <AdminSidebarLink
-                                section={ADMIN_SECTION_VALUES.AREAS}
-                                icon={LayoutGridIcon}
-                                label="Áreas"
-                                active={section === ADMIN_SECTION_VALUES.AREAS}
-                            />
-                            <AdminSidebarLink
-                                section={ADMIN_SECTION_VALUES.MAPS}
-                                icon={MapIcon}
-                                label="Mapas"
-                                active={section === ADMIN_SECTION_VALUES.MAPS}
-                            />
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-            </SidebarContent>
-            <SidebarFooter className="p-2.5 pb-3 group-data-[collapsible=icon]:items-center">
+            }
+            footer={
                 <UserMenu
                     side={isMobile ? "bottom" : "right"}
                     align="end"
                     compact={state === "collapsed" && !isMobile}
                 />
-            </SidebarFooter>
-        </Sidebar>
+            }
+        >
+            <SectionSidebarLink
+                to="/admin/assets"
+                icon={BoxIcon}
+                label="Biblioteca de recursos"
+            />
+            <SectionSidebarLink
+                to="/admin/tilesets"
+                icon={Grid2x2Icon}
+                label="Tilesets"
+            />
+            <SectionSidebarLink
+                to="/admin/areas"
+                icon={LayoutGridIcon}
+                label="Áreas"
+            />
+            <SectionSidebarLink to="/admin/maps" icon={MapIcon} label="Mapas" />
+        </SectionSidebar>
     );
 };
