@@ -2,6 +2,8 @@ import os from "node:os";
 import path from "node:path";
 import fs from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
+import type { EditorOp } from "@standin/contracts";
+import { publishOps, publishRaw } from "./helpers/publishOps";
 
 // Runs the map flows against a real Postgres. Off by default: point
 // INTEGRATION_DATABASE_URL at a throwaway database (migrated, empty) to run.
@@ -38,6 +40,21 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
     const asUser = (key: keyof typeof users) => users[key];
     const accessOf = (key: keyof typeof users, mapId: string) =>
         core.MapService.getAccess(asUser(key), mapId);
+
+    // Layout changes go through the publication, as the editor does.
+    const publishAs = async (
+        key: keyof typeof users,
+        mapId: string,
+        baseVersion: number,
+        ops: EditorOp[]
+    ) =>
+        publishOps(
+            core,
+            { id: users[key].id, name: key },
+            await accessOf(key, mapId),
+            baseVersion,
+            ops
+        );
 
     beforeAll(async () => {
         process.env.DATABASE_URL = url;
@@ -365,11 +382,9 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
         });
     });
 
-    describe("layout-ops", () => {
+    describe("layout changes through the publication", () => {
         it("paints, bumps the version, and rejects a stale baseVersion", async () => {
-            const access = await accessOf("owner", space.mapId);
-
-            const applied = await core.MapService.applyLayoutOps(access, 1, [
+            const applied = await publishAs("owner", space.mapId, 1, [
                 {
                     type: "paint",
                     layer: "ground",
@@ -384,7 +399,7 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
             expect(applied.version).toBe(2);
 
             await expect(
-                core.MapService.applyLayoutOps(access, 1, [
+                publishAs("owner", space.mapId, 1, [
                     { type: "set_background", color: "#101010" },
                 ])
             ).rejects.toMatchObject({ status: 409, currentVersion: 2 });
@@ -392,15 +407,30 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
 
         it("lets only one of two concurrent editors win", async () => {
             const access = await accessOf("owner", space.mapId);
+            const actor = { id: users.owner.id, name: "owner" };
+            const lock = core.MapLockService.acquire(
+                space.mapId,
+                actor,
+                "integration-publish-session"
+            );
+            expect(lock.ok).toBe(true);
             const run = (color: string) =>
-                core.MapService.applyLayoutOps(access, 2, [
+                publishRaw(core, actor, access, 2, [
                     { type: "set_background", color },
                 ]);
 
-            const results = await Promise.allSettled([
-                run("#111111"),
-                run("#222222"),
-            ]);
+            let results: PromiseSettledResult<unknown>[];
+            try {
+                results = await Promise.allSettled([
+                    run("#111111"),
+                    run("#222222"),
+                ]);
+            } finally {
+                core.MapLockService.release(
+                    space.mapId,
+                    "integration-publish-session"
+                );
+            }
 
             expect(
                 results.filter(({ status }) => status === "fulfilled")
@@ -420,15 +450,16 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
             );
 
             await expect(
-                core.MapService.applyLayoutOps(
-                    access,
-                    render.map.layoutVersion,
-                    [{ type: "erase", layer: "ground", cells: [[500, 500]] }]
-                )
+                publishAs("owner", space.mapId, render.map.layoutVersion, [
+                    { type: "erase", layer: "ground", cells: [[500, 500]] },
+                ])
             ).rejects.toMatchObject({
                 status: 422,
                 errors: [
-                    expect.objectContaining({ code: "CELL_OUT_OF_BOUNDS" }),
+                    expect.objectContaining({
+                        opIndex: 0,
+                        code: "CELL_OUT_OF_BOUNDS",
+                    }),
                 ],
             });
         });
@@ -941,7 +972,7 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
                 users.admin.id,
                 { assetId: defs.monitor, tileX: 4, tileY: 4, parentId: desk.id }
             );
-            await core.MapService.applyLayoutOps(adminAccess, 1, [
+            await publishAs("admin", template.mapId, 1, [
                 { type: "set_background", color: "#abcdef" },
             ]);
 
@@ -975,7 +1006,7 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
             expect(render.desks).toEqual([]);
 
             // Editing the template afterwards leaves the space alone.
-            await core.MapService.applyLayoutOps(adminAccess, 2, [
+            await publishAs("admin", template.mapId, 2, [
                 { type: "set_background", color: "#000000" },
             ]);
             const after = await core.MapService.buildRenderPayload(
@@ -1413,6 +1444,27 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
                     expect.objectContaining({ code: "ANIMATION_IMMUTABLE" }),
                 ],
             });
+        });
+    });
+
+    describe("editor model", () => {
+        it("loads the same model the client builds from the render payload", async () => {
+            const access = await accessOf("owner", space.mapId);
+            const render = await core.MapService.buildRenderPayload(
+                access,
+                users.owner.id
+            );
+            const palette = await core.AssetService.getMapPalette(access);
+            const { buildEditorModel } = await import("@standin/contracts");
+            const expected = buildEditorModel(render, palette);
+
+            const model = await database.db.transaction((tx) =>
+                core.MapPublishService.loadEditorModel(tx, access)
+            );
+
+            expect(render.placed.length).toBeGreaterThan(0);
+            expect(model).toEqual(expected);
+            expect(model.limits.objectsUsed).toBe(render.placed.length);
         });
     });
 

@@ -1,13 +1,15 @@
 import { renderMap } from "./render";
 import { exportMap } from "./exportTiled";
-import { applyLayoutOps } from "./layoutOps";
 import { getMapLibrary } from "./library";
+import { getMapLock } from "./lock";
+import { publishMap } from "./publish";
 import { MapAssetController } from "./assets";
 
 export const MapController = {
     render: renderMap,
     export: exportMap,
-    layoutOps: applyLayoutOps,
     library: getMapLibrary,
+    lock: getMapLock,
+    publish: publishMap,
     assets: MapAssetController,
 };

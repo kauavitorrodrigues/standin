@@ -5,6 +5,10 @@ import {
     LayoutValidationError,
     LibraryError,
     LibraryValidationError,
+    LockNotHeldError,
+    MapLockedError,
+    PublishTooManyOpsError,
+    PublishValidationError,
     StaleLayoutVersionError,
 } from "@standin/contracts";
 import { ErrorMessages } from "@/enums/errorMessages";
@@ -59,6 +63,7 @@ export const sendError = ({
             warnings: reportError.warnings,
         });
     }
+    
     // The library answers with the same shape, and its other errors with
     // their code and details.
     if (reportError instanceof LibraryValidationError) {
@@ -69,6 +74,7 @@ export const sendError = ({
             warnings: reportError.warnings,
         });
     }
+    
     if (reportError instanceof LibraryError) {
         return res.status(reportError.status).json({
             error: reportError.message,
@@ -76,11 +82,45 @@ export const sendError = ({
             ...reportError.details,
         });
     }
+    
     if (reportError instanceof StaleLayoutVersionError) {
         return res.status(reportError.status).json({
             error: reportError.message,
             code: reportError.code,
             version: reportError.currentVersion,
+        });
+    }
+    
+    // A locked map answers 423 with who holds the lock and since when.
+    if (reportError instanceof MapLockedError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
+            by: reportError.by,
+            since: reportError.since,
+        });
+    }
+    
+    // A draft that cannot be applied answers with the operation that failed.
+    if (reportError instanceof PublishValidationError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
+            errors: reportError.errors,
+        });
+    }
+
+    if (reportError instanceof PublishTooManyOpsError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
+        });
+    }
+
+    if (reportError instanceof LockNotHeldError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
         });
     }
 
