@@ -60,10 +60,10 @@ export const EditorSidePanel = ({
                     actions={actions}
                     onExit={requestExit}
                 >
-                    <PanelTabList />
+                    <PanelTabList withAreas />
                     <PanelToggle open={open} onToggle={store.togglePanel} />
                 </SidePanelHeader>
-                <PanelTabs palette={palette} />
+                <PanelTabs palette={palette} withAreas />
             </Tabs>
             <UsageFooter />
         </EditorLayout.Panel>

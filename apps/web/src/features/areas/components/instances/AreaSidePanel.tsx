@@ -39,10 +39,10 @@ export const AreaSidePanel = ({ palette, onExit }: Props) => {
                 className="min-h-0 flex-1 gap-0"
             >
                 <SidePanelHeader title={<AreaNameField />} onExit={onExit}>
-                    <PanelTabList />
+                    <PanelTabList withAreas={false} />
                     <PanelToggle open={open} onToggle={store.togglePanel} />
                 </SidePanelHeader>
-                <PanelTabs palette={palette} />
+                <PanelTabs palette={palette} withAreas={false} />
             </Tabs>
             <AreaZoneBox />
             <UsageFooter />
