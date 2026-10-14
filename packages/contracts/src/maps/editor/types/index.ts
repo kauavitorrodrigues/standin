@@ -26,3 +26,6 @@ export * from "./replace-alternatives";
 export * from "./replay-ops-result";
 export * from "./stamp";
 export * from "./build-stamp-ops-result";
+export * from "./stamp-rect";
+export * from "./capture-stamp-options";
+export * from "./capture-stamp-result";

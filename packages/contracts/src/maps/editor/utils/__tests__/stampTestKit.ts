@@ -12,6 +12,7 @@ import type { EditorModel } from "../../types/editor-model";
 import type { Stamp } from "../../types/stamp";
 import { applyEditorOp } from "../applyEditorOp";
 import { buildBlankEditorModel } from "../buildBlankEditorModel";
+import { buildStampOps } from "../buildStampOps";
 
 const asset = (overrides: Partial<AssetDefinition>): AssetDefinition =>
     ({
@@ -142,4 +143,17 @@ export const applyAll = (model: EditorModel, ops: EditorOp[]) => {
         inverseBySteps.push(result.inverse);
     }
     return { model: current, inverse: inverseBySteps.reverse().flat() };
+};
+
+// A map model with the standard stamp already placed at (x, y).
+export const buildModelWithStamp = (x = 3, y = 2): EditorModel => {
+    const result = buildStampOps(
+        buildMapModel(),
+        buildStamp(),
+        x,
+        y,
+        tempIds()
+    );
+    if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    return result.model;
 };

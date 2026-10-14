@@ -26,3 +26,5 @@ export * from "./ops/diffTileLayers";
 export * from "./replayOps";
 export * from "./buildBlankEditorModel";
 export * from "./buildStampOps";
+export * from "./validateStamp";
+export * from "./captureStamp";
