@@ -15,6 +15,7 @@ import { isSameTileMeta } from "../utils/editor/metaEdit";
 import { getTilesetSavedMessage } from "../utils/getSavedMessage";
 import type { useTilesetGridForm } from "./useGridForm";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 // Everything the editor of a tileset does. The marks and the grid typed live
 // in forms and only go to the server on save, which sends them together,
@@ -24,6 +25,7 @@ export const useTilesetEditor = (
     tileset: LibraryTilesetDetail,
     gridForm: ReturnType<typeof useTilesetGridForm>
 ) => {
+    const { paths } = useLibraryScope();
     const navigate = useNavigate();
     const replaceTileMeta = useReplaceTileMeta();
     const saved = tileset.tileMeta ?? {};
@@ -104,7 +106,7 @@ export const useTilesetEditor = (
 
     const handleDeleted = () => {
         guard.release();
-        navigate({ to: "/admin/tilesets" });
+        navigate({ to: paths.tilesets });
     };
 
     return {

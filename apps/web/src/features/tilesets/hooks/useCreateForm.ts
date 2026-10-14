@@ -16,11 +16,13 @@ import type { CreateTilesetFormValues } from "../types/createForm";
 import { buildTilesetData } from "../utils/buildData";
 import { getTilesetGrid } from "../utils/grid/getGrid";
 import { validateCreateTileset } from "../utils/validateCreate";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 // Everything the form of a new tileset does: reads the grid from the sheet as
 // the margin and the spacing are typed, suggests the name from the file,
 // checks what saves a round trip and sends the tileset.
 export const useCreateTilesetForm = () => {
+    const { paths } = useLibraryScope();
     const navigate = useNavigate();
     const createTileset = useCreateTileset();
 
@@ -63,7 +65,7 @@ export const useCreateTilesetForm = () => {
                 data: buildTilesetData(values, grid.tileCount),
             });
             toast.add({ title: TILESET_MESSAGES.CREATED, type: "success" });
-            navigate({ to: "/admin/tilesets" });
+            navigate({ to: paths.tilesets });
         } catch (error) {
             applyApiErrorWithFallback(
                 error,
@@ -84,6 +86,6 @@ export const useCreateTilesetForm = () => {
         issuesMessage: form.formState.errors.root?.message,
         suggestName,
         submit: form.handleSubmit(onSubmit),
-        cancel: () => navigate({ to: "/admin/tilesets" }),
+        cancel: () => navigate({ to: paths.tilesets }),
     };
 };
