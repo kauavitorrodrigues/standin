@@ -41,6 +41,9 @@ export const mapAssetsTable = pgTable(
         // Bottom left cell of the footprint.
         tileX: integer("tile_x").notNull(),
         tileY: integer("tile_y").notNull(),
+        // Pixel shift from the anchor cell, under one cell in each axis.
+        offsetX: integer("offset_x").notNull().default(0),
+        offsetY: integer("offset_y").notNull().default(0),
         // Only what changes in this instance (promptText, actionDisabled...).
         propertyOverrides: jsonb("property_overrides").$type<
             Record<string, unknown>
