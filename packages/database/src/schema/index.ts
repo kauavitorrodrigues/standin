@@ -5,6 +5,7 @@ export * from "./organization-invites";
 export * from "./files";
 export * from "./maps";
 export * from "./map-templates";
+export * from "./areas";
 export * from "./tilesets";
 export * from "./assets";
 export * from "./asset-parts";
