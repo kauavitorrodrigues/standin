@@ -1,16 +1,6 @@
-import { PageContainer } from "@/components/layout/page-container";
 import { CreateSpaceForm } from "@/features/spaces/components/forms/CreateForm";
 
+// Takes the whole screen, with no header, like the setup of an office.
 export function CreateSpacePage() {
-    return (
-        <PageContainer.Root>
-            <PageContainer.Header
-                title="Criar espaço"
-                description="Dê um nome ao seu espaço."
-            />
-            <PageContainer.Content>
-                <CreateSpaceForm />
-            </PageContainer.Content>
-        </PageContainer.Root>
-    );
+    return <CreateSpaceForm />;
 }
