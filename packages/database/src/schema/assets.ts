@@ -19,6 +19,7 @@ import {
 } from "drizzle-orm/pg-core";
 import {
     type AssetAnimation,
+    type FootprintMask,
     ASSET_ACTIONS,
     ASSET_CATEGORIES,
     ASSET_PLACEMENTS,
@@ -81,6 +82,17 @@ export const assetsTable = pgTable(
         footprintW: integer("footprint_w").notNull().default(1),
         footprintH: integer("footprint_h").notNull().default(1),
         footprintOffsetX: integer("footprint_offset_x").notNull().default(0),
+        // Occupied tiles inside the footprint, one flag per tile, rows from top
+        // to bottom. Null means the whole rectangle is occupied. Set only at
+        // creation and never for an animated asset.
+        footprintMask: jsonb("footprint_mask").$type<FootprintMask>(),
+        // The cells that block the way, SOLID_MASK_SUBDIVISION per tile per
+        // side, rows from top to bottom of the footprint rectangle. Null means
+        // the occupied tiles block whole. Set only at creation, only for a
+        // solid asset and never for an animated one.
+        footprintSolidMask: jsonb(
+            "footprint_solid_mask"
+        ).$type<FootprintMask>(),
         placement: assetPlacementEnum("placement")
             .notNull()
             .default(ASSET_PLACEMENTS.GROUND),
