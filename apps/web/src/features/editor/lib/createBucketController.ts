@@ -9,6 +9,7 @@ import { resolveBrushTarget } from "@/features/editor/utils/resolveBrushTarget";
 // The bucket (G). It fills, on release, the region of the cell with the same
 // tile on the layer of the brush tile. A region over MAX_CELLS_PER_OP cells
 // goes out as several operations of the SAME gesture, so it is one undo step.
+// Inside the frame of an area it stays inside the frame.
 export const createBucketController = (env: ToolEnv): ToolController => {
     let target: BrushTarget | null = null;
 
@@ -25,7 +26,12 @@ export const createBucketController = (env: ToolEnv): ToolController => {
 
             const { brush, layer } = target;
             target = null;
-            const region = floodFill(context.model.layout, layer, context.cell);
+            const region = floodFill(
+                context.model.layout,
+                layer,
+                context.cell,
+                env.getBounds?.() ?? undefined
+            );
             const gesture = buildPaintOps(context.model, brush, layer, region);
             commitTileGesture({
                 context,

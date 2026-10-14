@@ -26,6 +26,12 @@ import { SelectionOverlay } from "@/features/editor/lib/SelectionOverlay";
 import { FrameController } from "@/features/editor/lib/FrameController";
 import { FrameOverlay } from "@/features/editor/lib/FrameOverlay";
 import { isEditable } from "@/features/editor/utils/isEditable";
+import {
+    FRAME_CAMERA_MARGIN_TILES,
+    FRAME_FIT_PADDING,
+} from "@/features/editor/consts/frame";
+import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
+import { isPanMode } from "@/features/editor/utils/isPanMode";
 import type { FrameConfig } from "@/features/editor/types/FrameConfig";
 import { ZoneOverlay } from "@/features/editor/lib/ZoneOverlay";
 import { TOOL_REGISTRY } from "@/features/editor/consts/toolRegistry";
@@ -41,6 +47,7 @@ import type {
     PlacedAsset,
     Tileset,
 } from "@standin/contracts";
+import { TILE_SIZE } from "@standin/contracts";
 import type { GameMapData } from "@/features/game/types/tilemap";
 import type { EditorSceneInitData } from "@/features/editor/types/editor";
 import type {
@@ -131,7 +138,8 @@ export class EditorScene extends Phaser.Scene {
             tilemap.widthInPixels,
             tilemap.heightInPixels,
             this.store.getState().zoom,
-            (zoom) => this.game.events.emit(EDITOR_EVENTS.ZOOM_CHANGED, zoom)
+            (zoom) => this.game.events.emit(EDITOR_EVENTS.ZOOM_CHANGED, zoom),
+            this.frameConfig ? FRAME_CAMERA_MARGIN_TILES : undefined
         );
         const grid = new GridOverlay(
             this,
@@ -199,31 +207,66 @@ export class EditorScene extends Phaser.Scene {
             this.tileRenderer?.setLayersVisible(layerVisibility);
         };
 
-        const handleResize = () => camera.handleViewResize();
-        const handleFit = () => camera.fit();
+        // With a frame, the view fits the frame, not the whole canvas.
+        const fitTarget = () => {
+            const rect = this.frameConfig?.store.getRect();
+            if (!rect) return undefined;
+            return {
+                x: rect.x * TILE_SIZE,
+                y: rect.y * TILE_SIZE,
+                width: rect.w * TILE_SIZE,
+                height: rect.h * TILE_SIZE,
+            };
+        };
+        const handleFit = () => camera.fit(fitTarget(), FRAME_FIT_PADDING);
+        // The view may still be settling when the scene opens, so with a frame it
+        // keeps fitting on every resize until the first press or wheel on it.
+        let autoFit = this.frameConfig !== null;
+        const stopAutoFit = () => {
+            autoFit = false;
+        };
+        const handleResize = () => {
+            camera.handleViewResize();
+            if (autoFit) handleFit();
+        };
+        this.input.once(Phaser.Input.Events.POINTER_DOWN, stopAutoFit);
+        this.input.once(Phaser.Input.Events.POINTER_WHEEL, stopAutoFit);
         const handleFocusCell = (cell: Cell) => camera.focusCell(cell);
 
         camera.refreshBounds();
-        camera.fit();
+        camera.fit(fitTarget(), FRAME_FIT_PADDING);
         grid.setVisible(this.store.getState().gridVisible);
         this.tileRenderer?.setLayersVisible(
             this.store.getState().layerVisibility
         );
 
-        const frameController = this.createFrame(tilemap.width, tilemap.height);
-
         const panState = { spaceHeld: false };
+        const frameController = this.createFrame(
+            tilemap.width,
+            tilemap.height,
+            () =>
+                isPanMode({
+                    spaceHeld: panState.spaceHeld,
+                    tool: this.store.getState().tool,
+                })
+        );
         const unbindInput = bindEditorCameraInput(
             this,
             camera,
             this.store,
-            panState
+            panState,
+            (worldX, worldY) =>
+                frameController?.isOver({ worldX, worldY }) ?? false
         );
         this.toolRouter = new EditorToolRouter({
             registry: TOOL_REGISTRY,
             source: bindToolInput(this),
             store: this.store,
-            env: { scene: this, store: this.store },
+            env: {
+                scene: this,
+                store: this.store,
+                getBounds: () => this.frameConfig?.store.getRect() ?? null,
+            },
             columns: tilemap.width,
             rows: tilemap.height,
             interceptor: frameController ?? undefined,
@@ -286,7 +329,11 @@ export class EditorScene extends Phaser.Scene {
 
     // The frame of an area, when the shell asked for one: its overlay and the
     // controller that drags it.
-    private createFrame(columns: number, rows: number): FrameController | null {
+    private createFrame(
+        columns: number,
+        rows: number,
+        canMoveFromBody: () => boolean
+    ): FrameController | null {
         const config = this.frameConfig;
         if (!config) return null;
 
@@ -304,6 +351,12 @@ export class EditorScene extends Phaser.Scene {
             columns,
             rows,
             isEditable: () => isEditable(this.store.getState()),
+            canMoveFromBody,
+            // Resizing is a job of the select tool, so the hand gives way to it.
+            onResizeStart: () => {
+                if (this.store.getState().tool !== EDITOR_TOOLS.PAN) return;
+                this.store.setTool(EDITOR_TOOLS.SELECT);
+            },
             onHint: (text) =>
                 this.game.events.emit(EDITOR_EVENTS.HINT_CHANGED, text),
         });

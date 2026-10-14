@@ -161,7 +161,15 @@ export class EditorToolRouter {
             return;
         }
         if (this.panning) return;
-        this.options.interceptor?.hover(input);
+        const interceptor = this.options.interceptor;
+        if (interceptor?.isOver(input)) {
+            // On the frame the tool shows nothing, so its ghost goes away first
+            // and the cursor of the frame is the last one written.
+            this.leaveMap();
+            interceptor.hover(input);
+            return;
+        }
+        interceptor?.hover(input);
 
         const cell = this.getCell(input);
         if (!cell) {

@@ -6,16 +6,24 @@ import type { Cell } from "../types/cell";
 
 /**
  * Connected region (4 neighbours) sharing the gid of `start`, limited to the
- * map. Returns an empty list when `start` is outside the map or the layer is
- * missing.
+ * map, or to `within` (tiles) when given. Returns an empty list when `start` is
+ * outside the map or `within`, or the layer is missing.
  */
 export const floodFill = (
     layout: MapLayout,
     layer: LayerName,
-    start: Cell
+    start: Cell,
+    within?: { x: number; y: number; w: number; h: number }
 ): Cell[] => {
     const target = findTileLayer(layout, layer);
-    if (!target || !isCellInside(layout, start)) {
+    const isAllowed = ([x, y]: Cell) =>
+        isCellInside(layout, [x, y]) &&
+        (!within ||
+            (x >= within.x &&
+                x < within.x + within.w &&
+                y >= within.y &&
+                y < within.y + within.h));
+    if (!target || !isAllowed(start)) {
         return [];
     }
     const gidAt = ([x, y]: Cell) => target.data[y * layout.width + x];
@@ -34,7 +42,7 @@ export const floodFill = (
             [x, y + 1],
         ];
         for (const next of neighbours) {
-            if (!isCellInside(layout, next)) {
+            if (!isAllowed(next)) {
                 continue;
             }
             const key = next[1] * layout.width + next[0];

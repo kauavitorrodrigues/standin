@@ -30,6 +30,7 @@ const setup = (takesPress: boolean) => {
         press: vi.fn(() => takesPress),
         move: vi.fn(),
         release: vi.fn(),
+        isOver: vi.fn(() => false),
         hover: vi.fn(),
         cancel: vi.fn(),
     } satisfies PointerInterceptor;
@@ -93,5 +94,15 @@ describe("EditorToolRouter interceptor", () => {
 
         expect(interceptor.hover).toHaveBeenCalledTimes(1);
         expect(interceptor.cancel).toHaveBeenCalledTimes(1);
+    });
+
+    it("leaves the tool out of a move that is over the interceptor", () => {
+        const { handlers, controller, interceptor } = setup(false);
+        interceptor.isOver.mockReturnValue(true);
+
+        handlers().move({ worldX: 40, worldY: 40 } as never);
+
+        expect(interceptor.hover).toHaveBeenCalledTimes(1);
+        expect(controller.onPointerMove).not.toHaveBeenCalled();
     });
 });

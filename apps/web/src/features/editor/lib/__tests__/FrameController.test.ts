@@ -19,23 +19,26 @@ const at = (
     ...extra,
 });
 
-const setup = (editable = true) => {
+const setup = (editable = true, canMoveFromBody = true) => {
+    const onResizeStart = vi.fn();
     const store = createFrameStore({ x: 0, y: 0, w: 12, h: 8 });
-    const setDefaultCursor = vi.fn();
+    const canvas = { style: { cursor: "crosshair" } };
     const hints: (string | null)[] = [];
     const controller = new FrameController({
         scene: {
             cameras: { main: { zoom: 1 } },
-            input: { setDefaultCursor },
+            game: { canvas },
         } as never,
         store,
         limits: { minSize: 2, maxWidth: 40, maxHeight: 30 },
         columns: 40,
         rows: 30,
         isEditable: () => editable,
+        canMoveFromBody: () => canMoveFromBody,
+        onResizeStart,
         onHint: (text) => hints.push(text),
     });
-    return { store, controller, hints, setDefaultCursor };
+    return { store, controller, hints, canvas, onResizeStart };
 };
 
 describe("FrameController", () => {
@@ -50,24 +53,29 @@ describe("FrameController", () => {
         expect(store.getRect()).toEqual({ x: 0, y: 0, w: 21, h: 8 });
     });
 
-    it("moves the whole frame by its grip", () => {
+    it("asks for the resize tool on a handle, but not when moving the frame", () => {
+        const { controller, onResizeStart } = setup();
+
+        controller.press(at(3, 3));
+        controller.release(at(3, 3));
+        expect(onResizeStart).not.toHaveBeenCalled();
+
+        controller.press(at(12, 4));
+        expect(onResizeStart).toHaveBeenCalledTimes(1);
+    });
+
+    it("moves the whole frame by its inside while panning", () => {
         const { store, controller } = setup();
 
-        expect(controller.press(at(0, 0, { worldX: 12, worldY: 12 }))).toBe(
-            true
-        );
-        controller.move(
-            at(6, 5, { worldX: 6 * TILE_SIZE + 12, worldY: 5 * TILE_SIZE + 12 })
-        );
-        controller.release(
-            at(6, 5, { worldX: 6 * TILE_SIZE + 12, worldY: 5 * TILE_SIZE + 12 })
-        );
+        expect(controller.press(at(3, 3))).toBe(true);
+        controller.move(at(9, 8));
+        controller.release(at(9, 8));
 
         expect(store.getRect()).toEqual({ x: 6, y: 5, w: 12, h: 8 });
     });
 
-    it("does not take a press away from the frame", () => {
-        const { store, controller } = setup();
+    it("leaves the inside to the tool when not panning", () => {
+        const { store, controller } = setup(true, false);
 
         expect(controller.press(at(6, 4))).toBe(false);
         controller.move(at(9, 9));
@@ -114,13 +122,15 @@ describe("FrameController", () => {
         expect(hints.at(-1)).toBeNull();
     });
 
-    it("shows the cursor of what a press would grab", () => {
-        const { controller, setDefaultCursor } = setup();
+    it("shows the cursor of what a press would grab and puts the old one back", () => {
+        const { controller, canvas } = setup(true, false);
 
         controller.hover(at(12, 4));
-        expect(setDefaultCursor).toHaveBeenLastCalledWith("ew-resize");
+        expect(canvas.style.cursor).toBe("ew-resize");
+        expect(controller.isOver(at(12, 4))).toBe(true);
 
         controller.hover(at(6, 4));
-        expect(setDefaultCursor).toHaveBeenLastCalledWith("default");
+        expect(canvas.style.cursor).toBe("crosshair");
+        expect(controller.isOver(at(6, 4))).toBe(false);
     });
 });
