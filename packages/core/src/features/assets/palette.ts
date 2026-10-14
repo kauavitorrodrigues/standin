@@ -104,5 +104,10 @@ export const buildMapPalette = async (
         })
     );
 
-    return { tilesets: await toTilesets(tilesetRows), assets, categories };
+    return {
+        tilesets: await toTilesets(tilesetRows),
+        assets,
+        categories,
+        areas: [],
+    };
 };

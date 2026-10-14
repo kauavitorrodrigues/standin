@@ -43,6 +43,7 @@ const palette = {
     ),
     assets: [crate, bigCrate, desk, vase, poster, sofa],
     categories: [],
+    areas: [],
 } as unknown as LibraryPalette;
 
 const placedAt = (
@@ -89,7 +90,6 @@ const paintWall = (model: EditorModel, x: number, y: number, index: number) => {
 const clearWalls = (model: EditorModel) => {
     findTileLayer(model.layout, "walls")!.data.fill(0);
 };
-
 
 const move = (
     id: string,
@@ -240,7 +240,9 @@ describe("applyEditorOp: move_asset", () => {
         ]);
 
         const onOther = apply(model, move("v", 6, 9, "d2"));
-        expect(onOther.model.placed[2]).toEqual(placedAt("v", "vase", 6, 9, "d2"));
+        expect(onOther.model.placed[2]).toEqual(
+            placedAt("v", "vase", 6, 9, "d2")
+        );
         expect(undo(onOther.model, onOther.inverse)).toEqual(model);
 
         expect(codeOf(model, move("v", 6, 12, null))).toEqual([

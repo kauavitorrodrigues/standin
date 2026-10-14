@@ -25,6 +25,7 @@ const palette = {
     ),
     assets: [crate],
     categories: [],
+    areas: [],
 } as unknown as LibraryPalette;
 
 const buildModel = (): EditorModel => {

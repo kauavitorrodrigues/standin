@@ -32,6 +32,7 @@ export const toPlacementModel = (items: Item[], map?: MapInfo): EditorModel => {
             tilesets: [],
             assets: items.map(toPlacementAsset),
             categories: [],
+            areas: [],
         },
         desks: [],
         limits: { objectsUsed: items.length, objectsMax: items.length },

@@ -24,3 +24,4 @@ export * from "./replace-incompatible-detail";
 export * from "./can-replace-asset-result";
 export * from "./replace-alternatives";
 export * from "./replay-ops-result";
+export * from "./stamp";

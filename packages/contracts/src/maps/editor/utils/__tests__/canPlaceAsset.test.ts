@@ -42,6 +42,7 @@ const palette = {
     ),
     assets: [crate, bigCrate, desk, vase, poster, sofa],
     categories: [],
+    areas: [],
 } as unknown as LibraryPalette;
 
 const placedAt = (
