@@ -17,12 +17,15 @@ import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
 import { Route as AppSpacesNewRouteImport } from './routes/_app/spaces/new'
 import { Route as AppSpacesSpaceIdEditRouteImport } from './routes/_app/spaces/$spaceId_.edit'
+import { Route as AppAdminAdminAreasIndexRouteImport } from './routes/_app/_admin/admin/areas/index'
+import { Route as AppAdminAdminAreasNewRouteImport } from './routes/_app/_admin/admin/areas/new'
 import { Route as AppAdminAdminAssetsIndexRouteImport } from './routes/_app/_admin/admin/assets/index'
 import { Route as AppAdminAdminAssetsNewRouteImport } from './routes/_app/_admin/admin/assets/new'
 import { Route as AppAdminAdminMapsIndexRouteImport } from './routes/_app/_admin/admin/maps/index'
 import { Route as AppAdminAdminTilesetsIndexRouteImport } from './routes/_app/_admin/admin/tilesets/index'
 import { Route as AppAdminAdminTilesetsTilesetIdRouteImport } from './routes/_app/_admin/admin/tilesets/$tilesetId'
 import { Route as AppAdminAdminTilesetsNewRouteImport } from './routes/_app/_admin/admin/tilesets/new'
+import { Route as AppAdminAdminAreasAreaIdEditRouteImport } from './routes/_app/_admin/admin/areas/$areaId.edit'
 import { Route as AppAdminAdminMapsTemplateIdEditRouteImport } from './routes/_app/_admin/admin/maps/$templateId.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -62,6 +65,16 @@ const AppSpacesSpaceIdEditRoute = AppSpacesSpaceIdEditRouteImport.update({
   path: '/spaces/$spaceId/edit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminAdminAreasIndexRoute = AppAdminAdminAreasIndexRouteImport.update({
+  id: '/admin/areas/',
+  path: '/admin/areas/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAdminAreasNewRoute = AppAdminAdminAreasNewRouteImport.update({
+  id: '/admin/areas/new',
+  path: '/admin/areas/new',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppAdminAdminAssetsIndexRoute =
   AppAdminAdminAssetsIndexRouteImport.update({
     id: '/admin/assets/',
@@ -96,6 +109,12 @@ const AppAdminAdminTilesetsNewRoute =
     path: '/admin/tilesets/new',
     getParentRoute: () => AppAdminRoute,
   } as any)
+const AppAdminAdminAreasAreaIdEditRoute =
+  AppAdminAdminAreasAreaIdEditRouteImport.update({
+    id: '/admin/areas/$areaId/edit',
+    path: '/admin/areas/$areaId/edit',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
 const AppAdminAdminMapsTemplateIdEditRoute =
   AppAdminAdminMapsTemplateIdEditRouteImport.update({
     id: '/admin/maps/$templateId/edit',
@@ -109,12 +128,15 @@ export interface FileRoutesByFullPath {
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
+  '/admin/areas/new': typeof AppAdminAdminAreasNewRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
+  '/admin/areas/': typeof AppAdminAdminAreasIndexRoute
   '/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
   '/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
+  '/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -123,12 +145,15 @@ export interface FileRoutesByTo {
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
+  '/admin/areas/new': typeof AppAdminAdminAreasNewRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
+  '/admin/areas': typeof AppAdminAdminAreasIndexRoute
   '/admin/assets': typeof AppAdminAdminAssetsIndexRoute
   '/admin/maps': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets': typeof AppAdminAdminTilesetsIndexRoute
+  '/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
 }
 export interface FileRoutesById {
@@ -141,12 +166,15 @@ export interface FileRoutesById {
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spaces/new': typeof AppSpacesNewRoute
   '/_app/spaces/$spaceId_/edit': typeof AppSpacesSpaceIdEditRoute
+  '/_app/_admin/admin/areas/new': typeof AppAdminAdminAreasNewRoute
   '/_app/_admin/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/_app/_admin/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/_app/_admin/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
+  '/_app/_admin/admin/areas/': typeof AppAdminAdminAreasIndexRoute
   '/_app/_admin/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
   '/_app/_admin/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/_app/_admin/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
+  '/_app/_admin/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/_app/_admin/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
 }
 export interface FileRouteTypes {
@@ -157,12 +185,15 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
+    | '/admin/areas/new'
     | '/admin/assets/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
+    | '/admin/areas/'
     | '/admin/assets/'
     | '/admin/maps/'
     | '/admin/tilesets/'
+    | '/admin/areas/$areaId/edit'
     | '/admin/maps/$templateId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -171,12 +202,15 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
+    | '/admin/areas/new'
     | '/admin/assets/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
+    | '/admin/areas'
     | '/admin/assets'
     | '/admin/maps'
     | '/admin/tilesets'
+    | '/admin/areas/$areaId/edit'
     | '/admin/maps/$templateId/edit'
   id:
     | '__root__'
@@ -188,12 +222,15 @@ export interface FileRouteTypes {
     | '/_app/spaces/$spaceId'
     | '/_app/spaces/new'
     | '/_app/spaces/$spaceId_/edit'
+    | '/_app/_admin/admin/areas/new'
     | '/_app/_admin/admin/assets/new'
     | '/_app/_admin/admin/tilesets/$tilesetId'
     | '/_app/_admin/admin/tilesets/new'
+    | '/_app/_admin/admin/areas/'
     | '/_app/_admin/admin/assets/'
     | '/_app/_admin/admin/maps/'
     | '/_app/_admin/admin/tilesets/'
+    | '/_app/_admin/admin/areas/$areaId/edit'
     | '/_app/_admin/admin/maps/$templateId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -260,6 +297,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSpacesSpaceIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/_admin/admin/areas/': {
+      id: '/_app/_admin/admin/areas/'
+      path: '/admin/areas'
+      fullPath: '/admin/areas/'
+      preLoaderRoute: typeof AppAdminAdminAreasIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/areas/new': {
+      id: '/_app/_admin/admin/areas/new'
+      path: '/admin/areas/new'
+      fullPath: '/admin/areas/new'
+      preLoaderRoute: typeof AppAdminAdminAreasNewRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/_admin/admin/assets/': {
       id: '/_app/_admin/admin/assets/'
       path: '/admin/assets'
@@ -302,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdminTilesetsNewRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/_admin/admin/areas/$areaId/edit': {
+      id: '/_app/_admin/admin/areas/$areaId/edit'
+      path: '/admin/areas/$areaId/edit'
+      fullPath: '/admin/areas/$areaId/edit'
+      preLoaderRoute: typeof AppAdminAdminAreasAreaIdEditRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/_admin/admin/maps/$templateId/edit': {
       id: '/_app/_admin/admin/maps/$templateId/edit'
       path: '/admin/maps/$templateId/edit'
@@ -313,22 +371,28 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdminRouteChildren {
+  AppAdminAdminAreasNewRoute: typeof AppAdminAdminAreasNewRoute
   AppAdminAdminAssetsNewRoute: typeof AppAdminAdminAssetsNewRoute
   AppAdminAdminTilesetsTilesetIdRoute: typeof AppAdminAdminTilesetsTilesetIdRoute
   AppAdminAdminTilesetsNewRoute: typeof AppAdminAdminTilesetsNewRoute
+  AppAdminAdminAreasIndexRoute: typeof AppAdminAdminAreasIndexRoute
   AppAdminAdminAssetsIndexRoute: typeof AppAdminAdminAssetsIndexRoute
   AppAdminAdminMapsIndexRoute: typeof AppAdminAdminMapsIndexRoute
   AppAdminAdminTilesetsIndexRoute: typeof AppAdminAdminTilesetsIndexRoute
+  AppAdminAdminAreasAreaIdEditRoute: typeof AppAdminAdminAreasAreaIdEditRoute
   AppAdminAdminMapsTemplateIdEditRoute: typeof AppAdminAdminMapsTemplateIdEditRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminAdminAreasNewRoute: AppAdminAdminAreasNewRoute,
   AppAdminAdminAssetsNewRoute: AppAdminAdminAssetsNewRoute,
   AppAdminAdminTilesetsTilesetIdRoute: AppAdminAdminTilesetsTilesetIdRoute,
   AppAdminAdminTilesetsNewRoute: AppAdminAdminTilesetsNewRoute,
+  AppAdminAdminAreasIndexRoute: AppAdminAdminAreasIndexRoute,
   AppAdminAdminAssetsIndexRoute: AppAdminAdminAssetsIndexRoute,
   AppAdminAdminMapsIndexRoute: AppAdminAdminMapsIndexRoute,
   AppAdminAdminTilesetsIndexRoute: AppAdminAdminTilesetsIndexRoute,
+  AppAdminAdminAreasAreaIdEditRoute: AppAdminAdminAreasAreaIdEditRoute,
   AppAdminAdminMapsTemplateIdEditRoute: AppAdminAdminMapsTemplateIdEditRoute,
 }
 
