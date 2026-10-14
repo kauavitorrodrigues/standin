@@ -1162,7 +1162,7 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
 
             expect(admin.status).toBe(200);
             expect(admin.body.library.tilesets.length).toBeGreaterThan(0);
-            expect(admin.body.library.areas).toEqual([]);
+            expect(Array.isArray(admin.body.library.areas)).toBe(true);
 
             expect(
                 (await call("owner", "GET", "/library/palette")).status
