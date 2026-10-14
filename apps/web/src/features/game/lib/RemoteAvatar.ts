@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { PLAYER_DIRECTIONS, type PlayerDirection } from "@standin/contracts";
 import { REMOTE_AVATAR_APPEARANCE } from "@/features/game/consts/remote-avatar";
+import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 import {
     resolveSittingAlpha,
     resolveSmoothingFactor,
@@ -30,8 +31,16 @@ export class RemoteAvatar {
     // position isn't known yet), so the first move() must snap instead of
     // gliding there from an arbitrary, unrelated spot on the map.
     private hasReceivedPosition = false;
+    private isSitting = false;
+    private readonly mapHeightPx: number;
 
-    constructor(scene: Phaser.Scene, x: number, y: number) {
+    constructor(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        mapHeightPx: number
+    ) {
+        this.mapHeightPx = mapHeightPx;
         this.body = scene.add.circle(
             0,
             0,
@@ -50,7 +59,7 @@ export class RemoteAvatar {
             this.body,
             this.directionIndicator,
         ]);
-        this.gameObject.setDepth(REMOTE_AVATAR_APPEARANCE.DEPTH);
+        this.updateDepth();
         this.targetX = x;
         this.targetY = y;
     }
@@ -78,6 +87,20 @@ export class RemoteAvatar {
             Phaser.Math.Linear(this.gameObject.x, this.targetX, t),
             Phaser.Math.Linear(this.gameObject.y, this.targetY, t)
         );
+        this.updateDepth();
+    }
+
+    // Same rule as the local avatar: behind the objects whose base is below
+    // its feet, over the ones above them.
+    private updateDepth(): void {
+        this.gameObject.setDepth(
+            getAvatarDepth({
+                centerY: this.gameObject.y,
+                radius: REMOTE_AVATAR_APPEARANCE.RADIUS,
+                mapHeightPx: this.mapHeightPx,
+                isSitting: this.isSitting,
+            })
+        );
     }
 
     updateAnimation(direction: PlayerDirection): void {
@@ -86,6 +109,7 @@ export class RemoteAvatar {
     }
 
     setSitting(isSitting: boolean): void {
+        this.isSitting = isSitting;
         this.gameObject.setAlpha(resolveSittingAlpha(isSitting));
     }
 

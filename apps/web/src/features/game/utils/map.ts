@@ -52,10 +52,12 @@ export const resolveAnchorKind = (
 
 const resolveVerticalCenterSign = (anchorKind: ObjectAnchorKind): number => {
     switch (anchorKind) {
-    case OBJECT_ANCHOR_KINDS.TOP_LEFT:
-        return OBJECT_ANCHOR_VERTICAL_SIGNS[OBJECT_ANCHOR_KINDS.TOP_LEFT];
-    case OBJECT_ANCHOR_KINDS.BOTTOM_LEFT:
-        return OBJECT_ANCHOR_VERTICAL_SIGNS[OBJECT_ANCHOR_KINDS.BOTTOM_LEFT];
+        case OBJECT_ANCHOR_KINDS.TOP_LEFT:
+            return OBJECT_ANCHOR_VERTICAL_SIGNS[OBJECT_ANCHOR_KINDS.TOP_LEFT];
+        case OBJECT_ANCHOR_KINDS.BOTTOM_LEFT:
+            return OBJECT_ANCHOR_VERTICAL_SIGNS[
+                OBJECT_ANCHOR_KINDS.BOTTOM_LEFT
+            ];
     }
 };
 
@@ -70,8 +72,7 @@ export const resolveObjectCenter = (
         ...bounds,
         centerX: bounds.x + bounds.width / CENTER_POSITION_DIVISOR,
         centerY:
-            bounds.y +
-            (bounds.height / CENTER_POSITION_DIVISOR) * verticalSign,
+            bounds.y + (bounds.height / CENTER_POSITION_DIVISOR) * verticalSign,
     };
 };
 
@@ -123,17 +124,15 @@ export const resolveObjectRecords = (
                     center: resolveObjectCenter(object, tilemap),
                 };
             })
-            .filter(
-                (record): record is ResolvedObjectRecord => record !== null
-            )
+            .filter((record): record is ResolvedObjectRecord => record !== null)
     );
 
 export const getMapObjectMarkerColor = (action: MapObjectAction): number => {
     switch (action) {
-    case MAP_OBJECT_ACTIONS.SIT:
-        return MAP_OBJECT_MARKER_COLORS.SIT;
-    case MAP_OBJECT_ACTIONS.TELEPORT:
-        return MAP_OBJECT_MARKER_COLORS.TELEPORT;
+        case MAP_OBJECT_ACTIONS.SIT:
+            return MAP_OBJECT_MARKER_COLORS.SIT;
+        case MAP_OBJECT_ACTIONS.TELEPORT:
+            return MAP_OBJECT_MARKER_COLORS.TELEPORT;
     }
 };
 

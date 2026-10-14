@@ -34,9 +34,7 @@ describe("registerAssetAnimations", () => {
         const { host, created, generated } = makeHost();
         registerAssetAnimations(host, [door]);
 
-        expect(generated).toEqual([
-            ["asset-tex:door-1", { start: 0, end: 5 }],
-        ]);
+        expect(generated).toEqual([["asset-tex:door-1", { start: 0, end: 5 }]]);
         expect(created).toEqual([
             {
                 key: "asset:door-1",
