@@ -1,4 +1,5 @@
 import {
+    buildZoneFloorOps,
     buildZoneRemoveOps,
     type LayerName,
     type ZoomLevel,
@@ -436,6 +437,27 @@ export class EditorStore {
                 result.errors,
                 ZONE_MESSAGES.EDIT_FAILED
             ),
+        });
+    };
+
+    // Repaints the whole floor of the selected area with one tile, as one
+    // gesture. A refusal stays in `selectionNotice`.
+    repaintSelectedZoneFloor = (tile: EditorBrush): void => {
+        const host = this.selectionHost;
+        if (!host || !isEditable(this.state)) return;
+
+        const zoneId = getSelectedZoneId(this.state.selection);
+        if (zoneId === null) return;
+        const zone = findEditableZone(host.getModel().layout, zoneId);
+        if (!zone) return;
+
+        const result = host.dispatch(
+            buildZoneFloorOps(getZoneTileRect(zone), tile)
+        );
+        this.update({
+            selectionNotice: result.ok
+                ? null
+                : describeZoneFailure(result.errors, ZONE_MESSAGES.EDIT_FAILED),
         });
     };
 
