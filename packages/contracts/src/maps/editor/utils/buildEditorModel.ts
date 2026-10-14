@@ -1,6 +1,7 @@
 import type { LibraryPalette } from "../../../assets/types/library";
 import type { MapRenderPayload } from "../../render/render-payload.schema";
 import type { MapLayout } from "../../schemas/layout.schema";
+import { ensureAreaFloorLayer } from "../../layout/ops/ensureAreaFloorLayer";
 import type { EditorModel } from "../types/editor-model";
 
 /**
@@ -12,12 +13,14 @@ export const buildEditorModel = (
     library: LibraryPalette
 ): EditorModel => {
     const placed = structuredClone(render.placed);
+    const layout = structuredClone(render.map.layout) as MapLayout;
+    ensureAreaFloorLayer(layout);
 
     return {
         mapId: render.map.id,
         width: render.map.width,
         height: render.map.height,
-        layout: structuredClone(render.map.layout) as MapLayout,
+        layout,
         placed,
         desks: structuredClone(render.desks),
         library,

@@ -32,7 +32,7 @@ describe("stamp round trip", () => {
         const again = captureStamp(
             placed.model,
             { x: 6, y: 1, w: 4, h: 4 },
-            { zoneLabel: "Sala" }
+            { zoneLabel: "Sala", groundLayer: "area-floor" }
         );
 
         expect(again.ok && again.stamp).toEqual(stamp);

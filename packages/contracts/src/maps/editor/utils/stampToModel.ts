@@ -1,6 +1,7 @@
 import type { LibraryPalette } from "../../../assets/types/library";
 import type { StampToModelResult } from "../types/stamp-to-model-result";
 import type { Stamp } from "../types/stamp";
+import { LAYOUT_LAYER_NAMES } from "../../schemas/layout.schema";
 import { buildBlankEditorModel } from "./buildBlankEditorModel";
 import { buildStampOps } from "./buildStampOps";
 
@@ -30,7 +31,8 @@ export const stampToModel = (
         { ...stamp, zone: null },
         0,
         0,
-        () => `object-${++count}`
+        () => `object-${++count}`,
+        LAYOUT_LAYER_NAMES.GROUND
     );
     if (!result.ok) return result;
 

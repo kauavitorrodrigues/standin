@@ -57,18 +57,18 @@ describe("buildStampOps", () => {
             result.ops
                 .filter((op) => op.type === "paint_tiles")
                 .map((op) => op.layer)
-        ).toEqual(["ground", "walls", "furniture", "foreground"]);
+        ).toEqual(["area-floor", "walls", "furniture", "foreground"]);
     });
 
     it("moves the tiles by the corner", () => {
         const { result } = build(3, 2);
         const ground = result.ops.find(
-            (op) => op.type === "paint_tiles" && op.layer === "ground"
+            (op) => op.type === "paint_tiles" && op.layer === "area-floor"
         );
 
         expect(ground).toEqual({
             type: "paint_tiles",
-            layer: "ground",
+            layer: "area-floor",
             tiles: [
                 {
                     tilesetId: FLOOR_IMAGE_ID,
@@ -80,7 +80,7 @@ describe("buildStampOps", () => {
                 },
             ],
         });
-        const layer = findTileLayer(result.model.layout, "ground")!;
+        const layer = findTileLayer(result.model.layout, "area-floor")!;
         expect(layer.data[2 * result.model.width + 3]).not.toBe(layer.data[0]);
     });
 

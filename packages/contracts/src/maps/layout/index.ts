@@ -10,3 +10,4 @@ export * from "./applyOp";
 export * from "./applyOps";
 export * from "./blankDefaults";
 export * from "./ops.schema";
+export * from "./ops/ensureAreaFloorLayer";

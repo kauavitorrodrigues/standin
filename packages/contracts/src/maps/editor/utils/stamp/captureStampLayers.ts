@@ -28,7 +28,10 @@ type CapturedLayers = Pick<Stamp, "palette" | "layers"> & {
 export const captureStampLayers = (
     model: EditorModel,
     library: LayoutLibrary,
-    rect: StampRect
+    rect: StampRect,
+    // Where the ground of the stamp is read from. The composer keeps it on the
+    // ground layer, a map keeps the ground of its areas on their floor layer.
+    groundLayer: string = LAYOUT_LAYER_NAMES.GROUND
 ): CapturedLayers => {
     const palette: Stamp["palette"] = [];
     const paletteIndex = new Map<string, number>();
@@ -36,7 +39,10 @@ export const captureStampLayers = (
     const issues: LayoutIssue[] = [];
 
     for (const layerName of STAMP_LAYER_ORDER) {
-        const layer = findTileLayer(model.layout, layerName);
+        const layer = findTileLayer(
+            model.layout,
+            layerName === LAYOUT_LAYER_NAMES.GROUND ? groundLayer : layerName
+        );
         if (!layer) continue;
 
         const data: number[] = [];
