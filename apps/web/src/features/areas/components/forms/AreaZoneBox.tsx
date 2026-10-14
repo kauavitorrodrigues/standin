@@ -1,22 +1,43 @@
-import { useFormContext } from "react-hook-form";
-import { SwitchFormField } from "@/components/fields/SwitchFormField";
+import { Controller, useFormContext } from "react-hook-form";
+import { MapPinIcon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import type { AreaComposerFormValues } from "../../types/areaComposerForm";
-import { ZoneLabelField } from "./ZoneLabelField";
 
-// Whether placing the area also creates a zone of the area, and the label it
-// gets. It sits in the side panel, under the lists.
+// Whether placing the area also creates a zone of the area, named after it.
 export const AreaZoneBox = () => {
     const { control } = useFormContext<AreaComposerFormValues>();
 
     return (
-        <div className="flex shrink-0 flex-col gap-3 border-t px-3 py-3">
-            <SwitchFormField
-                control={control}
-                name="createZone"
-                label="Criar zona de área ao colocar"
-                hint="Ao colocar a área num mapa, ela vira uma zona com nome, que aparece no editor e para quem estiver no espaço."
-            />
-            <ZoneLabelField />
+        <div className="bg-card flex flex-col gap-4 rounded-xl border p-4">
+            <div className="flex items-start gap-3">
+                <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg">
+                    <MapPinIcon className="size-4" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <label
+                        htmlFor="createZone"
+                        className="text-sm leading-snug font-medium"
+                    >
+                        Criar uma zona ao colocar
+                    </label>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                        Ao colocar a área num mapa, ela vira uma zona com o nome
+                        da área, que aparece no editor e para quem estiver no
+                        espaço.
+                    </p>
+                </div>
+                <Controller
+                    control={control}
+                    name="createZone"
+                    render={({ field }) => (
+                        <Switch
+                            id="createZone"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                    )}
+                />
+            </div>
         </div>
     );
 };

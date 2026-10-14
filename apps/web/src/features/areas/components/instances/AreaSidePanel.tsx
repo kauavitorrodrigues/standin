@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Tabs } from "@/components/ui/tabs";
 import { EditorLayout } from "@/features/editor/components/layout";
 import { SidePanelHeader } from "@/features/editor/components/layout/SidePanelHeader";
@@ -8,8 +9,8 @@ import { UsageFooter } from "@/features/editor/components/views/panel/UsageFoote
 import { PANEL_TABS } from "@/features/editor/consts/panelTabs";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
-import { AreaNameField } from "../forms/AreaNameField";
-import { AreaZoneBox } from "../forms/AreaZoneBox";
+import { AreaPropertiesDialog } from "../dialogs/AreaPropertiesDialog";
+import { AreaTitleButton } from "../views/AreaTitleButton";
 import type { AreaPalette } from "../../types/areaPalette";
 
 type Props = {
@@ -17,13 +18,14 @@ type Props = {
     onExit: () => void;
 };
 
-// The side panel of the composer. The name of the area is in the title bar, in
-// the place of the title, and there is no tab of areas: an area has no area
-// inside it. Under the lists, the box of the zone and the meter of objects.
+// The left panel of the composer: the lists of objects and tiles, and under
+// them the meter of objects. There is no tab of areas: an area has no area
+// inside it. The name in the title opens the properties of the area.
 export const AreaSidePanel = ({ palette, onExit }: Props) => {
     const store = useEditorStore();
     const open = useEditorSelector((state) => state.panelOpen);
     const panelTab = useEditorSelector((state) => state.panelTab);
+    const [propertiesOpen, setPropertiesOpen] = useState(false);
 
     return (
         <EditorLayout.Panel open={open}>
@@ -38,14 +40,24 @@ export const AreaSidePanel = ({ palette, onExit }: Props) => {
                 }}
                 className="min-h-0 flex-1 gap-0"
             >
-                <SidePanelHeader title={<AreaNameField />} onExit={onExit}>
-                    <PanelTabList withAreas={false} />
+                <SidePanelHeader
+                    title={
+                        <AreaTitleButton
+                            onClick={() => setPropertiesOpen(true)}
+                        />
+                    }
+                    onExit={onExit}
+                >
                     <PanelToggle open={open} onToggle={store.togglePanel} />
                 </SidePanelHeader>
+                <PanelTabList withAreas={false} />
                 <PanelTabs palette={palette} withAreas={false} />
             </Tabs>
-            <AreaZoneBox />
             <UsageFooter />
+            <AreaPropertiesDialog
+                open={propertiesOpen}
+                onOpenChange={setPropertiesOpen}
+            />
         </EditorLayout.Panel>
     );
 };

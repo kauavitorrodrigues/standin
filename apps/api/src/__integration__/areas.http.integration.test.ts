@@ -801,6 +801,104 @@ describe.skipIf(!enabled)("areas over HTTP (real stack)", () => {
             expect(await render()).toEqual(placed);
         });
 
+        it("places the area in a template draft, publishes, starts a space, claims the desk and keeps the map after the area is edited", async () => {
+            const { buildStampOps } = await import("@standin/contracts");
+            const { db, mapAssetsTable, eq } = database;
+            const actor = { id: users.admin.id, name: "admin" };
+
+            const tpl = await core.MapTemplateService.create(users.admin.id, {
+                name: `Fim a fim ${RUN}`,
+                sizeTier: "S",
+            });
+            const area = await createArea(`Fim a fim ${RUN}`);
+            const details = await call(
+                "admin",
+                "GET",
+                `/library/areas/${area.id}`
+            );
+            const stamp = details.body.area.stamp as Stamp;
+
+            const access = await core.MapService.getAccess(
+                users.admin,
+                tpl.mapId
+            );
+            const model = await db.transaction((tx) =>
+                core.MapPublishService.loadEditorModel(tx, access)
+            );
+            const built = buildStampOps(model, stamp, 2, 2, () =>
+                crypto.randomUUID()
+            );
+            expect(built.ok).toBe(true);
+            if (!built.ok) return;
+
+            await publishOps(core, actor, access, 1, built.ops);
+
+            const published = await call(
+                "admin",
+                "PUT",
+                `/templates/${tpl.id}/thumbnail`,
+                undefined,
+                (() => {
+                    const body = new FormData();
+                    body.append(
+                        "thumbnail",
+                        new Blob([new Uint8Array(png(60, 40))], {
+                            type: "image/png",
+                        }),
+                        "thumb.png"
+                    );
+                    return body;
+                })()
+            );
+            expect(published.status).toBe(200);
+            expect(
+                (await call("admin", "POST", `/templates/${tpl.id}/publish`))
+                    .status
+            ).toBe(200);
+
+            const created = await call(
+                "owner",
+                "POST",
+                `/organizations/${organizationId}/spaces`,
+                { name: `Do template ${RUN}`, templateId: tpl.id }
+            );
+            expect(created.status).toBe(201);
+
+            const [desk] = await db
+                .select({ id: mapAssetsTable.id })
+                .from(mapAssetsTable)
+                .where(eq(mapAssetsTable.mapId, created.body.mapId));
+            expect(desk).toBeDefined();
+
+            const claim = await call(
+                "owner",
+                "POST",
+                `/spaces/${created.body.id}/desks/${desk.id}/claim`,
+                {}
+            );
+            expect(claim.status).toBe(200);
+
+            const render = async () =>
+                (
+                    await call(
+                        "owner",
+                        "GET",
+                        `/maps/${created.body.mapId}/render`
+                    )
+                ).body;
+            const placed = await render();
+
+            await send(
+                "admin",
+                "PUT",
+                `/library/areas/${area.id}`,
+                upload(buildStamp({ objects: [], zone: null }), "Editada")
+            );
+            await call("admin", "DELETE", `/library/areas/${area.id}`);
+
+            expect(await render()).toEqual(placed);
+        });
+
         it("refuses a paint_tiles above the cell limit of one operation", async () => {
             core.MapLockService.acquire(
                 template.mapId,

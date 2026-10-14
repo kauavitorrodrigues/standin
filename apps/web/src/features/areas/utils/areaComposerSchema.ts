@@ -9,8 +9,4 @@ export const AreaComposerSchema = z.object({
         .min(1, { error: Messages.NAME_REQUIRED })
         .max(AREA_NAME_MAX, { error: Messages.NAME_TOO_LONG }),
     createZone: z.boolean(),
-    zoneLabel: z
-        .string()
-        .trim()
-        .max(AREA_NAME_MAX, { error: Messages.NAME_TOO_LONG }),
 });
