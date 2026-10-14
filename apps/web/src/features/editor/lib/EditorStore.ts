@@ -1,4 +1,8 @@
-import type { LayerName, ZoomLevel } from "@standin/contracts";
+import {
+    buildZoneRemoveOps,
+    type LayerName,
+    type ZoomLevel,
+} from "@standin/contracts";
 import { DEFAULT_LAYER_VISIBILITY } from "@/features/editor/consts/layers";
 import { EDITOR_DIALOG } from "@/features/editor/consts/editor-dialog";
 import { PANEL_TABS } from "@/features/editor/consts/panelTabs";
@@ -28,6 +32,7 @@ import { needsChangeBeforeRetry } from "@/features/editor/utils/needsChangeBefor
 import type { ClassifiedPublishError } from "@/features/editor/types/publish-error";
 import { EDITOR_CAMERA_CONFIG } from "@/features/editor/consts/camera";
 import { EDITOR_STATUS } from "@/features/editor/consts/status";
+import type { ZoneRect } from "@/features/editor/types/zone-rect";
 import { ZONE_KINDS } from "@/features/editor/consts/zone-kinds";
 import type { ZoneKind } from "@/features/editor/types/zone-kind";
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
@@ -434,13 +439,49 @@ export class EditorStore {
         });
     };
 
+    // Deleting an area takes everything in it: the zone, the tiles and the
+    // objects. The ground of the map stays, because the floor of the area is on
+    // its own layer. A spawn is only removed.
+    // An area with a claimed desk stays and the notice says why.
     private removeSelectedZone(host: SelectionHost, zoneId: number): void {
+        const zone = findEditableZone(host.getModel().layout, zoneId);
+        if (zone?.kind === ZONE_KINDS.AREA) {
+            this.removeSelectedArea(host, zoneId, getZoneTileRect(zone));
+            return;
+        }
+
         const outcome = removeZone({ host, zoneId });
         if (outcome.removed) {
             this.clearSelection();
             return;
         }
         this.update({ selectionNotice: outcome.reason });
+    }
+
+    private removeSelectedArea(
+        host: SelectionHost,
+        zoneId: number,
+        rect: ZoneRect
+    ): void {
+        const built = buildZoneRemoveOps(host.getModel(), zoneId, rect);
+        if (!built.ok) {
+            this.update({
+                selectionNotice: ZONE_MESSAGES.AREA_HAS_CLAIMED_DESKS,
+            });
+            return;
+        }
+
+        const result = host.dispatch(built.ops);
+        if (result.ok) {
+            this.clearSelection();
+            return;
+        }
+        this.update({
+            selectionNotice: describeZoneFailure(
+                result.errors,
+                ZONE_MESSAGES.REMOVE_FAILED
+            ),
+        });
     }
 
     // Moves the selected objects by one tile (arrow keys), as one gesture.

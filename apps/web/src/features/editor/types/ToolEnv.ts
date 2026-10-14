@@ -21,4 +21,6 @@ export type ToolEnv = {
     // The region the tools may fill, such as the frame of an area. Without it,
     // or when it returns null, the whole map.
     getBounds?: () => TileRect | null;
+    // The picture of a region of the map in tiles, at native resolution.
+    captureSnapshot?: (rect: TileRect) => Promise<Blob>;
 };

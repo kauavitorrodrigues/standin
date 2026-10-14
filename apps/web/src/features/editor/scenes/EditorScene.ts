@@ -266,6 +266,7 @@ export class EditorScene extends Phaser.Scene {
                 scene: this,
                 store: this.store,
                 getBounds: () => this.frameConfig?.store.getRect() ?? null,
+                captureSnapshot: (rect) => this.captureNativeSnapshot(rect),
             },
             columns: tilemap.width,
             rows: tilemap.height,

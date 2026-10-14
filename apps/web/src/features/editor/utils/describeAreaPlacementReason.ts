@@ -10,6 +10,8 @@ export const describeAreaPlacementReason = (code: LayoutIssueCode): string => {
             return AREA_PLACEMENT_MESSAGES.NOT_EMPTY;
         case "STAMP_COVERS_SPAWN":
             return AREA_PLACEMENT_MESSAGES.COVERS_SPAWN;
+        case "STAMP_OVERLAPS_AREA":
+            return AREA_PLACEMENT_MESSAGES.OVERLAPS_AREA;
         case "TOO_MANY_OBJECTS":
             return AREA_PLACEMENT_MESSAGES.LIMIT_REACHED;
         case "STAMP_TILESET_UNAVAILABLE":
