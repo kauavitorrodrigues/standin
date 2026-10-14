@@ -9,7 +9,21 @@ const payload = {
         height: 15,
         tileSize: 32,
         layoutVersion: 3,
-        layout: { tilesets: [] },
+        layout: {
+            width: 20,
+            height: 15,
+            tilesets: [],
+            layers: [
+                {
+                    id: 1,
+                    type: "tilelayer",
+                    name: "ground",
+                    width: 20,
+                    height: 15,
+                    data: [],
+                },
+            ],
+        },
     },
     tilesets: [{ id: "tileset-1", name: "Floor", url: "/files/floor.png" }],
     assets: [{ id: "asset-1" }],
@@ -26,7 +40,23 @@ describe("toEditorMapData", () => {
         expect(map.width).toBe(20);
         expect(map.height).toBe(15);
         expect(map.tileSize).toBe(32);
-        expect(map.layout).toBe(payload.map.layout);
+        expect(map.layout).toMatchObject({ width: 20, height: 15 });
+    });
+
+    it("adds the floor layer of the areas above the ground when the map has none", () => {
+        const layers = (
+            toEditorMapData(payload).layout as unknown as {
+                layers: { name: string }[];
+            }
+        ).layers;
+
+        expect(layers.map(({ name }) => name)).toEqual([
+            "ground",
+            "area-floor",
+        ]);
+        expect(
+            (payload.map.layout as unknown as { layers: unknown[] }).layers
+        ).toHaveLength(1);
     });
 
     it("names each tileset image by the tileset id", () => {
