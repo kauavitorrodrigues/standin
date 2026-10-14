@@ -20,6 +20,40 @@ describe("EditorOpSchema", () => {
         expect(ok({ ...base, tileIndex: -1 })).toBe(false);
     });
 
+    it("accepts and rejects paint_tiles", () => {
+        const base = {
+            type: "paint_tiles",
+            layer: "ground",
+            tiles: [
+                { tilesetId: "t", tileIndex: 0, cells: [[1, 2]] },
+                { tilesetId: "t", tileIndex: 1, cells: [[3, 2]] },
+            ],
+        };
+        expect(ok(base)).toBe(true);
+        expect(ok({ ...base, tiles: [] })).toBe(false);
+        expect(ok({ ...base, layer: "nope" })).toBe(false);
+        expect(
+            ok({ ...base, tiles: [{ tilesetId: "", tileIndex: 0, cells: [] }] })
+        ).toBe(false);
+    });
+
+    it("limits the total cells of paint_tiles, not each item", () => {
+        const item = (n: number, tileIndex: number) => ({
+            tilesetId: "t",
+            tileIndex,
+            cells: cells(n),
+        });
+        const op = (tiles: unknown[]) => ({
+            type: "paint_tiles",
+            layer: "ground",
+            tiles,
+        });
+        const half = MAX_CELLS_PER_OP / 2;
+
+        expect(ok(op([item(half, 0), item(half, 1)]))).toBe(true);
+        expect(ok(op([item(half, 0), item(half + 1, 1)]))).toBe(false);
+    });
+
     it("accepts and rejects erase", () => {
         expect(ok({ type: "erase", layer: "walls", cells: [[0, 0]] })).toBe(
             true
@@ -145,6 +179,26 @@ describe("PublishRequestSchema", () => {
             ops: [op],
         });
         expect(result.success).toBe(true);
+    });
+
+    it("accepts paint_tiles inside a publish request", () => {
+        const paintTiles = {
+            type: "paint_tiles",
+            layer: "ground",
+            tiles: [{ tilesetId: "t", tileIndex: 0, cells: [[1, 2]] }],
+        };
+        const request = { publishId: uuid, baseVersion: 1 };
+
+        expect(
+            PublishRequestSchema.safeParse({ ...request, ops: [paintTiles] })
+                .success
+        ).toBe(true);
+        expect(
+            PublishRequestSchema.safeParse({
+                ...request,
+                ops: [{ ...paintTiles, tiles: [] }],
+            }).success
+        ).toBe(false);
     });
 
     it("rejects a publishId that is not a uuid", () => {

@@ -3,6 +3,7 @@ import type { AssetDefinition } from "../../../../assets/types";
 import type { LibraryPalette } from "../../../../assets/types/library";
 import {
     FLOOR_IMAGE_ID,
+    WALL_IMAGE_ID,
     buildLayout,
     library,
 } from "../../../layout/__tests__/fixtures";
@@ -107,5 +108,109 @@ describe("replayOps", () => {
         const result = replayOps(base, []);
 
         expect(result).toEqual({ ok: true, model: base });
+    });
+});
+
+describe("replayOps: paint_tiles", () => {
+    const paintTiles: EditorOp = {
+        type: "paint_tiles",
+        layer: "ground",
+        tiles: [
+            {
+                tilesetId: FLOOR_IMAGE_ID,
+                tileIndex: 1,
+                cells: [
+                    [3, 3],
+                    [4, 3],
+                ],
+            },
+            {
+                tilesetId: FLOOR_IMAGE_ID,
+                tileIndex: 0,
+                cells: [
+                    [4, 3],
+                    [5, 3],
+                ],
+            },
+        ],
+    };
+    const paints: EditorOp[] =
+        paintTiles.type === "paint_tiles"
+            ? paintTiles.tiles.map((item) => ({
+                  type: "paint",
+                  layer: paintTiles.layer,
+                  ...item,
+              }))
+            : [];
+
+    it("gives the same model and diff as a sequence of paints", () => {
+        const base = buildModel();
+        const grouped = applyEditorOp(base, paintTiles);
+        if (!grouped.ok) throw new Error(grouped.errors[0]?.code);
+
+        const diff: unknown[] = [];
+        let current = base;
+        for (const op of paints) {
+            const step = applyEditorOp(current, op);
+            if (!step.ok) throw new Error(step.errors[0]?.code);
+            current = step.model;
+            diff.push(...step.diff);
+        }
+
+        expect(grouped.model).toEqual(current);
+        expect(grouped.diff).toEqual(diff);
+    });
+
+    it("undoes every item with the inverse, in order", () => {
+        const base = buildModel();
+        const grouped = applyEditorOp(base, paintTiles);
+        if (!grouped.ok) throw new Error(grouped.errors[0]?.code);
+
+        const undone = replayOps(grouped.model, grouped.inverse);
+        expect(undone.ok).toBe(true);
+        if (!undone.ok) return;
+        expect(undone.model.layout).toEqual(base.layout);
+    });
+
+    it("writes the derived wall top and undoes it", () => {
+        const base = buildModel();
+        const walls: EditorOp = {
+            type: "paint_tiles",
+            layer: "walls",
+            tiles: [
+                { tilesetId: WALL_IMAGE_ID, tileIndex: 0, cells: [[5, 5]] },
+            ],
+        };
+        const grouped = applyEditorOp(base, walls);
+        if (!grouped.ok) throw new Error(grouped.errors[0]?.code);
+
+        expect(grouped.diff.map(({ layer }) => layer).sort()).toEqual([
+            "foreground",
+            "walls",
+        ]);
+        const undone = replayOps(grouped.model, grouped.inverse);
+        expect(undone.ok && undone.model.layout).toEqual(base.layout);
+    });
+
+    it("fails with the paint errors when an item breaks a rule", () => {
+        const result = replayOps(buildModel(), [
+            {
+                type: "paint_tiles",
+                layer: "ground",
+                tiles: [
+                    {
+                        tilesetId: FLOOR_IMAGE_ID,
+                        tileIndex: 1,
+                        cells: [[3, 3]],
+                    },
+                    { tilesetId: WALL_IMAGE_ID, tileIndex: 0, cells: [[4, 3]] },
+                ],
+            },
+        ]);
+
+        expect(result.ok).toBe(false);
+        if (result.ok) return;
+        expect(result.opIndex).toBe(0);
+        expect(result.errors[0]?.code).toBe("CATEGORY_LAYER_MISMATCH");
     });
 });

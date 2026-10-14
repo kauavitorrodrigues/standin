@@ -11,6 +11,11 @@ export const EditorOpErrorMessages = {
     cells: {
         max: "A paint or erase operation can touch at most 2500 cells.",
     },
+    tiles: {
+        invalid: "The paint tiles list is invalid.",
+        empty: "A paint tiles operation needs at least one tile.",
+        max: "A paint tiles operation can touch at most 2500 cells in total.",
+    },
     zone: {
         invalid: "The zone is invalid.",
         id: { invalid: "The zone id is invalid." },
