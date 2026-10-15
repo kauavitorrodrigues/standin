@@ -66,8 +66,8 @@ const getRoomCenter = (room: GameRoom): Point => ({
 
 const byDistanceTo =
     (target: Point) =>
-    (a: Cell, b: Cell): number =>
-        Math.hypot(a.center.x - target.x, a.center.y - target.y) -
+        (a: Cell, b: Cell): number =>
+            Math.hypot(a.center.x - target.x, a.center.y - target.y) -
         Math.hypot(b.center.x - target.x, b.center.y - target.y);
 
 // The free cell nearest to the room center, since the avatar comes from
