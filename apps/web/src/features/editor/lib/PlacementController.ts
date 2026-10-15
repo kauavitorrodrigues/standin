@@ -23,6 +23,25 @@ const getFreePointer = ({
 }: ToolContext): { x: number; y: number } | undefined =>
     ctrl ? undefined : { x: worldX, y: worldY };
 
+type PlaceOpPlan = {
+    tileX: number;
+    tileY: number;
+    offsetX: number;
+    offsetY: number;
+    parentId?: string | null;
+};
+
+const buildPlaceOp = (assetId: string, plan: PlaceOpPlan): EditorOp => ({
+    type: "place_asset",
+    tempId: createTempId(),
+    assetId,
+    tileX: plan.tileX,
+    tileY: plan.tileY,
+    offsetX: plan.offsetX,
+    offsetY: plan.offsetY,
+    ...(plan.parentId ? { parentId: plan.parentId } : {}),
+});
+
 // Places objects. It does something only while the store has an asset in
 // `placing`: the ghost follows the cursor and a click on a valid spot sends ONE
 // gesture with a place_asset. The mode stays on for the next one and Esc leaves
@@ -86,16 +105,12 @@ export class PlacementController implements ToolController {
         }
         if (!plan.asset) return;
 
-        const op: EditorOp = {
-            type: "place_asset",
-            tempId: createTempId(),
-            assetId: plan.asset.id,
-            tileX: plan.tileX,
-            tileY: plan.tileY,
-            offsetX: plan.offsetX,
-            offsetY: plan.offsetY,
-            ...(plan.parentId ? { parentId: plan.parentId } : {}),
-        };
+        const op = buildPlaceOp(plan.asset.id, plan);
+        const vetoed = this.env.veto?.([op], context.model) ?? null;
+        if (vetoed !== null) {
+            context.setHint(vetoed);
+            return;
+        }
         const result = context.dispatch([op]);
         if (!result.ok) {
             const [issue] = result.errors;
@@ -123,6 +138,17 @@ export class PlacementController implements ToolController {
         this.env.setHint(null);
     };
 
+    // Why the host refuses the placement the plan describes, or null.
+    private getVeto(
+        context: ToolContext,
+        plan: ReturnType<typeof planPlacement>
+    ): string | null {
+        if (!plan.result.ok || !plan.asset) return null;
+
+        const op = buildPlaceOp(plan.asset.id, plan);
+        return this.env.veto?.([op], context.model) ?? null;
+    }
+
     private preview(context: ToolContext): void {
         const assetId = this.env.store.getState().placing;
         if (!assetId) {
@@ -136,7 +162,8 @@ export class PlacementController implements ToolController {
             context.cell,
             getFreePointer(context)
         );
-        const hint = getPlacementHint(plan.result);
+        const vetoed = this.getVeto(context, plan);
+        const hint = vetoed ?? getPlacementHint(plan.result);
         const layout = plan.asset
             ? getGhostLayout(context.model, plan.asset, plan)
             : null;
@@ -150,7 +177,7 @@ export class PlacementController implements ToolController {
             asset: plan.asset,
             x: layout.x,
             bottomY: layout.bottomY,
-            valid: plan.result.ok,
+            valid: plan.result.ok && vetoed === null,
         });
         context.setHint(hint);
     }

@@ -9,6 +9,12 @@ import { PaletteTabs } from "../PaletteTabs";
 vi.mock("@/features/assets/components/views/palette/PaletteFamilies", () => ({
     PaletteFamilies: () => null,
 }));
+vi.mock(
+    "@/features/assets/components/views/palette/PaletteSearchResults",
+    () => ({
+        PaletteSearchResults: () => null,
+    })
+);
 
 type Categories = Parameters<typeof PaletteTabs>[0]["categories"];
 
@@ -28,6 +34,7 @@ const render = (hideTilesTab?: boolean) =>
             TooltipProvider,
             null,
             createElement(PaletteTabs, {
+                search: "",
                 categories,
                 tilesets: [],
                 onPick: () => {},

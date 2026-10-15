@@ -5,6 +5,8 @@ import type {
     PaletteCategories,
     PaletteTilesets,
 } from "@/features/assets/types/mapPalette";
+import { PALETTE_LOOKS } from "@/features/assets/consts/paletteLooks";
+import type { PaletteLook } from "@/features/assets/types/paletteLook";
 import { PaletteBody } from "./PaletteBody";
 
 type Props = {
@@ -15,20 +17,25 @@ type Props = {
     selectedId?: string | null;
     // Hides the library's own Tiles tab, for hosts that have their own.
     hideTilesTab?: boolean;
+    // The text of the search box.
+    searchPlaceholder?: string;
+    look?: PaletteLook;
 };
 
 type SearchValues = { search: string };
 
 // Editor palette: one entry per family, shown by its base, in one tab per
 // category that has assets (the server already sends them in order, by
-// name), a separate Tiles group, and a search that crosses every category
-// and hides the tabs while there is text.
+// name), a separate Tiles group, and a search that filters the families of
+// the picked tab while the tabs stay, dimming the ones with no match.
 export function MapPalette({
     tilesets,
     categories,
     onPick,
     selectedId,
     hideTilesTab = false,
+    searchPlaceholder = "Buscar peça",
+    look = PALETTE_LOOKS.EDITOR,
 }: Props) {
     const { register, control } = useForm<SearchValues>({
         defaultValues: { search: "" },
@@ -40,7 +47,8 @@ export function MapPalette({
             <div className="px-3">
                 <SearchField
                     {...register("search")}
-                    placeholder="Buscar peça"
+                    withIcon={look.searchIcon}
+                    placeholder={searchPlaceholder}
                 />
             </div>
             <PaletteBody
@@ -50,6 +58,7 @@ export function MapPalette({
                 onPick={onPick}
                 selectedId={selectedId}
                 hideTilesTab={hideTilesTab}
+                look={look}
             />
         </div>
     );

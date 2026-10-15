@@ -38,6 +38,7 @@ export const previewTemplate = async (
         },
         canRead: true,
         canEdit: false,
+        canDecorate: false,
         membership: null,
     });
 

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LOCK_HEARTBEAT_MS } from "@standin/contracts";
-import type { EditorAcquireAck } from "@standin/contracts";
+import { EDIT_SCOPES, LOCK_HEARTBEAT_MS } from "@standin/contracts";
+import type {
+    EditorAcquireAck,
+    EditorLockLostReason,
+    EditScopeKind,
+} from "@standin/contracts";
 import { realtimeSocket } from "@/features/realtime/socket";
 import { useSocketEvent } from "@/features/realtime/hooks/useSocketEvent";
 import { LOCK_ACK_TIMEOUT_MS } from "@/features/maps/__shared__/consts/lock-recovery";
@@ -16,13 +20,21 @@ import { getLockStatus } from "@/features/maps/__shared__/utils/getLockStatus";
 // answer grants the lock, before the status changes, so the caller can drop
 // what it cached before it held the lock. The release goes out once: leaving
 // by the button, by the exit dialog or by unmounting all end in the cleanup.
+// The `mode` says what is being edited: the whole map (the Studio, the
+// default) or only its objects (the decorator). `lostReason` tells why the
+// lock was lost when the server said so, `MAP_EDITING` being the Studio that
+// opened over a decorator.
 export const useEditorLock = (
     mapId: string,
     sessionId: string,
-    onAcquired?: () => void
+    onAcquired?: () => void,
+    mode: EditScopeKind = EDIT_SCOPES.MAP
 ) => {
     const [acquireAck, setAcquireAck] = useState<EditorAcquireAck | null>(null);
     const [lost, setLost] = useState(false);
+    const [lostReason, setLostReason] = useState<EditorLockLostReason | null>(
+        null
+    );
     const releasedRef = useRef(true);
     const onAcquiredRef = useRef(onAcquired);
 
@@ -35,7 +47,7 @@ export const useEditorLock = (
 
     useEffect(() => {
         let active = true;
-        const payload = { mapId, sessionId };
+        const payload = { mapId, sessionId, mode };
         // Until the answer says otherwise the lock may be ours, so leaving
         // before it arrives still has to give it back.
         releasedRef.current = false;
@@ -56,7 +68,7 @@ export const useEditorLock = (
             releasedRef.current = true;
             realtimeSocket.emit("editor:release", payload, () => {});
         };
-    }, [mapId, sessionId]);
+    }, [mapId, sessionId, mode]);
 
     useEffect(() => {
         if (!isHeld) return;
@@ -64,7 +76,7 @@ export const useEditorLock = (
         const interval = setInterval(() => {
             realtimeSocket.emit(
                 "editor:heartbeat",
-                { mapId, sessionId },
+                { mapId, sessionId, mode },
                 (response) => {
                     if (!response.ok) setLost(true);
                 }
@@ -72,20 +84,24 @@ export const useEditorLock = (
         }, LOCK_HEARTBEAT_MS);
 
         return () => clearInterval(interval);
-    }, [isHeld, mapId, sessionId]);
+    }, [isHeld, mapId, sessionId, mode]);
 
     useSocketEvent("editor:lock_lost", (payload) => {
         if (payload.mapId !== mapId) return;
+        setLostReason(payload.reason ?? null);
         setLost(true);
     });
 
     const reacquire = useCallback(async () => {
-        const ack = await acquireEditorLock(mapId, sessionId);
+        const ack = await acquireEditorLock(mapId, sessionId, mode);
         if (ack?.ok) releasedRef.current = false;
         return ack;
-    }, [mapId, sessionId]);
+    }, [mapId, sessionId, mode]);
 
-    const restore = useCallback(() => setLost(false), []);
+    const restore = useCallback(() => {
+        setLostReason(null);
+        setLost(false);
+    }, []);
 
     const markLost = useCallback(() => setLost(true), []);
 
@@ -102,11 +118,11 @@ export const useEditorLock = (
                 releasedRef.current = true;
                 realtimeSocket
                     .timeout(LOCK_ACK_TIMEOUT_MS)
-                    .emit("editor:release", { mapId, sessionId }, () =>
+                    .emit("editor:release", { mapId, sessionId, mode }, () =>
                         resolve()
                     );
             }),
-        [mapId, sessionId]
+        [mapId, sessionId, mode]
     );
 
     const control = useMemo<EditorLockControl>(
@@ -114,5 +130,5 @@ export const useEditorLock = (
         [reacquire, restore, markLost, release]
     );
 
-    return { lock, control };
+    return { lock, control, lostReason };
 };

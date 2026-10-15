@@ -1,5 +1,9 @@
 import Phaser from "phaser";
-import type { PlayerPosition } from "@standin/contracts";
+import type {
+    AssetDefinition,
+    PlacedAsset,
+    PlayerPosition,
+} from "@standin/contracts";
 import {
     GAME_SCENE_KEYS,
     SCENE_EVENTS,
@@ -12,8 +16,8 @@ import {
     fitWorldBoundsToMap,
     loadMapAssets,
     registerAssetAnimations,
+    EditorObjectRenderer,
     renderObjectLayers,
-    renderPlacedAssets,
     renderTileLayers,
 } from "@/features/game/renderers";
 import { MapCameraController } from "@/features/game/lib/MapCameraController";
@@ -35,6 +39,15 @@ import {
 import { SeatController } from "@/features/game/lib/SeatController";
 import { buildSeatAreas } from "@/features/game/utils/buildSeatAreas";
 import { buildDeskAreas } from "@/features/game/utils/buildDeskAreas";
+import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
+import { REMOTE_AVATAR_APPEARANCE } from "@/features/game/consts/remote-avatar";
+import {
+    findNearestFreeCell,
+    isPositionBlocked,
+} from "@/features/game/utils/findNearestFreeCell";
+import { hasPlacedChanges } from "@/features/game/utils/hasPlacedChanges";
+import { PlacedObjectsSync } from "@/features/game/lib/PlacedObjectsSync";
+import { SolidColliders } from "@/features/game/lib/SolidColliders";
 import { HoverTargetController } from "@/features/game/lib/HoverTargetController";
 import { DESK_EVENTS } from "@/features/game/consts/desk";
 import { resolveDefaultSpawnPoint } from "@/features/game/utils/map";
@@ -71,6 +84,13 @@ export class MapScene extends Phaser.Scene {
         ((distances: ReadonlyMap<string, number>) => void) | null = null;
 
     private mapHeightPx = 0;
+    private mapColumns = 0;
+    private mapRows = 0;
+    // Asked by the camera drag. The decorator holds the camera still for a
+    // press that drags an object.
+    private canPanCamera: () => boolean = () => true;
+    private placedSync: PlacedObjectsSync | null = null;
+    private solidGroup: Phaser.Physics.Arcade.StaticGroup | null = null;
 
     cameraController: MapCameraController | null = null;
     player: Player | null = null;
@@ -105,17 +125,19 @@ export class MapScene extends Phaser.Scene {
             tilemap
         );
 
-        renderPlacedAssets(
-            this,
-            this.mapData.placed ?? [],
-            assets,
-            tilemap.heightInPixels,
-            solidGroup
+        this.solidGroup = solidGroup;
+        this.placedSync = new PlacedObjectsSync(
+            new EditorObjectRenderer(this, assets, tilemap.heightInPixels),
+            new SolidColliders(this, solidGroup),
+            tilemap.heightInPixels
         );
+        this.placedSync.apply(this.mapData.placed ?? [], assets);
 
         const spawnPoint = resolveDefaultSpawnPoint(tilemap);
         this.spawnPoint = spawnPoint;
         this.mapHeightPx = tilemap.heightInPixels;
+        this.mapColumns = tilemap.width;
+        this.mapRows = tilemap.height;
 
         this.player = new Player(
             this,
@@ -133,25 +155,19 @@ export class MapScene extends Phaser.Scene {
             this.player
         );
 
-        this.seatController.addAreas(
-            buildSeatAreas(
-                this.mapData.placed ?? [],
-                new Map(assets.map((asset) => [asset.id, asset])),
-                tilemap.heightInPixels
-            )
-        );
-
         this.deskHoverController = new HoverTargetController(
             this,
             DESK_EVENTS.HOVER_CHANGED
         );
-        this.deskHoverController.addTargets(
-            buildDeskAreas(
-                this.mapData.placed ?? [],
-                new Map(assets.map((asset) => [asset.id, asset])),
-                tilemap.heightInPixels
-            )
-        );
+
+        this.placedSync.subscribe((placed, assetsById) => {
+            this.seatController?.setAreas(
+                buildSeatAreas(placed, assetsById, tilemap.heightInPixels)
+            );
+            this.deskHoverController?.setTargets(
+                buildDeskAreas(placed, assetsById, tilemap.heightInPixels)
+            );
+        });
 
         bindPlayerCollision(this, this.player, solidGroup);
 
@@ -177,7 +193,7 @@ export class MapScene extends Phaser.Scene {
         );
 
         bindMapWheelZoom(this, this.cameraController);
-        bindMapDragPan(this, this.cameraController);
+        bindMapDragPan(this, this.cameraController, () => this.canPanCamera());
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             // Silence every peer's <audio> element rather than just
@@ -207,6 +223,89 @@ export class MapScene extends Phaser.Scene {
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
+    }
+
+    // False until create() has run, since the map is drawn there.
+    isReady(): boolean {
+        return this.placedSync !== null;
+    }
+
+    // The size of the map in tiles, known once the scene is created.
+    getMapSize(): { columns: number; rows: number } {
+        return { columns: this.mapColumns, rows: this.mapRows };
+    }
+
+    // Takes the view to a point of the map, with the player left behind.
+    focusPoint(x: number, y: number, offsetXPixels = 0): void {
+        this.cameraController?.focusPoint(x, y, offsetXPixels);
+    }
+
+    // The decorator takes the clicks on desks for its own selection, and may
+    // hold the camera still for a press. `null` gives both back.
+    setDecoratorGuards(
+        guards: { canPan: () => boolean } | null
+    ): void {
+        this.canPanCamera = guards?.canPan ?? (() => true);
+        this.deskHoverController?.setEnabled(guards === null);
+    }
+
+    // Brings the objects on screen to a new list, drawing only what changed.
+    setPlaced(
+        placed: readonly PlacedAsset[],
+        assets: readonly AssetDefinition[],
+        options: { animate?: boolean } = {}
+    ): void {
+        if (!this.placedSync) {
+            // The scene has not been created yet, so create() starts from this.
+            this.mapData = {
+                ...this.mapData,
+                placed: [...placed],
+                assets: [...assets],
+            };
+            return;
+        }
+
+        const diff = this.placedSync.apply(placed, assets, options);
+        if (!hasPlacedChanges(diff)) return;
+
+        this.freeTrappedAvatars();
+    }
+
+    // An avatar left inside an object that just became solid is taken to the
+    // free cell closest to it: the local one at once, the remote ones by the
+    // same smoothing as any other move (their own client moves them too).
+    private freeTrappedAvatars(): void {
+        const { player, solidGroup } = this;
+        if (!player || !solidGroup) return;
+
+        const solidRects = solidGroup
+            .getChildren()
+            .map((child) => child.body as Phaser.Physics.Arcade.StaticBody)
+            .map(({ x, y, width, height }) => ({ x, y, width, height }));
+        const bounds = this.physics.world.bounds;
+        const free = (point: { x: number; y: number }, radius: number) =>
+            isPositionBlocked(point, radius, solidRects)
+                ? findNearestFreeCell({
+                      point,
+                      solidRects,
+                      radius,
+                      bounds,
+                  })
+                : null;
+
+        const own = free(player, PLAYER_APPEARANCE.RADIUS);
+        if (own) {
+            player.standUp();
+            player.teleportTo(own.x, own.y);
+        }
+
+        this.remoteAvatars.forEach((avatar) => {
+            const target = free(
+                avatar.gameObject,
+                REMOTE_AVATAR_APPEARANCE.RADIUS
+            );
+            if (target) avatar.move(target.x, target.y);
+        });
     }
 
     spawnRemoteAvatar(socketId: string): void {

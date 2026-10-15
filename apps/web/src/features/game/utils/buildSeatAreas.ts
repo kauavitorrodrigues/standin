@@ -59,7 +59,7 @@ const buildFootprint = (placed: PlacedRef, asset: AssetRef): PlacedRect => {
  * action, or with params that do not read as seats, have no area.
  */
 export const buildSeatAreas = (
-    placed: PlacedRef[],
+    placed: readonly PlacedRef[],
     assetsById: ReadonlyMap<string, AssetRef>,
     mapHeightPx: number
 ): SeatArea[] => {

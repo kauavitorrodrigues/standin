@@ -22,4 +22,7 @@ export type EditorModel = {
     limits: { objectsUsed: number; objectsMax: number };
     // The published layout version this model was built from.
     version: number;
+    // Latest `updated_at` among the objects of the map when the model was built.
+    // The decorator publishes against it. Missing in models built by hand.
+    objectsRevision?: string | null;
 };

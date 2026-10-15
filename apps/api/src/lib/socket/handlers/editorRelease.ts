@@ -13,6 +13,7 @@ export function registerEditorRelease(socket: Socket) {
             if (!parsed.success) return replyAck(ack, { ok: false });
             const { mapId, sessionId } = parsed.data;
 
+            const mode = MapLockService.get(mapId)?.mode;
             const released = MapLockService.release(mapId, sessionId);
             if (!released) return replyAck(ack, { ok: false });
 
@@ -22,7 +23,10 @@ export function registerEditorRelease(socket: Socket) {
             const user = await UserService.findById(socket.data.userId);
             if (user) {
                 const access = await MapService.getAccess(user, mapId);
-                emitMapEvent(access, MapEvents.MAP_UNLOCKED, { mapId });
+                emitMapEvent(access, MapEvents.MAP_UNLOCKED, {
+                    mapId,
+                    mode,
+                });
             }
 
             replyAck(ack, { ok: true });

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { PublishResult } from "@standin/contracts";
+import { EDIT_SCOPES } from "@standin/contracts";
+import type { EditScopeKind, PublishResult } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { mapPaletteQueryOptions } from "@/features/assets/queries/useMapPalette";
@@ -20,6 +21,8 @@ type UsePublishDraftOptions = {
     onPublished?: (result: PublishResult) => void;
     // Leaves the editor. Called when the publish was asked to leave.
     onLeave: () => void;
+    // Which draft is saved in IndexedDB, the Studio one by default.
+    mode?: EditScopeKind;
 };
 
 // Publishes the draft: builds the request (the same one again when nothing
@@ -29,6 +32,7 @@ type UsePublishDraftOptions = {
 export const usePublishDraft = ({
     onPublished,
     onLeave,
+    mode = EDIT_SCOPES.MAP,
 }: UsePublishDraftOptions) => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -51,7 +55,7 @@ export const usePublishDraft = ({
                 draftStore,
                 publish: mutateAsync,
                 clearSavedDraft: async () => {
-                    await clearDraft(user.id, mapId);
+                    await clearDraft(user.id, mapId, mode);
                 },
             },
             { attempt }
@@ -82,6 +86,7 @@ export const usePublishDraft = ({
         draftStore,
         editorStore,
         mutateAsync,
+        mode,
         onLeave,
         onPublished,
         queryClient,

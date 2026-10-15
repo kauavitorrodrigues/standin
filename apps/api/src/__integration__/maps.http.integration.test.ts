@@ -310,6 +310,7 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             );
             expect(owner.body.access).toEqual({
                 canEdit: true,
+                canDecorate: true,
                 ownDeskMapAssetId: null,
             });
 
@@ -1182,9 +1183,10 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             expect(asAdmin.body.templates.length).toBeGreaterThan(
                 asOwner.body.templates.length
             );
+            // Other files publish templates to the same database too.
             expect(
                 asOwner.body.templates.map((item: { id: string }) => item.id)
-            ).toEqual([template.id]);
+            ).toContain(template.id);
 
             expect((await call("member", "GET", "/templates")).status).toBe(
                 403

@@ -70,4 +70,49 @@ describe("applyMapLockEvent", () => {
             )
         ).toEqual(LOCKED);
     });
+
+    it("keeps the mode of the lock", () => {
+        expect(
+            applyMapLockEvent(
+                FREE,
+                {
+                    type: "locked",
+                    payload: {
+                        mapId: "m1",
+                        by: { id: "u1", name: "Ana" },
+                        since: LOCKED.since!,
+                        mode: "objects",
+                    },
+                },
+                "m1"
+            )
+        ).toEqual({ ...LOCKED, mode: "objects" });
+    });
+
+    it("frees only the mode that the unlock names", () => {
+        const studio = { ...LOCKED, mode: "map" } as const;
+        const decorator = { ...LOCKED, mode: "objects" } as const;
+
+        expect(
+            applyMapLockEvent(
+                studio,
+                { type: "unlocked", payload: { mapId: "m1", mode: "objects" } },
+                "m1"
+            )
+        ).toEqual(studio);
+        expect(
+            applyMapLockEvent(
+                decorator,
+                { type: "unlocked", payload: { mapId: "m1", mode: "objects" } },
+                "m1"
+            )
+        ).toEqual(FREE);
+        expect(
+            applyMapLockEvent(
+                decorator,
+                { type: "unlocked", payload: { mapId: "m1" } },
+                "m1"
+            )
+        ).toEqual(FREE);
+    });
 });

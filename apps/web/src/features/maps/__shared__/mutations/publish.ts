@@ -19,15 +19,13 @@ const wait = (ms: number) =>
 export const publishMap = async ({
     mapId,
     sessionId,
-    publishId,
-    baseVersion,
-    ops,
+    ...body
 }: PublishInput): Promise<PublishResult> => {
     for (let attempt = 1; ; attempt++) {
         try {
             const res = await api.post<PublishResult>(
                 `/maps/${mapId}/publish`,
-                { publishId, baseVersion, ops },
+                body,
                 { headers: { [PUBLISH_SESSION_HEADER]: sessionId } }
             );
             return res.data;

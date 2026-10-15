@@ -5,6 +5,7 @@ import type {
     RunPublishResult,
 } from "@/features/maps/__shared__/types/run-publish";
 import { PublishError } from "@/features/maps/__shared__/utils/PublishError";
+import { buildPublishInput } from "@/features/maps/__shared__/utils/buildPublishInput";
 import { buildPublishedModel } from "@/features/maps/__shared__/utils/buildPublishedModel";
 
 // Sends one attempt and moves the stores with the answer. A success swaps the
@@ -19,13 +20,9 @@ export const runPublish = async (
     editorStore.beginPublish();
 
     try {
-        const result = await publish({
-            mapId,
-            sessionId: editorStore.sessionId,
-            publishId: attempt.publishId,
-            baseVersion: attempt.baseVersion,
-            ops: attempt.ops,
-        });
+        const result = await publish(
+            buildPublishInput(attempt, mapId, editorStore.sessionId)
+        );
 
         draftStore.rebase(
             buildPublishedModel(draftStore.getState().draft, result)

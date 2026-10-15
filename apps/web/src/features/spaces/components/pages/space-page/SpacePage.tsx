@@ -34,10 +34,15 @@ import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 import { useSpaceMapLock } from "@/features/maps/organizations/hooks/useSpaceMapLock";
-import { LockBanner } from "@/features/maps/organizations/components/views/LockBanner";
+import { LockBanner } from "@/features/spaces/components/pages/space-page/controls/LockBanner";
 import { OwnDeskProfileCard } from "@/features/desks/components/instances/OwnDeskProfileCard";
 import { useProfileCard } from "@/features/users/hooks/useProfileCard";
 import { DeskHoverCard } from "@/features/desks/components/instances/DeskHoverCard";
+import { Decorator } from "@/features/decorator/components/instances/Decorator";
+import { useDecorateAvailability } from "@/features/decorator/hooks/useDecorateAvailability";
+import { useDecoratorSession } from "@/features/decorator/hooks/useDecoratorSession";
+import type { DecorateAvailability } from "@/features/decorator/types/decorate-availability";
+import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
@@ -75,6 +80,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const gameMap = useGameMapData(space.map);
     const mapLock = useSpaceMapLock(space.map.id);
     const profileCard = useProfileCard();
+    const decorator = useDecoratorSession();
+    const decorateAvailability = useDecorateAvailability(space.map.id, mapLock);
     const { containerRef, handle } = useGameEngine(gameMap, -RAIL_WIDTH_PX / 2);
 
     const { handlers: peerChatHandlers, typingByConversation } =
@@ -143,6 +150,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     isPeopleOpen={peoplePanel.isVisible}
                     onTogglePeople={peoplePanel.toggle}
                     chatFooter={<ChatFooter tiles={stageTiles} media={media} />}
+                    onDecorate={() => decorator.open()}
+                    decorateAvailability={decorateAvailability}
                 />
                 <SpacePeoplePanel
                     isMounted={peoplePanel.isMounted}
@@ -166,12 +175,27 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         onCloseProfile={profileCard.close}
                     />
                     <ProfileCardSlot
-                        isOpen={profileCard.isOpen}
+                        isOpen={profileCard.isOpen && !decorator.isOpen}
                         spaceId={space.id}
                         isMapLocked={mapLock.isLocked}
+                        decorateAvailability={decorateAvailability}
+                        onDecorate={(focus) => {
+                            profileCard.close();
+                            decorator.open(focus);
+                        }}
                         onClose={profileCard.close}
                     />
-                    <LockBanner locked={mapLock.locked} by={mapLock.by} />
+                    <Decorator
+                        session={decorator}
+                        handle={handle}
+                        mapId={space.map.id}
+                    />
+                    <LockBanner
+                        locked={mapLock.locked}
+                        by={mapLock.by}
+                        mode={mapLock.mode}
+                        currentUserId={user.id}
+                    />
                     <VideoStage
                         tiles={stageTiles}
                         isGridOpen={isGridOpen}
@@ -202,6 +226,8 @@ type ProfileCardSlotProps = {
     isOpen: boolean;
     spaceId: string;
     isMapLocked: boolean;
+    decorateAvailability: DecorateAvailability;
+    onDecorate: (focus: DecoratorFocus) => void;
     onClose: () => void;
 };
 

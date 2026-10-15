@@ -12,7 +12,10 @@ export const applyEditorSetBackground: EditorOpHandler<
     // A layout without a background color goes back to the default one.
     const previous = model.layout.backgroundcolor;
     const inverse: EditorOp[] = [
-        { type: "set_background", color: previous ?? EDITOR_DEFAULT_BACKGROUND_COLOR },
+        {
+            type: "set_background",
+            color: previous ?? EDITOR_DEFAULT_BACKGROUND_COLOR,
+        },
     ];
 
     return {

@@ -45,11 +45,16 @@ export const PublishErrorMessages = {
     baseVersion: {
         invalid: "The base version must be an integer of 1 or more.",
     },
+    scope: { invalid: "The publish scope must be map or objects." },
+    baseObjectsRevision: {
+        invalid: "The base objects revision must be an ISO date.",
+    },
     ops: {
         invalid: "The publish operations are invalid.",
         max: "A publish can carry at most 5000 operations.",
     },
     version: { invalid: "The published version is invalid." },
+    objectsRevision: { invalid: "The objects revision is invalid." },
     idMap: { invalid: "The id map is invalid." },
     limits: { invalid: "The object limits are invalid." },
 };
@@ -91,4 +96,8 @@ export const StampErrorMessages = {
     zone: {
         invalid: `The area zone label must have 1 to ${AREA_NAME_MAX} characters.`,
     },
+};
+
+export const EditScopeErrorMessages = {
+    scope: { invalid: "The edit scope must be map or objects." },
 };

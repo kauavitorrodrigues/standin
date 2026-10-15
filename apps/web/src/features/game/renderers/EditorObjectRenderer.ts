@@ -13,11 +13,11 @@ import {
     shouldPlayAnimation,
     type PlacedLayout,
 } from "@/features/game/utils/placed";
-import { EDITOR_OBJECT_PLACEHOLDER } from "@/features/editor/consts/placed-objects";
+import { EDITOR_OBJECT_PLACEHOLDER } from "@/features/game/consts/placed-objects";
 import { loadAssetTexture } from "@/features/editor/lib/loadAssetTexture";
-import { OBJECT_DROP } from "@/features/editor/consts/object-drop";
-import { prefersReducedMotion } from "@/features/editor/utils/prefersReducedMotion";
-import { diffPlaced } from "@/features/editor/utils/diffPlaced";
+import { OBJECT_DROP } from "@/features/game/consts/object-drop";
+import { prefersReducedMotion } from "@/features/game/utils/prefersReducedMotion";
+import { diffPlaced } from "@/features/game/renderers/diffPlaced";
 
 // The `type` Phaser gives a sprite, to tell it from the placeholder rectangle.
 const SPRITE_TYPE = "Sprite";

@@ -8,11 +8,14 @@ import {
 import { MapPublishService } from "@standin/core";
 import { EDITOR_SESSION_HEADER } from "@/consts/mapIdSources";
 import { parseSchema } from "@/utils/parseSchema";
+import { emitPublished } from "@/features/maps/utils/emitPublished";
 import { sendError } from "@/utils/sendError";
 import { emitMapEvent } from "@/lib/socket/utils/emitMapEvent";
 import type { ExtendedRequest } from "@/types/request";
 
-// Publishes the draft of the editor session that holds the lock. The events
+// Publishes the draft of the editor session that holds the lock. The scope in
+// the body picks the permission: canEdit for the map, canDecorate for the
+// objects, which the service reads from the database. The events
 // go out only after the service committed, and the session never comes back
 // in the answer.
 export const publishMap = async (req: ExtendedRequest, res: Response) => {
@@ -36,10 +39,7 @@ export const publishMap = async (req: ExtendedRequest, res: Response) => {
             data
         );
 
-        emitMapEvent(req.mapAccess, MapEvents.MAP_PUBLISHED, {
-            mapId: req.mapAccess.mapId,
-            version: result.version,
-        });
+        emitPublished(req.mapAccess, data.scope, result);
         for (const desk of releasedDesks) {
             emitMapEvent(req.mapAccess, MapEvents.DESK_RELEASED, desk);
         }

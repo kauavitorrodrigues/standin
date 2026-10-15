@@ -42,11 +42,12 @@ router.get(
     MapController.lock
 );
 
-// Publishes the draft. The lock guard lets through only the editor session
-// that holds the lock, and the body has its own, bigger, size limit.
+// Publishes the draft. Reading is enough here: the service asks for canEdit or
+// canDecorate by the scope of the body. The lock guard lets through only the
+// editor session that holds the lock, and the body has its own, bigger, size limit.
 router.post(
     "/:mapId/publish",
-    RequiresMapAccess(MAP_ACCESS_MODES.EDIT),
+    RequiresMapAccess(MAP_ACCESS_MODES.READ),
     RequiresMapNotLocked(MAP_ID_SOURCES.MAP, { allowHolderSession: true }),
     ReadsPublishBody,
     MapController.publish

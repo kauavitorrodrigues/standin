@@ -269,6 +269,8 @@ export const MapRenderErrorMessages = {
     parentId: { invalid: "The parent object ID is invalid." },
     userId: { invalid: "The desk user ID is invalid." },
     canEdit: { invalid: "The edit permission is invalid." },
+    canDecorate: { invalid: "The decorate permission is invalid." },
+    objectsRevision: { invalid: "The objects revision is invalid." },
     ownDesk: { invalid: "The user's desk is invalid." },
     limits: { invalid: "The map object limits are invalid." },
     objectsUsed: { invalid: "The number of objects in use is invalid." },

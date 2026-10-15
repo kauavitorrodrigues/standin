@@ -9,6 +9,7 @@ import {
 import { PeerChatContext } from "@/features/chat/contexts/PeerChatContext";
 import type { PeerTypingContextType } from "@/features/chat/contexts/PeerTypingContext";
 import { PeerTypingContext } from "@/features/chat/contexts/PeerTypingContext";
+import type { DecorateAvailability } from "@/features/decorator/types/decorate-availability";
 import { Rail } from "@/features/spaces/components/pages/space-page/sidebar/Rail";
 import type { ChatPageMode } from "@/features/chat/consts/chatPage";
 import type { SelectConversation } from "@/features/chat/types/chatPage";
@@ -29,6 +30,8 @@ type Props = {
     chatPage: ChatPageContextType;
     // Rendered at the bottom of the chat conversation list.
     chatFooter: ReactNode;
+    onDecorate: () => void;
+    decorateAvailability: DecorateAvailability;
 };
 
 // The whole left side of the space: the fixed rail and the views that cover
@@ -47,6 +50,8 @@ export const SpaceSidebar = ({
     peerTyping,
     chatPage,
     chatFooter,
+    onDecorate,
+    decorateAvailability,
 }: Props) => {
     return (
         <>
@@ -56,6 +61,8 @@ export const SpaceSidebar = ({
                 onSelectView={onSelectView}
                 isPeopleOpen={isPeopleOpen}
                 onTogglePeople={onTogglePeople}
+                onDecorate={onDecorate}
+                decorateAvailability={decorateAvailability}
             />
             <PeerChatContext.Provider value={peerChat}>
                 <PeerTypingContext.Provider value={peerTyping}>

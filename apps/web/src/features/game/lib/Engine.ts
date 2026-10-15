@@ -22,6 +22,8 @@ import {
     pinHover,
     selectHover,
 } from "@/features/game/utils/hover";
+import { getMapScene } from "@/features/game/utils/map";
+import { startDecorator } from "@/features/game/utils/startDecorator";
 import { focusOnPlayer } from "@/features/game/utils/player";
 import type {
     GameEngineHandle,
@@ -63,6 +65,11 @@ export const createGameEngine = ({
 
     const unbindResize = bindGameResize(game, container);
 
+    // While someone decorates, what the scene shows is their draft. The server
+    // copy that arrives meanwhile (an event of the space) would paint over it,
+    // so it waits: the page asks for the map again when the decorator closes.
+    let decorating = false;
+
     return {
         game,
         destroy: () => {
@@ -72,6 +79,22 @@ export const createGameEngine = ({
         zoomIn: () => getMapCameraController(game)?.zoomIn(),
         zoomOut: () => getMapCameraController(game)?.zoomOut(),
         focusOnPlayer: () => focusOnPlayer(game),
+        focusPoint: (x, y, offsetXPixels) =>
+            getMapScene(game)?.focusPoint(x, y, offsetXPixels),
+        setPlaced: (placed, assets, options) => {
+            if (decorating) return;
+            getMapScene(game)?.setPlaced(placed, assets, options);
+        },
+        startDecorator: (options) => {
+            const stop = startDecorator(game, options);
+            if (!stop) return () => undefined;
+
+            decorating = true;
+            return () => {
+                decorating = false;
+                stop();
+            };
+        },
         subscribeToCameraState: (listener) =>
             bindCameraStateSubscription(game, listener),
         subscribeToHover: (event, listener) =>

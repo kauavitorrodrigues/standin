@@ -1,4 +1,5 @@
 import type { PlacedAsset } from "../render/render-payload.schema";
+import type { EditScopeKind } from "../editor/types/edit-scope";
 import type { EditorLockHolder } from "../editor/types/editor-lock-holder";
 
 // Emitted in the room of the space (`space:{id}`), or `map:{id}` for the map
@@ -14,6 +15,7 @@ export const MapEvents = {
     MAP_LOCKED: "map_locked",
     MAP_UNLOCKED: "map_unlocked",
     MAP_PUBLISHED: "map_published",
+    OBJECTS_PUBLISHED: "objects_published",
 } as const;
 
 export type AssetPlacedPayload = { mapId: string; placed: PlacedAsset[] };
@@ -30,10 +32,14 @@ export type MapLockedPayload = {
     mapId: string;
     by: EditorLockHolder;
     since: string;
+    // Missing means `map`.
+    mode?: EditScopeKind;
 };
 
-export type MapUnlockedPayload = { mapId: string };
+export type MapUnlockedPayload = { mapId: string; mode?: EditScopeKind };
 export type MapPublishedPayload = { mapId: string; version: number };
+// `revision` is the objects revision (an ISO date) after the publish.
+export type ObjectsPublishedPayload = { mapId: string; revision: string };
 
 export type MapServerEvents = {
     asset_placed: (payload: AssetPlacedPayload) => void;
@@ -45,4 +51,5 @@ export type MapServerEvents = {
     map_locked: (payload: MapLockedPayload) => void;
     map_unlocked: (payload: MapUnlockedPayload) => void;
     map_published: (payload: MapPublishedPayload) => void;
+    objects_published: (payload: ObjectsPublishedPayload) => void;
 };

@@ -237,3 +237,106 @@ describe("PublishRequestSchema", () => {
         ).toBe(true);
     });
 });
+
+describe("PublishRequestSchema scopes", () => {
+    const op = { type: "remove_zone", zoneId: 1 };
+    const revision = "2026-10-14T12:00:00.000Z";
+
+    it("treats a missing scope as map", () => {
+        const result = PublishRequestSchema.safeParse({
+            publishId: uuid,
+            baseVersion: 1,
+            ops: [op],
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.data?.scope).toBe("map");
+    });
+
+    it("accepts the map scope with a base version", () => {
+        expect(
+            PublishRequestSchema.safeParse({
+                scope: "map",
+                publishId: uuid,
+                baseVersion: 3,
+                ops: [],
+            }).success
+        ).toBe(true);
+    });
+
+    it("accepts the objects scope with a base objects revision", () => {
+        const result = PublishRequestSchema.safeParse({
+            scope: "objects",
+            publishId: uuid,
+            baseObjectsRevision: revision,
+            ops: [],
+        });
+
+        expect(result.success).toBe(true);
+    });
+
+    it("accepts a null revision for a map that had no object", () => {
+        expect(
+            PublishRequestSchema.safeParse({
+                scope: "objects",
+                publishId: uuid,
+                baseObjectsRevision: null,
+                ops: [],
+            }).success
+        ).toBe(true);
+    });
+
+    it("rejects the objects scope without a revision", () => {
+        expect(
+            PublishRequestSchema.safeParse({
+                scope: "objects",
+                publishId: uuid,
+                ops: [],
+            }).success
+        ).toBe(false);
+    });
+
+    it("rejects the objects scope with a base version instead", () => {
+        expect(
+            PublishRequestSchema.safeParse({
+                scope: "objects",
+                publishId: uuid,
+                baseVersion: 1,
+                ops: [],
+            }).success
+        ).toBe(false);
+    });
+
+    it("rejects a revision that is not an ISO date", () => {
+        expect(
+            PublishRequestSchema.safeParse({
+                scope: "objects",
+                publishId: uuid,
+                baseObjectsRevision: "yesterday",
+                ops: [],
+            }).success
+        ).toBe(false);
+    });
+
+    it("rejects the map scope with a revision only", () => {
+        expect(
+            PublishRequestSchema.safeParse({
+                scope: "map",
+                publishId: uuid,
+                baseObjectsRevision: revision,
+                ops: [],
+            }).success
+        ).toBe(false);
+    });
+
+    it("rejects an unknown scope", () => {
+        expect(
+            PublishRequestSchema.safeParse({
+                scope: "zones",
+                publishId: uuid,
+                baseVersion: 1,
+                ops: [],
+            }).success
+        ).toBe(false);
+    });
+});

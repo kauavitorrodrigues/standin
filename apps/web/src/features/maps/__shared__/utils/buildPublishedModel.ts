@@ -2,7 +2,7 @@ import type { EditorModel, PublishResult } from "@standin/contracts";
 
 // The model the draft becomes once the server accepted it: the temporary ids
 // of the new objects give way to the real ones, and the version and the object
-// limit come from the answer. Everything else is what the draft already shows.
+// limit come from the answer (and the objects revision, when it sent one). Everything else is what the draft already shows.
 export const buildPublishedModel = (
     draft: EditorModel,
     result: PublishResult
@@ -18,5 +18,6 @@ export const buildPublishedModel = (
         })),
         limits: result.limits,
         version: result.version,
+        objectsRevision: result.objectsRevision ?? draft.objectsRevision,
     };
 };

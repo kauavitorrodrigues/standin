@@ -27,5 +27,6 @@ export const buildEditorModel = (
         usedTilesets: structuredClone(render.tilesets),
         limits: { ...render.limits },
         version: render.map.layoutVersion,
+        objectsRevision: render.objectsRevision,
     };
 };

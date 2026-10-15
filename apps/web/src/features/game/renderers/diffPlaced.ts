@@ -1,5 +1,5 @@
 import type { PlacedAsset } from "@standin/contracts";
-import type { PlacedDiff } from "@/features/editor/types/placed-diff";
+import type { PlacedDiff } from "@/features/game/types/placed-diff";
 
 const hasMoved = (previous: PlacedAsset, next: PlacedAsset): boolean =>
     previous.tileX !== next.tileX ||
