@@ -5,3 +5,4 @@ export * from "./paletteCategories";
 export * from "./countTiles";
 export * from "./pruneTileMeta";
 export * from "./footprintMask";
+export * from "./pickDoorVariant";
