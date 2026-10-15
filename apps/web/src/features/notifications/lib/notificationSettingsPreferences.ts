@@ -2,7 +2,6 @@ import {
     CHAT_NOTIFY_MODE_IDS,
     CHAT_SOUND_MODE_IDS,
     DEFAULT_NOTIFICATION_SETTINGS,
-    NEARBY_NOTIFY_MODE_IDS,
     NOTIFICATION_SETTINGS_STORAGE_KEY,
     type NotificationSettings,
 } from "@/features/notifications/consts/notificationSettings";
@@ -25,11 +24,6 @@ const parseNotificationSettings = (stored: unknown): NotificationSettings => {
             record.chatSound,
             CHAT_SOUND_MODE_IDS,
             defaults.chatSound
-        ),
-        nearbyNotify: pickAllowed(
-            record.nearbyNotify,
-            NEARBY_NOTIFY_MODE_IDS,
-            defaults.nearbyNotify
         ),
     };
 };
