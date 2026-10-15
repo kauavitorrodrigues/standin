@@ -52,4 +52,24 @@ describe("resolveEditMapAction", () => {
             })
         ).toBe(EDIT_MAP_ACTION.ENABLED);
     });
+
+    it("enables the item while someone decorates, since the Studio takes the lock over", () => {
+        expect(
+            resolveEditMapAction({
+                canEdit: true,
+                lock: { ...LOCKED_BY_ANA, mode: "objects" },
+                userId: "me",
+            })
+        ).toBe(EDIT_MAP_ACTION.ENABLED);
+    });
+
+    it("disables the item when the Studio is held by someone else", () => {
+        expect(
+            resolveEditMapAction({
+                canEdit: true,
+                lock: { ...LOCKED_BY_ANA, mode: "map" },
+                userId: "me",
+            })
+        ).toBe(EDIT_MAP_ACTION.LOCKED_BY_OTHER);
+    });
 });

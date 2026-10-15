@@ -14,5 +14,6 @@ export const getLockStatus = ({
         code: acquireAck.code,
         by: acquireAck.by,
         since: acquireAck.since,
+        mode: acquireAck.mode,
     };
 };

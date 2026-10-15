@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { EDIT_SCOPES } from "@standin/contracts";
 import type { MapLockState } from "@standin/contracts";
 import { useMapRender } from "@/features/game/queries/useMapRender";
 import { useSocketEvent } from "@/features/game/multiplayer/hooks/useSocketEvent";
@@ -9,7 +10,9 @@ const FREE: MapLockState = { locked: false };
 
 // Lock of the space map: starts from the render payload and follows the
 // map_locked and map_unlocked events of the space room. `isLocked` is what
-// table actions use to disable themselves.
+// table actions use to disable themselves: only the Studio blocks them, a
+// decorator does not (claiming and giving a desk back go on). `isDecorating`
+// says someone is decorating, which the page only announces.
 export const useSpaceMapLock = (mapId: string) => {
     const { data } = useMapRender(mapId);
     const [live, setLive] = useState<MapLockState | null>(null);
@@ -28,5 +31,9 @@ export const useSpaceMapLock = (mapId: string) => {
         handle({ type: "unlocked", payload })
     );
 
-    return { ...lock, isLocked: lock.locked };
+    return {
+        ...lock,
+        isLocked: lock.locked && lock.mode !== EDIT_SCOPES.OBJECTS,
+        isDecorating: lock.locked && lock.mode === EDIT_SCOPES.OBJECTS,
+    };
 };

@@ -138,6 +138,6 @@ describe("useResumeDraft settled", () => {
             await latest.discard();
         });
         expect(latest.settled).toBe(true);
-        expect(db.clearDraft).toHaveBeenCalledWith("user-1", "map-1");
+        expect(db.clearDraft).toHaveBeenCalledWith("user-1", "map-1", "map");
     });
 });

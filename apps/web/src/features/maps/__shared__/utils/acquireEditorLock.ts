@@ -1,4 +1,4 @@
-import type { EditorAcquireAck } from "@standin/contracts";
+import type { EditorAcquireAck, EditScopeKind } from "@standin/contracts";
 import { realtimeSocket } from "@/features/realtime/socket";
 import { LOCK_ACK_TIMEOUT_MS } from "@/features/maps/__shared__/consts/lock-recovery";
 
@@ -6,12 +6,17 @@ import { LOCK_ACK_TIMEOUT_MS } from "@/features/maps/__shared__/consts/lock-reco
 // does not answer in time, so the caller can tell it from a refusal.
 export const acquireEditorLock = (
     mapId: string,
-    sessionId: string
+    sessionId: string,
+    mode: EditScopeKind
 ): Promise<EditorAcquireAck | null> =>
     new Promise((resolve) => {
         realtimeSocket
             .timeout(LOCK_ACK_TIMEOUT_MS)
-            .emit("editor:acquire", { mapId, sessionId }, (error, ack) => {
-                resolve(error ? null : ack);
-            });
+            .emit(
+                "editor:acquire",
+                { mapId, sessionId, mode },
+                (error, ack) => {
+                    resolve(error ? null : ack);
+                }
+            );
     });

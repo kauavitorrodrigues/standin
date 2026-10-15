@@ -1,7 +1,10 @@
 import { useEffect } from "react";
+import { EDIT_SCOPES } from "@standin/contracts";
+import type { EditScopeKind } from "@standin/contracts";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import { clearDraft, saveDraft } from "@/features/maps/__shared__/lib/draftDb";
 import type { StoredDraft } from "@/features/maps/__shared__/types/StoredDraft";
+import { buildStoredDraft } from "@/features/maps/__shared__/utils/buildStoredDraft";
 import { createDraftSaver } from "@/features/maps/__shared__/utils/createDraftSaver";
 
 // Keeps IndexedDB in step with the effective operations of the draft. It does
@@ -13,13 +16,14 @@ export const useDraftPersistence = (
     store: DraftStore,
     userId: string,
     mapId: string,
-    enabled: boolean
+    enabled: boolean,
+    mode: EditScopeKind = EDIT_SCOPES.MAP
 ) => {
     useEffect(() => {
         if (!enabled) return;
 
         const saver = createDraftSaver<StoredDraft>((value) =>
-            saveDraft(userId, mapId, value)
+            saveDraft(userId, mapId, mode, value)
         );
         let lastOps = store.getState().ops;
 
@@ -30,15 +34,15 @@ export const useDraftPersistence = (
 
             if (ops.length === 0) {
                 saver.cancel();
-                void clearDraft(userId, mapId);
+                void clearDraft(userId, mapId, mode);
                 return;
             }
-            saver.save({ baseVersion: base.version, ops });
+            saver.save(buildStoredDraft(mode, base, ops));
         });
 
         return () => {
             unsubscribe();
             void saver.flush();
         };
-    }, [store, userId, mapId, enabled]);
+    }, [store, userId, mapId, enabled, mode]);
 };
