@@ -77,6 +77,7 @@ export class EditorStore {
     private state: EditorState = {
         tool: EDITOR_TOOLS.PAN,
         selection: EMPTY_SELECTION,
+        draggedId: null,
         panelTab: PANEL_TABS.OBJECTS,
         pendingDeskRemoval: NO_DESK_REMOVAL,
         selectionNotice: null,
@@ -139,6 +140,10 @@ export class EditorStore {
     setSelection = (selection: EditorSelection): void => {
         if (isSameSelection(this.state.selection, selection)) return;
         this.update({ selection, selectionNotice: null });
+    };
+
+    setDraggedId = (draggedId: string | null): void => {
+        this.update({ draggedId });
     };
 
     clearSelection = (): void => {

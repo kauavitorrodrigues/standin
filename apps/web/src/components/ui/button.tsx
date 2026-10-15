@@ -1,5 +1,6 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
-import { Loader2Icon, type LucideIcon } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { Loader2Icon } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
@@ -43,7 +44,7 @@ const buttonVariants = cva(
 
 export type ButtonProps = ButtonPrimitive.Props &
     VariantProps<typeof buttonVariants> & {
-        icon?: LucideIcon;
+        icon?: ComponentType<SVGProps<SVGSVGElement>>;
         iconPosition?: "start" | "end";
         // Replaces the icon with a spinner and blocks clicks while it is on.
         isLoading?: boolean;

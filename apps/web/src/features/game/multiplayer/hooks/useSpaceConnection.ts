@@ -445,6 +445,7 @@ export function useSpaceConnection({
             scene?.setPositionBroadcaster((state) =>
                 manager.broadcastPosition(state)
             );
+            scene?.setLocalSocketIdProvider(() => socket.id ?? "");
             scene?.setVolumeUpdater((socketId, volume) =>
                 remoteAudioManager.setVolume(socketId, volume)
             );
@@ -488,6 +489,7 @@ export function useSpaceConnection({
             game.events.off(SCENE_EVENTS.MAP_READY, applyBroadcaster);
             const scene = getMapScene(game);
             scene?.setPositionBroadcaster(null);
+            scene?.setLocalSocketIdProvider(null);
             scene?.setVolumeUpdater(null);
             scene?.setProximityListener(null);
             scene?.setPeerDistanceListener(null);

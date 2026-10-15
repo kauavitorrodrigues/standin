@@ -20,6 +20,10 @@ export const ASSET_FORM_MESSAGES = {
 } as const;
 
 // What the collision painter tells the user when it reads the drawing.
+export const AUTO_MARKS_MESSAGES = {
+    FAILED: "Não foi possível ler o desenho para marcar o recorte.",
+} as const;
+
 export const SOLID_DETECT_MESSAGES = {
     EMPTY: "Nenhuma célula do desenho ficou sólida. A colisão anterior foi mantida.",
     FAILED: "Não foi possível ler o desenho para detectar a colisão.",

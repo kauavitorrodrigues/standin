@@ -1,4 +1,3 @@
-import { FOOTPRINT_COLOR } from "../../../consts/editorColors";
 import { SOLID_HOVER_TINT_PERCENT } from "../../../consts/editorOverlayStyle";
 import type { Zoom } from "../../../consts/editorZoom";
 import { SOLID_CELL_PX } from "../../../consts/solidMask";
@@ -10,10 +9,11 @@ type Props = {
     // The footprint on the image, in px.
     rect: Crop;
     cell: SolidCell | null;
+    color: string;
 };
 
 // The cell under the pointer, which a press would paint or erase.
-export const SolidHoveredCell = ({ zoom, rect, cell }: Props) => {
+export const SolidHoveredCell = ({ zoom, rect, cell, color }: Props) => {
     if (!cell) return null;
 
     return (
@@ -24,7 +24,7 @@ export const SolidHoveredCell = ({ zoom, rect, cell }: Props) => {
                 top: (rect.y + cell.row * SOLID_CELL_PX) * zoom,
                 width: SOLID_CELL_PX * zoom,
                 height: SOLID_CELL_PX * zoom,
-                backgroundColor: `color-mix(in srgb, ${FOOTPRINT_COLOR} ${SOLID_HOVER_TINT_PERCENT}%, transparent)`,
+                backgroundColor: `color-mix(in srgb, ${color} ${SOLID_HOVER_TINT_PERCENT}%, transparent)`,
             }}
         />
     );

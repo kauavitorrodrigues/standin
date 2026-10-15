@@ -37,6 +37,7 @@ import {
     bindPlayerInteractions,
 } from "@/features/game/utils/player";
 import { SeatController } from "@/features/game/lib/SeatController";
+import { SeatOccupancy } from "@/features/game/lib/SeatOccupancy";
 import { buildSeatAreas } from "@/features/game/utils/buildSeatAreas";
 import { buildDeskAreas } from "@/features/game/utils/buildDeskAreas";
 import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
@@ -65,6 +66,7 @@ export class MapScene extends Phaser.Scene {
     private seatController: SeatController | null = null;
     private deskHoverController: HoverTargetController | null = null;
     private remoteAvatars = new Map<string, RemoteAvatar>();
+    private seatOccupancy = new SeatOccupancy();
     private spawnPoint = { x: 0, y: 0 };
     private broadcastLocalPosition: ((state: PlayerPosition) => void) | null =
         null;
@@ -146,7 +148,10 @@ export class MapScene extends Phaser.Scene {
             tilemap.heightInPixels
         );
 
-        this.seatController = new SeatController(this.player);
+        this.seatController = new SeatController(
+            this.player,
+            this.seatOccupancy
+        );
         this.playerController = new PlayerController(this, this.player);
         bindKeyboardFocusGuard(this);
 
@@ -207,6 +212,7 @@ export class MapScene extends Phaser.Scene {
             });
             this.remoteAvatars.forEach((avatar) => avatar.destroy());
             this.remoteAvatars.clear();
+            this.seatOccupancy.clear();
             this.remoteAudible.clear();
             this.remoteSpeakingRaw.clear();
         });
@@ -242,9 +248,7 @@ export class MapScene extends Phaser.Scene {
 
     // The decorator takes the clicks on desks for its own selection, and may
     // hold the camera still for a press. `null` gives both back.
-    setDecoratorGuards(
-        guards: { canPan: () => boolean } | null
-    ): void {
+    setDecoratorGuards(guards: { canPan: () => boolean } | null): void {
         this.canPanCamera = guards?.canPan ?? (() => true);
         this.deskHoverController?.setEnabled(guards === null);
     }
@@ -325,6 +329,7 @@ export class MapScene extends Phaser.Scene {
     removeRemoteAvatar(socketId: string): void {
         this.remoteAvatars.get(socketId)?.destroy();
         this.remoteAvatars.delete(socketId);
+        this.seatOccupancy.remove(socketId);
         this.remoteAudible.delete(socketId);
         this.remoteSpeakingRaw.delete(socketId);
     }
@@ -332,6 +337,7 @@ export class MapScene extends Phaser.Scene {
     clearRemoteAvatars(): void {
         this.remoteAvatars.forEach((avatar) => avatar.destroy());
         this.remoteAvatars.clear();
+        this.seatOccupancy.clear();
         this.remoteAudible.clear();
         this.remoteSpeakingRaw.clear();
     }
@@ -355,6 +361,11 @@ export class MapScene extends Phaser.Scene {
         avatar.move(position.x, position.y);
         avatar.updateAnimation(position.direction);
         avatar.setSitting(position.isSitting);
+        this.seatOccupancy.track(socketId, position);
+    }
+
+    setLocalSocketIdProvider(provider: (() => string) | null): void {
+        this.seatOccupancy.setLocalSocketIdProvider(provider);
     }
 
     setRemoteSpeaking(socketId: string, isSpeaking: boolean): void {

@@ -3,6 +3,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import type { AddressInfo } from "node:net";
+import { expandTileMask } from "@standin/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishOps } from "./helpers/publishOps";
 
@@ -606,10 +607,11 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
         });
 
         it("stores the footprint mask and returns it in the asset", async () => {
-            const mask = [
+            // Four cells per tile per side, the bottom right tile left free.
+            const mask = expandTileMask([
                 [true, true],
                 [true, false],
-            ];
+            ]);
             const response = await createAsset({
                 image: png(64, 64),
                 data: mug(`masked-${RUN}`, {
@@ -630,7 +632,7 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
             });
         });
 
-        it("stores the collision mask, derives the tile mask and returns both", async () => {
+        it("stores the collision mask and returns it with the footprint whole", async () => {
             // One tile wide and two high: only the top tile has solid cells.
             const solidMask = Array.from({ length: 8 }, (_, row) =>
                 Array.from({ length: 4 }, (_, column) => row < 4 && column < 2)
@@ -651,7 +653,7 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
                 w: 1,
                 h: 2,
                 offsetX: 0,
-                mask: [[true], [false]],
+                mask: null,
                 solidMask,
             });
         });
@@ -673,7 +675,7 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
                     footprint: {
                         w: 2,
                         h: 1,
-                        mask: [[true, false]],
+                        mask: expandTileMask([[true, false]]),
                         solidMask: Array.from({ length: 4 }, () => [
                             false,
                             false,
@@ -704,7 +706,7 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
                 image: png(64, 32),
                 data: mug(`maskanim-${RUN}`, {
                     placement: "GROUND",
-                    footprint: { w: 1, h: 1, mask: [[true]] },
+                    footprint: { w: 1, h: 1, mask: expandTileMask([[true]]) },
                     animation: {
                         frameCount: 2,
                         frameDurationMs: 100,

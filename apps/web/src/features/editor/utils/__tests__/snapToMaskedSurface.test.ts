@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { expandTileMask } from "@standin/contracts";
 import {
     ASSET_PLACEMENTS,
     TILE_SIZE,
@@ -23,11 +24,11 @@ const corner = asset({
         w: 3,
         h: 3,
         offsetX: 0,
-        mask: [
+        mask: expandTileMask([
             [true, true, true],
             [true, false, false],
             [true, false, false],
-        ],
+        ]),
     },
 });
 const monitor = asset({ id: "monitor", placement: ASSET_PLACEMENTS.SURFACE });

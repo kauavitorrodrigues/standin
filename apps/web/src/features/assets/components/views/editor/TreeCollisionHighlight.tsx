@@ -31,8 +31,8 @@ export const TreeCollisionHighlight = ({ highlight }: Props) => {
                 y={TREE_TRUNK_CELLS.y}
                 width={TREE_TRUNK_CELLS.cols * TREE_CELL_PX}
                 height={TREE_TRUNK_CELLS.rows * TREE_CELL_PX}
-                fill="rgba(239,68,68,0.55)"
-                stroke="#EF4444"
+                fill="rgba(34,197,94,0.55)"
+                stroke="#22C55E"
                 strokeWidth="2"
             />
         </>

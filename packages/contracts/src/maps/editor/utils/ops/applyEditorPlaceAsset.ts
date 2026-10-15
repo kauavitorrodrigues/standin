@@ -39,6 +39,8 @@ export const applyEditorPlaceAsset: EditorOpHandler<
     const parentId = op.parentId ?? null;
     const check = canPlaceAsset(model, asset, op.tileX, op.tileY, {
         parentId,
+        offsetX: op.offsetX ?? 0,
+        offsetY: op.offsetY ?? 0,
     });
     if (!check.ok) {
         return { ok: false, errors: [placementIssue(check.reason, path)] };

@@ -1,41 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
-    clearSolidTile,
-    countSolidCapacity,
     countSolidCells,
-    fillSolidMask,
     getCellsBetween,
     getFloodCells,
     getRectCells,
     getSolidRuns,
-    paintSolidCells,
+    paintCells,
     resolveSolidMask,
-    toggleTileMasks,
     toPayloadSolidMask,
 } from "../solidMask";
 
 const footprint = { w: 2, h: 1, offsetX: 0 };
 
-// A grid of 8 x 4 cells with only the given cells solid.
+// A grid of 8 x 4 cells with only the given cells set.
 const cellsWith = (solid: [number, number][]) => {
     const cells = Array.from({ length: 4 }, () => Array(8).fill(false));
     for (const [col, row] of solid) cells[row][col] = true;
     return cells;
 };
-
-describe("fillSolidMask", () => {
-    it("makes every cell of the occupied tiles solid", () => {
-        const cells = fillSolidMask(footprint, [[true, false]]);
-        expect(countSolidCells(cells)).toBe(16);
-        expect(cells[0][3]).toBe(true);
-        expect(cells[0][4]).toBe(false);
-    });
-
-    it("fills the whole rectangle without a tile mask", () => {
-        expect(countSolidCells(fillSolidMask(footprint, null))).toBe(32);
-        expect(countSolidCapacity(footprint, null)).toBe(32);
-    });
-});
+const full = () => Array.from({ length: 4 }, () => Array(8).fill(true));
 
 describe("getCellsBetween", () => {
     it("is the cell itself for a press without a move", () => {
@@ -64,167 +47,6 @@ describe("getCellsBetween", () => {
     });
 });
 
-describe("paintSolidCells", () => {
-    it("erases from the occupied tiles when there is no collision mask", () => {
-        const result = paintSolidCells({
-            footprint,
-            masks: { mask: null, solidMask: null },
-            cells: [{ col: 0, row: 0 }],
-            action: "erase",
-        });
-        expect(result.mask).toBeNull();
-        expect(result.solidMask?.[0][0]).toBe(false);
-        expect(countSolidCells(result.solidMask ?? [])).toBe(31);
-    });
-
-    it("occupies the tile of a cell painted in a free tile", () => {
-        const result = paintSolidCells({
-            footprint,
-            masks: { mask: [[true, false]], solidMask: null },
-            cells: [{ col: 5, row: 2 }],
-            action: "paint",
-        });
-        expect(result.mask).toBeNull();
-        expect(result.solidMask?.[2][5]).toBe(true);
-        expect(result.solidMask?.[2][6]).toBe(false);
-    });
-
-    it("keeps the masks when nothing changes", () => {
-        const masks = { mask: null, solidMask: cellsWith([[0, 0]]) };
-        expect(
-            paintSolidCells({
-                footprint,
-                masks,
-                cells: [
-                    { col: 0, row: 0 },
-                    { col: 99, row: 0 },
-                ],
-                action: "paint",
-            })
-        ).toBe(masks);
-    });
-
-    it("does not erase the last solid cell", () => {
-        const masks = { mask: null, solidMask: cellsWith([[3, 1]]) };
-        const result = paintSolidCells({
-            footprint,
-            masks,
-            cells: [{ col: 3, row: 1 }],
-            action: "erase",
-        });
-        expect(result).toBe(masks);
-    });
-
-    it("erases a whole stroke but stops before the last cell", () => {
-        const masks = {
-            mask: null,
-            solidMask: cellsWith([
-                [0, 0],
-                [1, 0],
-                [2, 0],
-            ]),
-        };
-        const result = paintSolidCells({
-            footprint,
-            masks,
-            cells: getCellsBetween({ col: 0, row: 0 }, { col: 2, row: 0 }),
-            action: "erase",
-        });
-        expect(countSolidCells(result.solidMask ?? [])).toBe(1);
-        expect(result.solidMask?.[0][2]).toBe(true);
-    });
-
-    it("goes back to no collision mask when the cells match the tiles again", () => {
-        const solidMask = fillSolidMask(footprint, null);
-        solidMask[0][0] = false;
-        const result = paintSolidCells({
-            footprint,
-            masks: { mask: null, solidMask },
-            cells: [{ col: 0, row: 0 }],
-            action: "paint",
-        });
-        expect(result.solidMask).toBeNull();
-    });
-
-    it("ignores cells outside the footprint", () => {
-        const masks = { mask: null, solidMask: null };
-        expect(
-            paintSolidCells({
-                footprint,
-                masks,
-                cells: [
-                    { col: -1, row: 0 },
-                    { col: 0, row: 4 },
-                ],
-                action: "erase",
-            })
-        ).toBe(masks);
-    });
-});
-
-describe("clearSolidTile", () => {
-    it("empties the cells of one tile", () => {
-        const cells = cellsWith([
-            [1, 1],
-            [5, 1],
-        ]);
-        const result = clearSolidTile(cells, { col: 0, row: 0 });
-        expect(result?.[1][1]).toBe(false);
-        expect(result?.[1][5]).toBe(true);
-    });
-
-    it("is null when no solid cell is left", () => {
-        expect(
-            clearSolidTile(cellsWith([[1, 1]]), { col: 0, row: 0 })
-        ).toBeNull();
-    });
-});
-
-describe("toggleTileMasks", () => {
-    it("clears the solid cells of a tile that gets freed", () => {
-        const result = toggleTileMasks(
-            footprint,
-            {
-                mask: null,
-                solidMask: cellsWith([
-                    [1, 1],
-                    [5, 1],
-                ]),
-            },
-            { col: 0, row: 0 }
-        );
-        expect(result.mask).toEqual([[false, true]]);
-        expect(countSolidCells(result.solidMask ?? [])).toBe(1);
-    });
-
-    it("drops the collision mask when the freed tile held all the cells", () => {
-        const result = toggleTileMasks(
-            footprint,
-            { mask: null, solidMask: cellsWith([[1, 1]]) },
-            { col: 0, row: 0 }
-        );
-        expect(result.solidMask).toBeNull();
-    });
-
-    it("keeps the collision mask when a tile is occupied again", () => {
-        const solidMask = cellsWith([[1, 1]]);
-        const result = toggleTileMasks(
-            footprint,
-            { mask: [[true, false]], solidMask },
-            { col: 1, row: 0 }
-        );
-        expect(result.mask).toBeNull();
-        expect(result.solidMask).toBe(solidMask);
-    });
-
-    it("keeps everything when the last occupied tile cannot be freed", () => {
-        const masks = { mask: [[true, false]], solidMask: cellsWith([[1, 1]]) };
-        expect(toggleTileMasks(footprint, masks, { col: 0, row: 0 })).toBe(
-            masks
-        );
-    });
-});
-
 describe("getSolidRuns", () => {
     it("joins neighbours of a row into one run", () => {
         const runs = getSolidRuns(
@@ -243,37 +65,6 @@ describe("getSolidRuns", () => {
     });
 });
 
-describe("resolveSolidMask", () => {
-    it("is the collision mask when there is one", () => {
-        const cells = cellsWith([[0, 0]]);
-        expect(resolveSolidMask(footprint, null, cells)).toBe(cells);
-    });
-});
-
-describe("toPayloadSolidMask", () => {
-    const base = {
-        footprint,
-        mask: null,
-        solidMask: cellsWith([[0, 0]]),
-        solid: true,
-        isAnimated: false,
-    };
-
-    it("goes up for a still asset that blocks", () => {
-        expect(toPayloadSolidMask(base)).toBe(base.solidMask);
-    });
-
-    it("stays out when the asset does not block or is animated", () => {
-        expect(toPayloadSolidMask({ ...base, solid: false })).toBeNull();
-        expect(toPayloadSolidMask({ ...base, isAnimated: true })).toBeNull();
-    });
-
-    it("stays out when it blocks like the occupied tiles", () => {
-        const solidMask = fillSolidMask(footprint, null);
-        expect(toPayloadSolidMask({ ...base, solidMask })).toBeNull();
-    });
-});
-
 describe("getRectCells", () => {
     it("covers the block between two corners in any order", () => {
         const cells = getRectCells({ col: 3, row: 2 }, { col: 1, row: 1 });
@@ -283,31 +74,244 @@ describe("getRectCells", () => {
     });
 });
 
-describe("getFloodCells", () => {
-    const masks = {
+describe("resolveSolidMask", () => {
+    it("follows the occupied cells without a collision mask", () => {
+        const mask = cellsWith([[0, 0]]);
+        expect(resolveSolidMask(footprint, mask, null)).toBe(mask);
+        expect(countSolidCells(resolveSolidMask(footprint, null, null))).toBe(
+            32
+        );
+    });
+
+    it("takes the collision mask when there is one", () => {
+        const solid = cellsWith([[1, 1]]);
+        expect(resolveSolidMask(footprint, null, solid)).toBe(solid);
+    });
+});
+
+describe("paintCells in the footprint layer", () => {
+    const base = { mask: null, solidMask: null };
+    const frees = (cells: { col: number; row: number }[]) =>
+        paintCells({
+            footprint,
+            masks: base,
+            cells,
+            action: "erase",
+            layer: "footprint",
+        });
+
+    it("frees a cell of a full footprint, and the collision follows", () => {
+        const result = frees([{ col: 3, row: 0 }]);
+        expect(result.mask?.[0][3]).toBe(false);
+        expect(countSolidCells(result.mask ?? [])).toBe(31);
+        expect(result.solidMask).toBeNull();
+    });
+
+    it("occupies the cell again and goes back to no mask when full", () => {
+        const freed = frees([{ col: 3, row: 0 }]);
+        const result = paintCells({
+            footprint,
+            masks: freed,
+            cells: [{ col: 3, row: 0 }],
+            action: "paint",
+            layer: "footprint",
+        });
+        expect(result.mask).toBeNull();
+    });
+
+    it("stops a freed cell from blocking when the collision is its own", () => {
+        const masks = {
+            mask: null,
+            solidMask: cellsWith([
+                [0, 0],
+                [1, 0],
+            ]),
+        };
+        const result = paintCells({
+            footprint,
+            masks,
+            cells: [{ col: 0, row: 0 }],
+            action: "erase",
+            layer: "footprint",
+        });
+        expect(result.mask?.[0][0]).toBe(false);
+        expect(result.solidMask?.[0][0]).toBe(false);
+        expect(result.solidMask?.[0][1]).toBe(true);
+    });
+
+    it("never frees the last occupied cell", () => {
+        const masks = { mask: cellsWith([[2, 2]]), solidMask: null };
+        const result = paintCells({
+            footprint,
+            masks,
+            cells: [{ col: 2, row: 2 }],
+            action: "erase",
+            layer: "footprint",
+        });
+        expect(result).toBe(masks);
+    });
+
+    it("ignores cells outside the footprint", () => {
+        const result = frees([
+            { col: 99, row: 0 },
+            { col: 0, row: -1 },
+        ]);
+        expect(result).toBe(base);
+    });
+
+    it("keeps the masks when nothing changes", () => {
+        const result = paintCells({
+            footprint,
+            masks: base,
+            cells: [{ col: 0, row: 0 }],
+            action: "paint",
+            layer: "footprint",
+        });
+        expect(result).toBe(base);
+    });
+});
+
+describe("paintCells in the collision layer", () => {
+    it("makes a cell block and occupied", () => {
+        const masks = { mask: cellsWith([[0, 0]]), solidMask: null };
+        const result = paintCells({
+            footprint,
+            masks,
+            cells: [{ col: 5, row: 2 }],
+            action: "paint",
+            layer: "collision",
+        });
+        expect(result.mask?.[2][5]).toBe(true);
+        expect(result.mask?.[0][0]).toBe(true);
+        // It blocks like the footprint, so there is no collision mask of its own.
+        expect(result.solidMask).toBeNull();
+    });
+
+    it("stops a cell from blocking without freeing it", () => {
+        const result = paintCells({
+            footprint,
+            masks: { mask: null, solidMask: null },
+            cells: [{ col: 0, row: 0 }],
+            action: "erase",
+            layer: "collision",
+        });
+        expect(result.mask).toBeNull();
+        expect(result.solidMask?.[0][0]).toBe(false);
+        expect(countSolidCells(result.solidMask ?? [])).toBe(31);
+    });
+
+    it("does not erase the last solid cell", () => {
+        const masks = { mask: null, solidMask: cellsWith([[3, 1]]) };
+        const result = paintCells({
+            footprint,
+            masks,
+            cells: [{ col: 3, row: 1 }],
+            action: "erase",
+            layer: "collision",
+        });
+        expect(result).toBe(masks);
+    });
+
+    it("erases a whole stroke but stops before the last cell", () => {
+        const masks = {
+            mask: null,
+            solidMask: cellsWith([
+                [0, 0],
+                [1, 0],
+                [2, 0],
+            ]),
+        };
+        const result = paintCells({
+            footprint,
+            masks,
+            cells: getCellsBetween({ col: 0, row: 0 }, { col: 2, row: 0 }),
+            action: "erase",
+            layer: "collision",
+        });
+        expect(countSolidCells(result.solidMask ?? [])).toBe(1);
+        expect(result.solidMask?.[0][2]).toBe(true);
+    });
+
+    it("goes back to no collision mask when the cells match the footprint", () => {
+        const solidMask = full();
+        solidMask[0][0] = false;
+        const result = paintCells({
+            footprint,
+            masks: { mask: null, solidMask },
+            cells: [{ col: 0, row: 0 }],
+            action: "paint",
+            layer: "collision",
+        });
+        expect(result.solidMask).toBeNull();
+    });
+});
+
+describe("toPayloadSolidMask", () => {
+    const params = {
+        footprint,
         mask: null,
-        solidMask: cellsWith([
-            [0, 0],
-            [1, 0],
-        ]),
+        solidMask: cellsWith([[0, 0]]),
+        solid: true,
+        isAnimated: false,
     };
 
-    it("reaches the connected area in the same state", () => {
-        const empty = getFloodCells(footprint, masks, { col: 5, row: 2 });
-        expect(empty).toHaveLength(32 - 2);
-        const solid = getFloodCells(footprint, masks, { col: 0, row: 0 });
-        expect(solid).toHaveLength(2);
+    it("goes up for a still asset that blocks", () => {
+        expect(toPayloadSolidMask(params)).toEqual(cellsWith([[0, 0]]));
     });
 
-    it("does nothing from a cell of a free tile", () => {
-        const freed = { mask: [[true, false]], solidMask: null };
-        expect(getFloodCells(footprint, freed, { col: 5, row: 1 })).toEqual([]);
+    it("stays out when it does not block, is animated or is missing", () => {
+        expect(toPayloadSolidMask({ ...params, solid: false })).toBeNull();
+        expect(toPayloadSolidMask({ ...params, isAnimated: true })).toBeNull();
+        expect(toPayloadSolidMask({ ...params, solidMask: null })).toBeNull();
     });
 
-    it("stops at the free tiles", () => {
-        const freed = { mask: [[true, false]], solidMask: null };
+    it("stays out when it blocks like the occupied cells", () => {
+        expect(toPayloadSolidMask({ ...params, solidMask: full() })).toBeNull();
+    });
+});
+
+describe("getFloodCells", () => {
+    const masks = {
+        mask: cellsWith([
+            [0, 0],
+            [1, 0],
+            [2, 0],
+            [3, 0],
+            [0, 1],
+            [1, 1],
+            [2, 1],
+            [3, 1],
+        ]),
+        solidMask: null,
+    };
+
+    it("fills the footprint layer across free and occupied cells alike", () => {
+        const reached = getFloodCells(
+            footprint,
+            masks,
+            { col: 7, row: 3 },
+            "footprint"
+        );
+        // The free cells all touch, so the bucket reaches every one of them.
+        expect(reached).toHaveLength(32 - 8);
+    });
+
+    it("stops at the free cells in the collision layer", () => {
+        const reached = getFloodCells(
+            footprint,
+            masks,
+            { col: 0, row: 0 },
+            "collision"
+        );
+        expect(reached).toHaveLength(8);
+        expect(reached.every((cell) => cell.col < 4 && cell.row < 2)).toBe(
+            true
+        );
+    });
+
+    it("reaches nothing from a free cell in the collision layer", () => {
         expect(
-            getFloodCells(footprint, freed, { col: 1, row: 1 })
-        ).toHaveLength(16);
+            getFloodCells(footprint, masks, { col: 7, row: 3 }, "collision")
+        ).toEqual([]);
     });
 });

@@ -10,27 +10,24 @@ import { getActiveEditor } from "@/features/assets/utils/getActiveEditor";
 import { keepSeatsInFrame } from "@/features/assets/utils/seatList";
 import { SpriteEditor } from "@/features/assets/components/instances/editor/SpriteEditor";
 import { NO_CROP, NO_FOOTPRINT } from "@/features/assets/consts/spriteGeometry";
+import { useAutoMarks } from "@/features/assets/hooks/useAutoMarks";
 import { useResetMarksOnAnimation } from "@/features/assets/hooks/useResetMarksOnAnimation";
 import {
     NO_FOOTPRINT_MASK,
     NO_SOLID_MASK,
 } from "@/features/assets/consts/footprintMask";
-import type {
-    FootprintMasks,
-    FootprintTile,
-} from "@/features/assets/types/footprintMask";
-import { canHaveMask } from "@/features/assets/utils/footprintMask";
+import type { FootprintMasks } from "@/features/assets/types/footprintMask";
 import type { CreateAssetFormValues } from "@/features/assets/types/createForm";
 import type { Crop, Footprint } from "@/features/assets/types/spriteGeometry";
 import { InlineError } from "@/features/assets/components/views/form/InlineError";
 import { footprintFitsCrop } from "@/features/assets/utils/footprintFitsCrop";
 import {
+    getFootprintOfFrame,
     getFrameCrop,
     hasCrop,
     hasFootprint,
 } from "@/features/assets/utils/spriteGeometry";
 import { getEditorFrameCount } from "@/features/assets/utils/getEditorFrameCount";
-import { toggleTileMasks } from "@/features/assets/utils/solidMask";
 
 type Props = {
     form: UseFormReturn<CreateAssetFormValues>;
@@ -107,12 +104,18 @@ export const ImageFields = ({ form, file, disabled, actions }: Props) => {
         form.setValue("footprintSolidMask", NO_SOLID_MASK);
         form.clearErrors(["footprintW", "footprintH"]);
     };
-    // A new crop leaves the footprint alone, to be marked on its own. Only one
-    // that no longer fits in the crop goes away.
+    // A new crop of a still piece takes the whole crop as its footprint, and
+    // the cells of it are read from the drawing. The footprint of an animated
+    // piece is marked on its own, and only goes away when it no longer fits in
+    // the crop.
     const markCrop = (next: Crop) => {
         setCrop(next);
         keepSeats(next);
         const frame = getFrameCrop(next, editorFrameCount);
+        if (!isAnimated) {
+            setFootprint(getFootprintOfFrame(frame));
+            return;
+        }
         if (hasFootprint(footprint) && footprintFitsCrop(frame, footprint)) {
             return;
         }
@@ -122,25 +125,17 @@ export const ImageFields = ({ form, file, disabled, actions }: Props) => {
         form.setValue("footprintMask", next.mask);
         form.setValue("footprintSolidMask", next.solidMask);
     };
-    // Freeing a tile also empties the solid cells inside it.
-    const toggleTile = (tile: FootprintTile) => {
-        setMasks(
-            toggleTileMasks(
-                footprint,
-                {
-                    mask: form.getValues("footprintMask"),
-                    solidMask: form.getValues("footprintSolidMask"),
-                },
-                tile
-            )
-        );
-    };
-
-    // Only a footprint of more than one tile of a still asset has a mask.
-    const getTileToggle = () => {
-        if (isAnimated || !canHaveMask(footprint)) return undefined;
-        return toggleTile;
-    };
+    // A still image comes in with the crop and the footprint already marked
+    // around the drawing, to be adjusted. The cells of the footprint then follow
+    // the drawing on their own.
+    useAutoMarks({
+        file,
+        enabled: !isAnimated && !hasCrop(crop),
+        onDetect: (detected) => {
+            setCrop(detected);
+            setFootprint(getFootprintOfFrame(detected));
+        },
+    });
 
     // The tabs only exist for a piece that has seats to mark.
     const getTabs = () => {
@@ -214,7 +209,6 @@ export const ImageFields = ({ form, file, disabled, actions }: Props) => {
             mask={mask}
             solidMask={solidMask}
             onChangeSolid={setMasks}
-            onToggleTile={getTileToggle()}
             solid={solid}
             fill
             disabled={disabled}

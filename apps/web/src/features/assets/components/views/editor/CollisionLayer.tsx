@@ -1,3 +1,4 @@
+import { COLLISION_COLOR } from "../../../consts/editorColors";
 import type { Zoom } from "../../../consts/editorZoom";
 import type {
     FootprintMaskValue,
@@ -28,7 +29,7 @@ type Props = {
 };
 
 // The cells that block. Beside another layer it is only the cells, and only
-// when they differ from the occupied tiles, since otherwise they add nothing
+// when they differ from the occupied cells, since otherwise they add nothing
 // to the footprint.
 export const CollisionLayer = ({
     opacity,
@@ -50,8 +51,8 @@ export const CollisionLayer = ({
                     zoom={zoom}
                     frame={frame}
                     footprint={footprint}
-                    mask={mask}
-                    solidMask={solidMask}
+                    cells={resolveSolidMask(footprint, mask, solidMask)}
+                    color={COLLISION_COLOR}
                     hoveredCell={hoveredCell}
                 />
             </LayerBox>

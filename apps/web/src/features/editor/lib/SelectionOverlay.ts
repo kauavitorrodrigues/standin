@@ -12,7 +12,8 @@ import { getObjectBounds } from "@/features/editor/utils/getObjectBounds";
 // listens to the selection and to the draft, and redraws one Graphics object,
 // so a pointer move never touches it. A selected id that is not in the draft
 // (removed, or undone away) draws nothing. The size follows the texture, so a
-// texture that loads later redraws it too.
+// texture that loads later redraws it too. The object being dragged is left
+// out, since the ghost already shows where it goes.
 export class SelectionOverlay {
     private readonly scene: Phaser.Scene;
     private readonly store: EditorStore;
@@ -51,13 +52,14 @@ export class SelectionOverlay {
     private redraw = (): void => {
         this.graphics.clear();
 
-        const { selection } = this.store.getState();
+        const { selection, draggedId } = this.store.getState();
         if (selection.length === 0) return;
 
         const model = this.draftStore.getState().draft;
         const lookup = createObjectLookup(model);
 
         for (const id of selection) {
+            if (id === draggedId) continue;
             const placed = lookup.placedById.get(id);
             if (!placed) continue;
 

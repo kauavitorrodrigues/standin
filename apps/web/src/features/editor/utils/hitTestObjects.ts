@@ -1,6 +1,8 @@
 import type { EditorModel } from "@standin/contracts";
+import { OBJECT_HIT } from "@/features/editor/consts/object-hit";
 import { createObjectLookup } from "@/features/editor/utils/createObjectLookup";
 import { getObjectBounds } from "@/features/editor/utils/getObjectBounds";
+import { getSliceDepthAt } from "@/features/editor/utils/getSliceDepthAt";
 import type { ObjectSurface } from "@/features/editor/types/ObjectSurface";
 import type { SelectionTarget } from "@/features/editor/types/SelectionTarget";
 
@@ -11,10 +13,22 @@ type Params = {
     surface: ObjectSurface;
 };
 
-// The object with the greatest depth under the point. A point counts when it
-// is inside the box of the sprite, transparent pixels included, so the whole
-// image width answers to the pointer. On equal depth the later object in the
-// list wins, as it is drawn later.
+type Candidate = {
+    target: SelectionTarget;
+    // Where it is drawn at the point, to tell which one is on top.
+    drawnDepth: number;
+};
+
+const isBetter = (candidate: Candidate, best: Candidate | null): boolean =>
+    !best || candidate.drawnDepth >= best.drawnDepth;
+
+// The object under the point. An object answers in two ways: on a pixel it
+// draws, or, failing that, anywhere in the box of its sprite. A pixel always
+// beats a box, so a chair that stands in the empty corner of a desk is picked
+// and not the desk around it, while a lone object still answers on its
+// transparent border. Among the same kind of answer the one drawn on top wins,
+// by the depth of the strip of the sprite under the point, and on equal depth
+// the later object in the list, as it is drawn later.
 export const hitTestObjects = ({
     model,
     worldX,
@@ -22,7 +36,8 @@ export const hitTestObjects = ({
     surface,
 }: Params): SelectionTarget | null => {
     const lookup = createObjectLookup(model);
-    let best: SelectionTarget | null = null;
+    let onPixel: Candidate | null = null;
+    let inBox: Candidate | null = null;
 
     for (const placed of model.placed) {
         const bounds = getObjectBounds(placed, lookup, surface);
@@ -32,14 +47,25 @@ export const hitTestObjects = ({
         const insideY = worldY >= bounds.y && worldY < bounds.y + bounds.height;
         if (!insideX || !insideY) continue;
 
-        if (best && best.depth > bounds.depth) continue;
-        best = {
-            kind: "object",
-            id: placed.id,
-            depth: bounds.depth,
-            area: bounds.width * bounds.height,
+        const spriteX = Math.floor(worldX - bounds.x);
+        const spriteY = Math.floor(worldY - bounds.y);
+        const candidate: Candidate = {
+            target: {
+                kind: "object",
+                id: placed.id,
+                depth: bounds.depth,
+                area: bounds.width * bounds.height,
+            },
+            drawnDepth: getSliceDepthAt(bounds.slices, spriteY, bounds.depth),
         };
+
+        const alpha = surface.getAlpha(placed.assetId, spriteX, spriteY);
+        if (alpha !== null && alpha >= OBJECT_HIT.MIN_ALPHA) {
+            if (isBetter(candidate, onPixel)) onPixel = candidate;
+            continue;
+        }
+        if (isBetter(candidate, inBox)) inBox = candidate;
     }
 
-    return best;
+    return (onPixel ?? inBox)?.target ?? null;
 };

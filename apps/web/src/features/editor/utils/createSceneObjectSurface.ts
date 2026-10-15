@@ -18,6 +18,11 @@ export const createSceneObjectSurface = (
     getAlpha: (assetId, x, y) => {
         const key = buildAssetTextureKey(assetId);
         if (!scene.textures.exists(key)) return null;
-        return scene.textures.getPixelAlpha(x, y, key);
+        // A texture the canvas cannot read leaves the box as the only answer.
+        try {
+            return scene.textures.getPixelAlpha(x, y, key);
+        } catch {
+            return null;
+        }
     },
 });

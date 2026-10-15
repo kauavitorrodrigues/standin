@@ -1,4 +1,4 @@
-import { FOOTPRINT_COLOR } from "../../../consts/editorColors";
+import { COLLISION_COLOR } from "../../../consts/editorColors";
 import { SOLID_CELL_TINT_PERCENT } from "../../../consts/editorOverlayStyle";
 import type { Zoom } from "../../../consts/editorZoom";
 import { SOLID_CELL_PX } from "../../../consts/solidMask";
@@ -10,10 +10,17 @@ type Props = {
     // The footprint on the image, in px.
     rect: Crop;
     cells: boolean[][];
+    // The color of the cells, the collision one unless the footprint is shown.
+    color?: string;
 };
 
 // The solid cells, one box for each run of them on a row.
-export const SolidRuns = ({ zoom, rect, cells }: Props) => (
+export const SolidRuns = ({
+    zoom,
+    rect,
+    cells,
+    color = COLLISION_COLOR,
+}: Props) => (
     <>
         {getSolidRuns(cells).map((run) => (
             <div
@@ -24,7 +31,7 @@ export const SolidRuns = ({ zoom, rect, cells }: Props) => (
                     top: (rect.y + run.row * SOLID_CELL_PX) * zoom,
                     width: run.length * SOLID_CELL_PX * zoom,
                     height: SOLID_CELL_PX * zoom,
-                    backgroundColor: `color-mix(in srgb, ${FOOTPRINT_COLOR} ${SOLID_CELL_TINT_PERCENT}%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, ${color} ${SOLID_CELL_TINT_PERCENT}%, transparent)`,
                 }}
             />
         ))}

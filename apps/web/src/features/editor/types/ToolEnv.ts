@@ -16,6 +16,7 @@ export type ToolEnv = {
         | "cancelPlacingArea"
         | "setSelection"
         | "clearSelection"
+        | "setDraggedId"
         | "requestDeskRemoval"
     >;
     setHint: (text: string | null) => void;

@@ -61,6 +61,19 @@ describe("diffPlaced", () => {
         expect(diff.moved).toHaveLength(0);
     });
 
+    it("treats a change of the pixel offset inside the same tile as a move", () => {
+        const previous = [placed("p1"), placed("p2")];
+        const next = [
+            placed("p1", { offsetX: 12 }),
+            placed("p2", { offsetY: -5 }),
+        ];
+
+        expect(diffPlaced(previous, next).moved.map(({ id }) => id)).toEqual([
+            "p1",
+            "p2",
+        ]);
+    });
+
     it("treats a new parent as a move and ignores property overrides", () => {
         const diff = diffPlaced(
             [placed("p1"), placed("p2")],

@@ -3,13 +3,11 @@ import { cn } from "@/lib/utils";
 import { useObjectUrl } from "../../../hooks/useObjectUrl";
 import { useSolidDetection } from "../../../hooks/useSolidDetection";
 import { useSpriteEditor } from "../../../hooks/useSpriteEditor";
-import { EDITOR_MODES } from "../../../consts/editorModes";
+import { useSpriteHotkeys } from "../../../hooks/useSpriteHotkeys";
 import { useImageSize } from "../../../queries/useImageSize";
 import type {
     FootprintMasks,
     FootprintMaskValue,
-    FootprintTile,
-    SolidCell,
     SolidMaskValue,
 } from "../../../types/footprintMask";
 import type { Crop, Footprint } from "../../../types/spriteGeometry";
@@ -32,18 +30,14 @@ type Props = {
     crop: Crop;
     frameCount: number;
     footprint: Footprint;
-    // The occupied tiles of the footprint, null when it is the whole rectangle.
+    // The occupied cells of the footprint, null when it is the whole rectangle.
     mask?: FootprintMaskValue;
     // The cells of the footprint that block the player, null when the occupied
-    // tiles block as a whole.
+    // cells block as a whole.
     solidMask?: SolidMaskValue;
-    // Takes the two masks together, since painting a cell can occupy a tile.
-    // Left out when the editor cannot paint the collision.
+    // Takes the two masks together, since painting a cell can change both.
+    // Left out when the editor cannot paint the cells.
     onChangeSolid?: (masks: FootprintMasks) => void;
-    // Left out when the footprint cannot have a mask, like the one of an
-    // animated asset.
-    onToggleTile?: (tile: FootprintTile) => void;
-    // Puts every tile back to occupied, shown with the legend of the tiles.
     // Whether the footprint blocks the way, which changes how it is drawn.
     solid: boolean;
     disabled?: boolean;
@@ -62,12 +56,6 @@ type Props = {
     onRemoveImage: () => void;
 };
 
-// The cell under the pointer only matters while the collision is painted.
-const getHoveredCell = (isCollision: boolean, cell: SolidCell | null) => {
-    if (!isCollision) return null;
-    return cell;
-};
-
 // The uploaded image with its toolbar and the column of layers and tools:
 // pick a layer and a tool, then drag over the image to mark the crop and the
 // footprint or paint the collision. Zoom in, clear the marks or drop the
@@ -80,7 +68,6 @@ export const SpriteEditor = ({
     mask = null,
     solidMask = null,
     onChangeSolid,
-    onToggleTile,
     solid,
     disabled = false,
     onMarkCrop,
@@ -104,12 +91,18 @@ export const SpriteEditor = ({
         canEdit: onChangeSolid !== undefined,
     });
     const canCollide = collisionBlocker === null;
+    // The shape of the art is read for any still asset with a footprint, so
+    // the area of a piece that does not block is as thin as its drawing too.
+    const canDetect =
+        onChangeSolid !== undefined &&
+        hasCrop(crop) &&
+        hasFootprint(footprint) &&
+        !isAnimated;
     const detection = useSolidDetection({
         file,
         frame: getFrameCrop(crop, frameCount),
         footprint,
-        masks,
-        enabled: canCollide,
+        enabled: canDetect,
         onChange: onChangeSolid,
     });
     // A cell painted by hand is not replaced by the drawing afterwards.
@@ -125,14 +118,14 @@ export const SpriteEditor = ({
         onMarkFootprint,
         onEraseCrop: onClear,
         footprint,
-        onToggleTile,
         footprintOnly,
         masks,
         onChangeSolid: paintSolid,
         canCollide,
     });
+    const availableTools = getModeTools(editor.mode, editor.canPaintCells);
+    useSpriteHotkeys({ available: availableTools, onTool: editor.setTool });
     const [helpOpen, setHelpOpen] = useState(false);
-    const isCollision = editor.mode === EDITOR_MODES.COLLISION;
 
     const handleClear = () => {
         if (!onClear) return;
@@ -163,15 +156,11 @@ export const SpriteEditor = ({
                     footprint={footprint}
                     mask={mask}
                     solid={solid}
-                    paintable={editor.canPaintTiles}
-                    hoveredTile={editor.hoveredTile}
+                    byCells={editor.canPaintCells}
                     mode={editor.mode}
                     collisionAvailable={collisionBlocker === null}
                     solidMask={solidMask}
-                    hoveredCell={getHoveredCell(
-                        isCollision,
-                        editor.hoveredCell
-                    )}
+                    hoveredCell={editor.hoveredCell}
                     className="min-h-0 flex-1"
                     pointerHandlers={editor.pointerHandlers}
                 />
@@ -186,7 +175,7 @@ export const SpriteEditor = ({
                             onModeChange={editor.setMode}
                         />
                     }
-                    available={getModeTools(editor.mode, editor.canPaintTiles)}
+                    available={availableTools}
                     tool={editor.tool}
                     showClear={onClear !== undefined}
                     canClear={hasCrop(crop)}

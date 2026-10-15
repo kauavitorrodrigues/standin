@@ -14,6 +14,8 @@ const placed = (id: string, tileX: number, tileY: number): PlacedAsset => ({
     assetId: "asset-1",
     tileX,
     tileY,
+    offsetX: 0,
+    offsetY: 0,
     parentId: null,
     propertyOverrides: null,
 });

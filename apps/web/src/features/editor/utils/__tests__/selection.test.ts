@@ -93,6 +93,65 @@ describe("hitTestObjects", () => {
         expect(hit?.id).toBe("c");
     });
 
+    it("picks an object standing in the empty corner of a bigger one", () => {
+        // The desk is listed last, so it is the one drawn on top by the box.
+        const model = buildModel([
+            placedAt("chair", "crate", 3, 4),
+            placedAt("desk-1", "desk", 2, 4),
+        ]);
+        const hollowDesk = surfaceWith((assetId) =>
+            assetId === "desk" ? 0 : 255
+        );
+
+        const hit = hitTestObjects({
+            model,
+            worldX: 112,
+            worldY: 140,
+            surface: hollowDesk,
+        });
+
+        expect(hit?.id).toBe("chair");
+    });
+
+    it("still picks the desk on a pixel it draws", () => {
+        const model = buildModel([
+            placedAt("chair", "crate", 3, 4),
+            placedAt("desk-1", "desk", 2, 4),
+        ]);
+        const hollowChair = surfaceWith((assetId) =>
+            assetId === "crate" ? 0 : 255
+        );
+
+        const hit = hitTestObjects({
+            model,
+            worldX: 112,
+            worldY: 140,
+            surface: hollowChair,
+        });
+
+        expect(hit?.id).toBe("desk-1");
+    });
+
+    it("lets the object drawn lower win when both draw the pixel", () => {
+        const model = buildModel([
+            placedAt("back", "crate", 2, 3),
+            placedAt("front", "crate", 2, 4),
+        ]);
+        const tall: ObjectSurface = {
+            getFrameSize: () => ({ width: 32, height: 64 }),
+            getAlpha: () => 255,
+        };
+
+        const hit = hitTestObjects({
+            model,
+            worldX: 70,
+            worldY: 110,
+            surface: tall,
+        });
+
+        expect(hit?.id).toBe("front");
+    });
+
     it("misses the empty ground", () => {
         const model = buildModel([placedAt("c", "crate", 2, 4)]);
         expect(

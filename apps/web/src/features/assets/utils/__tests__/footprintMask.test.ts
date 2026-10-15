@@ -1,124 +1,90 @@
 import { describe, expect, it } from "vitest";
+import { buildAssetData } from "../buildData";
 import { describeFootprint } from "../describeFootprint";
 import {
     buildMaskField,
-    canHaveMask,
-    countOccupiedTiles,
-    getTileAtCell,
-    isTileOccupied,
-    toggleMaskTile,
+    countFootprintCells,
+    countOccupiedCells,
+    fillMask,
+    normalizeMask,
+    resolveMask,
     toPayloadMask,
 } from "../footprintMask";
-import { buildAssetData } from "../buildData";
 import { validateCreateAsset } from "../validateCreate";
 import { createValues } from "./fixtures";
 
-const footprint = { w: 2, h: 2, offsetX: 0 };
+const footprint = { w: 2, h: 1, offsetX: 0 };
 
-describe("toggleMaskTile", () => {
-    it("frees a tile of a full footprint", () => {
-        expect(toggleMaskTile(footprint, null, { col: 1, row: 0 })).toEqual([
-            [true, false],
-            [true, true],
-        ]);
-    });
-
-    it("occupies it again and goes back to null when full", () => {
-        const mask = [
-            [true, false],
-            [true, true],
-        ];
-        expect(toggleMaskTile(footprint, mask, { col: 1, row: 0 })).toBeNull();
-    });
-
-    it("keeps the last occupied tile", () => {
-        const mask = [
-            [false, false],
-            [false, true],
-        ];
-        expect(toggleMaskTile(footprint, mask, { col: 1, row: 1 })).toBe(mask);
-    });
-
-    it("ignores a tile outside the footprint", () => {
-        expect(toggleMaskTile(footprint, null, { col: 2, row: 0 })).toBeNull();
-    });
-});
+// A mask of the footprint with only the cells where `occupied` is true.
+const cellsOf = (occupied: (col: number, row: number) => boolean) =>
+    Array.from({ length: 4 }, (_, row) =>
+        Array.from({ length: 8 }, (_, col) => occupied(col, row))
+    );
+const leftHalf = cellsOf((col) => col < 4);
 
 describe("mask reading", () => {
-    it("counts the occupied tiles", () => {
-        expect(countOccupiedTiles(footprint, null)).toBe(4);
+    it("counts the cells of a footprint without a mask", () => {
+        expect(countFootprintCells(footprint)).toBe(32);
+        expect(countOccupiedCells(footprint, null)).toBe(32);
+    });
+
+    it("counts the occupied cells of a mask", () => {
+        expect(countOccupiedCells(footprint, leftHalf)).toBe(16);
+    });
+
+    it("fills every cell when there is no mask", () => {
+        const cells = fillMask(footprint);
+        expect(cells).toHaveLength(4);
         expect(
-            countOccupiedTiles(footprint, [
-                [true, false],
-                [true, true],
-            ])
-        ).toBe(3);
-    });
-
-    it("reads a tile, all occupied without a mask", () => {
-        expect(isTileOccupied(null, { col: 1, row: 1 })).toBe(true);
-        expect(isTileOccupied([[false]], { col: 0, row: 0 })).toBe(false);
-    });
-
-    it("only a footprint of more than one tile can have a mask", () => {
-        expect(canHaveMask({ w: 1, h: 1, offsetX: 0 })).toBe(false);
-        expect(canHaveMask(footprint)).toBe(true);
-    });
-
-    it("finds the tile under a cell, counted from the bottom of the frame", () => {
-        const frame = { x: 0, y: 32, w: 96, h: 96 };
-        const placed = { w: 2, h: 2, offsetX: 1 };
-        expect(getTileAtCell(frame, placed, { col: 1, row: 2 })).toEqual({
-            col: 0,
-            row: 0,
-        });
-        expect(getTileAtCell(frame, placed, { col: 2, row: 3 })).toEqual({
-            col: 1,
-            row: 1,
-        });
-        expect(getTileAtCell(frame, placed, { col: 0, row: 3 })).toBeNull();
-        expect(getTileAtCell(frame, placed, { col: 1, row: 1 })).toBeNull();
+            cells.every((row) => row.length === 8 && row.every(Boolean))
+        ).toBe(true);
+        expect(resolveMask(footprint, null)).toEqual(cells);
+        expect(resolveMask(footprint, leftHalf)).toBe(leftHalf);
     });
 });
 
 describe("payload", () => {
-    const mask = [
-        [true, false],
-        [true, true],
-    ];
+    it("goes back to null when every cell is occupied", () => {
+        expect(normalizeMask(fillMask(footprint))).toBeNull();
+        expect(normalizeMask(leftHalf)).toBe(leftHalf);
+    });
 
-    it("drops the mask of an animated asset or a full one", () => {
-        expect(toPayloadMask(mask, true)).toBeNull();
-        expect(toPayloadMask([[true, true]], false)).toBeNull();
-        expect(toPayloadMask(mask, false)).toBe(mask);
+    it("sends no mask for an animated asset", () => {
+        expect(toPayloadMask(leftHalf, true)).toBeNull();
+        expect(toPayloadMask(leftHalf, false)).toBe(leftHalf);
     });
 
     it("adds the mask key only when there is one", () => {
         expect(buildMaskField(null)).toEqual({});
-        expect(buildMaskField(mask)).toEqual({ mask });
+        expect(buildMaskField(leftHalf)).toEqual({ mask: leftHalf });
     });
 
     it("sends the mask in the footprint of the asset", () => {
         const data = buildAssetData(
             createValues({
                 footprintW: 2,
-                footprintH: 2,
-                footprintMask: mask,
+                footprintH: 1,
+                footprintMask: leftHalf,
             })
         );
-        expect(data.footprint).toEqual({ w: 2, h: 2, offsetX: 0, mask });
+        expect(data.footprint).toEqual({
+            w: 2,
+            h: 1,
+            offsetX: 0,
+            mask: leftHalf,
+        });
     });
 
-    it("sends no mask for an animated asset", () => {
+    it("sends no mask for an animated asset form", () => {
         const data = buildAssetData(
             createValues({
                 footprintW: 2,
-                footprintH: 2,
-                footprintMask: mask,
+                footprintH: 1,
+                footprintMask: leftHalf,
                 isAnimated: true,
             })
         );
-        expect(data.footprint).toEqual({ w: 2, h: 2, offsetX: 0 });
+        expect(data.footprint).toEqual({ w: 2, h: 1, offsetX: 0 });
     });
 });
 
@@ -127,8 +93,8 @@ describe("validation", () => {
         const errors = validateCreateAsset(
             createValues({
                 footprintW: 2,
-                footprintH: 2,
-                footprintMask: [[true]],
+                footprintH: 1,
+                footprintMask: [[true, false]],
             }),
             undefined
         );
@@ -139,11 +105,8 @@ describe("validation", () => {
         const errors = validateCreateAsset(
             createValues({
                 footprintW: 2,
-                footprintH: 2,
-                footprintMask: [
-                    [true, false],
-                    [true, true],
-                ],
+                footprintH: 1,
+                footprintMask: leftHalf,
             }),
             undefined
         );
@@ -154,16 +117,13 @@ describe("validation", () => {
 describe("describeFootprint", () => {
     it("keeps the plain text without a mask", () => {
         expect(describeFootprint(footprint, null)).toBe(
-            "2 × 2 tiles, deslocamento 0"
+            "2 × 1 tiles, deslocamento 0"
         );
     });
 
-    it("counts the occupied tiles with a mask", () => {
-        expect(
-            describeFootprint(footprint, [
-                [true, false],
-                [true, true],
-            ])
-        ).toBe("2 × 2 tiles, 3 ocupados, deslocamento 0");
+    it("counts the occupied cells with a mask", () => {
+        expect(describeFootprint(footprint, leftHalf)).toBe(
+            "2 × 1 tiles, 16 células ocupadas, deslocamento 0"
+        );
     });
 });

@@ -107,11 +107,25 @@ describe("validateAddVariant", () => {
 
 describe("buildVariantData mask", () => {
     it("sends the mask of a new rotation", () => {
-        const mask = [[true, false]];
+        const mask = Array.from({ length: 4 }, () => [
+            true,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+        ]);
         const data = buildVariantData(
             family(["DEG_0"]),
             values({ rotation: "DEG_90", footprintW: 2, footprintMask: mask })
         );
-        expect(data.footprint).toEqual({ w: 2, h: 1, offsetX: 0, mask });
+        expect(data.footprint).toEqual({
+            w: 2,
+            h: 1,
+            offsetX: 0,
+            mask,
+        });
     });
 });

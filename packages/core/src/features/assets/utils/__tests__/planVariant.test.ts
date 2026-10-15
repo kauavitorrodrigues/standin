@@ -4,6 +4,7 @@ import {
     ASSET_ROTATIONS,
     ASSET_TYPES,
     LIBRARY_ISSUE_CODES,
+    expandTileMask,
 } from "@standin/contracts";
 import type { CreateVariantData } from "@standin/contracts";
 import { planVariant } from "../planVariant";
@@ -91,7 +92,7 @@ describe("planVariant, a color on a rotation the family has", () => {
 
 describe("planVariant, the footprint mask of a color", () => {
     it("copies the mask of the sibling", () => {
-        const mask = [[true, false]];
+        const mask = expandTileMask([[true, false]]);
         const sibling = assetRow({ footprintW: 2, footprintMask: mask });
         const plan = planVariant(
             sibling,

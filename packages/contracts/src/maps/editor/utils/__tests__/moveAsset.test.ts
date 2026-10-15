@@ -294,3 +294,57 @@ describe("applyEditorOp: move_asset", () => {
         expect(model).toEqual(snapshot);
     });
 });
+
+describe("applyEditorOp: move_asset with a pixel offset", () => {
+    const moveBy = (
+        id: string,
+        tileX: number,
+        tileY: number,
+        offsetX: number,
+        offsetY = 0
+    ): EditorOp => ({ type: "move_asset", id, tileX, tileY, offsetX, offsetY });
+
+    it("refuses a spot that only overlaps once the offset counts", () => {
+        const model = clean([
+            placedAt("a", "crate", 5, 5),
+            placedAt("b", "crate", 3, 5),
+        ]);
+
+        expect(codeOf(model, moveBy("b", 4, 5, 0))).toBeNull();
+        expect(codeOf(model, moveBy("b", 4, 5, 16))).toEqual([
+            Code.FOOTPRINT_OVERLAP,
+        ]);
+    });
+
+    it("lets two objects touch by the edge", () => {
+        const model = clean([
+            placedAt("a", "crate", 5, 5),
+            placedAt("b", "crate", 3, 5),
+        ]);
+
+        expect(codeOf(model, moveBy("b", 4, 5, 0))).toBeNull();
+    });
+
+    it("counts the offset of the object that is already placed", () => {
+        const model = clean([
+            { ...placedAt("a", "crate", 5, 5), offsetX: -16 },
+            placedAt("b", "crate", 3, 5),
+        ]);
+
+        expect(codeOf(model, moveBy("b", 4, 5, 0))).toEqual([
+            Code.FOOTPRINT_OVERLAP,
+        ]);
+    });
+
+    it("counts the vertical offset too", () => {
+        const model = clean([
+            placedAt("a", "crate", 5, 5),
+            placedAt("b", "crate", 5, 3),
+        ]);
+
+        expect(codeOf(model, moveBy("b", 5, 4, 0, 0))).toBeNull();
+        expect(codeOf(model, moveBy("b", 5, 4, 0, 16))).toEqual([
+            Code.FOOTPRINT_OVERLAP,
+        ]);
+    });
+});

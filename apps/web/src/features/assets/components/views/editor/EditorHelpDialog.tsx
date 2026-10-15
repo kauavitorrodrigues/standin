@@ -46,19 +46,21 @@ export const EditorHelpDialog = ({ open, onOpenChange }: Props) => (
                         <TreeIllustration highlight="footprint" />
                     </div>
                     <p className="text-muted-foreground text-sm">
-                        O espaço que a peça ocupa no chão. Nenhuma outra peça
-                        fica nele e, com &quot;Bloqueia a passagem&quot; ligado,
-                        os avatares não passam. Fica na base do recorte, e o
-                        resto é só desenho.
+                        O espaço que a peça ocupa no chão. Ela nasce sozinha a
+                        partir do desenho, em células de 8 px, sem contar o
+                        fundo transparente, e você só ajusta com o pincel, o
+                        retângulo, o balde e a borracha. Outra peça não entra
+                        onde há célula ocupada, mas pode ficar no vão de uma
+                        mesa em L.
                     </p>
                     <p className="mt-auto border-t pt-3 text-sm">
                         <span className="font-medium">Exemplo: </span>
-                        na mesma árvore, é só a base do tronco.
+                        numa mesa em L, é o L, e o canto vazio fica livre.
                     </p>
                 </section>
                 <section className="flex flex-col gap-4 rounded-xl border p-4">
                     <h3 className="flex items-center gap-2 font-medium">
-                        <span className="size-3 rounded-sm border-2 border-red-500 bg-red-500/55" />
+                        <span className="size-3 rounded-sm border-2 border-green-500 bg-green-500/55" />
                         Colisão
                     </h3>
                     <div className="flex justify-center">
@@ -66,9 +68,10 @@ export const EditorHelpDialog = ({ open, onOpenChange }: Props) => (
                     </div>
                     <p className="text-muted-foreground text-sm">
                         Dentro da pegada, as células de 8 px em que a peça é
-                        rígida. Só nelas o avatar esbarra. Ela já vem detectada
-                        pelo desenho, e você ajusta com o pincel, o retângulo e
-                        o balde.
+                        rígida. Só nelas o avatar esbarra, e só vale com
+                        &quot;Bloqueia a passagem&quot; ligado. Ela começa igual
+                        à pegada, e você tira as células por onde o avatar pode
+                        passar.
                     </p>
                     <p className="mt-auto border-t pt-3 text-sm">
                         <span className="font-medium">Exemplo: </span>
@@ -77,6 +80,16 @@ export const EditorHelpDialog = ({ open, onOpenChange }: Props) => (
                     </p>
                 </section>
             </div>
+            <p className="text-muted-foreground rounded-xl border border-dashed p-4 text-sm">
+                <span className="text-foreground font-medium">
+                    Seleção automática:{" "}
+                </span>
+                ao subir a imagem, o editor lê o desenho e já marca o recorte (a
+                menor área de tiles ao redor do desenho) e as células da pegada,
+                ignorando o fundo transparente. A pegada aparece em vermelho e a
+                colisão em verde. Pintar ou apagar uma célula à mão pausa a
+                leitura automática, até você mudar o recorte.
+            </p>
         </DialogContent>
     </Dialog>
 );

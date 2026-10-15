@@ -186,6 +186,8 @@ describe("brush", () => {
                     assetId: "chair",
                     tileX: 1,
                     tileY: 0,
+                    offsetX: 0,
+                    offsetY: 0,
                     parentId: null,
                     propertyOverrides: null,
                 },

@@ -32,6 +32,7 @@ const setup = (model: EditorModel, provider: SelectionProvider) => {
             selection = ids;
         }),
         clearSelection: vi.fn(),
+        setDraggedId: vi.fn(),
     };
     const env = { scene: {}, store, setHint } as unknown as ToolEnv;
     const ghost = { show: vi.fn(), hide: vi.fn(), destroy: vi.fn() };
@@ -267,6 +268,23 @@ describe("SelectController drag", () => {
         controller.onPointerDown(at([2, 4]));
         controller.onPointerUp(at([2, 4]));
         expect(store.clearSelection).toHaveBeenCalledTimes(1);
+    });
+
+    it("marks the dragged object while the ghost shows and frees it on release", () => {
+        const model = buildModel([placedAt("c", "crate", 2, 4)]);
+        const { controller, store, at } = setup(
+            model,
+            crateAtCell("c", [2, 4])
+        );
+
+        controller.onPointerDown(at([2, 4]));
+        expect(store.setDraggedId).not.toHaveBeenCalledWith("c");
+
+        controller.onPointerMove(at([5, 6]));
+        expect(store.setDraggedId).toHaveBeenLastCalledWith("c");
+
+        controller.onPointerUp(at([5, 6]));
+        expect(store.setDraggedId).toHaveBeenLastCalledWith(null);
     });
 
     it("drops the drag on cancel", () => {

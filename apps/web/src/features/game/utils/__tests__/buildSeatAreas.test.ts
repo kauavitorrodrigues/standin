@@ -9,6 +9,7 @@ const MAP_HEIGHT = 640;
 
 const chair = {
     id: "chair",
+    type: "CHAIR" as const,
     placement: ASSET_PLACEMENTS.GROUND,
     solid: true,
     surfaceHeightPx: 0,

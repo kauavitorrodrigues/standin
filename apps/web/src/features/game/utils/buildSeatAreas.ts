@@ -33,6 +33,7 @@ type PlacedRef = Pick<
 type AssetRef = Pick<
     AssetDefinition,
     | "id"
+    | "type"
     | "footprint"
     | "placement"
     | "surfaceHeightPx"

@@ -92,6 +92,7 @@ const setup = (placing: string | null, withArea = false) => {
         }),
         setSelection: vi.fn(),
         clearSelection: vi.fn(),
+        setDraggedId: vi.fn(),
     };
     const setHint = vi.fn();
     const scene = { textures: { exists: () => false } };
