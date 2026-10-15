@@ -3,12 +3,13 @@ import { SpacesPage } from "@/features/spaces/components/pages/SpacesPage";
 import {
     OrganizationsEmptyState,
     OrganizationsErrorState,
+    OrganizationsLoadingState,
 } from "@/features/organizations/components/pages/ContentStates";
 
 function Content() {
     const { organizations, isLoading, isError } = OrganizationsQueries.useAll();
 
-    if (isLoading) return null;
+    if (isLoading) return <OrganizationsLoadingState />;
 
     if (isError) {
         return (

@@ -35,7 +35,7 @@ export const markConversationAsRead = async (
     } catch (error) {
         return sendError({
             res,
-            resource: "conversation",
+            resource: "message",
             action: "update",
             reportError: error,
         });

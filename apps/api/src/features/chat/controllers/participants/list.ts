@@ -23,7 +23,7 @@ export const listParticipants = async (req: ExtendedRequest, res: Response) => {
     } catch (error) {
         return sendError({
             res,
-            resource: "participant",
+            resource: "user",
             action: "read",
             plural: true,
             reportError: error,

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { RequiresAuth } from "@/middlewares/requiresAuth";
-import { RequiresOrgMember, RequiresOrgOwner } from "@/middlewares/requiresOrgMember";
+import { RequiresOrgMember } from "@/middlewares/requiresOrgMember";
+import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { OrganizationController } from "./controllers";
 import { spacesRouter } from "../spaces/routes";
 import { mapsRouter } from "../maps/routes";
@@ -10,29 +11,43 @@ const router = Router();
 
 router.use(RequiresAuth);
 
-router.post("/", OrganizationController.create);
+router.post(
+    "/",
+    RequiresPermission("create", "organization"),
+    OrganizationController.create
+);
+
 router.get("/", OrganizationController.list);
+
 router.put(
     "/:organizationId",
     RequiresOrgMember,
-    RequiresOrgOwner,
-    OrganizationController.update,
+    RequiresPermission("update", "organization"),
+    OrganizationController.update
 );
+
 router.delete(
     "/:organizationId",
     RequiresOrgMember,
-    RequiresOrgOwner,
-    OrganizationController.delete,
+    RequiresPermission("delete", "organization"),
+    OrganizationController.delete
 );
 
 router.get(
     "/:organizationId/members",
     RequiresOrgMember,
-    OrganizationController.members.list,
+    RequiresPermission("read", "organization"),
+    OrganizationController.members.list
 );
 
 router.use("/:organizationId/spaces", RequiresOrgMember, spacesRouter);
+
 router.use("/:organizationId/maps", RequiresOrgMember, mapsRouter);
-router.use("/:organizationId/conversations", RequiresOrgMember, conversationsRouter);
+
+router.use(
+    "/:organizationId/conversations",
+    RequiresOrgMember,
+    conversationsRouter
+);
 
 export const organizationsRouter = router;

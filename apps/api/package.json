@@ -13,6 +13,7 @@
         "test": "vitest run"
     },
     "dependencies": {
+        "@standin/auth": "workspace:*",
         "@standin/contracts": "workspace:*",
         "@standin/core": "workspace:*",
         "@standin/database": "workspace:*",

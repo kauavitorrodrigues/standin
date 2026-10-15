@@ -32,7 +32,7 @@ export const createDirectConversation = async (
     } catch (error) {
         return sendError({
             res,
-            resource: "conversation",
+            resource: "message",
             action: "create",
             reportError: error,
         });

@@ -16,7 +16,7 @@ export const countCharacterTypes = (password: string): number => {
     const hasUpper = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSpecial = new RegExp(
-        `[${SPECIAL_CHARACTERS.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}]`,
+        `[${SPECIAL_CHARACTERS.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}]`
     ).test(password);
     return [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
 };

@@ -28,7 +28,10 @@ export const CHAT_ATTACHMENT_MIME_TYPES = [
 // Guards against a spoofed Content-Type paired with a mismatched extension
 // (e.g. an .html file declared as image/png) being served back with the
 // spoofed mime type by the static file server.
-export const ALLOWED_EXTENSIONS_BY_MIME_TYPE: Record<string, readonly string[]> = {
+export const ALLOWED_EXTENSIONS_BY_MIME_TYPE: Record<
+    string,
+    readonly string[]
+> = {
     "image/png": [".png"],
     "image/jpeg": [".jpg", ".jpeg"],
     "image/webp": [".webp"],

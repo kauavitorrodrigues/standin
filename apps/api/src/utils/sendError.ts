@@ -7,7 +7,7 @@ import {
     RESOURCE_LABELS,
     type Action,
     type Resource,
-} from "@/consts/resources";
+} from "@standin/auth";
 
 type SendErrorOptions = {
     res: Response;

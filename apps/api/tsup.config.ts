@@ -5,5 +5,10 @@ export default defineConfig({
     splitting: false,
     sourcemap: true,
     clean: true,
-    noExternal: ["@standin/contracts", "@standin/core", "@standin/database"],
+    noExternal: [
+        "@standin/auth",
+        "@standin/contracts",
+        "@standin/core",
+        "@standin/database",
+    ],
 });

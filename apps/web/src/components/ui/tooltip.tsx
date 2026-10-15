@@ -24,6 +24,29 @@ function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
     return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
+type ShortcutSide = "start" | "end";
+
+// The popup keeps a little less room on the side where the key is.
+const getShortcutPadding = (side: ShortcutSide) => {
+    switch (side) {
+        case "start":
+            return "has-data-[slot=kbd]:pr-3 has-data-[slot=kbd]:pl-1.5";
+        default:
+            return undefined;
+    }
+};
+
+type ShortcutKeyProps = {
+    shortcut?: string;
+    show: boolean;
+};
+
+const TooltipShortcut = ({ shortcut, show }: ShortcutKeyProps) => {
+    if (!shortcut || !show) return null;
+
+    return <Kbd>{shortcut}</Kbd>;
+};
+
 function TooltipContent({
     className,
     side = "top",
@@ -31,11 +54,14 @@ function TooltipContent({
     align = "center",
     alignOffset = 0,
     shortcut,
+    shortcutSide = "start",
     children,
     ...props
 }: TooltipPrimitive.Popup.Props & {
     // Key shown next to the text, for actions that have a keyboard shortcut.
     shortcut?: string;
+    // Whether the key comes before the text (centered on its left, the default) or after it.
+    shortcutSide?: ShortcutSide;
 } & Pick<
         TooltipPrimitive.Positioner.Props,
         "align" | "alignOffset" | "side" | "sideOffset"
@@ -53,12 +79,20 @@ function TooltipContent({
                     data-slot="tooltip-content"
                     className={cn(
                         "z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-md bg-neutral-900 px-3 py-1.5 text-xs text-white ring-1 ring-white/10 has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+                        getShortcutPadding(shortcutSide),
                         className
                     )}
                     {...props}
                 >
+                    <TooltipShortcut
+                        shortcut={shortcut}
+                        show={shortcutSide === "start"}
+                    />
                     {children}
-                    {shortcut && <Kbd>{shortcut}</Kbd>}
+                    <TooltipShortcut
+                        shortcut={shortcut}
+                        show={shortcutSide === "end"}
+                    />
                     <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%-2px)] rotate-45 rounded-[2px] bg-neutral-900 fill-neutral-900 data-[side=bottom]:top-1 data-[side=inline-end]:top-1/2! data-[side=inline-end]:-left-1 data-[side=inline-end]:-translate-y-1/2 data-[side=inline-start]:top-1/2! data-[side=inline-start]:-right-1 data-[side=inline-start]:-translate-y-1/2 data-[side=left]:top-1/2! data-[side=left]:-right-1 data-[side=left]:-translate-y-1/2 data-[side=right]:top-1/2! data-[side=right]:-left-1 data-[side=right]:-translate-y-1/2 data-[side=top]:-bottom-2.5" />
                 </TooltipPrimitive.Popup>
             </TooltipPrimitive.Positioner>

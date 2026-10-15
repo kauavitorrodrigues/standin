@@ -15,8 +15,9 @@ export const PasswordSchema = z
     .refine((pass) => {
         const lowerPass = pass.toLowerCase();
         return (
-            !SEQUENTIAL_PATTERNS.some((pattern) => lowerPass.includes(pattern)) &&
-            !COMMON_SEQUENCES.some((seq) => lowerPass.includes(seq))
+            !SEQUENTIAL_PATTERNS.some((pattern) =>
+                lowerPass.includes(pattern)
+            ) && !COMMON_SEQUENCES.some((seq) => lowerPass.includes(seq))
         );
     }, AuthErrorMessages.password.sequential)
     .refine((pass) => countCharacterTypes(pass) >= 3, {

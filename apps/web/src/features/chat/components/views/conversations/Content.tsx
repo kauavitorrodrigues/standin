@@ -21,6 +21,35 @@ type Props = {
     onSelectDirectConversation: (conversation: ConversationSummary) => void;
 };
 
+type DirectMessagesProps = {
+    conversations: ConversationSummary[];
+    isLoading: boolean;
+    isError: boolean;
+    selectedConversationId: string;
+    onSelect: (conversation: ConversationSummary) => void;
+};
+
+const DirectMessages = ({
+    conversations,
+    isLoading,
+    isError,
+    selectedConversationId,
+    onSelect,
+}: DirectMessagesProps) => {
+    if (isLoading) return <DirectMessagesLoadingState />;
+    if (isError) return <DirectMessagesErrorState />;
+    if (conversations.length === 0) return <DirectMessagesEmptyState />;
+
+    return conversations.map((conversation) => (
+        <DirectConversationItem
+            key={conversation.id}
+            conversation={conversation}
+            selected={conversation.id === selectedConversationId}
+            onSelect={() => onSelect(conversation)}
+        />
+    ));
+};
+
 export const Content = ({
     spaceName,
     spaceUnreadCount,
@@ -32,31 +61,6 @@ export const Content = ({
     onSelectSpaceConversation,
     onSelectDirectConversation,
 }: Props) => {
-    const directMessagesContent: React.ReactNode[] = [];
-
-    if (isLoading) directMessagesContent.push(<DirectMessagesLoadingState />);
-
-    if (!isLoading && isError) {
-        directMessagesContent.push(<DirectMessagesErrorState />);
-    }
-
-    if (!isLoading && !isError && directConversations.length === 0) {
-        directMessagesContent.push(<DirectMessagesEmptyState />);
-    }
-
-    if (!isLoading && !isError && directConversations.length > 0) {
-        directConversations.forEach((conversation) => {
-            directMessagesContent.push(
-                <DirectConversationItem
-                    key={conversation.id}
-                    conversation={conversation}
-                    selected={conversation.id === selectedConversationId}
-                    onSelect={() => onSelectDirectConversation(conversation)}
-                />
-            );
-        });
-    }
-
     return (
         <div className="flex flex-col gap-3">
             <SearchField />
@@ -70,7 +74,15 @@ export const Content = ({
                 />
             </Section>
 
-            <Section title="Mensagens diretas">{directMessagesContent}</Section>
+            <Section title="Mensagens diretas">
+                <DirectMessages
+                    conversations={directConversations}
+                    isLoading={isLoading}
+                    isError={isError}
+                    selectedConversationId={selectedConversationId}
+                    onSelect={onSelectDirectConversation}
+                />
+            </Section>
         </div>
     );
 };

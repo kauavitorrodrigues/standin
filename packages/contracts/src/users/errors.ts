@@ -5,7 +5,7 @@ export class UserAlreadyExistsError extends BaseError {
         super(
             "Já existe uma conta com este e-mail.",
             "USER_ALREADY_EXISTS",
-            409,
+            409
         );
     }
 }

@@ -2,13 +2,12 @@ import { useForm } from "react-hook-form";
 import { toast } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-    MAX_SPACE_NAME_LENGTH,
     SpaceUpdateSchema,
     type Space,
     type SpaceUpdateSchemaType,
 } from "@standin/contracts";
-import { TextFormField } from "@/components/fields/TextFormField";
 import { FormDialogControls } from "@/components/FormDialogControls";
+import { SpaceFormFields } from "../fields/FormFields";
 import { SpaceMutations } from "../../mutations";
 import { SpacesQueries } from "../../queries";
 import { UpdateMessages } from "./Messages";
@@ -41,16 +40,11 @@ export const UpdateSpaceForm = ({ space, onShowDialog }: Props) => {
     const { isSubmitting } = form.formState;
 
     return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <TextFormField
-                control={form.control}
-                name="name"
-                label="Nome"
-                required
-                placeholder="Nome do espaço"
-                disabled={isSubmitting}
-                maxLength={MAX_SPACE_NAME_LENGTH}
-            />
+        <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+        >
+            <SpaceFormFields form={form} disabled={isSubmitting} />
             <FormDialogControls
                 onClose={() => {
                     form.reset();
