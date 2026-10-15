@@ -10,6 +10,7 @@ import type { EditorOp } from "../../schemas/editorOp.schema";
 import type { EditorModel } from "../../types/editor-model";
 import { applyEditorOp } from "../applyEditorOp";
 import { canReplaceAsset } from "../canReplaceAsset";
+import { findReplaceAnchor } from "../findReplaceAnchor";
 import { getReplaceAlternatives } from "../getReplaceAlternatives";
 
 const asset = (overrides: Partial<AssetDefinition>): AssetDefinition =>
@@ -146,7 +147,10 @@ const placedAt = (
     propertyOverrides: { label: id },
 });
 
-const buildModel = (placed: PlacedAsset[]): EditorModel => {
+const buildModel = (
+    placed: PlacedAsset[],
+    extraAssets: AssetDefinition[] = []
+): EditorModel => {
     const layout = buildLayout();
     findTileLayer(layout, "walls")!.data.fill(0);
     return {
@@ -155,7 +159,12 @@ const buildModel = (placed: PlacedAsset[]): EditorModel => {
         height: layout.height,
         layout,
         placed,
-        library: palette,
+        library: extraAssets.length
+            ? ({
+                  ...palette,
+                  assets: [...palette.assets, ...extraAssets],
+              } as LibraryPalette)
+            : palette,
         desks: [],
         limits: { objectsUsed: placed.length, objectsMax: 100 },
         version: 1,
@@ -299,8 +308,66 @@ describe("getReplaceAlternatives", () => {
 
         const top = placedAt("s1", "sofa", 3, 0);
         const none = getReplaceAlternatives(buildModel([top]), top);
-        expect(none.rotations).toEqual([]);
+        expect(none.rotations.map(({ id }) => id)).toEqual(["sofa-90"]);
         expect(none.colors).toHaveLength(2);
+    });
+
+    it("turns the base of a family that has no rotation of its own", () => {
+        const door = asset({ id: "door", type: "DOOR", colorKey: "bege" });
+        const door90 = asset({
+            id: "door-90",
+            type: "DOOR",
+            baseAssetId: "door",
+            rotation: "DEG_90",
+            colorKey: "bege",
+            footprint: { w: 1, h: 3, offsetX: 0 },
+        });
+        const door180 = asset({
+            id: "door-180",
+            type: "DOOR",
+            baseAssetId: "door",
+            rotation: "DEG_180",
+            colorKey: "bege",
+        });
+        const placed = placedAt("s1", "door", 3, 5);
+        const model = buildModel([placed], [door, door90, door180]);
+        expect(
+            getReplaceAlternatives(model, placed).rotations.map(({ id }) => id)
+        ).toEqual(["door-90"]);
+
+        const turned = placedAt("s1", "door-180", 3, 5);
+        const modelTurned = buildModel([turned], [door, door90, door180]);
+        expect(
+            getReplaceAlternatives(modelTurned, turned).rotations.map(
+                ({ id }) => id
+            )
+        ).toEqual(["door"]);
+
+        const top = placedAt("s1", "door", 3, 0);
+        const shifted = buildModel([top], [door, door90, door180]);
+        expect(
+            getReplaceAlternatives(shifted, top).rotations.map(({ id }) => id)
+        ).toEqual(["door-90"]);
+    });
+
+    it("moves the anchor of a rotation that only fits from another cell", () => {
+        // The sofa at row 0 grows up from its cell as a 1 x 2 and leaves the
+        // map, but anchored a row lower it fits.
+        const top = placedAt("s1", "sofa", 3, 0);
+        const model = buildModel([top]);
+        const current = model.library.assets.find(({ id }) => id === "sofa")!;
+        const rotated = model.library.assets.find(
+            ({ id }) => id === "sofa-90"
+        )!;
+
+        expect(findReplaceAnchor(model, top, current, rotated)).toEqual({
+            tileX: 3,
+            tileY: 1,
+        });
+        const inPlace = placedAt("s1", "sofa", 3, 5);
+        expect(
+            findReplaceAnchor(buildModel([inPlace]), inPlace, current, rotated)
+        ).toEqual({ tileX: 3, tileY: 5 });
     });
 
     it("is empty for an unknown object asset", () => {
@@ -310,6 +377,41 @@ describe("getReplaceAlternatives", () => {
             rotations: [],
             models: [],
         });
+    });
+});
+
+describe("applyEditorOp: replace_asset with a new anchor", () => {
+    it("moves the object and the inverse puts it back", () => {
+        const top = placedAt("d1", "sofa", 3, 0);
+        const model = buildModel([top]);
+        const op: EditorOp = {
+            type: "replace_asset",
+            id: "d1",
+            assetId: "sofa-90",
+            tileX: 3,
+            tileY: 1,
+        };
+
+        const result = applyEditorOp(model, op);
+        if (!result.ok) throw new Error("expected ok");
+        expect(result.model.placed[0]).toMatchObject({
+            assetId: "sofa-90",
+            tileX: 3,
+            tileY: 1,
+        });
+        expect(result.inverse).toEqual([
+            {
+                type: "replace_asset",
+                id: "d1",
+                assetId: "sofa",
+                tileX: 3,
+                tileY: 0,
+            },
+        ]);
+
+        const back = applyEditorOp(result.model, result.inverse[0]!);
+        if (!back.ok) throw new Error("expected ok");
+        expect(back.model.placed).toEqual(model.placed);
     });
 });
 

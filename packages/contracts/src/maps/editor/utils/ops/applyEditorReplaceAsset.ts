@@ -8,8 +8,8 @@ import type { EditorOpHandler } from "../../types/editor-op-handler";
 import { canReplaceAsset } from "../canReplaceAsset";
 
 /**
- * Swaps the asset of an object, keeping its position, parentId, children and
- * propertyOverrides. The inverse swaps the previous asset back. The desk link
+ * Swaps the asset of an object, keeping its position (unless the op carries a
+ * new anchor), parentId, children and propertyOverrides. The inverse swaps the previous asset back. The desk link
  * is kept by the server, the model does not know claimed desks.
  */
 export const applyEditorReplaceAsset: EditorOpHandler<
@@ -44,7 +44,12 @@ export const applyEditorReplaceAsset: EditorOpHandler<
         };
     }
 
-    const check = canReplaceAsset(model, target, asset);
+    const moved = op.tileX !== undefined && op.tileY !== undefined;
+    const anchor = moved
+        ? { tileX: op.tileX as number, tileY: op.tileY as number }
+        : target;
+
+    const check = canReplaceAsset(model, target, asset, anchor);
     if (!check.ok) {
         return {
             ok: false,
@@ -64,12 +69,22 @@ export const applyEditorReplaceAsset: EditorOpHandler<
             ...model,
             placed: model.placed.map((object) =>
                 object.id === op.id
-                    ? { ...object, assetId: op.assetId }
+                    ? {
+                          ...object,
+                          assetId: op.assetId,
+                          tileX: anchor.tileX,
+                          tileY: anchor.tileY,
+                      }
                     : object
             ),
         },
         inverse: [
-            { type: "replace_asset", id: op.id, assetId: target.assetId },
+            {
+                type: "replace_asset",
+                id: op.id,
+                assetId: target.assetId,
+                ...(moved ? { tileX: target.tileX, tileY: target.tileY } : {}),
+            },
         ],
         diff: [],
     };
