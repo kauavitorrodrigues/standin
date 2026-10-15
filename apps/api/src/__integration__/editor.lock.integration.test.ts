@@ -123,9 +123,12 @@ describe.skipIf(!enabled)("editor lock with two sessions (real stack)", () => {
     const acquire = (
         socket: Socket,
         sessionId: string,
-        mapId = space.mapId
+        mapId = space.mapId,
+        mode?: "map" | "objects"
     ): Promise<Ack> =>
-        socket.timeout(2000).emitWithAck("editor:acquire", { mapId, sessionId });
+        socket
+            .timeout(2000)
+            .emitWithAck("editor:acquire", { mapId, sessionId, mode });
 
     const heartbeat = (
         socket: Socket,
@@ -350,7 +353,10 @@ describe.skipIf(!enabled)("editor lock with two sessions (real stack)", () => {
         );
         const takeover = await acquire(socketA2, SESSION_A2);
         expect(takeover.ok).toBe(true);
-        expect(await lostA1).toEqual({ mapId: space.mapId });
+        expect(await lostA1).toEqual({
+            mapId: space.mapId,
+            reason: "TAKEN_OVER",
+        });
         // The first session no longer holds anything.
         expect((await heartbeat(socketA, SESSION_A1)).ok).toBe(false);
         expect((await heartbeat(socketA2, SESSION_A2)).ok).toBe(true);
@@ -362,7 +368,10 @@ describe.skipIf(!enabled)("editor lock with two sessions (real stack)", () => {
             "map_unlocked"
         );
         expect((await release(socketA2, SESSION_A2)).ok).toBe(true);
-        expect(await unlockedForB).toEqual({ mapId: space.mapId });
+        expect(await unlockedForB).toEqual({
+            mapId: space.mapId,
+            mode: "map",
+        });
         // Releasing again, or heartbeating after, is refused.
         expect((await release(socketA2, SESSION_A2)).ok).toBe(false);
         expect((await heartbeat(socketA2, SESSION_A2)).ok).toBe(false);
@@ -388,8 +397,14 @@ describe.skipIf(!enabled)("editor lock with two sessions (real stack)", () => {
             "editor:lock_lost"
         );
         vi.setSystemTime(Date.now() + 46_000);
-        expect(await unlockedAfterExpiry).toEqual({ mapId: space.mapId });
-        expect(await lostAfterExpiry).toEqual({ mapId: space.mapId });
+        expect(await unlockedAfterExpiry).toEqual({
+            mapId: space.mapId,
+            mode: "map",
+        });
+        expect(await lostAfterExpiry).toEqual({
+            mapId: space.mapId,
+            reason: "EXPIRED",
+        });
         expect(
             (await call("b", "GET", `/maps/${space.mapId}/lock`)).body
         ).toEqual({ locked: false });
@@ -398,6 +413,77 @@ describe.skipIf(!enabled)("editor lock with two sessions (real stack)", () => {
         // After expiry A acquires again and publishes with the new hold.
         expect((await acquire(socketA, SESSION_A1)).ok).toBe(true);
         expect((await release(socketA, SESSION_A1)).ok).toBe(true);
+    });
+
+    it("lets a member decorate, refuses a second decorator and lets the owner push it out", async () => {
+        const socketA = await joinSpace("a");
+        const socketB = await joinSpace("b");
+        const SESSION_DECO = `deco-${RUN}`;
+        const SESSION_STUDIO = `studio-deco-${RUN}`;
+
+        // A member opens the decorator and the room hears the mode.
+        const lockedForA = nextEvent<{ mode: string; by: any }>(
+            socketA,
+            "map_locked"
+        );
+        const granted = await acquire(socketB, SESSION_DECO, space.mapId, "objects");
+        expect(granted.ok).toBe(true);
+        const locked = await lockedForA;
+        expect(locked.mode).toBe("objects");
+        expect(locked.by).toEqual({ id: users.b.id, name: "b" });
+        expect(
+            (await call("a", "GET", `/maps/${space.mapId}/lock`)).body
+        ).toMatchObject({ locked: true, mode: "objects" });
+
+        // The owner in the decorator is refused: first one holds.
+        expect(
+            await acquire(socketA, `deco-a-${RUN}`, space.mapId, "objects")
+        ).toMatchObject({
+            ok: false,
+            code: "MAP_LOCKED",
+            mode: "objects",
+            by: { id: users.b.id },
+        });
+
+        // A claim goes through while the decorator is open.
+        const claim = await call(
+            "b",
+            "POST",
+            `/spaces/${space.id}/desks/${deskRowId}/claim`,
+            {}
+        );
+        expect(claim.status).toBe(200);
+        expect(
+            (await call("b", "DELETE", `/spaces/${space.id}/desks/${deskRowId}/claim`))
+                .status
+        ).toBe(200);
+
+        // The owner opens the Studio: the decorator is told why.
+        const lost = nextEvent<{ mapId: string; reason: string }>(
+            socketB,
+            "editor:lock_lost"
+        );
+        const studio = await acquire(socketA, SESSION_STUDIO, space.mapId, "map");
+        expect(studio.ok).toBe(true);
+        expect(await lost).toEqual({
+            mapId: space.mapId,
+            reason: "MAP_EDITING",
+        });
+        expect((await heartbeat(socketB, SESSION_DECO)).ok).toBe(false);
+        expect(
+            (await call("a", "GET", `/maps/${space.mapId}/lock`)).body
+        ).toMatchObject({ locked: true, mode: "map" });
+
+        // With the Studio open, the member cannot decorate nor claim.
+        expect(
+            await acquire(socketB, SESSION_DECO, space.mapId, "objects")
+        ).toMatchObject({ ok: false, code: "MAP_LOCKED", mode: "map" });
+        expect(
+            (await call("b", "POST", `/spaces/${space.id}/desks/${deskRowId}/claim`, {}))
+                .status
+        ).toBe(423);
+
+        expect((await release(socketA, SESSION_STUDIO)).ok).toBe(true);
     });
 
     it("denies a second admin on a template map with by and since", async () => {
@@ -450,7 +536,7 @@ describe.skipIf(!enabled)("editor lock with two sessions (real stack)", () => {
                 "map_unlocked"
             );
             expect((await release(first, SESSION_A1, mapId)).ok).toBe(true);
-            expect(await unlocked).toEqual({ mapId });
+            expect(await unlocked).toEqual({ mapId, mode: "map" });
             expect((await acquire(second, SESSION_B, mapId)).ok).toBe(true);
             expect((await release(second, SESSION_B, mapId)).ok).toBe(true);
         } finally {

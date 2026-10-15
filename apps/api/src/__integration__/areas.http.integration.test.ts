@@ -873,7 +873,7 @@ describe.skipIf(!enabled)("areas over HTTP (real stack)", () => {
             const claim = await call(
                 "owner",
                 "POST",
-                `/spaces/${created.body.id}/desks/${desk.id}/claim`,
+                `/spaces/${created.body.space.id}/desks/${desk.id}/claim`,
                 {}
             );
             expect(claim.status).toBe(200);
