@@ -31,7 +31,10 @@ const boxesOverlap = (
     a: ReturnType<typeof pixelBox>,
     b: ReturnType<typeof pixelBox>
 ): boolean =>
-    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    a.left < b.right &&
+    b.left < a.right &&
+    a.top < b.bottom &&
+    b.top < a.bottom;
 
 /**
  * GROUND: no solid wall under the occupied tiles and no overlap with the
@@ -61,14 +64,10 @@ export const checkGroundPlacement = (
                     pixelBox(footprint, offset),
                     pixelBox(other, otherOffset)
                 ) &&
-                cellsOverlapAtShift(
-                    fineCells,
-                    getOccupiedFineCells(other),
-                    {
-                        x: offset.x - otherOffset.x,
-                        y: offset.y - otherOffset.y,
-                    }
-                )
+                cellsOverlapAtShift(fineCells, getOccupiedFineCells(other), {
+                    x: offset.x - otherOffset.x,
+                    y: offset.y - otherOffset.y,
+                })
             );
         }
     );

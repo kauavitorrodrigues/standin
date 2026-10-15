@@ -5,10 +5,15 @@ import { EDITOR_EVENTS } from "@/features/editor/consts/events";
 import { ZONE_MESSAGES } from "@/features/editor/consts/messages";
 import { createZoneController } from "@/features/editor/lib/createZoneController";
 import type { ZoneKind } from "@/features/editor/types/zone-kind";
+import { buildZoneModel } from "@/features/editor/lib/__tests__/fixtures/buildZoneModel";
 import type { ToolContext } from "@/features/editor/types/ToolController";
 import type { ToolEnv } from "@/features/editor/types/ToolEnv";
 
-const setup = (zoneKind: ZoneKind, dispatchResult = { ok: true as const }) => {
+const setup = (
+    zoneKind: ZoneKind,
+    dispatchResult = { ok: true as const },
+    model: EditorModel = buildZoneModel([])
+) => {
     const events = new EventEmitter();
     const graphics = {
         setDepth: vi.fn(),
@@ -50,7 +55,7 @@ const setup = (zoneKind: ZoneKind, dispatchResult = { ok: true as const }) => {
         worldY: 0,
         shift: false,
         ctrl: false,
-        model: {} as EditorModel,
+        model,
         dispatch,
         setHint,
     });
@@ -129,6 +134,7 @@ describe("zone controller, area", () => {
 
         expect(dispatch).not.toHaveBeenCalled();
         expect(requested).toHaveBeenCalledWith({
+            kind: "area",
             anchor: {
                 left: 10 + 1 * TILE_SIZE * 2,
                 top: 20 + 2 * TILE_SIZE * 2,
@@ -180,5 +186,53 @@ describe("zone controller, area", () => {
         controller.onDeactivate?.();
 
         expect(closed).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("zone controller, room", () => {
+    const dragRoom = (setupResult: ReturnType<typeof setup>) => {
+        setupResult.controller.onPointerDown?.(setupResult.at(1, 2));
+        setupResult.controller.onPointerUp?.(setupResult.at(4, 5));
+    };
+
+    it("ignores a drag below the minimum with the hint of a room", () => {
+        const { controller, at, dispatch, setHint } = setup("private");
+
+        controller.onPointerDown?.(at(2, 2));
+        controller.onPointerUp?.(at(2, 2));
+
+        expect(setHint).toHaveBeenCalledWith(ZONE_MESSAGES.ROOM_AREA_TOO_SMALL);
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it("asks for the name of a room and creates it with a generated key", () => {
+        const result = setup("private");
+        dragRoom(result);
+
+        expect(result.requested).toHaveBeenCalledWith(
+            expect.objectContaining({ kind: "private" })
+        );
+        expect(result.dispatch).not.toHaveBeenCalled();
+
+        result.events.emit(EDITOR_EVENTS.ZONE_NAME_CONFIRMED, "  Reunião ");
+
+        const [ops] = result.dispatch.mock.calls[0] as unknown as [
+            { type: string; zone: Record<string, unknown> }[],
+        ];
+        expect(ops[0].zone).toMatchObject({
+            kind: "private",
+            label: "Reunião",
+            rect: { x: 1, y: 2, w: 4, h: 4 },
+        });
+        expect(ops[0].zone.key).toMatch(/^room-[0-9a-f]{8}$/);
+    });
+
+    it("does not create the room without a name", () => {
+        const result = setup("private");
+        dragRoom(result);
+
+        result.events.emit(EDITOR_EVENTS.ZONE_NAME_CONFIRMED, "  ");
+
+        expect(result.dispatch).not.toHaveBeenCalled();
     });
 });

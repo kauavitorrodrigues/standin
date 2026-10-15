@@ -185,8 +185,8 @@ export const SpriteEditor = ({
                     onRemoveImage={onRemoveImage}
                     onHelp={() => setHelpOpen(true)}
                 />
+                <EditorFrameWarning crop={crop} frameCount={frameCount} />
             </EditorStage>
-            <EditorFrameWarning crop={crop} frameCount={frameCount} />
             <EditorHelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
         </div>
     );

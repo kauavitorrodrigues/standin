@@ -17,6 +17,7 @@ import { loadEditorModel } from "./loadEditorModel";
 import { persistModelDiff } from "./persistModelDiff";
 import type { PublishOutcome } from "./types/publish-outcome";
 import { assertBaseIsCurrent } from "./utils/assertBaseIsCurrent";
+import { assertDoorsInRooms } from "./utils/assertDoorsInRooms";
 import { assertRequestInScope } from "./utils/assertRequestInScope";
 import { canPublishInScope } from "./utils/canPublishInScope";
 import { getPublishScope } from "./utils/getPublishScope";
@@ -78,6 +79,7 @@ export const publishMap = async (
                 toPublishIssues(replayed.opIndex, replayed.errors)
             );
         }
+        assertDoorsInRooms(replayed.model, request.ops.length);
         if (assertDiffInScope(base, replayed.model, scope).length > 0) {
             throw new OutOfScopeError();
         }

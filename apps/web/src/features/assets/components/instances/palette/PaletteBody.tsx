@@ -15,6 +15,8 @@ type Props = {
     // The family to show as picked.
     selectedId?: string | null;
     hideTilesTab?: boolean;
+    // Why a family cannot be picked, or null when it can.
+    getDisabledReason?: (asset: AssetDefinition) => string | null;
     look?: PaletteLook;
 };
 
@@ -27,6 +29,7 @@ export const PaletteBody = ({
     onPick,
     selectedId,
     hideTilesTab,
+    getDisabledReason,
     look = PALETTE_LOOKS.EDITOR,
 }: Props) => (
     <PaletteTabs
@@ -36,6 +39,7 @@ export const PaletteBody = ({
         onPick={onPick}
         selectedId={selectedId}
         hideTilesTab={hideTilesTab}
+        getDisabledReason={getDisabledReason}
         look={look}
     />
 );

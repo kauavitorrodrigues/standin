@@ -13,6 +13,7 @@ import { EditorPanelToggle } from "@/features/editor/components/instances/Editor
 import { ZoneNamePopover } from "@/features/editor/components/instances/ZoneNamePopover";
 import { ZoneToolOptions } from "@/features/editor/components/instances/ZoneToolOptions";
 import { ZoneToolbar } from "@/features/editor/components/instances/ZoneToolbar";
+import { RoomPanel } from "@/features/editor/components/instances/RoomPanel";
 import { ObjectToolbar } from "@/features/editor/components/instances/ObjectToolbar";
 import { EditorToolRail } from "@/features/editor/components/instances/EditorToolRail";
 import { useDraftPersistence } from "@/features/maps/__shared__/hooks/useDraftPersistence";
@@ -107,6 +108,7 @@ export const EditorWorkspace = ({
                     />
                     <ObjectToolbar toolbarRef={toolbarRef} />
                     <ZoneToolbar toolbarRef={zoneToolbarRef} />
+                    <RoomPanel />
                     <EditorZoom onFit={fitCamera} />
                     <EditorLockNotice />
                     <EditorBottomBar />

@@ -11,12 +11,15 @@ import { getZoneHandlePoints } from "@/features/editor/utils/getZoneHandlePoints
 import { getZoneShape } from "@/features/editor/utils/getZoneShape";
 import { getZoneTileRect } from "@/features/editor/utils/getZoneTileRect";
 import { isEditableZone } from "@/features/editor/utils/isEditableZone";
-import type { ZoneAreaShape } from "@/features/editor/types/zone-shape";
+import type {
+    ZoneAreaShape,
+    ZoneRoomShape,
+} from "@/features/editor/types/zone-shape";
 import type { ZoneRect } from "@/features/editor/types/zone-rect";
 
 // Outline and label of each area zone and a marker for each spawn. Only drawn
 // while editing. The zone the selection holds is highlighted and, when it is
-// an area, gets the 8 resize handles. The highlight and the handles hide with
+// an area or a room, gets the 8 resize handles. The highlight and the handles hide with
 // the zones toggle, and so does the bar over the zone (it stops being
 // tracked). It listens to the store itself and redraws only when the
 // selection changes, so a pointer move never touches it.
@@ -65,7 +68,10 @@ export class ZoneOverlay {
                     this.drawSpawn(shape.x, shape.y);
                     break;
                 case "area":
-                    this.drawArea(shape);
+                    this.drawOutline(shape, EDITOR_ZONES.AREA_COLOR);
+                    break;
+                case "room":
+                    this.drawOutline(shape, EDITOR_ZONES.ROOM_COLOR);
                     break;
             }
         }
@@ -122,7 +128,7 @@ export class ZoneOverlay {
         this.graphics.fillRect(x, y, width, height);
         this.graphics.strokeRect(x, y, width, height);
 
-        if (zone.kind !== ZONE_KINDS.AREA) return;
+        if (zone.kind === ZONE_KINDS.SPAWN) return;
         this.drawHandles(getZoneTileRect(zone));
     }
 
@@ -154,14 +160,14 @@ export class ZoneOverlay {
         this.graphics.strokeCircle(x, y, EDITOR_ZONES.SPAWN_RADIUS);
     }
 
-    private drawArea(shape: ZoneAreaShape): void {
-        this.graphics.fillStyle(
-            EDITOR_ZONES.AREA_COLOR,
-            EDITOR_ZONES.FILL_ALPHA
-        );
+    private drawOutline(
+        shape: ZoneAreaShape | ZoneRoomShape,
+        color: number
+    ): void {
+        this.graphics.fillStyle(color, EDITOR_ZONES.FILL_ALPHA);
         this.graphics.lineStyle(
             EDITOR_ZONES.OUTLINE_WIDTH,
-            EDITOR_ZONES.AREA_COLOR,
+            color,
             EDITOR_ZONES.OUTLINE_ALPHA
         );
         this.graphics.fillPoints(shape.outline, true);

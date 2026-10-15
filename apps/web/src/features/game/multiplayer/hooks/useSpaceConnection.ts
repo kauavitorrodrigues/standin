@@ -275,40 +275,40 @@ export function useSpaceConnection({
                 }
 
                 switch (message.type) {
-                case PEER_MESSAGE_TYPES.POSITION:
-                    (game ? getMapScene(game) : null)?.applyRemotePosition(
-                        socketId,
-                        message.payload
-                    );
-                    return;
-                case PEER_MESSAGE_TYPES.CHAT:
-                    onChatMessage?.(socketId, message.payload);
-                    return;
-                case PEER_MESSAGE_TYPES.TYPING:
-                    onTyping?.(socketId, message.payload);
-                    return;
-                case PEER_MESSAGE_TYPES.REACTION:
-                    onReaction?.(socketId, message.payload);
-                    return;
-                case PEER_MESSAGE_TYPES.EDIT:
-                    onEdit?.(socketId, message.payload);
-                    return;
-                case PEER_MESSAGE_TYPES.DELETE:
-                    onDelete?.(socketId, message.payload);
-                    return;
-                case PEER_MESSAGE_TYPES.CONFIRM:
-                    onConfirm?.(socketId, message.payload);
-                    return;
-                case PEER_MESSAGE_TYPES.MEDIA_STATE:
-                    setRemoteMicMuted(
-                        message.payload.userId,
-                        message.payload.isMicMuted
-                    );
-                    setRemoteMediaState(socketId, {
-                        cameraStreamId: message.payload.cameraStreamId,
-                        screenStreamId: message.payload.screenStreamId,
-                    });
-                    return;
+                    case PEER_MESSAGE_TYPES.POSITION:
+                        (game ? getMapScene(game) : null)?.applyRemotePosition(
+                            socketId,
+                            message.payload
+                        );
+                        return;
+                    case PEER_MESSAGE_TYPES.CHAT:
+                        onChatMessage?.(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.TYPING:
+                        onTyping?.(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.REACTION:
+                        onReaction?.(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.EDIT:
+                        onEdit?.(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.DELETE:
+                        onDelete?.(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.CONFIRM:
+                        onConfirm?.(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.MEDIA_STATE:
+                        setRemoteMicMuted(
+                            message.payload.userId,
+                            message.payload.isMicMuted
+                        );
+                        setRemoteMediaState(socketId, {
+                            cameraStreamId: message.payload.cameraStreamId,
+                            screenStreamId: message.payload.screenStreamId,
+                        });
+                        return;
                 }
             },
         });

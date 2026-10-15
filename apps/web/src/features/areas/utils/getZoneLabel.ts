@@ -5,7 +5,7 @@ import type { AreaComposerFormValues } from "../types/areaComposerForm";
 export const getZoneLabel = ({
     name,
     createZone,
-}: AreaComposerFormValues): string | null => {
+}: Pick<AreaComposerFormValues, "name" | "createZone">): string | null => {
     if (!createZone) return null;
     return name.trim();
 };

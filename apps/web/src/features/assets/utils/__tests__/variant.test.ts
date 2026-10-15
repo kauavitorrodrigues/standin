@@ -105,6 +105,34 @@ describe("validateAddVariant", () => {
     });
 });
 
+describe("validateAddVariant for a door", () => {
+    const doorFamily = () => {
+        const base = family([null]);
+        return {
+            ...base,
+            variants: base.variants.map((variant) => ({
+                ...variant,
+                type: "DOOR" as const,
+                animation: { frameCount: 4, frameDurationMs: 80, repeat: 0 },
+            })),
+        };
+    };
+
+    it("rejects a strip that does not divide into the frames", () => {
+        const errors = validateAddVariant(doorFamily(), values(), {
+            w: 130,
+            h: 32,
+        });
+        expect(errors.image).toContain("dividir");
+    });
+
+    it("accepts a strip that divides into the frames", () => {
+        expect(
+            validateAddVariant(doorFamily(), values(), { w: 128, h: 32 })
+        ).toEqual({});
+    });
+});
+
 describe("buildVariantData mask", () => {
     it("sends the mask of a new rotation", () => {
         const mask = Array.from({ length: 4 }, () => [

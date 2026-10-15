@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { EditorModel, EditorOp } from "@standin/contracts";
+import type { EditorModel, EditorOp, Zone } from "@standin/contracts";
 import type { TileRect } from "@/features/editor/types/tile-rect";
 import type { EditorStore } from "@/features/editor/lib/EditorStore";
 
@@ -31,6 +31,11 @@ export type ToolEnv = {
     // The region the tools may fill, such as the frame of an area. Without it,
     // or when it returns null, the whole map.
     getBounds?: () => TileRect | null;
+    // The rooms the door rule reads instead of the zones of the model. The
+    // area composer has no zones, so it answers the rectangle of the area
+    // when the area is a room and an empty list when it is not. Without it, or
+    // when it returns null, the zones of the model count.
+    getDoorRooms?: () => readonly Zone[] | null;
     // The picture of a region of the map in tiles, at native resolution.
     captureSnapshot?: (rect: TileRect) => Promise<Blob>;
 };

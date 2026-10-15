@@ -10,8 +10,9 @@ const isTileAligned = (value: number): boolean => value % TILE_SIZE === 0;
 
 /**
  * The zone in tiles that rebuilds this layout object exactly, or null when the
- * object is not a spawn or an area the editor can write back (another kind,
- * not aligned to the grid, rotated, polygon, key, target or custom name).
+ * object is not a spawn, an area or a room the editor can write back (another
+ * kind, a key on a non-room, not aligned to the grid, rotated, polygon, target
+ * or custom name).
  */
 export const layoutObjectToZoneInput = (
     object: LayoutObject
@@ -21,11 +22,15 @@ export const layoutObjectToZoneInput = (
     const zone = objectToZone(object);
     const isEditable =
         zone.kind === LAYOUT_ZONE_KINDS.SPAWN ||
-        zone.kind === LAYOUT_ZONE_KINDS.AREA;
+        zone.kind === LAYOUT_ZONE_KINDS.AREA ||
+        zone.kind === LAYOUT_ZONE_KINDS.PRIVATE;
+    // Only a room carries a key, and the editor keeps it as it is.
+    const isKeyAllowed =
+        zone.key === undefined || zone.kind === LAYOUT_ZONE_KINDS.PRIVATE;
     const isPlain =
         zone.polygon === undefined &&
         (zone.rotation ?? 0) === 0 &&
-        zone.key === undefined &&
+        isKeyAllowed &&
         zone.targetX === undefined &&
         zone.targetY === undefined &&
         (zone.name === undefined || zone.name === zone.kind);
@@ -44,5 +49,6 @@ export const layoutObjectToZoneInput = (
             h: zone.height / TILE_SIZE,
         },
         ...(zone.label === undefined ? {} : { label: zone.label }),
+        ...(zone.key === undefined ? {} : { key: zone.key }),
     };
 };

@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import {
+    ASSET_TYPES,
     TILE_SIZE,
     type AssetDefinition,
     type PlacedAsset,
@@ -111,6 +112,17 @@ export class EditorObjectRenderer {
         [...diff.added, ...diff.moved].forEach((item) =>
             this.playDrop(item.id)
         );
+    }
+
+    // The sprite that draws an object, or its first slice when it has several.
+    // A door view drives it, so it never gets a looping animation of its own.
+    getSprite(id: string): Phaser.GameObjects.Sprite | undefined {
+        return this.displays
+            .get(id)
+            ?.find(
+                (display): display is Phaser.GameObjects.Sprite =>
+                    display.type === SPRITE_TYPE
+            );
     }
 
     // The sprites and placeholders on screen, for the map photo.
@@ -278,10 +290,10 @@ export class EditorObjectRenderer {
         layout: PlacedLayout
     ): Phaser.GameObjects.Sprite[] {
         const animationKey = buildAssetAnimationKey(asset.id);
-        const animated = shouldPlayAnimation(
-            asset,
-            this.scene.anims.exists(animationKey)
-        );
+        // A door plays its animation once, when its room opens or closes.
+        const animated =
+            asset.type !== ASSET_TYPES.DOOR &&
+            shouldPlayAnimation(asset, this.scene.anims.exists(animationKey));
 
         return layout.slices.map((slice) => {
             const sprite = this.scene.add.sprite(

@@ -4,6 +4,7 @@ import { MapPalette } from "@/features/assets/components/instances/palette/MapPa
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
+import { getDoorPaletteReason } from "@/features/editor/utils/getDoorPaletteReason";
 import type { EditorPalette } from "@/features/editor/types/editor-palette";
 
 type ObjectsTabProps = {
@@ -12,6 +13,8 @@ type ObjectsTabProps = {
     // How the palette looks. The editor panel by default.
     look?: PaletteLook;
     searchPlaceholder?: string;
+    // Only in the area composer, where the area (not the map) is the room.
+    areaIsRoom?: boolean;
 };
 
 // The library of objects. Picking one puts the editor in placing mode with
@@ -21,6 +24,7 @@ export const ObjectsTab = ({
     palette,
     look,
     searchPlaceholder,
+    areaIsRoom,
 }: ObjectsTabProps) => {
     const store = useEditorStore();
     const placing = useEditorSelector((state) => state.placing);
@@ -36,12 +40,16 @@ export const ObjectsTab = ({
         store.startPlacing(asset.id);
     };
 
+    const getDisabledReason = (asset: AssetDefinition) =>
+        getDoorPaletteReason(asset, areaIsRoom);
+
     return (
         <MapPalette
             tilesets={palette.tilesets}
             categories={palette.categories}
             onPick={handlePick}
             selectedId={placing}
+            getDisabledReason={getDisabledReason}
             look={look}
             searchPlaceholder={searchPlaceholder}
             hideTilesTab

@@ -42,6 +42,7 @@ export const useComposerSave = ({
         const rect = frameStore.getRect();
         const captured = captureStamp(draftStore.getState().draft, rect, {
             zoneLabel: getZoneLabel(values),
+            zoneKind: values.zoneKind,
         });
         if (!captured.ok) {
             setIssues(captured.errors);

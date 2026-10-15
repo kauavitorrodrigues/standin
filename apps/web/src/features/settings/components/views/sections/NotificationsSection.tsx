@@ -18,21 +18,6 @@ export const NotificationsSection = () => {
                     <NotificationsSwitch />
                 </SettingsRow>
             </SettingsGroup>
-            <SettingsGroup label="Conversas por perto">
-                <SettingsRow
-                    title="Avisar quando alguém chegar por perto"
-                    description="Você sempre ouve quem está por perto na aba do espaço. Isto controla o aviso quando a aba está em segundo plano"
-                >
-                    <NotificationSettingsSelect
-                        field="nearbyNotify"
-                        ariaLabel="Avisar quando alguém chegar por perto"
-                        options={[
-                            { value: "all", label: "Todas as conversas" },
-                            { value: "none", label: "Nenhuma" },
-                        ]}
-                    />
-                </SettingsRow>
-            </SettingsGroup>
             <SettingsGroup label="Chat">
                 <SettingsRow
                     title="Notificar sobre"

@@ -10,6 +10,7 @@ import { NO_FOOTPRINT_MASK, NO_SOLID_MASK } from "../consts/footprintMask";
 import { NO_ROTATION } from "../consts/rotationMeta";
 import { ASSET_MESSAGES } from "../consts/messages";
 import { STATIC_FRAME_COUNT } from "../consts/frames";
+import { readImageSize } from "../queries/useImageSize";
 import { useCreateVariant } from "../mutations/createVariant";
 import type { AddVariantFormValues } from "../types/addVariantForm";
 import { applyApiErrorWithFallback } from "../utils/applyApiErrorWithFallback";
@@ -59,8 +60,9 @@ export const useAddVariantForm = ({ family, onDone }: Params) => {
     useVariantAutoColor(form, familyHasColor);
 
     const onSubmit = async (values: AddVariantFormValues) => {
-        const errors = validateAddVariant(family, values);
         const [image] = values.image;
+        const imageSize = image ? await readImageSize(image) : undefined;
+        const errors = validateAddVariant(family, values, imageSize);
         if (image) {
             const message = await validateUploadFile(image);
             if (message) errors.image = message;

@@ -216,13 +216,18 @@ export class SelectController implements ToolController {
             free: context.ctrl
                 ? undefined
                 : {
-                      startX: drag.startX,
-                      startY: drag.startY,
-                      x: context.worldX,
-                      y: context.worldY,
-                  },
+                    startX: drag.startX,
+                    startY: drag.startY,
+                    x: context.worldX,
+                    y: context.worldY,
+                },
         });
-        return planMove({ model: context.model, id: drag.id, ...target });
+        return planMove({
+            model: context.model,
+            id: drag.id,
+            rooms: this.env.getDoorRooms?.() ?? undefined,
+            ...target,
+        });
     }
 
     // Why the host refuses the move the plan describes, or null.

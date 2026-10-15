@@ -11,6 +11,7 @@ import {
     STAMP_MIN_SIZE,
     STAMP_VERSION,
 } from "../consts/limits";
+import { STAMP_ZONE_KINDS } from "../consts/stamp-zone-kinds";
 import type { CaptureStampOptions } from "../types/capture-stamp-options";
 import type { CaptureStampResult } from "../types/capture-stamp-result";
 import type { EditorModel } from "../types/editor-model";
@@ -43,10 +44,20 @@ const checkRect = (model: EditorModel, rect: StampRect): LayoutIssue[] => {
         : [issue(Code.STAMP_OUT_OF_BOUNDS, Messages.stampOutOfBounds)];
 };
 
+// An `area` zone stays as it always was, with no kind. Only a room says so.
+const buildStampZone = (opts: CaptureStampOptions): Stamp["zone"] => {
+    if (opts.zoneLabel === null) return null;
+
+    const label = opts.zoneLabel.trim();
+    return opts.zoneKind === STAMP_ZONE_KINDS.PRIVATE
+        ? { label, kind: STAMP_ZONE_KINDS.PRIVATE }
+        : { label };
+};
+
 /**
  * Reads a rectangle of the model into a stamp: the four layers as palette
  * indexes, every object fully inside it (offsets included) and, with a
- * `zoneLabel`, the area zone. Claimed desks, spawns, other zones, property
+ * `zoneLabel`, the zone (a room with `zoneKind` private). Claimed desks, spawns, other zones, property
  * overrides and the background are not captured. The result goes through
  * validateStamp before it is returned.
  */
@@ -81,7 +92,7 @@ export const captureStamp = (
         palette: layers.palette,
         layers: layers.layers,
         objects: captured.objects,
-        zone: opts.zoneLabel === null ? null : { label: opts.zoneLabel.trim() },
+        zone: buildStampZone(opts),
     };
 
     const invalid = validateStamp(stamp, model.library);

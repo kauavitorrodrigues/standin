@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { Cell, EditorModel } from "@standin/contracts";
+import type { AssetDefinition, Cell, EditorModel } from "@standin/contracts";
 import { ZONE_MESSAGES } from "@/features/editor/consts/messages";
 import { createDraftStore } from "@/features/editor/lib/DraftStore";
 import { createEditorStore } from "@/features/editor/lib/EditorStore";
@@ -180,6 +180,87 @@ describe("ZoneDragController resize", () => {
                 worldY: 7 * 32,
             })
         ).toBe(false);
+    });
+});
+
+const doorAsset = {
+    id: "door",
+    type: "DOOR",
+    placement: "GROUND",
+    footprint: { w: 1, h: 1, offsetX: 0 },
+    surfaceHeightPx: 0,
+} as unknown as AssetDefinition;
+
+// A room at (3, 3) 4 x 4 with a door on its top border, at tile (4, 2).
+const roomWithDoor = (): EditorModel => {
+    const base = buildZoneModel([
+        { id: 1, kind: "spawn", x: 0, y: 0, w: 1, h: 1 },
+        {
+            id: 2,
+            kind: "private",
+            x: 3,
+            y: 3,
+            w: 4,
+            h: 4,
+            label: "Sala",
+            key: "room-a",
+        },
+    ]);
+    return {
+        ...base,
+        placed: [
+            {
+                id: "d1",
+                assetId: "door",
+                tileX: 4,
+                tileY: 2,
+                offsetX: 0,
+                offsetY: 0,
+                parentId: null,
+                propertyOverrides: null,
+            },
+        ],
+        library: { ...base.library, assets: [doorAsset] },
+    };
+};
+
+describe("ZoneDragController room with doors", () => {
+    it("refuses moving a room so its door ends up outside", () => {
+        const { controller, dispatch, hints, at } = setup(roomWithDoor());
+
+        controller.pressBody(at([4, 4]), toZoneSelectionId(2));
+        controller.onPointerUp(at([4, 8]));
+
+        expect(dispatch).not.toHaveBeenCalled();
+        expect(hints).toContain(ZONE_MESSAGES.ROOM_DOORS_LEFT_OUT);
+    });
+
+    it("allows a small move that keeps the door on the border", () => {
+        const { controller, dispatch, at } = setup(roomWithDoor());
+
+        controller.pressBody(at([4, 4]), toZoneSelectionId(2));
+        controller.onPointerUp(at([5, 4]));
+
+        expect(dispatch).toHaveBeenCalledTimes(1);
+    });
+
+    it("refuses resizing a room so its door ends up outside", () => {
+        const { controller, store, dispatch, hints, at } =
+            setup(roomWithDoor());
+        store.setSelection([toZoneSelectionId(2)]);
+
+        // The north west corner is at (3, 3) tiles. Dragging it to (3, 6)
+        // shrinks the room away from the door.
+        const pressed = controller.pressHandle({
+            ...at([3, 3]),
+            worldX: 3 * 32,
+            worldY: 3 * 32,
+        });
+        controller.onPointerUp(at([3, 6]));
+
+        expect(pressed).toBe(true);
+        expect(dispatch).not.toHaveBeenCalled();
+        expect(hints).toContain(ZONE_MESSAGES.ROOM_DOORS_LEFT_OUT);
     });
 });
 

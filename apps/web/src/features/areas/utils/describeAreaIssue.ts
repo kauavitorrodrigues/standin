@@ -21,6 +21,10 @@ export const describeAreaIssue = (issue: LayoutIssue): string => {
             return AREA_ISSUE_MESSAGES.STAMP_ASSET_UNAVAILABLE;
         case LAYOUT_ISSUE_CODES.STAMP_TILESET_UNAVAILABLE:
             return AREA_ISSUE_MESSAGES.STAMP_TILESET_UNAVAILABLE;
+        case LAYOUT_ISSUE_CODES.STAMP_DOOR_NEEDS_ROOM:
+            return AREA_ISSUE_MESSAGES.STAMP_DOOR_NEEDS_ROOM;
+        case LAYOUT_ISSUE_CODES.STAMP_DOOR_OUTSIDE_ROOM:
+            return AREA_ISSUE_MESSAGES.STAMP_DOOR_OUTSIDE_ROOM;
         default:
             return issue.message;
     }

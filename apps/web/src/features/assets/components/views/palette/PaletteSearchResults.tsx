@@ -9,6 +9,8 @@ type Props = {
     // The family to show as picked.
     selectedId?: string | null;
     showNames?: boolean;
+    // Why a family cannot be picked, or null when it can.
+    getDisabledReason?: (asset: AssetDefinition) => string | null;
 };
 
 // Matches of the search across every category.
@@ -18,6 +20,7 @@ export const PaletteSearchResults = ({
     onPick,
     selectedId,
     showNames,
+    getDisabledReason,
 }: Props) => {
     const results = searchFamilies(families, search);
     if (results.length === 0) return <PaletteSearchEmptyState />;
@@ -28,6 +31,7 @@ export const PaletteSearchResults = ({
             onPick={onPick}
             selectedId={selectedId}
             showNames={showNames}
+            getDisabledReason={getDisabledReason}
         />
     );
 };

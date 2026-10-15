@@ -117,6 +117,41 @@ describe("EditorOpSchema", () => {
         expect(ok({ type: "set_zone", zone })).toBe(false);
     });
 
+    it("requires a label and a key on room zones", () => {
+        const zone = {
+            kind: "private",
+            label: "Sala",
+            key: "room-a",
+            rect: { x: 0, y: 0, w: 3, h: 3 },
+        };
+        expect(ok({ type: "set_zone", zone })).toBe(true);
+        expect(
+            ok({ type: "set_zone", zone: { ...zone, key: undefined } })
+        ).toBe(false);
+        expect(ok({ type: "set_zone", zone: { ...zone, key: " " } })).toBe(
+            false
+        );
+        expect(ok({ type: "set_zone", zone: { ...zone, label: " " } })).toBe(
+            false
+        );
+        expect(
+            ok({
+                type: "set_zone",
+                zone: { ...zone, rect: { ...zone.rect, w: 1 } },
+            })
+        ).toBe(false);
+    });
+
+    it("refuses a key on a zone that is not a room", () => {
+        const zone = {
+            kind: "area",
+            label: "Sala",
+            key: "k",
+            rect: { x: 0, y: 0, w: 3, h: 3 },
+        };
+        expect(ok({ type: "set_zone", zone })).toBe(false);
+    });
+
     it("accepts and rejects remove_zone and set_background", () => {
         expect(ok({ type: "remove_zone", zoneId: 4 })).toBe(true);
         expect(ok({ type: "remove_zone", zoneId: "4" })).toBe(false);

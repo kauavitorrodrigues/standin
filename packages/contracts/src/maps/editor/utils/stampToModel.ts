@@ -3,6 +3,7 @@ import type { StampToModelResult } from "../types/stamp-to-model-result";
 import type { Stamp } from "../types/stamp";
 import { LAYOUT_LAYER_NAMES } from "../../schemas/layout.schema";
 import { buildBlankEditorModel } from "./buildBlankEditorModel";
+import { getStampZoneKind } from "./getStampZoneKind";
 import { buildStampOps } from "./buildStampOps";
 
 /**
@@ -10,7 +11,7 @@ import { buildStampOps } from "./buildStampOps";
  * model has the size of `canvas` when given (the composer passes the maximum
  * size and frames the area inside it), otherwise the size of the stamp. This
  * is how the composer opens an existing area. The
- * zone is not placed in the model, its name comes back as `zoneLabel`. The
+ * zone is not placed in the model, its name comes back as `zoneLabel` and its kind as `zoneKind`. The
  * stamp must have passed StampSchema, and it fails with the placement errors
  * when the library no longer allows it.
  */
@@ -40,5 +41,6 @@ export const stampToModel = (
         ok: true,
         model: result.model,
         zoneLabel: stamp.zone?.label ?? null,
+        zoneKind: getStampZoneKind(stamp),
     };
 };

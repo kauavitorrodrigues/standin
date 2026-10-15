@@ -41,13 +41,14 @@ export const FormBody = ({
                 form={form}
                 file={file}
                 disabled={isSubmitting}
-                actions={
+                renderActions={(canSave) => (
                     <FormFooter
                         submitLabel="Criar asset"
                         isSubmitting={isSubmitting}
+                        canSubmit={canSave}
                         onCancel={onCancel}
                     />
-                }
+                )}
             />
         </div>
     );

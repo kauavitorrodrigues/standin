@@ -14,6 +14,7 @@ import { AREA_FRAME_LIMITS } from "../consts/composer";
 import type { AreaComposerFormValues } from "../types/areaComposerForm";
 import type { ComposerStart } from "../types/composerStart";
 import { AreaComposerSchema } from "../utils/areaComposerSchema";
+import { isRoomArea } from "../utils/isRoomArea";
 import { useComposerDirty } from "./useComposerDirty";
 import { useComposerDiscard } from "./useComposerDiscard";
 import { useComposerSave } from "./useComposerSave";
@@ -39,8 +40,12 @@ export const useComposer = ({ areaId, map, start, onExit }: Params) => {
     const draftStore = useDraftStore();
     const [frameStore] = useState(() => createFrameStore(start.frame));
     const frame = useMemo(
-        () => ({ store: frameStore, limits: AREA_FRAME_LIMITS }),
-        [frameStore]
+        () => ({
+            store: frameStore,
+            limits: AREA_FRAME_LIMITS,
+            isRoom: () => isRoomArea(form.getValues()),
+        }),
+        [frameStore, form]
     );
 
     const sceneLink = useSceneSync();

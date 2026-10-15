@@ -58,6 +58,7 @@ describe("buildComposerStart", () => {
         expect(result.start.values).toEqual({
             name: "",
             createZone: true,
+            zoneKind: "area",
         });
     });
 
@@ -81,6 +82,7 @@ describe("buildComposerStart", () => {
         expect(result.start.values).toEqual({
             name: "Sala",
             createZone: true,
+            zoneKind: "area",
         });
     });
 

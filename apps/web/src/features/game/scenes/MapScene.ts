@@ -1,8 +1,10 @@
 import Phaser from "phaser";
-import type {
-    AssetDefinition,
-    PlacedAsset,
-    PlayerPosition,
+import {
+    LAYOUT_LAYER_NAMES,
+    ROOM_DOOR_STATES,
+    type AssetDefinition,
+    type PlacedAsset,
+    type PlayerPosition,
 } from "@standin/contracts";
 import {
     GAME_SCENE_KEYS,
@@ -38,8 +40,37 @@ import {
 } from "@/features/game/utils/player";
 import { SeatController } from "@/features/game/lib/SeatController";
 import { SeatOccupancy } from "@/features/game/lib/SeatOccupancy";
-import { buildSeatAreas } from "@/features/game/utils/buildSeatAreas";
+import {
+    buildSeatAreas,
+    type SeatArea,
+} from "@/features/game/utils/buildSeatAreas";
 import { buildDeskAreas } from "@/features/game/utils/buildDeskAreas";
+import { RoomDoorController } from "@/features/game/lib/RoomDoorController";
+import { RoomDoorColliders } from "@/features/game/lib/RoomDoorColliders";
+import { RoomDoorView } from "@/features/game/renderers/RoomDoorView";
+import { RoomDimOverlay } from "@/features/game/renderers/RoomDimOverlay";
+import type { RoomDoorSync } from "@/features/game/multiplayer/lib/RoomDoorSync";
+import type { PlacedRect } from "@/features/game/utils/placed";
+import {
+    buildWallCells,
+    type WallCells,
+} from "@/features/game/utils/wallCells";
+import { pickAdmissionSpot } from "@/features/game/utils/pickAdmissionSpot";
+import { buildRooms } from "@/features/game/utils/buildRooms";
+import { buildDoorViewDoors } from "@/features/game/utils/buildDoorViewDoors";
+import { buildRoomDoors } from "@/features/game/utils/buildRoomDoors";
+import { getRoomStates } from "@/features/game/utils/getRoomStates";
+import { getColliderStates } from "@/features/game/utils/getColliderStates";
+import { readTilemapZones } from "@/features/game/utils/readTilemapZones";
+import { ROOM_EVENTS } from "@/features/game/consts/room-events";
+import { ROOM_DOOR_COLLIDER_PREFIX } from "@/features/game/consts/room-door";
+import type { CurrentRoom } from "@/features/game/types/room-current";
+import type {
+    GameRoom,
+    GameRoomDoor,
+    RoomDoorStates,
+    RoomEntitlements,
+} from "@/features/game/types/room";
 import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
 import { REMOTE_AVATAR_APPEARANCE } from "@/features/game/consts/remote-avatar";
 import {
@@ -55,7 +86,11 @@ import { resolveDefaultSpawnPoint } from "@/features/game/utils/map";
 import type { MapSceneInitData } from "@/features/game/types/tilemap";
 import { SEND_INTERVAL_MS } from "@/features/game/multiplayer/consts/sync";
 import { MAX_AUDIBLE_RADIUS } from "@/features/game/multiplayer/consts/audio";
+import { getCommunicationDistance } from "@/features/game/utils/canCommunicate";
+import { getRoomAt } from "@/features/game/utils/getRoomAt";
 import { calculateVolumeFromDistance } from "@/features/game/multiplayer/utils/audio";
+import { ROOM_DOOR_PADLOCK } from "@/features/game/consts/room-door";
+import padlockUrl from "@assets/game/lock.png";
 
 export class MapScene extends Phaser.Scene {
     private mapData!: MapSceneInitData["map"];
@@ -86,6 +121,8 @@ export class MapScene extends Phaser.Scene {
         ((distances: ReadonlyMap<string, number>) => void) | null = null;
 
     private mapHeightPx = 0;
+    private wallCells: WallCells = new Set();
+    private roomDoors: GameRoomDoor[] = [];
     private mapColumns = 0;
     private mapRows = 0;
     // Asked by the camera drag. The decorator holds the camera still for a
@@ -93,6 +130,20 @@ export class MapScene extends Phaser.Scene {
     private canPanCamera: () => boolean = () => true;
     private placedSync: PlacedObjectsSync | null = null;
     private solidGroup: Phaser.Physics.Arcade.StaticGroup | null = null;
+
+    private rooms: GameRoom[] = [];
+    private roomDoorController: RoomDoorController | null = null;
+    private roomDoorColliders: RoomDoorColliders | null = null;
+    private roomDoorView: RoomDoorView | null = null;
+    private roomDimOverlay: RoomDimOverlay | null = null;
+    private roomSync: RoomDoorSync | null = null;
+    private roomEntitlements: RoomEntitlements = {
+        all: false,
+        roomKeys: new Set(),
+    };
+    private seatAreas: SeatArea[] = [];
+    private unsubscribeRoomSync: (() => void) | null = null;
+    private currentRoomKey: string | null = null;
 
     cameraController: MapCameraController | null = null;
     player: Player | null = null;
@@ -108,6 +159,7 @@ export class MapScene extends Phaser.Scene {
 
     preload(): void {
         loadMapAssets(this.load, this.mapData);
+        this.load.image(ROOM_DOOR_PADLOCK.TEXTURE_KEY, padlockUrl);
     }
 
     create(): void {
@@ -128,9 +180,15 @@ export class MapScene extends Phaser.Scene {
         );
 
         this.solidGroup = solidGroup;
+        const objectRenderer = new EditorObjectRenderer(
+            this,
+            assets,
+            tilemap.heightInPixels
+        );
+        const solidColliders = new SolidColliders(this, solidGroup);
         this.placedSync = new PlacedObjectsSync(
-            new EditorObjectRenderer(this, assets, tilemap.heightInPixels),
-            new SolidColliders(this, solidGroup),
+            objectRenderer,
+            solidColliders,
             tilemap.heightInPixels
         );
         this.placedSync.apply(this.mapData.placed ?? [], assets);
@@ -165,13 +223,54 @@ export class MapScene extends Phaser.Scene {
             DESK_EVENTS.HOVER_CHANGED
         );
 
+        this.wallCells = buildWallCells(
+            tilemap.getLayer(LAYOUT_LAYER_NAMES.WALLS)?.data ?? []
+        );
+        const zones = readTilemapZones(tilemap);
+        this.rooms = buildRooms(zones);
+        this.roomDoorColliders = new RoomDoorColliders({
+            set: (id, rects) =>
+                solidColliders.set(`${ROOM_DOOR_COLLIDER_PREFIX}${id}`, rects),
+            remove: (id) =>
+                solidColliders.remove(`${ROOM_DOOR_COLLIDER_PREFIX}${id}`),
+        });
+        this.roomDoorView = new RoomDoorView(this, {
+            getSprite: (id) => objectRenderer.getSprite(id),
+        });
+        this.roomDimOverlay = new RoomDimOverlay(this, {
+            x: 0,
+            y: 0,
+            width: tilemap.widthInPixels,
+            height: tilemap.heightInPixels,
+        });
+        this.roomDoorController = new RoomDoorController(this.player, {
+            onPresent: (roomKey) => this.roomSync?.present(roomKey),
+            onCrossed: (roomKey, direction) =>
+                this.roomSync?.crossed(roomKey, direction),
+            onStepOnDoor: (roomKey) => this.roomSync?.open(roomKey),
+            onNearLockedDoor: (roomKey) => this.emitLockedDoorNear(roomKey),
+        });
+        this.roomDoorController.setRooms(this.rooms);
+
         this.placedSync.subscribe((placed, assetsById) => {
-            this.seatController?.setAreas(
-                buildSeatAreas(placed, assetsById, tilemap.heightInPixels)
+            this.seatAreas = buildSeatAreas(
+                placed,
+                assetsById,
+                tilemap.heightInPixels
             );
+            this.seatController?.setAreas(this.seatAreas);
             this.deskHoverController?.setTargets(
                 buildDeskAreas(placed, assetsById, tilemap.heightInPixels)
             );
+
+            const doors = buildRoomDoors(placed, assetsById, zones);
+            this.roomDoors = doors;
+            this.roomDoorController?.setDoors(doors);
+            this.roomDoorColliders?.setDoors(doors);
+            this.roomDoorView?.setDoors(
+                buildDoorViewDoors(doors, placed, assetsById)
+            );
+            this.refreshRoomDoors();
         });
 
         bindPlayerCollision(this, this.player, solidGroup);
@@ -215,6 +314,9 @@ export class MapScene extends Phaser.Scene {
             this.seatOccupancy.clear();
             this.remoteAudible.clear();
             this.remoteSpeakingRaw.clear();
+            this.unsubscribeRoomSync?.();
+            this.roomDoorView?.destroy();
+            this.roomDimOverlay?.destroy();
         });
 
         this.game.events.emit(SCENE_EVENTS.MAP_READY);
@@ -223,6 +325,8 @@ export class MapScene extends Phaser.Scene {
     update(time: number, delta: number): void {
         this.playerController?.update();
         this.seatController?.update();
+        this.roomDoorController?.update();
+        this.followCurrentRoom();
         this.player?.updateDepth();
         this.interactionController?.update();
         this.deskHoverController?.update();
@@ -244,6 +348,125 @@ export class MapScene extends Phaser.Scene {
     // Takes the view to a point of the map, with the player left behind.
     focusPoint(x: number, y: number, offsetXPixels = 0): void {
         this.cameraController?.focusPoint(x, y, offsetXPixels);
+    }
+
+    // Follows the doors the server owns. `null` lets go of them, and every
+    // door goes back to open.
+    bindRoomDoors(sync: RoomDoorSync | null): void {
+        this.unsubscribeRoomSync?.();
+        this.unsubscribeRoomSync = null;
+        this.roomSync = sync;
+        if (sync) {
+            const stopStates = sync.subscribe(() => this.refreshRoomDoors());
+            // The server sends its snapshot after every join, reconnects
+            // included, and a new socket id forgot who is inside a room.
+            const stopSnapshot = sync.subscribeSnapshot(() =>
+                this.roomDoorController?.reportPresence()
+            );
+            this.unsubscribeRoomSync = () => {
+                stopStates();
+                stopSnapshot();
+            };
+        }
+        this.refreshRoomDoors();
+    }
+
+    // The locked rooms the local avatar may walk into: all of them for the
+    // owner of the space, or the ones where someone inside accepted it.
+    setRoomEntitlements(entitlements: RoomEntitlements): void {
+        this.roomEntitlements = entitlements;
+        this.roomDoorController?.setEntitlements(entitlements);
+        this.refreshRoomDoors();
+    }
+
+    // The request of the local user was accepted: the avatar goes into the room
+    // and sits on the free seat closest to it, or stands on the free cell
+    // closest to it. The door stays locked. The controller reads the new side
+    // on its next frame and reports crossing in as for any entry.
+    admitToRoom(roomKey: string): void {
+        const { player } = this;
+        const room = this.rooms.find((candidate) => candidate.key === roomKey);
+        if (!player || !room) return;
+
+        const spot = pickAdmissionSpot({
+            room,
+            point: player,
+            seatAreas: this.seatAreas,
+            isTaken: this.seatOccupancy.isTaken,
+            solidRects: this.getSolidRects(),
+            radius: PLAYER_APPEARANCE.RADIUS,
+            wallCells: this.wallCells,
+            doors: this.roomDoors,
+        });
+        if (!spot) return;
+
+        player.standUp();
+        switch (spot.kind) {
+            case "seat":
+                player.sitAt(spot.seat);
+                break;
+            case "cell":
+                player.teleportTo(spot.x, spot.y);
+                break;
+        }
+    }
+
+    private emitLockedDoorNear(roomKey: string | null): void {
+        const room = this.rooms.find((candidate) => candidate.key === roomKey);
+        if (!room) {
+            this.game.events.emit(ROOM_EVENTS.LOCKED_DOOR_NEAR, null);
+            return;
+        }
+
+        const near: CurrentRoom = { roomKey: room.key, roomLabel: room.label };
+        this.game.events.emit(ROOM_EVENTS.LOCKED_DOOR_NEAR, near);
+    }
+
+    // The room the local avatar is in changed: the camera, the dark layer and
+    // the interface around the canvas follow it.
+    private followCurrentRoom(): void {
+        const key = this.roomDoorController?.getRoomKey() ?? null;
+        if (key !== this.currentRoomKey) {
+            this.currentRoomKey = key;
+            // Who the local avatar may talk to changed with the room, so the
+            // next volume pass must not wait for the throttle.
+            this.lastVolumeUpdateAt = 0;
+            this.onCurrentRoomChanged(this.rooms.find((r) => r.key === key));
+        }
+    }
+
+    private onCurrentRoomChanged(room: GameRoom | undefined): void {
+        this.refreshRoomDoors();
+        if (!room) {
+            this.roomDimOverlay?.hide();
+            this.game.events.emit(ROOM_EVENTS.CURRENT_CHANGED, null);
+            return;
+        }
+
+        this.roomDimOverlay?.show(room);
+        const current: CurrentRoom = {
+            roomKey: room.key,
+            roomLabel: room.label,
+        };
+        this.game.events.emit(ROOM_EVENTS.CURRENT_CHANGED, current);
+    }
+
+    // Brings the look of the doors, their bodies and the controller to the
+    // states the server last sent.
+    private refreshRoomDoors(): void {
+        const states: RoomDoorStates = getRoomStates(
+            this.rooms,
+            (key) => this.roomSync?.getState(key) ?? ROOM_DOOR_STATES.OPEN
+        );
+        this.roomDoorController?.setStates(states);
+        this.roomDoorColliders?.setStates(
+            getColliderStates(
+                states,
+                this.currentRoomKey,
+                this.roomEntitlements
+            )
+        );
+        this.roomDoorView?.apply(states);
     }
 
     // The decorator takes the clicks on desks for its own selection, and may
@@ -275,6 +498,15 @@ export class MapScene extends Phaser.Scene {
         this.freeTrappedAvatars();
     }
 
+    private getSolidRects(): PlacedRect[] {
+        if (!this.solidGroup) return [];
+
+        return this.solidGroup
+            .getChildren()
+            .map((child) => child.body as Phaser.Physics.Arcade.StaticBody)
+            .map(({ x, y, width, height }) => ({ x, y, width, height }));
+    }
+
     // An avatar left inside an object that just became solid is taken to the
     // free cell closest to it: the local one at once, the remote ones by the
     // same smoothing as any other move (their own client moves them too).
@@ -282,10 +514,7 @@ export class MapScene extends Phaser.Scene {
         const { player, solidGroup } = this;
         if (!player || !solidGroup) return;
 
-        const solidRects = solidGroup
-            .getChildren()
-            .map((child) => child.body as Phaser.Physics.Arcade.StaticBody)
-            .map(({ x, y, width, height }) => ({ x, y, width, height }));
+        const solidRects = this.getSolidRects();
         const bounds = this.physics.world.bounds;
         const free = (point: { x: number; y: number }, radius: number) =>
             isPositionBlocked(point, radius, solidRects)
@@ -430,11 +659,20 @@ export class MapScene extends Phaser.Scene {
         const distances = new Map<string, number>();
 
         this.remoteAvatars.forEach((avatar, socketId) => {
-            const distance = Phaser.Math.Distance.Between(
-                player.x,
-                player.y,
-                avatar.gameObject.x,
-                avatar.gameObject.y
+            const remoteRoomKey =
+                getRoomAt(this.rooms, {
+                    x: avatar.gameObject.x,
+                    y: avatar.gameObject.y,
+                })?.key ?? null;
+            const distance = getCommunicationDistance(
+                Phaser.Math.Distance.Between(
+                    player.x,
+                    player.y,
+                    avatar.gameObject.x,
+                    avatar.gameObject.y
+                ),
+                this.currentRoomKey,
+                remoteRoomKey
             );
             distances.set(socketId, distance);
             const volume = calculateVolumeFromDistance(
