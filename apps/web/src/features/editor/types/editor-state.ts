@@ -3,6 +3,7 @@ import type { LayerVisibility } from "@/features/editor/types/layer-visibility";
 import type { EditorBrush } from "@/features/editor/types/editor-brush";
 import type { EditorDialog } from "@/features/editor/types/editor-dialog";
 import type { DraftSummary } from "@/features/editor/types/DraftSummary";
+import type { PlacingArea } from "@/features/editor/types/placing-area";
 import type { PanelTab } from "@/features/editor/types/panel-tab";
 import type { EditorStatus } from "@/features/editor/types/status";
 import type { EditorTool } from "@/features/editor/types/tool";
@@ -36,6 +37,8 @@ export type EditorState = {
     draft: DraftSummary;
     // The asset the palette picked to place, or null.
     placing: string | null;
+    // The area the palette picked to place, with its stamp, or null.
+    placingArea: PlacingArea | null;
     // The tile the palette picked for the brush, or null.
     brush: EditorBrush | null;
     // What the zone tool creates: a spawn or an area.

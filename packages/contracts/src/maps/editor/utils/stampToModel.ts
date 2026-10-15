@@ -5,19 +5,22 @@ import { buildBlankEditorModel } from "./buildBlankEditorModel";
 import { buildStampOps } from "./buildStampOps";
 
 /**
- * Opens a stamp as an editable model: a blank model of its size with the stamp
- * laid on the origin. This is how the composer opens an existing area. The
+ * Opens a stamp as an editable model with the stamp laid on the origin. The
+ * model has the size of `canvas` when given (the composer passes the maximum
+ * size and frames the area inside it), otherwise the size of the stamp. This
+ * is how the composer opens an existing area. The
  * zone is not placed in the model, its name comes back as `zoneLabel`. The
  * stamp must have passed StampSchema, and it fails with the placement errors
  * when the library no longer allows it.
  */
 export const stampToModel = (
     stamp: Stamp,
-    library: LibraryPalette
+    library: LibraryPalette,
+    canvas?: { width: number; height: number }
 ): StampToModelResult => {
     const blank = buildBlankEditorModel({
-        width: stamp.width,
-        height: stamp.height,
+        width: canvas?.width ?? stamp.width,
+        height: canvas?.height ?? stamp.height,
         library,
     });
 

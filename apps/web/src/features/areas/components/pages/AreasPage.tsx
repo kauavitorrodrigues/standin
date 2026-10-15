@@ -1,6 +1,6 @@
 import { PageContainer } from "@/components/layout/page-container";
-import { NewAreaDialog } from "../dialogs/NewAreaDialog";
 import { AreasList } from "../instances/AreasList";
+import { NewAreaButton } from "../instances/NewAreaButton";
 
 export function AreasPage() {
     return (
@@ -10,7 +10,7 @@ export function AreasPage() {
                 description="Blocos prontos de mapa, como salas e mesas, que os editores colocam inteiros."
                 controls={
                     <PageContainer.Controls>
-                        <NewAreaDialog />
+                        <NewAreaButton />
                     </PageContainer.Controls>
                 }
             />

@@ -11,6 +11,7 @@ export type ToolEnv = {
         | "subscribe"
         | "pickTile"
         | "cancelPlacing"
+        | "cancelPlacingArea"
         | "setSelection"
         | "clearSelection"
         | "requestDeskRemoval"

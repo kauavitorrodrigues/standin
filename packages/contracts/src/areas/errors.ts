@@ -8,7 +8,6 @@ import { AREA_NAME_MAX } from "./consts/limits";
 
 export const AREA_ISSUE_CODES = {
     THUMBNAIL_SIZE_MISMATCH: "THUMBNAIL_SIZE_MISMATCH",
-    AREA_SIZE_IMMUTABLE: "AREA_SIZE_IMMUTABLE",
 } as const;
 
 export type AreaIssueCode =
@@ -31,13 +30,6 @@ export class ThumbnailSizeMismatchIssue {
     public readonly code = AREA_ISSUE_CODES.THUMBNAIL_SIZE_MISMATCH;
     public readonly path = "image";
     public readonly message = `The image must measure the stamp size times ${TILE_SIZE} px.`;
-}
-
-export class AreaSizeImmutableIssue {
-    public readonly code = AREA_ISSUE_CODES.AREA_SIZE_IMMUTABLE;
-    public readonly path = "stamp";
-    public readonly message =
-        "The size of an area cannot change. Create another area.";
 }
 
 const AREA_INVALID_STATUS = 422;

@@ -25,6 +25,7 @@ export const createEditorEngine = ({
     map,
     store,
     draftStore,
+    frame,
     onHoverCell,
     onHint,
     onSelectionAnchor,
@@ -90,6 +91,7 @@ export const createEditorEngine = ({
         map,
         store,
         draftStore,
+        frame,
     });
 
     const unbindResize = bindGameResize(game, container);
@@ -112,14 +114,14 @@ export const createEditorEngine = ({
             }
             return scene.captureThumbnail();
         },
-        captureNativeSnapshot: () => {
+        captureNativeSnapshot: (rect) => {
             const scene = game.scene.getScene(EDITOR_SCENE_KEYS.EDITOR);
             if (!(scene instanceof EditorScene)) {
                 return Promise.reject(
                     new Error(THUMBNAIL_MESSAGES.CAPTURE_FAILED)
                 );
             }
-            return scene.captureNativeSnapshot();
+            return scene.captureNativeSnapshot(rect);
         },
         destroy: () => {
             onSceneLost?.();

@@ -509,7 +509,7 @@ describe.skipIf(!enabled)("areas over HTTP (real stack)", () => {
             expect(old!.deletedAt).not.toBeNull();
         });
 
-        it("refuses a size change and an unknown area", async () => {
+        it("accepts a size change with a thumbnail of the new size", async () => {
             const area = await createArea();
             const bigger = buildStamp({
                 width: 5,
@@ -523,9 +523,20 @@ describe.skipIf(!enabled)("areas over HTTP (real stack)", () => {
                 `/library/areas/${area.id}`,
                 upload(bigger, "Maior", 5, 3)
             );
-            expect(resized.status).toBe(422);
-            expect(codes(resized)).toEqual(["AREA_SIZE_IMMUTABLE"]);
+            expect(resized.status).toBe(200);
+            expect(resized.body.area).toMatchObject({ width: 5, height: 3 });
 
+            const stale = await send(
+                "admin",
+                "PUT",
+                `/library/areas/${area.id}`,
+                upload(bigger, "Maior", 4, 3)
+            );
+            expect(stale.status).toBe(422);
+            expect(codes(stale)).toEqual(["THUMBNAIL_SIZE_MISMATCH"]);
+        });
+
+        it("refuses an unknown area", async () => {
             const missing = await send(
                 "admin",
                 "PUT",

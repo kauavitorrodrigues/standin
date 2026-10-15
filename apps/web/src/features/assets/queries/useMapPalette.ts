@@ -22,5 +22,6 @@ export const useMapPalette = (mapId: string) => {
         tilesets: query.data?.tilesets ?? [],
         assets: query.data?.assets ?? [],
         categories: query.data?.categories ?? [],
+        areas: query.data?.areas ?? [],
     };
 };
