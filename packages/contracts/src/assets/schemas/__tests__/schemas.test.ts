@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { expandTileMask } from "../../utils/footprintMask";
 import { assetAnimationSchema } from "../asset-animation.schema";
 import {
     CreateAssetDataSchema,
@@ -100,17 +101,15 @@ describe("CreateAssetDataSchema", () => {
 });
 
 describe("CreateAssetDataSchema footprint mask", () => {
+    // Four cells per tile per side, with the bottom right tile left free.
+    const mask = expandTileMask([
+        [true, true],
+        [true, false],
+    ]);
     const valid = {
         name: "Mesa de canto",
         type: "DESK",
-        footprint: {
-            w: 2,
-            h: 2,
-            mask: [
-                [true, true],
-                [true, false],
-            ],
-        },
+        footprint: { w: 2, h: 2, mask },
     };
 
     it("accepts a mask that fits the footprint", () => {
@@ -126,14 +125,15 @@ describe("CreateAssetDataSchema footprint mask", () => {
     });
 
     it.each([
-        { mask: [[true, true]] },
-        { mask: [[true], [true]] },
         {
             mask: [
-                [false, false],
-                [false, false],
+                [true, true],
+                [true, false],
             ],
         },
+        { mask: [[true, true]] },
+        { mask: [[true], [true]] },
+        { mask: expandTileMask([[false, false]]) },
         { mask: [] },
         { mask: [[]] },
     ])("rejects %j", (override) => {
