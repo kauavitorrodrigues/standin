@@ -41,49 +41,52 @@ export const ZoneSchema = z.object({
     targetY: z.number({ error: Messages.zone.target.invalid }).optional(),
 });
 
+export const PaintOpSchema = z.object({
+    type: z.literal("paint"),
+    layer: LayerNameSchema,
+    tilesetId: z
+        .string({ error: Messages.tilesetId.invalid })
+        .min(1, { error: Messages.tilesetId.invalid }),
+    tileIndex: int(Messages.tileIndex.invalid).min(0, {
+        error: Messages.tileIndex.invalid,
+    }),
+    cells: z.array(CellSchema, { error: Messages.cells.invalid }),
+});
+
+export const EraseOpSchema = z.object({
+    type: z.literal("erase"),
+    layer: LayerNameSchema,
+    cells: z.array(CellSchema, { error: Messages.cells.invalid }),
+});
+
+export const SetZoneOpSchema = z.object({
+    type: z.literal("set_zone"),
+    zone: ZoneSchema,
+});
+
+export const RemoveZoneOpSchema = z.object({
+    type: z.literal("remove_zone"),
+    zoneId: int(Messages.zoneId.invalid),
+});
+
+export const SetBackgroundOpSchema = z.object({
+    type: z.literal("set_background"),
+    color: z
+        .string({ error: Messages.color.invalid })
+        .regex(/^#[0-9a-fA-F]{6}$/, { error: Messages.color.invalid }),
+});
+
 export const LayoutOpSchema = z.discriminatedUnion(
     "type",
     [
-        z.object({
-            type: z.literal("paint"),
-            layer: LayerNameSchema,
-            tilesetId: z
-                .string({ error: Messages.tilesetId.invalid })
-                .min(1, { error: Messages.tilesetId.invalid }),
-            tileIndex: int(Messages.tileIndex.invalid).min(0, {
-                error: Messages.tileIndex.invalid,
-            }),
-            cells: z.array(CellSchema, { error: Messages.cells.invalid }),
-        }),
-        z.object({
-            type: z.literal("erase"),
-            layer: LayerNameSchema,
-            cells: z.array(CellSchema, { error: Messages.cells.invalid }),
-        }),
-        z.object({ type: z.literal("set_zone"), zone: ZoneSchema }),
-        z.object({
-            type: z.literal("remove_zone"),
-            zoneId: int(Messages.zoneId.invalid),
-        }),
-        z.object({
-            type: z.literal("set_background"),
-            color: z
-                .string({ error: Messages.color.invalid })
-                .regex(/^#[0-9a-fA-F]{6}$/, { error: Messages.color.invalid }),
-        }),
+        PaintOpSchema,
+        EraseOpSchema,
+        SetZoneOpSchema,
+        RemoveZoneOpSchema,
+        SetBackgroundOpSchema,
     ],
     { error: Messages.op.invalid }
 );
 
-export const LayoutOpsRequestSchema = z.object({
-    baseVersion: int(Messages.baseVersion.invalid).min(1, {
-        error: Messages.baseVersion.invalid,
-    }),
-    ops: z
-        .array(LayoutOpSchema, { error: Messages.ops.invalid })
-        .min(1, { error: Messages.ops.required }),
-});
-
 export type LayoutOp = z.infer<typeof LayoutOpSchema>;
-export type LayoutOpsRequest = z.infer<typeof LayoutOpsRequestSchema>;
 export type LayerName = z.infer<typeof LayerNameSchema>;

@@ -7,5 +7,7 @@ export type Item = AssetDef & {
     assetId: string;
     tileX: number;
     tileY: number;
+    offsetX: number;
+    offsetY: number;
     parentId: string | null;
 };

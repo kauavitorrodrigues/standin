@@ -7,6 +7,8 @@ export type GroundMoveInput = {
     current: Item;
     def: AssetDef;
     next: Position;
+    // Where the pixel offset ends up. Missing means it stays.
+    nextOffset?: { offsetX: number; offsetY: number };
     requestedParentId: string | null | undefined;
     items: Item[];
     children: Item[];

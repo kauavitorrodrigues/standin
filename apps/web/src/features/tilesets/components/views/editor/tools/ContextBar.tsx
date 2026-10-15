@@ -1,5 +1,5 @@
-import { ToolOptionsPanel } from "@/components/editor/ToolOptionsPanel";
-import { ToolOptionToggle } from "@/components/editor/ToolOptionToggle";
+import { ToolOptionsPanel } from "@/features/editor/components/layout/ToolOptionsPanel";
+import { ToolOptionToggle } from "@/features/editor/components/views/ToolOptionToggle";
 import type { TileTool } from "../../../../types/sheet";
 import { getBucketScopeLabel } from "../../../../utils/editor/getBucketScopeLabel";
 

@@ -41,9 +41,10 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
         method: string,
         route: string,
         body?: unknown,
-        raw?: FormData
+        raw?: FormData,
+        extraHeaders: Record<string, string> = {}
     ) => {
-        const headers: Record<string, string> = {};
+        const headers: Record<string, string> = { ...extraHeaders };
         if (as) headers.cookie = `token=${createToken(users[as])}`;
         if (body !== undefined) headers["content-type"] = "application/json";
 
@@ -61,6 +62,34 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             json = text;
         }
         return { status: response.status, body: json };
+    };
+
+    // Layout changes go through the publication, as the editor does: take the
+    // lock, publish once with its session and let the lock go.
+    const publishHttp = async (
+        as: UserKey,
+        mapId: string,
+        baseVersion: number,
+        ops: unknown[]
+    ) => {
+        const session = `http-publish-${as}`;
+        core.MapLockService.acquire(
+            mapId,
+            { id: users[as].id, name: as },
+            session
+        );
+        try {
+            return await call(
+                as,
+                "POST",
+                `/maps/${mapId}/publish`,
+                { publishId: crypto.randomUUID(), baseVersion, ops },
+                undefined,
+                { "x-editor-session": session }
+            );
+        } finally {
+            core.MapLockService.release(mapId, session);
+        }
     };
 
     const listen = (as: UserKey): Promise<Socket> =>
@@ -213,7 +242,8 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             for (const [method, route] of [
                 ["GET", "/maps/x/render"],
                 ["GET", "/maps/x/export"],
-                ["POST", "/maps/x/layout-ops"],
+                ["GET", "/maps/x/lock"],
+                ["POST", "/maps/x/publish"],
                 ["POST", "/maps/x/assets"],
                 ["GET", "/spaces/x/desks"],
                 ["GET", "/templates"],
@@ -255,7 +285,7 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
                 sizeTier: "M",
             });
             expect(disabled.status).toBe(422);
-            expect(disabled.body.error).toContain("tamanho");
+            expect(disabled.body.error).toContain("size");
 
             const created = await call("owner", "POST", route, body);
             expect(created.status).toBe(201);
@@ -321,63 +351,90 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
         });
     });
 
-    describe("layout-ops over HTTP", () => {
-        const route = () => `/maps/${space.mapId}/layout-ops`;
-
+    describe("publish over HTTP", () => {
         it("is owner only, validated, and answers the stale and invalid cases", async () => {
             const op = { type: "set_background", color: "#123456" };
 
             expect(
-                (
-                    await call("member", "POST", route(), {
-                        baseVersion: 1,
-                        ops: [op],
-                    })
-                ).status
+                (await publishHttp("member", space.mapId, 1, [op])).status
             ).toBe(403);
+            // A bad operation and a bad base version break the contract.
             expect(
                 (
-                    await call("owner", "POST", route(), {
-                        baseVersion: 1,
-                        ops: [],
-                    })
+                    await publishHttp("owner", space.mapId, 1, [
+                        { type: "set_background", color: "red" },
+                    ])
                 ).status
             ).toBe(400);
             expect(
-                (
-                    await call("owner", "POST", route(), {
-                        baseVersion: 1,
-                        ops: [{ type: "set_background", color: "red" }],
-                    })
-                ).status
+                (await publishHttp("owner", space.mapId, 0, [op])).status
             ).toBe(400);
 
-            const ok = await call("owner", "POST", route(), {
-                baseVersion: 1,
-                ops: [op],
-            });
-            expect(ok).toEqual({ status: 200, body: { version: 2 } });
+            const ok = await publishHttp("owner", space.mapId, 1, [op]);
+            expect(ok.status).toBe(200);
+            expect(ok.body.version).toBe(2);
 
-            const stale = await call("owner", "POST", route(), {
-                baseVersion: 1,
-                ops: [op],
-            });
+            const stale = await publishHttp("owner", space.mapId, 1, [op]);
             expect(stale.status).toBe(409);
             expect(stale.body).toMatchObject({
                 code: "STALE_LAYOUT_VERSION",
                 version: 2,
             });
 
-            const invalid = await call("owner", "POST", route(), {
-                baseVersion: 2,
-                ops: [{ type: "erase", layer: "ground", cells: [[999, 0]] }],
-            });
+            const invalid = await publishHttp("owner", space.mapId, 2, [
+                { type: "erase", layer: "ground", cells: [[999, 0]] },
+            ]);
             expect(invalid.status).toBe(422);
             expect(invalid.body.errors[0]).toMatchObject({
+                opIndex: 0,
                 code: "CELL_OUT_OF_BOUNDS",
-                path: expect.stringContaining("ops.0"),
+                path: "999,0",
             });
-            expect(invalid.body.warnings).toEqual([]);
+        });
+
+        it("paints, and a batch with a bad operation writes nothing", async () => {
+            const floors = await call(
+                "owner",
+                "GET",
+                `/maps/${space.mapId}/library`
+            );
+// The palette only paints tiles that have a category.
+            const tilesetId = floors.body.library.tilesets.find(
+                (tileset: { tileMeta?: Record<string, unknown> }) =>
+                    tileset.tileMeta?.["1"]
+            ).id;
+            const before = (
+                await call("owner", "GET", `/maps/${space.mapId}/render`)
+            ).body.map.layoutVersion;
+
+            const bad = await publishHttp("owner", space.mapId, before, [
+                {
+                    type: "paint",
+                    layer: "ground",
+                    tilesetId,
+                    tileIndex: 1,
+                    cells: [[3, 3]],
+                },
+                { type: "erase", layer: "ground", cells: [[999, 999]] },
+            ]);
+            expect(bad.status).toBe(422);
+            expect(bad.body.errors[0].opIndex).toBe(1);
+            expect(
+                (await call("owner", "GET", `/maps/${space.mapId}/render`))
+                    .body.map.layoutVersion
+            ).toBe(before);
+
+            const painted = await publishHttp("owner", space.mapId, before, [
+                {
+                    type: "paint",
+                    layer: "ground",
+                    tilesetId,
+                    tileIndex: 1,
+                    cells: [[3, 3]],
+                },
+            ]);
+            expect(painted.status).toBe(200);
+            expect(painted.body.version).toBe(before + 1);
         });
     });
 
@@ -401,7 +458,7 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
                 tileY: 5,
             });
             expect(overlap.status).toBe(422);
-            expect(overlap.body.error).toContain("posição");
+            expect(overlap.body.error).toContain("position");
 
             expect(
                 (
@@ -456,7 +513,7 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
                 {}
             );
             expect(taken.status).toBe(409);
-            expect(taken.body.error).toContain("dono");
+            expect(taken.body.error).toContain("owner");
 
             expect(
                 (await call("outsider", "POST", `${base}/${deskId}/claim`, {}))
@@ -582,6 +639,194 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
         });
     });
 
+    describe("the map lock over HTTP", () => {
+        const holder = () => ({ id: users.admin.id, name: "Admin" });
+
+        it("serves limits and lock in the render and on GET /lock", async () => {
+            const { MapRenderPayloadSchema, MAX_OBJECTS_PER_MAP } =
+                await import("@standin/contracts");
+
+            const free = await call(
+                "owner",
+                "GET",
+                `/maps/${space.mapId}/render`
+            );
+            expect(MapRenderPayloadSchema.safeParse(free.body).success).toBe(
+                true
+            );
+            expect(free.body.lock).toEqual({ locked: false });
+            expect(free.body.limits).toEqual({
+                objectsUsed: free.body.placed.length,
+                objectsMax: MAX_OBJECTS_PER_MAP,
+            });
+            expect(
+                (await call("owner", "GET", `/maps/${space.mapId}/lock`)).body
+            ).toEqual({ locked: false });
+
+            core.MapLockService.acquire(space.mapId, holder(), "session-a");
+            try {
+                const locked = await call(
+                    "member",
+                    "GET",
+                    `/maps/${space.mapId}/lock`
+                );
+                expect(locked.status).toBe(200);
+                expect(locked.body.locked).toBe(true);
+                expect(locked.body.by).toEqual(holder());
+                expect(typeof locked.body.since).toBe("string");
+                expect(locked.body.sessionId).toBeUndefined();
+
+                const render = await call(
+                    "member",
+                    "GET",
+                    `/maps/${space.mapId}/render`
+                );
+                expect(render.body.lock).toEqual(locked.body);
+
+                expect(
+                    (
+                        await call(
+                            "outsider",
+                            "GET",
+                            `/maps/${space.mapId}/lock`
+                        )
+                    ).status
+                ).toBe(404);
+            } finally {
+                core.MapLockService.release(space.mapId, "session-a");
+            }
+        });
+
+        it("answers 423 on every object and desk route, whoever asks", async () => {
+            const placed = await call(
+                "owner",
+                "POST",
+                `/maps/${space.mapId}/assets`,
+                { assetId: defs.desk, tileX: 14, tileY: 14 }
+            );
+            expect(placed.status).toBe(201);
+            const id = placed.body.placed[0].id;
+            const desks = `/spaces/${space.id}/desks`;
+
+            core.MapLockService.acquire(space.mapId, holder(), "session-a");
+            try {
+                const attempts: [
+                    "owner" | "member",
+                    string,
+                    string,
+                    unknown?,
+                ][] = [
+                    [
+                        "owner",
+                        "POST",
+                        `/maps/${space.mapId}/assets`,
+                        { assetId: defs.tree, tileX: 1, tileY: 1 },
+                    ],
+                    [
+                        "owner",
+                        "PATCH",
+                        `/maps/${space.mapId}/assets/${id}`,
+                        { tileX: 15, tileY: 14 },
+                    ],
+                    ["owner", "DELETE", `/maps/${space.mapId}/assets/${id}`],
+                    ["member", "POST", `${desks}/${id}/claim`, {}],
+                    ["member", "DELETE", `${desks}/${id}/claim`],
+                    [
+                        "owner",
+                        "POST",
+                        `${desks}/${id}/assign`,
+                        { userId: users.other.id },
+                    ],
+                ];
+                for (const [as, method, route, body] of attempts) {
+                    const response = await call(as, method, route, body);
+                    expect(response.status, `${method} ${route}`).toBe(423);
+                    expect(response.body.code).toBe("MAP_LOCKED");
+                    expect(response.body.by).toEqual(holder());
+                    expect(typeof response.body.since).toBe("string");
+                }
+
+                // Reading stays free.
+                expect(
+                    (
+                        await call(
+                            "member",
+                            "GET",
+                            `/maps/${space.mapId}/render`
+                        )
+                    ).status
+                ).toBe(200);
+                expect(
+                    (await call("member", "GET", desks)).status
+                ).toBe(200);
+            } finally {
+                core.MapLockService.release(space.mapId, "session-a");
+            }
+
+            expect(
+                (
+                    await call(
+                        "owner",
+                        "DELETE",
+                        `/maps/${space.mapId}/assets/${id}`
+                    )
+                ).status
+            ).toBe(200);
+        });
+
+        it("refuses to delete a space or a template with the map locked", async () => {
+            const spaces = `/organizations/${organizationId}/spaces`;
+            const created = await call("owner", "POST", spaces, {
+                name: "Descartavel",
+                sizeTier: "XS",
+            });
+            expect(created.status).toBe(201);
+
+            core.MapLockService.acquire(created.body.mapId, holder(), "s-1");
+            const refusedSpace = await call(
+                "owner",
+                "DELETE",
+                `${spaces}/${created.body.space.id}`
+            );
+            expect(refusedSpace.status).toBe(423);
+            expect(refusedSpace.body.code).toBe("MAP_LOCKED");
+            core.MapLockService.release(created.body.mapId, "s-1");
+            expect(
+                (
+                    await call(
+                        "owner",
+                        "DELETE",
+                        `${spaces}/${created.body.space.id}`
+                    )
+                ).status
+            ).toBe(200);
+
+            const tpl = await call("admin", "POST", "/templates", {
+                name: "Descartavel",
+                sizeTier: "XS",
+            });
+            expect(tpl.status).toBe(201);
+            core.MapLockService.acquire(tpl.body.mapId, holder(), "s-2");
+            const refusedTemplate = await call(
+                "admin",
+                "DELETE",
+                `/templates/${tpl.body.templateId}`
+            );
+            expect(refusedTemplate.status).toBe(423);
+            expect(refusedTemplate.body.code).toBe("MAP_LOCKED");
+            core.MapLockService.release(tpl.body.mapId, "s-2");
+            expect(
+                (
+                    await call(
+                        "admin",
+                        "DELETE",
+                        `/templates/${tpl.body.templateId}`
+                    )
+                ).status
+            ).toBe(200);
+        });
+    });
+
     describe("socket events", () => {
         it("delivers the space events to the people in the room, after the commit", async () => {
             const room = await listen("owner");
@@ -604,7 +849,7 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             const received: string[] = [];
             const heardByOutsider: string[] = [];
             const events = [
-                "layout_ops_applied",
+                "map_published",
                 "asset_placed",
                 "asset_moved",
                 "asset_removed",
@@ -625,12 +870,11 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
 
             const layoutEvent = nextEvent<{ version: number }>(
                 watcher,
-                "layout_ops_applied"
+                "map_published"
             );
-            await call("owner", "POST", `/maps/${space.mapId}/layout-ops`, {
-                baseVersion: version,
-                ops: [{ type: "set_background", color: "#654321" }],
-            });
+            await publishHttp("owner", space.mapId, version, [
+                { type: "set_background", color: "#654321" },
+            ]);
             expect((await layoutEvent).version).toBe(version + 1);
 
             const placedEvent = nextEvent<{ placed: { id: string }[] }>(
@@ -688,7 +932,7 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             expect(heardByOutsider).toEqual([]);
             expect(received).toEqual(
                 expect.arrayContaining([
-                    "layout_ops_applied",
+                    "map_published",
                     "asset_placed",
                     "asset_moved",
                     "desk_claimed",
@@ -708,17 +952,11 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             await new Promise((resolve) => setTimeout(resolve, 200));
 
             let heard = false;
-            watcher.on("layout_ops_applied", () => (heard = true));
+            watcher.on("map_published", () => (heard = true));
 
-            const stale = await call(
-                "owner",
-                "POST",
-                `/maps/${space.mapId}/layout-ops`,
-                {
-                    baseVersion: 1,
-                    ops: [{ type: "set_background", color: "#000000" }],
-                }
-            );
+            const stale = await publishHttp("owner", space.mapId, 1, [
+                { type: "set_background", color: "#000000" },
+            ]);
             await new Promise((resolve) => setTimeout(resolve, 300));
 
             expect(stale.status).toBe(409);
@@ -908,7 +1146,7 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
                 `/templates/${bare.body.templateId}/publish`
             );
             expect(publishPrivate.status).toBe(422);
-            expect(publishPrivate.body.error).toContain("privados");
+            expect(publishPrivate.body.error).toContain("private");
         });
 
         it("publishes, and the catalog shows what each role may see", async () => {
@@ -1010,25 +1248,19 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             await new Promise((resolve) => setTimeout(resolve, 300));
 
             let strangerHeard = false;
-            stranger.on("layout_ops_applied", () => (strangerHeard = true));
-            const heard = nextEvent<{ mapId: string }>(
-                admin,
-                "layout_ops_applied"
-            );
+            stranger.on("map_published", () => (strangerHeard = true));
+            const heard = nextEvent<{ mapId: string }>(admin, "map_published");
 
             const render = await call(
                 "admin",
                 "GET",
                 `/maps/${template.mapId}/render`
             );
-            const edit = await call(
+            const edit = await publishHttp(
                 "admin",
-                "POST",
-                `/maps/${template.mapId}/layout-ops`,
-                {
-                    baseVersion: render.body.map.layoutVersion,
-                    ops: [{ type: "set_background", color: "#0a0a0a" }],
-                }
+                template.mapId,
+                render.body.map.layoutVersion,
+                [{ type: "set_background", color: "#0a0a0a" }]
             );
             expect(edit.status).toBe(200);
             expect((await heard).mapId).toBe(template.mapId);
@@ -1038,15 +1270,9 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             // Owners of organizations cannot edit a template map either.
             expect(
                 (
-                    await call(
-                        "owner",
-                        "POST",
-                        `/maps/${template.mapId}/layout-ops`,
-                        {
-                            baseVersion: 1,
-                            ops: [{ type: "set_background", color: "#000000" }],
-                        }
-                    )
+                    await publishHttp("owner", template.mapId, 1, [
+                        { type: "set_background", color: "#000000" },
+                    ])
                 ).status
             ).toBe(404);
         });

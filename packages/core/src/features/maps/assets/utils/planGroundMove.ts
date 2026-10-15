@@ -1,5 +1,7 @@
 import {
     ASSET_PLACEMENTS,
+    pixelDistance,
+    shiftPixelAnchor,
     MapAssetParentNotAllowedError,
 } from "@standin/contracts";
 import type { GroundMoveInput } from "../types/ground-move-input";
@@ -20,6 +22,7 @@ export const planGroundMove = ({
     current,
     def,
     next,
+    nextOffset,
     requestedParentId,
     items,
     children,
@@ -35,19 +38,24 @@ export const planGroundMove = ({
                 : current.parentId
             : requestedParentId;
 
-    const movingRoot = moved && children.length > 0;
+    const target = {
+        ...next,
+        offsetX: nextOffset?.offsetX ?? current.offsetX,
+        offsetY: nextOffset?.offsetY ?? current.offsetY,
+    };
+    const delta = pixelDistance(current, target);
+    const shifted = delta.x !== 0 || delta.y !== 0;
+
+    const movingRoot = shifted && children.length > 0;
     const group: Item[] = movingRoot ? [current, ...children] : [current];
     const groupIds = new Set(group.map((item) => item.rowId));
     const others = items.filter((item) => !groupIds.has(item.rowId));
-    const deltaX = next.tileX - current.tileX;
-    const deltaY = next.tileY - current.tileY;
     const childChanges: RowChange[] = [];
 
     for (const member of group) {
         const isSelf = member.rowId === current.rowId;
-        const position = isSelf
-            ? next
-            : { tileX: member.tileX + deltaX, tileY: member.tileY + deltaY };
+        const anchor = shiftPixelAnchor(member, delta.x, delta.y);
+        const position = isSelf ? next : anchor;
         const footprint = toFootprint(position, isSelf ? def : member);
 
         if (member.placement === ASSET_PLACEMENTS.WALL) {
@@ -59,7 +67,7 @@ export const planGroundMove = ({
         if (!isSelf) {
             childChanges.push({
                 id: member.rowId,
-                ...position,
+                ...anchor,
                 parentId: member.parentId,
             });
         }

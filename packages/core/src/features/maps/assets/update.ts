@@ -78,6 +78,10 @@ export const updateMapAsset = async (
             tileX: changes.tileX ?? current.tileX,
             tileY: changes.tileY ?? current.tileY,
         };
+        const offset = {
+            offsetX: changes.offsetX ?? current.offsetX,
+            offsetY: changes.offsetY ?? current.offsetY,
+        };
         const footprint = toFootprint(next, def);
 
         let parentId = targetParentId;
@@ -90,6 +94,7 @@ export const updateMapAsset = async (
                 current,
                 def,
                 next,
+                nextOffset: offset,
                 requestedParentId: changes.parentId,
                 items,
                 children,
@@ -103,6 +108,7 @@ export const updateMapAsset = async (
             {
                 id: rowId,
                 ...next,
+                ...offset,
                 parentId,
                 ...(nextAsset ? { assetId: nextAsset.id } : {}),
             },

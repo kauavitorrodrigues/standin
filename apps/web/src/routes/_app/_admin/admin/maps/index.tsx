@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MapsPage } from "@/features/admin/components/pages/MapsPage";
+import { TemplatesPage } from "@/features/maps/templates/components/pages/TemplatesPage";
 
 export const Route = createFileRoute("/_app/_admin/admin/maps/")({
-    component: MapsPage,
+    component: TemplatesPage,
 });

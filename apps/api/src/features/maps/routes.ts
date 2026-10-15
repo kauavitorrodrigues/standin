@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { MAP_ACCESS_MODES } from "@/consts/mapAccess";
+import { MAP_ID_SOURCES } from "@/consts/mapIdSources";
 import { RequiresMapAccess } from "@/middlewares/requiresMapAccess";
+import { RequiresMapNotLocked } from "@/middlewares/requiresMapNotLocked";
+import { ReadsPublishBody } from "@/middlewares/readsPublishBody";
 import { MapController } from "./controllers";
 
 // Maps are not created here: a map is born with its space or its template.
@@ -25,27 +28,41 @@ router.get(
     MapController.library
 );
 
+// Who is editing the map, for whoever can read it.
+router.get(
+    "/:mapId/lock",
+    RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    MapController.lock
+);
+
+// Publishes the draft. The lock guard lets through only the editor session
+// that holds the lock, and the body has its own, bigger, size limit.
 router.post(
-    "/:mapId/layout-ops",
+    "/:mapId/publish",
     RequiresMapAccess(MAP_ACCESS_MODES.EDIT),
-    MapController.layoutOps
+    RequiresMapNotLocked(MAP_ID_SOURCES.MAP, { allowHolderSession: true }),
+    ReadsPublishBody,
+    MapController.publish
 );
 
 // Objects: the owner edits anything, a member only the items on their own
-// desk, which the service checks.
+// desk, which the service checks. A locked map refuses all of them.
 router.post(
     "/:mapId/assets",
     RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    RequiresMapNotLocked(MAP_ID_SOURCES.MAP),
     MapController.assets.place
 );
 router.patch(
     "/:mapId/assets/:assetId",
     RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    RequiresMapNotLocked(MAP_ID_SOURCES.MAP),
     MapController.assets.update
 );
 router.delete(
     "/:mapId/assets/:assetId",
     RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    RequiresMapNotLocked(MAP_ID_SOURCES.MAP),
     MapController.assets.remove
 );
 

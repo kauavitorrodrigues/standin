@@ -6,6 +6,8 @@ export const toPlaced = (row: PlacedRow): PlacedAsset => ({
     assetId: row.assetId,
     tileX: row.tileX,
     tileY: row.tileY,
+    offsetX: row.offsetX,
+    offsetY: row.offsetY,
     parentId: row.parentId,
     propertyOverrides: row.propertyOverrides,
 });

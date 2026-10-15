@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { createApp } from "./app";
 import { validateEnv } from "@/utils/validateEnv";
 import { createSocketServer } from "@/lib/socket/createSocketServer";
+import { startLockSweeper } from "@/lib/socket/startLockSweeper";
 import { SocketManager } from "@/lib/socket/socketManager";
 import { ShutdownError, ShutdownTimeoutError } from "@/errors/ShutdownError";
 
@@ -10,6 +11,8 @@ validateEnv(["JWT_SECRET", "DATABASE_URL", "FRONTEND_URL"]);
 const server = createServer(createApp());
 
 createSocketServer(server);
+
+const stopLockSweeper = startLockSweeper();
 
 const PORT = process.env.SERVER_PORT || 3001;
 
@@ -30,6 +33,8 @@ async function gracefulShutdown(signal: string) {
         process.exit(1);
     }, 5000);
     forceExitTimer.unref();
+
+    stopLockSweeper();
 
     try {
         // Closes the underlying httpServer too (it was handed to socket.io

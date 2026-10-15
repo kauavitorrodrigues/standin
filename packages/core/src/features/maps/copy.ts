@@ -76,6 +76,8 @@ export const copyMap = async (
             assetId: object.assetId,
             tileX: object.tileX,
             tileY: object.tileY,
+            offsetX: object.offsetX,
+            offsetY: object.offsetY,
             parentId: object.parentId
                 ? (newIdsByOldId.get(object.parentId) ?? null)
                 : null,

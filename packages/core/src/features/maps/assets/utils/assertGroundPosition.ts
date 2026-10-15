@@ -1,16 +1,19 @@
 import {
-    ASSET_PLACEMENTS,
+    LAYOUT_ISSUE_CODES,
     MapAssetOutOfBoundsError,
     MapAssetPositionOccupiedError,
+    checkGroundPlacement,
+    isFootprintInsideMap,
+    type Footprint,
 } from "@standin/contracts";
-import type { Footprint } from "../types/footprint";
 import type { Item } from "../types/item";
 import type { MapInfo } from "../types/map-info";
-import { footprintsOverlap } from "./footprintsOverlap";
-import { isFootprintInsideMap } from "./isFootprintInsideMap";
-import { itemFootprint } from "./itemFootprint";
+import { toPlacementModel } from "./toPlacementModel";
 
-/** GROUND: inside the map, and no overlap with other GROUND objects. */
+/**
+ * GROUND: inside the map, and no overlap with other GROUND objects. The overlap
+ * rule is the pure one from the contracts, its reason mapped to the route error.
+ */
 export const assertGroundPosition = (
     footprint: Footprint,
     map: MapInfo,
@@ -20,10 +23,15 @@ export const assertGroundPosition = (
         throw new MapAssetOutOfBoundsError();
     }
 
-    const blocked = others.some(
-        (other) =>
-            other.placement === ASSET_PLACEMENTS.GROUND &&
-            footprintsOverlap(footprint, itemFootprint(other))
+    const result = checkGroundPlacement(
+        toPlacementModel(others, map),
+        footprint
     );
-    if (blocked) throw new MapAssetPositionOccupiedError();
+    if (result.ok) return;
+
+    switch (result.reason) {
+        case LAYOUT_ISSUE_CODES.FOOTPRINT_OVERLAP:
+        default:
+            throw new MapAssetPositionOccupiedError();
+    }
 };

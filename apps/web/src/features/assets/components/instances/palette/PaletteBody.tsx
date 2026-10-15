@@ -1,4 +1,5 @@
 import type { AssetDefinition } from "@standin/contracts";
+import { PanelScroll } from "@/features/editor/components/layout/PanelScroll";
 import type {
     PaletteCategories,
     PaletteTilesets,
@@ -11,6 +12,9 @@ type Props = {
     categories: PaletteCategories;
     tilesets: PaletteTilesets;
     onPick: (asset: AssetDefinition) => void;
+    // The family to show as picked.
+    selectedId?: string | null;
+    hideTilesTab?: boolean;
 };
 
 // What the palette shows under the search box: the matches across every
@@ -20,14 +24,19 @@ export const PaletteBody = ({
     categories,
     tilesets,
     onPick,
+    selectedId,
+    hideTilesTab,
 }: Props) => {
     if (search.trim() !== "") {
         return (
-            <PaletteSearchResults
-                search={search}
-                families={categories.flatMap(({ families }) => families)}
-                onPick={onPick}
-            />
+            <PanelScroll>
+                <PaletteSearchResults
+                    search={search}
+                    families={categories.flatMap(({ families }) => families)}
+                    onPick={onPick}
+                    selectedId={selectedId}
+                />
+            </PanelScroll>
         );
     }
 
@@ -36,6 +45,8 @@ export const PaletteBody = ({
             categories={categories}
             tilesets={tilesets}
             onPick={onPick}
+            selectedId={selectedId}
+            hideTilesTab={hideTilesTab}
         />
     );
 };

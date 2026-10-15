@@ -1,8 +1,14 @@
 import { z } from "zod/v4";
+import { MAX_OBJECT_OFFSET } from "../consts/constants";
 import { MapAssetErrorMessages as Messages } from "../schemas/consts/error-messages";
 
 const int = (message: string) =>
     z.number({ error: message }).int({ error: message });
+
+const offset = (message: string) =>
+    int(message)
+        .min(-MAX_OBJECT_OFFSET, { error: message })
+        .max(MAX_OBJECT_OFFSET, { error: message });
 
 export const PlaceMapAssetSchema = z.object({
     assetId: z
@@ -10,6 +16,8 @@ export const PlaceMapAssetSchema = z.object({
         .min(1, { error: Messages.assetId.invalid }),
     tileX: int(Messages.tile.invalid),
     tileY: int(Messages.tile.invalid),
+    offsetX: offset(Messages.offset.invalid).optional(),
+    offsetY: offset(Messages.offset.invalid).optional(),
     parentId: z.string({ error: Messages.parentId.invalid }).optional(),
 });
 
@@ -17,6 +25,8 @@ export const UpdateMapAssetSchema = z
     .object({
         tileX: int(Messages.tile.invalid).optional(),
         tileY: int(Messages.tile.invalid).optional(),
+        offsetX: offset(Messages.offset.invalid).optional(),
+        offsetY: offset(Messages.offset.invalid).optional(),
         // Null detaches the object from its parent.
         parentId: z
             .string({ error: Messages.parentId.invalid })

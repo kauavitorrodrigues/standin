@@ -36,6 +36,8 @@ const placedDesk = {
     assetId: "desk",
     tileX: 4,
     tileY: 5,
+    offsetX: 0,
+    offsetY: 0,
     parentId: null,
 };
 const placedMug = {
@@ -43,6 +45,8 @@ const placedMug = {
     assetId: "mug",
     tileX: 4,
     tileY: 5,
+    offsetX: 0,
+    offsetY: 0,
     parentId: "p1",
 };
 const placedById = new Map([placedDesk, placedMug].map((p) => [p.id, p]));
@@ -59,12 +63,35 @@ describe("resolvePlacedLayout", () => {
         expect(layout?.bottomY).toBe(192);
     });
 
+    it("shifts sprite, depth and solid rect by the pixel offset", () => {
+        const base = resolvePlacedLayout(
+            placedDesk,
+            assetsById,
+            placedById,
+            MAP_HEIGHT
+        );
+        const shifted = resolvePlacedLayout(
+            { ...placedDesk, offsetX: 10, offsetY: -6 },
+            assetsById,
+            placedById,
+            MAP_HEIGHT
+        );
+
+        expect(shifted?.x).toBe((base?.x ?? 0) + 10);
+        expect(shifted?.bottomY).toBe((base?.bottomY ?? 0) - 6);
+        expect(shifted?.depth).toBeLessThan(base?.depth ?? 0);
+        expect(shifted?.solidRect?.x).toBe((base?.solidRect?.x ?? 0) + 10);
+        expect(shifted?.solidRect?.y).toBe((base?.solidRect?.y ?? 0) - 6);
+    });
+
     it("moves the sprite left by the footprint offset", () => {
         const placed = {
             id: "p3",
             assetId: "tree",
             tileX: 3,
             tileY: 2,
+            offsetX: 0,
+            offsetY: 0,
             parentId: null,
         };
         const layout = resolvePlacedLayout(

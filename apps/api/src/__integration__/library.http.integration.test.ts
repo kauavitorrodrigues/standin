@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { publishOps } from "./helpers/publishOps";
 
 // Exercises the asset library over the real Express stack (auth, admin guard,
 // multer, controllers, error mapping) against a real Postgres. Off unless
@@ -402,15 +403,21 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
                 users.owner,
                 space.mapId
             );
-            await core.MapService.applyLayoutOps(access, 1, [
-                {
-                    type: "paint",
-                    layer: "ground",
-                    tilesetId: id,
-                    tileIndex: 1,
-                    cells: [[3, 3]],
-                },
-            ]);
+            await publishOps(
+                core,
+                { id: users.owner.id, name: "owner" },
+                access,
+                1,
+                [
+                    {
+                        type: "paint",
+                        layer: "ground",
+                        tilesetId: id,
+                        tileIndex: 1,
+                        cells: [[3, 3]],
+                    },
+                ]
+            );
 
             const detail = await call(
                 "admin",

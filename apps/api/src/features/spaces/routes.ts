@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { MAP_ID_SOURCES } from "@/consts/mapIdSources";
+import { RequiresMapNotLocked } from "@/middlewares/requiresMapNotLocked";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { SpaceController } from "./controllers";
 
@@ -23,6 +25,7 @@ router.put(
 router.delete(
     "/:spaceId",
     RequiresPermission("delete", "space"),
+    RequiresMapNotLocked(MAP_ID_SOURCES.SPACE),
     SpaceController.delete
 );
 

@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { ROLES } from "@standin/auth";
+import { MAP_ID_SOURCES } from "@/consts/mapIdSources";
+import { RequiresMapNotLocked } from "@/middlewares/requiresMapNotLocked";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { RequiresRole } from "@/middlewares/requiresRole";
 import { handleUploadError } from "../../files/middleware/handleUploadError";
@@ -49,6 +51,7 @@ router.post(
 router.delete(
     "/:templateId",
     RequiresPermission("delete", "template"),
+    RequiresMapNotLocked(MAP_ID_SOURCES.TEMPLATE),
     TemplateController.delete
 );
 

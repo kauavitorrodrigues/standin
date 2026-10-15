@@ -1,0 +1,86 @@
+import { getFamilyId } from "../../../assets/utils/assetFamily";
+import type { AssetDefinition } from "../../../assets/types";
+import { LAYOUT_ISSUE_CODES as Code } from "../../layout/issues";
+import type { PlacedAsset } from "../../render/render-payload.schema";
+import { REPLACE_INCOMPATIBLE_DETAILS as Detail } from "../consts/replace-incompatible-details";
+import type { CanReplaceAssetResult } from "../types/can-replace-asset-result";
+import type { EditorModel } from "../types/editor-model";
+import type { ReplaceIncompatibleDetail } from "../types/replace-incompatible-detail";
+import { isFootprintInside } from "./isFootprintInside";
+import { canPlaceAsset } from "./canPlaceAsset";
+import { listPlacedWithAsset } from "./placement/listPlacedWithAsset";
+import { placedFootprint } from "./placement/placedFootprint";
+import { ASSET_PLACEMENTS } from "../../../assets/enums/asset-placement";
+
+const refuse = (detail: ReplaceIncompatibleDetail): CanReplaceAssetResult => ({
+    ok: false,
+    reason: Code.REPLACE_INCOMPATIBLE,
+    detail,
+});
+
+// Same family: another color (same rotation) or another rotation. Another
+// family: a model, which must share category, type and placement.
+const checkKind = (
+    current: AssetDefinition,
+    target: AssetDefinition
+): ReplaceIncompatibleDetail | null => {
+    if (current.id === target.id) return Detail.SAME_ASSET;
+
+    if (getFamilyId(current) === getFamilyId(target)) {
+        const sameRotation = current.rotation === target.rotation;
+        const sameColor = current.colorKey === target.colorKey;
+        return sameRotation && sameColor ? Detail.NOT_A_VARIANT : null;
+    }
+
+    if (current.category !== target.category) return Detail.DIFFERENT_CATEGORY;
+    if (current.type !== target.type) return Detail.DIFFERENT_TYPE;
+    if (current.placement !== target.placement) {
+        return Detail.DIFFERENT_PLACEMENT;
+    }
+    return null;
+};
+
+/**
+ * Whether a placed object can be swapped for another asset (spec 4.5): a color,
+ * a rotation or a model, with the new footprint fitting around the same
+ * anchor (the bottom left cell) and the SURFACE children staying inside it.
+ * The desk link is not checked here, the model does not know claimed desks.
+ */
+export const canReplaceAsset = (
+    model: EditorModel,
+    placed: PlacedAsset,
+    targetAsset: AssetDefinition
+): CanReplaceAssetResult => {
+    const current = model.library.assets.find(
+        ({ id }) => id === placed.assetId
+    );
+    if (!current) return refuse(Detail.CURRENT_ASSET_UNKNOWN);
+
+    const kind = checkKind(current, targetAsset);
+    if (kind) return refuse(kind);
+
+    const fit = canPlaceAsset(model, targetAsset, placed.tileX, placed.tileY, {
+        parentId: placed.parentId,
+        ignoreId: placed.id,
+    });
+    if (!fit.ok) return refuse(fit.reason);
+
+    const footprint = {
+        tileX: placed.tileX,
+        tileY: placed.tileY,
+        width: targetAsset.footprint.w,
+        height: targetAsset.footprint.h,
+    };
+    const childOutside = listPlacedWithAsset(model).some(
+        (child) =>
+            child.placed.parentId === placed.id &&
+            child.asset.placement === ASSET_PLACEMENTS.SURFACE &&
+            !isFootprintInside(
+                placedFootprint(child.placed, child.asset),
+                footprint
+            )
+    );
+    if (childOutside) return refuse(Detail.CHILD_OUTSIDE_FOOTPRINT);
+
+    return { ok: true };
+};

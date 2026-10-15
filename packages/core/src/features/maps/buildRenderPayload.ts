@@ -8,13 +8,14 @@ import {
     inArray,
     isNull,
 } from "@standin/database";
-import { MapNotFoundError } from "@standin/contracts";
+import { MAX_OBJECTS_PER_MAP, MapNotFoundError } from "@standin/contracts";
 import type { MapRenderPayload } from "@standin/contracts";
 import { loadAssetRows } from "../assets/utils/loadRows";
 import {
     toAssetDefinitions,
     toTilesets,
 } from "../assets/utils/toDefinitions";
+import { MapLockService } from "./lock";
 import { mapRenderSelect, placedAssetSelect } from "./consts/select";
 import type { MapAccess } from "./types/map-access";
 import { completeLayout } from "./utils/completeLayout";
@@ -86,5 +87,11 @@ export const buildMapRenderPayload = async (
                 desks.find((desk) => desk.userId === userId)?.mapAssetId ??
                 null,
         },
+        // Active objects only, the same rows as `placed`.
+        limits: {
+            objectsUsed: placed.length,
+            objectsMax: MAX_OBJECTS_PER_MAP,
+        },
+        lock: MapLockService.getState(access.mapId),
     };
 };

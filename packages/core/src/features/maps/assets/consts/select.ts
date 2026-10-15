@@ -13,6 +13,8 @@ export const mapAssetItemSelect = {
     assetId: mapAssetsTable.assetId,
     tileX: mapAssetsTable.tileX,
     tileY: mapAssetsTable.tileY,
+    offsetX: mapAssetsTable.offsetX,
+    offsetY: mapAssetsTable.offsetY,
     parentId: mapAssetsTable.parentId,
     id: assetsTable.id,
     baseAssetId: assetsTable.baseAssetId,

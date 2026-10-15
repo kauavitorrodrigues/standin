@@ -7,6 +7,9 @@ const {
     requiresSocketAuthMock,
     registerJoinSpaceMock,
     registerJoinMapMock,
+    registerEditorAcquireMock,
+    registerEditorHeartbeatMock,
+    registerEditorReleaseMock,
     registerWebrtcSignalMock,
     registerDisconnectMock,
 } = vi.hoisted(() => {
@@ -29,6 +32,9 @@ const {
         requiresSocketAuthMock: vi.fn(),
         registerJoinSpaceMock: vi.fn(),
         registerJoinMapMock: vi.fn(),
+        registerEditorAcquireMock: vi.fn(),
+        registerEditorHeartbeatMock: vi.fn(),
+        registerEditorReleaseMock: vi.fn(),
         registerWebrtcSignalMock: vi.fn(),
         registerDisconnectMock: vi.fn(),
     };
@@ -52,6 +58,18 @@ vi.mock("../middlewares/requiresAuth", () => ({
 
 vi.mock("../handlers/joinSpace", () => ({
     registerJoinSpace: registerJoinSpaceMock,
+}));
+
+vi.mock("../handlers/editorAcquire", () => ({
+    registerEditorAcquire: registerEditorAcquireMock,
+}));
+
+vi.mock("../handlers/editorHeartbeat", () => ({
+    registerEditorHeartbeat: registerEditorHeartbeatMock,
+}));
+
+vi.mock("../handlers/editorRelease", () => ({
+    registerEditorRelease: registerEditorReleaseMock,
 }));
 
 vi.mock("../handlers/joinMap", () => ({
@@ -121,6 +139,9 @@ describe("createSocketServer", () => {
             fakeSocket
         );
         expect(registerJoinMapMock).toHaveBeenCalledWith(fakeSocket);
+        expect(registerEditorAcquireMock).toHaveBeenCalledWith(fakeSocket);
+        expect(registerEditorHeartbeatMock).toHaveBeenCalledWith(fakeSocket);
+        expect(registerEditorReleaseMock).toHaveBeenCalledWith(fakeSocket);
         expect(registerWebrtcSignalMock).toHaveBeenCalledWith(
             serverInstanceMock,
             fakeSocket

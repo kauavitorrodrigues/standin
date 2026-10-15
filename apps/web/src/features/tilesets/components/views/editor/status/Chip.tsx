@@ -1,5 +1,5 @@
 import type { TileMeta } from "@standin/contracts";
-import { InfoChip } from "@/components/editor/InfoChip";
+import { InfoChip } from "@/features/editor/components/views/InfoChip";
 import type { TileSheetGrid } from "../../../../types/sheet";
 import { TileHoverInfo } from "./Hover";
 import { TileSelectionCount } from "./Selection";

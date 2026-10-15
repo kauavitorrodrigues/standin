@@ -33,6 +33,8 @@ import { buildNameLookup } from "@/features/spaces/utils/buildStageTiles";
 import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
+import { useSpaceMapLock } from "@/features/maps/organizations/hooks/useSpaceMapLock";
+import { LockBanner } from "@/features/maps/organizations/components/views/LockBanner";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
@@ -68,6 +70,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const peoplePanel = usePeoplePanel({ view, selectView });
 
     const gameMap = useGameMapData(space.map);
+    const mapLock = useSpaceMapLock(space.map.id);
     const { containerRef, handle } = useGameEngine(
         gameMap,
         -RAIL_WIDTH_PX / 2
@@ -150,6 +153,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                 <LayoutPrimitive.Content style={layout.contentStyle}>
                     <GameCanvas ref={containerRef} />
                     <GameControls handle={handle} />
+                    <LockBanner locked={mapLock.locked} by={mapLock.by} />
                     <VideoStage
                         tiles={stageTiles}
                         isGridOpen={isGridOpen}
