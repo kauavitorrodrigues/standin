@@ -21,3 +21,14 @@ export const canHaveTop = (category: TileCategory): boolean => {
             return false;
     }
 };
+
+// Only a wall has the fields of a wall piece: the edges it draws, its style,
+// how much of it covers an avatar behind it and the cells that block.
+export const canHaveWallMeta = (category: TileCategory): boolean => {
+    switch (category) {
+        case TILE_CATEGORIES.WALL:
+            return true;
+        default:
+            return false;
+    }
+};

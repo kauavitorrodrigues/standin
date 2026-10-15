@@ -77,4 +77,30 @@ describe("buildRoomDoors", () => {
             ])
         ).toEqual([]);
     });
+
+    it("fills the solid rects from the wall tiles beside the door", () => {
+        const doors = buildRoomDoors(
+            [placed("d", "tall", 1, 2)],
+            assets,
+            [room("r1", 0, 0)],
+            (column, row) =>
+                column === 1 && row === 0
+                    ? [{ x: 32 + 24, y: 0, width: 8, height: 32 }]
+                    : null
+        );
+        expect(doors[0]?.solidRects).toEqual([
+            { x: 32 + 24, y: 32, width: 8, height: 32 },
+            { x: 32 + 24, y: 64, width: 8, height: 32 },
+        ]);
+    });
+
+    it("leaves the solid rects out with no wall tile beside the door", () => {
+        const doors = buildRoomDoors(
+            [placed("d", "tall", 1, 2)],
+            assets,
+            [room("r1", 0, 0)],
+            () => null
+        );
+        expect(doors[0]).not.toHaveProperty("solidRects");
+    });
 });

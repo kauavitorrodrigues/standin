@@ -21,6 +21,9 @@ import {
     EditorObjectRenderer,
     renderObjectLayers,
     renderTileLayers,
+    renderWallTiles,
+    buildTileColliders,
+    type WallTileRenderer,
 } from "@/features/game/renderers";
 import { MapCameraController } from "@/features/game/lib/MapCameraController";
 import {
@@ -62,6 +65,7 @@ import { buildRoomDoors } from "@/features/game/utils/buildRoomDoors";
 import { getRoomStates } from "@/features/game/utils/getRoomStates";
 import { getColliderStates } from "@/features/game/utils/getColliderStates";
 import { readTilemapZones } from "@/features/game/utils/readTilemapZones";
+import { buildWallRectsAt } from "@/features/game/renderers/buildWallRectsAt";
 import { ROOM_EVENTS } from "@/features/game/consts/room-events";
 import { ROOM_DOOR_COLLIDER_PREFIX } from "@/features/game/consts/room-door";
 import type { CurrentRoom } from "@/features/game/types/room-current";
@@ -130,6 +134,7 @@ export class MapScene extends Phaser.Scene {
     private canPanCamera: () => boolean = () => true;
     private placedSync: PlacedObjectsSync | null = null;
     private solidGroup: Phaser.Physics.Arcade.StaticGroup | null = null;
+    private wallTiles: WallTileRenderer | null = null;
 
     private rooms: GameRoom[] = [];
     private roomDoorController: RoomDoorController | null = null;
@@ -169,7 +174,10 @@ export class MapScene extends Phaser.Scene {
         ensureAssetTextures(this.textures, assets);
         registerAssetAnimations(this, assets);
 
-        renderTileLayers(tilemap, tilesets);
+        const tileLayers = renderTileLayers(tilemap, tilesets, {
+            skip: [LAYOUT_LAYER_NAMES.WALLS],
+        });
+        this.wallTiles = renderWallTiles(this, tilemap, tileLayers);
         renderObjectLayers(this, tilemap);
         fitCameraToMap(this.cameras.main, tilemap);
         fitWorldBoundsToMap(this.physics.world, tilemap);
@@ -186,6 +194,7 @@ export class MapScene extends Phaser.Scene {
             tilemap.heightInPixels
         );
         const solidColliders = new SolidColliders(this, solidGroup);
+        buildTileColliders(tilemap, solidColliders);
         this.placedSync = new PlacedObjectsSync(
             objectRenderer,
             solidColliders,
@@ -227,6 +236,7 @@ export class MapScene extends Phaser.Scene {
             tilemap.getLayer(LAYOUT_LAYER_NAMES.WALLS)?.data ?? []
         );
         const zones = readTilemapZones(tilemap);
+        const wallRectsAt = buildWallRectsAt(tilemap);
         this.rooms = buildRooms(zones);
         this.roomDoorColliders = new RoomDoorColliders({
             set: (id, rects) =>
@@ -263,7 +273,12 @@ export class MapScene extends Phaser.Scene {
                 buildDeskAreas(placed, assetsById, tilemap.heightInPixels)
             );
 
-            const doors = buildRoomDoors(placed, assetsById, zones);
+            const doors = buildRoomDoors(
+                placed,
+                assetsById,
+                zones,
+                wallRectsAt
+            );
             this.roomDoors = doors;
             this.roomDoorController?.setDoors(doors);
             this.roomDoorColliders?.setDoors(doors);
@@ -317,6 +332,8 @@ export class MapScene extends Phaser.Scene {
             this.unsubscribeRoomSync?.();
             this.roomDoorView?.destroy();
             this.roomDimOverlay?.destroy();
+            this.wallTiles?.destroy();
+            this.wallTiles = null;
         });
 
         this.game.events.emit(SCENE_EVENTS.MAP_READY);

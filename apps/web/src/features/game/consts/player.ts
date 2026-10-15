@@ -1,7 +1,15 @@
 import Phaser from "phaser";
 
+// The size of the avatar for what blocks it and what covers it, kept apart so
+// a taller body can come without changing how close it gets to a wall. The
+// collision stays at the feet, the body height is only what is drawn above.
+export const AVATAR_DIMENSIONS = {
+    COLLISION_RADIUS: 8,
+    BODY_HEIGHT: 16,
+} as const;
+
 export const PLAYER_APPEARANCE = {
-    RADIUS: 8,
+    RADIUS: AVATAR_DIMENSIONS.COLLISION_RADIUS,
     COLOR: 0xf97316,
     SPEAKING_RING_WIDTH: 3,
     SPEAKING_RING_COLOR: 0x22c55e,

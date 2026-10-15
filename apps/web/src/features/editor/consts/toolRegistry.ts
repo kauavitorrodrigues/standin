@@ -4,6 +4,7 @@ import { createBucketController } from "@/features/editor/lib/createBucketContro
 import { createEraseController } from "@/features/editor/lib/createEraseController";
 import { createPickerController } from "@/features/editor/lib/createPickerController";
 import { createRectController } from "@/features/editor/lib/createRectController";
+import { createRectOutlineController } from "@/features/editor/lib/createRectOutlineController";
 import { createSelectController } from "@/features/editor/lib/createSelectController";
 import { createZoneController } from "@/features/editor/lib/createZoneController";
 import type { ToolRegistry } from "@/features/editor/types/ToolRegistry";
@@ -17,6 +18,7 @@ export const TOOL_REGISTRY: ToolRegistry = {
     [EDITOR_TOOLS.PAINT]: createBrushController,
     [EDITOR_TOOLS.ERASE]: createEraseController,
     [EDITOR_TOOLS.RECT]: createRectController,
+    [EDITOR_TOOLS.RECT_OUTLINE]: createRectOutlineController,
     [EDITOR_TOOLS.BUCKET]: createBucketController,
     [EDITOR_TOOLS.PICKER]: createPickerController,
 };

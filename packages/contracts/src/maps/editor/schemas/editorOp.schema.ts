@@ -168,6 +168,10 @@ const ReplaceAssetOpSchema = z.object({
     assetId: z
         .string({ error: Messages.assetId.invalid })
         .min(1, { error: Messages.assetId.invalid }),
+    // The new anchor, when the asset does not fit where the object stands and
+    // the swap moves it (a rotation with another footprint). Both or none.
+    tileX: int(Messages.tile.invalid).optional(),
+    tileY: int(Messages.tile.invalid).optional(),
 });
 
 const RemoveAssetOpSchema = z.object({

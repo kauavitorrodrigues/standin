@@ -12,6 +12,7 @@ import { TILESET_MESSAGES } from "../consts/messages";
 import { useReplaceTileMeta } from "../mutations/replaceMeta";
 import type { TilesetEditorDialog, TilesetEditorValues } from "../types/editor";
 import { isSameTileMeta } from "../utils/editor/metaEdit";
+import { getWallIssues } from "../utils/editor/wall/getWallIssues";
 import { getTilesetSavedMessage } from "../utils/getSavedMessage";
 import type { useTilesetGridForm } from "./useGridForm";
 import { useUnsavedChangesGuard } from "./useUnsavedChangesGuard";
@@ -60,6 +61,13 @@ export const useTilesetEditor = (
     // and the marks fail, the grid stays saved and the marks stay unsaved.
     const save = async () => {
         form.clearErrors("root");
+        // A wall style that lacks pieces would leave holes when a map paints
+        // with it, so nothing is sent until every style is complete.
+        const wallIssues = getWallIssues(meta);
+        if (wallIssues.length > 0) {
+            form.setError("root", { message: wallIssues.join("\n") });
+            return;
+        }
         const gridChanged = gridForm.changed;
         let nextMeta = meta;
 

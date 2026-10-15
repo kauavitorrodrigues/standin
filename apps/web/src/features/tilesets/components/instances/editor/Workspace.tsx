@@ -26,6 +26,9 @@ type Props = {
     menu?: ReactNode;
     // The actions on the bottom of the sheet (discard, save).
     actions: ReactNode;
+    // Drops the image to choose another. Without it, the toolbar has no button
+    // for that.
+    onRemoveImage?: () => void;
     // What goes in the body of the side panel: the fields of the page that
     // holds the workspace.
     children?: ReactNode;
@@ -41,6 +44,7 @@ export const TileSheetWorkspace = ({
     onExit,
     menu,
     actions,
+    onRemoveImage,
     children,
     ...editor
 }: Props) => (
@@ -57,7 +61,7 @@ export const TileSheetWorkspace = ({
                 </TileEditorProperties>
                 <TileEditorPanelOpener />
                 <TileEditorToolOptions />
-                <TileEditorToolbar />
+                <TileEditorToolbar onRemoveImage={onRemoveImage} />
                 <TileEditorStatus />
                 <TileEditorBottomBar>{actions}</TileEditorBottomBar>
             </div>

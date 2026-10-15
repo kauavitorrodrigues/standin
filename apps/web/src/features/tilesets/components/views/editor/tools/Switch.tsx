@@ -5,11 +5,14 @@ import { VerticalToolbar } from "@/features/editor/components/layout/VerticalToo
 import { TILE_TOOL_META } from "../../../../consts/toolMeta";
 import type { TileTool } from "../../../../types/sheet";
 import { TileToolHelp } from "../help/Help";
+import { RemoveImageTool } from "./RemoveImageTool";
 
 type Props = {
     tool: TileTool;
     canUndo: boolean;
     canRedo: boolean;
+    disabled: boolean;
+    onRemoveImage?: () => void;
     onToolChange: (tool: TileTool) => void;
     onUndo: () => void;
     onRedo: () => void;
@@ -21,6 +24,8 @@ export const TileToolSwitch = ({
     tool,
     canUndo,
     canRedo,
+    disabled,
+    onRemoveImage,
     onToolChange,
     onUndo,
     onRedo,
@@ -42,6 +47,7 @@ export const TileToolSwitch = ({
             onUndo={onUndo}
             onRedo={onRedo}
         />
+        <RemoveImageTool disabled={disabled} onRemove={onRemoveImage} />
         <TileToolHelp />
     </VerticalToolbar>
 );

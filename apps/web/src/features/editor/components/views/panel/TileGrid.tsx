@@ -7,6 +7,7 @@ import {
 } from "@/features/editor/consts/tilePalette";
 import type { EditorBrush } from "@/features/editor/types/editor-brush";
 import type { PaletteTile } from "@/features/editor/types/palette-tile";
+import { isTileBrush } from "@/features/editor/utils/isTileBrush";
 import { getTileCategoryMeta } from "@/features/tilesets/consts/categoryMeta";
 
 type TileGridProps = {
@@ -29,10 +30,7 @@ export const TileGrid = ({ tileset, tiles, brush, onPick }: TileGridProps) => (
                 tileset={tileset}
                 tile={tile}
                 categoryLabel={getTileCategoryMeta(tile.category).label}
-                selected={
-                    brush?.tilesetId === tileset.id &&
-                    brush.tileIndex === tile.index
-                }
+                selected={isTileBrush(brush, tileset.id, tile)}
                 onPick={onPick}
             />
         )}

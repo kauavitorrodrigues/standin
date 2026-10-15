@@ -13,6 +13,9 @@ import { listPlacedWithAsset } from "./placement/listPlacedWithAsset";
 import { placedFootprint } from "./placement/placedFootprint";
 import { ASSET_PLACEMENTS } from "../../../assets/enums/asset-placement";
 
+// The bottom left cell the new asset is anchored at.
+export type ReplaceAnchor = { tileX: number; tileY: number };
+
 const refuse = (detail: ReplaceIncompatibleDetail): CanReplaceAssetResult => ({
     ok: false,
     reason: Code.REPLACE_INCOMPATIBLE,
@@ -50,7 +53,8 @@ const checkKind = (
 export const canReplaceAsset = (
     model: EditorModel,
     placed: PlacedAsset,
-    targetAsset: AssetDefinition
+    targetAsset: AssetDefinition,
+    anchor: ReplaceAnchor = placed
 ): CanReplaceAssetResult => {
     const current = model.library.assets.find(
         ({ id }) => id === placed.assetId
@@ -60,15 +64,15 @@ export const canReplaceAsset = (
     const kind = checkKind(current, targetAsset);
     if (kind) return refuse(kind);
 
-    const fit = canPlaceAsset(model, targetAsset, placed.tileX, placed.tileY, {
+    const fit = canPlaceAsset(model, targetAsset, anchor.tileX, anchor.tileY, {
         parentId: placed.parentId,
         ignoreId: placed.id,
     });
     if (!fit.ok) return refuse(fit.reason);
 
     const footprint = {
-        tileX: placed.tileX,
-        tileY: placed.tileY,
+        tileX: anchor.tileX,
+        tileY: anchor.tileY,
         width: targetAsset.footprint.w,
         height: targetAsset.footprint.h,
         mask: targetAsset.footprint.mask ?? null,

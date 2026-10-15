@@ -20,7 +20,7 @@ export class RoomDoorColliders {
     private readonly port: SolidColliderPort;
     private doors: GameRoomDoor[] = [];
     private states: RoomDoorStates = new Map();
-    // The rect each body was built from, to rebuild only the ones that moved.
+    // The rects each body was built from, to rebuild only the ones that moved.
     private readonly solidRects = new Map<string, string>();
 
     constructor(port: SolidColliderPort) {
@@ -52,11 +52,12 @@ export class RoomDoorColliders {
             this.solidRects.delete(id);
         });
         wanted.forEach((door, id) => {
-            const { x, y, width, height } = door;
-            const signature = `${x},${y},${width},${height}`;
+            const { x, y, width, height, solidRects } = door;
+            const rects = solidRects ?? [{ x, y, width, height }];
+            const signature = JSON.stringify(rects);
             if (this.solidRects.get(id) === signature) return;
 
-            this.port.set(id, [{ x, y, width, height }]);
+            this.port.set(id, rects);
             this.solidRects.set(id, signature);
         });
     }

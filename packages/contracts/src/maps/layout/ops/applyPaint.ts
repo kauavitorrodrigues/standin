@@ -18,6 +18,7 @@ import type { PaintOp } from "./types";
 import { findOutsideCell } from "./findOutsideCell";
 import { ensureAreaFloorLayer } from "./ensureAreaFloorLayer";
 import { findTileLayer } from "./findTileLayer";
+import { describeWallTile, retileWalls } from "./retileWalls";
 
 export const applyPaint = (
     layout: MapLayout,
@@ -77,6 +78,15 @@ export const applyPaint = (
         if (topGid !== null && foreground && y > 0) {
             foreground.data[(y - 1) * layout.width + x] = topGid;
         }
+    }
+
+    // A piece of a wall style is only a hint of the style: the piece that
+    // stays on each cell is the one its neighbors ask for.
+    if (
+        op.layer === LAYOUT_LAYER_NAMES.WALLS &&
+        describeWallTile(library, op.tilesetId, op.tileIndex)
+    ) {
+        return retileWalls(layout, library, op.cells, "strict");
     }
 
     return [];

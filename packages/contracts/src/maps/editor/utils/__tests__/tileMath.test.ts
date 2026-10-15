@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rectCells } from "../rectCells";
+import { rectOutlineCells } from "../rectOutlineCells";
 import { lineCells } from "../lineCells";
 import { floodFill } from "../floodFill";
 import { cellToWorld } from "../cellToWorld";
@@ -9,6 +10,35 @@ import { TILE_SIZE } from "../../../consts/constants";
 import { buildLayout } from "../../../layout/__tests__/fixtures";
 import { findTileLayer } from "../../../layout/ops/findTileLayer";
 import type { Cell } from "../../types/cell";
+
+describe("rectOutlineCells", () => {
+    it("leaves the middle empty", () => {
+        const cells = rectOutlineCells([0, 0], [3, 3]);
+
+        expect(cells).toHaveLength(12);
+        expect(cells).not.toContainEqual([1, 1]);
+        expect(cells).not.toContainEqual([2, 2]);
+    });
+
+    it("accepts inverted corners", () => {
+        expect(rectOutlineCells([3, 3], [0, 0])).toEqual(
+            rectOutlineCells([0, 0], [3, 3])
+        );
+    });
+
+    it("keeps every cell of a rectangle with no middle", () => {
+        expect(rectOutlineCells([0, 0], [1, 1])).toEqual(
+            rectCells([0, 0], [1, 1])
+        );
+        expect(rectOutlineCells([0, 0], [4, 0])).toEqual(
+            rectCells([0, 0], [4, 0])
+        );
+    });
+
+    it("returns one cell when corners are equal", () => {
+        expect(rectOutlineCells([3, 4], [3, 4])).toEqual([[3, 4]]);
+    });
+});
 
 describe("rectCells", () => {
     it("orders cells by y and then x", () => {

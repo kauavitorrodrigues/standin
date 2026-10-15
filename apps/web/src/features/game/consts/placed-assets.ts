@@ -21,4 +21,8 @@ export const PLACED_ASSET_DEPTH = {
     // An avatar that sits draws over everything, since it is in the seat and
     // the piece it sits on must not cover it.
     SEATED_AVATAR: 20,
+    // The foreground layer, the ceilings and the tiles above everything, draws
+    // over every object and avatar, the seated one included. It stays under
+    // the room dim (50) and the interaction hints (100).
+    FOREGROUND: 30,
 } as const;
