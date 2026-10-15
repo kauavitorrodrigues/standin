@@ -1,6 +1,9 @@
 import type Phaser from "phaser";
 import { PLAYER_DIRECTIONS, type PlayerDirection } from "@standin/contracts";
-import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
+import {
+    AVATAR_DIMENSIONS,
+    PLAYER_APPEARANCE,
+} from "@/features/game/consts/player";
 import type { SeatSpot } from "@/features/game/utils/buildSeatAreas";
 import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 
@@ -83,7 +86,7 @@ export class Player {
         this.gameObject.setDepth(
             getAvatarDepth({
                 centerY: this.gameObject.y,
-                radius: PLAYER_APPEARANCE.RADIUS,
+                radius: AVATAR_DIMENSIONS.COLLISION_RADIUS,
                 mapHeightPx: this.mapHeightPx,
                 isSitting: this.isSitting,
             })

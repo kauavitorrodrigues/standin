@@ -391,7 +391,13 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
                 }
             ).tilesets;
             expect(tilesets).toHaveLength(2);
-            expect(tilesets[1].tiles).toHaveLength(1);
+            // Phaser drops the tile properties of a layout without a version.
+            expect((owner.map.layout as { version: string }).version).toBe(
+                "1.10"
+            );
+            // The eight pieces of the default wall style each carry a property:
+            // solid and top for the tall ones, a collision mask for the sides.
+            expect(tilesets[1].tiles).toHaveLength(8);
             expect(owner.desks).toEqual([]);
         });
 

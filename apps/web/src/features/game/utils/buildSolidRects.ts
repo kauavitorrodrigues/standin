@@ -30,7 +30,7 @@ const findRuns = (row: readonly boolean[]): Run[] => {
     return runs;
 };
 
-type Grid = {
+export type Grid = {
     // One list of flags per row, from the top of the footprint.
     cells: readonly (readonly boolean[])[];
     // Side of one cell, in px.
@@ -39,7 +39,7 @@ type Grid = {
 
 // Each run of solid cells is a rectangle, and runs with the same columns on
 // consecutive rows are merged into one, so the physics world gets few bodies.
-const gridToRects = (
+export const gridToRects = (
     { cells, cellPx }: Grid,
     left: number,
     top: number

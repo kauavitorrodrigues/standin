@@ -31,6 +31,7 @@ describe("MAP_TOOL_META", () => {
         expect(MAP_TOOL_KEYS[EDITOR_TOOLS.ERASE]).toEqual(["e"]);
         expect(MAP_TOOL_KEYS[EDITOR_TOOLS.RECT]).toEqual(["r"]);
         expect(MAP_TOOL_KEYS[EDITOR_TOOLS.BUCKET]).toEqual(["g"]);
+        expect(MAP_TOOL_KEYS[EDITOR_TOOLS.RECT_OUTLINE]).toEqual(["b"]);
         expect(MAP_TOOL_KEYS[EDITOR_TOOLS.PICKER]).toEqual(["i"]);
         expect(MAP_TOOL_KEYS[EDITOR_TOOLS.PAN]).toEqual(["m"]);
     });

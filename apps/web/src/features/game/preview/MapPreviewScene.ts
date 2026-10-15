@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { LAYOUT_LAYER_NAMES } from "@standin/contracts";
 import { GAME_SCENE_KEYS } from "@/features/game/consts/scene-keys";
 import { MAP_LAYER_ORIGIN } from "@/features/game/consts/map-geometry";
 import {
@@ -8,6 +9,7 @@ import {
     registerAssetAnimations,
     renderPlacedAssets,
     renderTileLayers,
+    renderWallTiles,
 } from "@/features/game/renderers";
 import type { GameMapData } from "@/features/game/types/tilemap";
 
@@ -37,7 +39,10 @@ export class MapPreviewScene extends Phaser.Scene {
 
         ensureAssetTextures(this.textures, assets);
         registerAssetAnimations(this, assets);
-        renderTileLayers(tilemap, tilesets);
+        const tileLayers = renderTileLayers(tilemap, tilesets, {
+            skip: [LAYOUT_LAYER_NAMES.WALLS],
+        });
+        renderWallTiles(this, tilemap, tileLayers);
         renderPlacedAssets(
             this,
             this.mapData.placed ?? [],

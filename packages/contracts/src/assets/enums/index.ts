@@ -4,3 +4,4 @@ export * from "./asset-placement";
 export * from "./asset-rotation";
 export * from "./tile-category";
 export * from "./asset-category";
+export * from "./wall-edge";

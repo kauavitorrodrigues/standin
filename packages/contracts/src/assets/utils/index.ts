@@ -6,3 +6,5 @@ export * from "./countTiles";
 export * from "./pruneTileMeta";
 export * from "./footprintMask";
 export * from "./pickDoorVariant";
+export * from "./wallPiece";
+export * from "./wallStyle";

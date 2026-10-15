@@ -1,21 +1,26 @@
 import Phaser from "phaser";
 import {
+    LAYOUT_LAYER_NAMES,
     TILE_SIZE,
     diffTileLayers,
     type CellDiff,
     type MapLayout,
     type Tileset,
 } from "@standin/contracts";
+import type { WallTileRenderer } from "@/features/game/renderers/WallTileRenderer";
+import type { WallTileMetaSource } from "@/features/editor/lib/WallTileMetaSource";
 import { buildTilesetAssetKey } from "@/features/game/utils/map";
 import { loadTilesetTexture } from "@/features/editor/lib/loadTilesetTexture";
 import { getMissingTilesetSources } from "@/features/editor/utils/getMissingTilesetSources";
 import { planTileDiff } from "@/features/editor/utils/planTileDiff";
+import type { TileLayerPlan } from "@/features/editor/types/tile-plan";
 import type { TilesetSource } from "@/features/editor/types/tileset-source";
 
-type TilesetLibrary = readonly Pick<
+type TilesetLibrary = readonly (Pick<
     Tileset,
     "id" | "url" | "margin" | "spacing"
->[];
+> &
+    Partial<Pick<Tileset, "tileMeta">>)[];
 
 type TilesetSettable = Phaser.Tilemaps.TilemapLayer & {
     setTilesets: (tilesets: Phaser.Tilemaps.Tileset[]) => void;
@@ -36,14 +41,22 @@ export class EditorTileRenderer {
     // The layout the layers were built from, the base of the next diff.
     private layout: MapLayout;
     private tail: Promise<void> = Promise.resolve();
+    // The walls are drawn tile by tile with their own depth, so they are not a
+    // layer of the list above. See `WallTileRenderer`.
+    private readonly walls: WallTileRenderer | null;
+    private readonly wallMeta: WallTileMetaSource | null;
 
     constructor(
         scene: Phaser.Scene,
         tilemap: Phaser.Tilemaps.Tilemap,
         layers: readonly Phaser.Tilemaps.TilemapLayer[],
         mapId: string,
-        layout: MapLayout
+        layout: MapLayout,
+        walls: WallTileRenderer | null = null,
+        wallMeta: WallTileMetaSource | null = null
     ) {
+        this.walls = walls;
+        this.wallMeta = wallMeta;
         this.scene = scene;
         this.tilemap = tilemap;
         this.mapId = mapId;
@@ -56,11 +69,17 @@ export class EditorTileRenderer {
         return [...this.layers.values()];
     }
 
+    // The wall tiles on screen, for the map photo.
+    getWallDisplays(): Phaser.GameObjects.Image[] {
+        return this.walls?.getDisplays() ?? [];
+    }
+
     // Shows or hides each layer by name. A layer not in `visibility` is shown.
     setLayersVisible(visibility: Readonly<Record<string, boolean>>): void {
         this.layers.forEach((layer, name) => {
             layer.setVisible(visibility[name] ?? true);
         });
+        this.walls?.setVisible(visibility[LAYOUT_LAYER_NAMES.WALLS] ?? true);
     }
 
     // Resolves when every queued diff has been drawn.
@@ -79,6 +98,12 @@ export class EditorTileRenderer {
     syncTiles(layout: MapLayout, library: TilesetLibrary = []): Promise<void> {
         const diff = diffTileLayers(this.layout, layout);
         this.layout = layout;
+        this.wallMeta?.setLibrary(
+            library.map(({ id, tileMeta }) => ({
+                id,
+                tileMeta: tileMeta ?? null,
+            }))
+        );
 
         return this.enqueue(async () => {
             const known = new Set(
@@ -104,10 +129,16 @@ export class EditorTileRenderer {
 
     private paint(diff: readonly CellDiff[]): void {
         for (const plan of planTileDiff(diff)) {
+            if (plan.layer === LAYOUT_LAYER_NAMES.WALLS && this.walls) {
+                this.paintWalls(this.walls, plan);
+                continue;
+            }
             const layer = this.layers.get(plan.layer);
             if (!layer) continue;
 
             for (const { x, y, gid } of plan.puts) {
+                // The top of a wall is drawn with the wall, not by the layer.
+                if (this.walls?.isDerivedTop(x, y, gid)) continue;
                 // Without the tileset, Phaser fails reading the tile index.
                 if (this.tilemap.tiles[gid] === undefined) {
                     console.warn(
@@ -121,6 +152,17 @@ export class EditorTileRenderer {
                 layer.removeTileAt(x, y, true, false);
             }
         }
+    }
+
+    private paintWalls(walls: WallTileRenderer, plan: TileLayerPlan): void {
+        for (const { x, y, gid } of plan.puts) {
+            if (this.tilemap.tiles[gid] === undefined) {
+                console.warn(`Tile gid ${gid} has no tileset in the tilemap`);
+                continue;
+            }
+            walls.set(x, y, gid);
+        }
+        for (const { x, y } of plan.removes) walls.remove(x, y);
     }
 
     // `Tilemap.addTilesetImage` returns null for a name the Tiled JSON did not

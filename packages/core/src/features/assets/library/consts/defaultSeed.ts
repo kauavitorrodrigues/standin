@@ -9,6 +9,10 @@ import {
 import { buildColorSprite } from "../utils/buildColorSprite";
 import { buildColorTileset } from "../utils/buildColorTileset";
 import type { LibrarySeed } from "../../seed/types";
+import {
+    WALL_SHEET_IMAGE,
+    WALL_SHEET_META,
+} from "./defaultWallSheet";
 import type { Rgba } from "../types";
 
 export const DEFAULT_LIBRARY_KEYS = {
@@ -25,15 +29,6 @@ const FLOOR_COLORS: Rgba[] = [
     [150, 170, 200, 255],
     [210, 200, 190, 255],
 ];
-
-// Tile 0 is the wall face, tile 1 is the top drawn on the cell above it.
-const WALL_COLORS: Rgba[] = [
-    [92, 92, 108, 255],
-    [60, 60, 74, 255],
-];
-
-const WALL_TILE_INDEX = "0";
-const WALL_TOP_TILE_INDEX = 1;
 
 const RED = { key: "red", hex: "#D64545" } as const;
 const BLUE = { key: "blue", hex: "#3F6FD1" } as const;
@@ -67,15 +62,8 @@ export const DEFAULT_LIBRARY_SEED: LibrarySeed = {
         {
             key: DEFAULT_LIBRARY_KEYS.WALLS,
             name: "Paredes",
-            image: buildColorTileset(WALL_COLORS),
-            tileMeta: {
-                [WALL_TILE_INDEX]: {
-                    category: TILE_CATEGORIES.WALL,
-                    solid: true,
-                    top: WALL_TOP_TILE_INDEX,
-                    blankDefault: true,
-                },
-            },
+            image: WALL_SHEET_IMAGE,
+            tileMeta: WALL_SHEET_META,
         },
     ],
     assets: [

@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
-import { FileImageIcon, Grid3x3Icon, RulerIcon } from "lucide-react";
+import { Grid3x3Icon, RulerIcon } from "lucide-react";
 import { TextFormField } from "@/components/fields/TextFormField";
 import { ExtractedInfo } from "@/features/assets/components/views/upload/ExtractedInfo";
-import { RemoveImageButton } from "@/features/assets/components/views/upload/RemoveImageButton";
 import { IMAGE_COLOR } from "@/features/assets/consts/editorColors";
 import type { ImageSize } from "@/features/assets/queries/useImageSize";
 import type { ExtractedGroup } from "@/features/assets/types/extractedInfo";
-import { getFileSizeKb } from "@/features/assets/utils/getFileSizeKb";
 import type { CreateTilesetFormValues } from "../../types/createForm";
 import type { GridSuggestion, TileSheetGrid } from "../../types/sheet";
 import { getGridSuggestions } from "../../utils/grid/getGridSuggestions";
@@ -19,7 +17,6 @@ import { TilesetSizeValue } from "./SizeValue";
 
 type Props = {
     form: UseFormReturn<CreateTilesetFormValues>;
-    file: File;
     size: ImageSize | undefined;
     grid: TileSheetGrid | null;
     disabled: boolean;
@@ -28,13 +25,7 @@ type Props = {
 // The fields of a new tileset: its name, the margin and the spacing of the
 // sheet, and what the image says, with the grid read from it as the margin
 // and the spacing are typed.
-export const TilesetFormFields = ({
-    form,
-    file,
-    size,
-    grid,
-    disabled,
-}: Props) => {
+export const TilesetFormFields = ({ form, size, grid, disabled }: Props) => {
     const [margin, spacing] = useWatch({
         control: form.control,
         name: ["margin", "spacing"],
@@ -50,27 +41,10 @@ export const TilesetFormFields = ({
     const [pickerOpen, setPickerOpen] = useState(false);
     const [typing, setTyping] = useState(false);
 
-    const removeImage = () => {
-        form.setValue("image", []);
-        form.setValue("tileMeta", {});
-    };
-
     const groups: ExtractedGroup[] = [
         {
             title: "Imagem",
             rows: [
-                {
-                    label: "Arquivo",
-                    value: `${file.name} (${getFileSizeKb(file)} KB)`,
-                    icon: FileImageIcon,
-                    color: IMAGE_COLOR,
-                    action: (
-                        <RemoveImageButton
-                            disabled={disabled}
-                            onRemove={removeImage}
-                        />
-                    ),
-                },
                 {
                     label: "Dimensões",
                     value: <TilesetSizeValue size={size} />,

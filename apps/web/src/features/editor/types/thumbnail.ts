@@ -8,6 +8,7 @@ export type ThumbnailSize = {
 // What a map photo is made of: tile layers and the objects placed on them.
 export type ThumbnailDrawable =
     | Phaser.Tilemaps.TilemapLayer
+    | Phaser.GameObjects.Image
     | Phaser.GameObjects.Sprite
     | Phaser.GameObjects.Rectangle;
 

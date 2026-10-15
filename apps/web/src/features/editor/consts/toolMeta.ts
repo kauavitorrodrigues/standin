@@ -6,6 +6,7 @@ import {
     PaintBucketIcon,
     PaintbrushIcon,
     PipetteIcon,
+    SquareDashedIcon,
     SquareIcon,
 } from "lucide-react";
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
@@ -48,6 +49,14 @@ export const MAP_TOOL_META: readonly EditorToolMeta[] = [
         description: "Preenche uma área com o tile escolhido.",
         icon: SquareIcon,
         shortcut: "R",
+    },
+    {
+        value: EDITOR_TOOLS.RECT_OUTLINE,
+        label: "Retângulo vazado",
+        description:
+            "Pinta só a borda de uma área com o tile escolhido, deixando o meio vazio.",
+        icon: SquareDashedIcon,
+        shortcut: "B",
     },
     {
         value: EDITOR_TOOLS.BUCKET,

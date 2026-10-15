@@ -5,6 +5,7 @@ import { SidePanel } from "@/features/editor/components/layout/SidePanel";
 import { SidePanelHeader } from "@/features/editor/components/layout/SidePanelHeader";
 import { TILE_EDITOR_KEYS } from "../../../consts/editorKeys";
 import { useTileEditorContext } from "../../../hooks/editor/useEditorContext";
+import { TileWallPanel } from "./WallPanel";
 
 type Props = {
     title: string;
@@ -40,6 +41,7 @@ export const TileEditorProperties = ({
             </SidePanelHeader>
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 pt-2">
                 {children}
+                <TileWallPanel />
             </div>
         </SidePanel>
     );

@@ -4,12 +4,18 @@ import type {
     TileCategory,
     TileMetaEntry,
 } from "../../types/meta";
-import { canBeBlankDefault, canHaveTop } from "./categoryRules";
+import {
+    canBeBlankDefault,
+    canHaveTop,
+    canHaveWallMeta,
+} from "./categoryRules";
+import { pickWallFields } from "./wall/wallFields";
 
 const keyOf = (index: number) => String(index);
 
 // Gives the tiles a category. What does not apply to the new category is
-// dropped (a top only belongs to a wall, a blank default to a floor or wall).
+// dropped (a top and the fields of a wall piece only belong to a wall, a blank
+// default to a floor or wall).
 export const setTileCategory = (
     meta: TileMeta,
     indices: number[],
@@ -23,6 +29,9 @@ export const setTileCategory = (
         if (current?.solid) entry.solid = true;
         if (canHaveTop(category) && current?.top !== undefined) {
             entry.top = current.top;
+        }
+        if (canHaveWallMeta(category) && current) {
+            Object.assign(entry, pickWallFields(current));
         }
         if (canBeBlankDefault(category) && current?.blankDefault) {
             entry.blankDefault = true;

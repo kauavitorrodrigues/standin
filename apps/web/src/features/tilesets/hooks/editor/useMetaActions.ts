@@ -3,6 +3,16 @@ import type { TileMeta } from "@standin/contracts";
 import type { CanEditTile, TileCategory } from "../../types/meta";
 import type { TileBrush } from "../../types/sheet";
 import { useTileHistory } from "./useHistory";
+import type { WallPiece } from "@standin/contracts";
+import type { WallPaintAction } from "../../consts/wall";
+import {
+    clearWallCollision,
+    paintWallCollision,
+    type WallCell,
+} from "../../utils/editor/wall/paintWallCollision";
+import { setWallOverlap } from "../../utils/editor/wall/setWallOverlap";
+import { setWallPiece } from "../../utils/editor/wall/setWallPiece";
+import { setWallStyle } from "../../utils/editor/wall/setWallStyle";
 import {
     clearTileCategory,
     setTileBlankDefault,
@@ -20,7 +30,7 @@ type Params = {
 
 // What the editor does to the marks of the sheet: give the selected tiles a
 // category, make them solid, move the default of the blank map, set the top
-// of a wall, paint tiles with the brush, erase them, or undo and redo what was done.
+// of a wall, edit the wall piece fields, paint tiles with the brush, erase them, or undo and redo what was done.
 export const useTileMetaActions = ({
     meta,
     onChange,
@@ -90,8 +100,51 @@ export const useTileMetaActions = ({
         commit(clearTileCategory(latest.current, indices, canEdit));
     };
 
+    // The edits of the wall piece panel, on the selected tiles.
+    const setWallPieceOfSelected = (
+        piece: WallPiece | null,
+        fallbackStyle?: string
+    ) => {
+        commit(
+            setWallPiece(
+                latest.current,
+                selected,
+                piece,
+                canEdit,
+                fallbackStyle
+            )
+        );
+    };
+
+    const setWallStyleOfSelected = (name: string) => {
+        commit(setWallStyle(latest.current, selected, name, canEdit));
+    };
+
+    const setWallOverlapOfSelected = (rows: number | null) => {
+        commit(setWallOverlap(latest.current, selected, rows, canEdit));
+    };
+
+    const paintWallCells = (
+        index: number,
+        cells: WallCell[],
+        action: WallPaintAction
+    ) => {
+        commit(
+            paintWallCollision(latest.current, index, cells, action, canEdit)
+        );
+    };
+
+    const clearWallCollisionOfSelected = () => {
+        commit(clearWallCollision(latest.current, selected, canEdit));
+    };
+
     return {
         latest,
+        setWallPieceOfSelected,
+        setWallStyleOfSelected,
+        setWallOverlapOfSelected,
+        paintWallCells,
+        clearWallCollisionOfSelected,
         applyCategory,
         clearSelection,
         setSolid,

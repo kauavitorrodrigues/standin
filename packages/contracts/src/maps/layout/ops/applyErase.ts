@@ -8,6 +8,7 @@ import type { LayoutLibrary } from "../library";
 import type { EraseOp } from "./types";
 import { findOutsideCell } from "./findOutsideCell";
 import { findTileLayer } from "./findTileLayer";
+import { retileWalls } from "./retileWalls";
 
 export const applyErase = (
     layout: MapLayout,
@@ -45,6 +46,11 @@ export const applyErase = (
         if (foreground.data[aboveIndex] === tileset.firstgid + top) {
             foreground.data[aboveIndex] = 0;
         }
+    }
+
+    // The walls next to the erased cells change piece when their run does.
+    if (op.layer === LAYOUT_LAYER_NAMES.WALLS) {
+        return retileWalls(layout, library, op.cells, "lenient");
     }
 
     return [];
