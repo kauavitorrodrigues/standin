@@ -48,4 +48,10 @@ export const PERMISSIONS: Record<Resource, ActionPermissions> = {
     // Chat is shared work between members. Access to a conversation is
     // enforced by its own middleware, not by this matrix.
     message: createOpenPermissions(),
+    // The global asset library is managed by the admin and the library of an
+    // organization by its owner (the route decides which scope the user is
+    // in). Everyone reads them to build spaces.
+    asset: createWritePermissions([ROLES.ADMIN, ROLES.OWNER]),
+    // The template catalog is the admin's.
+    template: createWritePermissions([ROLES.ADMIN]),
 };

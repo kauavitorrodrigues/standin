@@ -50,5 +50,11 @@ export const organizationMembersTable = pgTable(
             table.organizationId,
         ),
         index("organization_members_user_id_index").on(table.userId),
+        // One active owner per organization.
+        uniqueIndex("organization_members_organization_id_owner_unique")
+            .on(table.organizationId)
+            .where(
+                sql`${table.role} = 'OWNER' AND ${table.deletedAt} IS NULL`,
+            ),
     ],
 );

@@ -22,7 +22,7 @@ export function SignInForm() {
 
     const onSubmit = async (data: SignInSchemaType) => {
         await signInMutation.mutateAsync(data, {
-            onSuccess: () => navigate({ to: "/home" }),
+            onSuccess: () => navigate({ to: "/" }),
             onError: () => form.resetField("password"),
         });
     };

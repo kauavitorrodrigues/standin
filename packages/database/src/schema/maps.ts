@@ -6,17 +6,20 @@ import {
     uuidPrimaryKeyColumn,
 } from "./common";
 import {
-    text,
-    varchar,
     integer,
+    jsonb,
+    pgEnum,
     pgTable,
     index,
-    uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { organizationsTable } from "./organizations";
-import { usersTable } from "./users";
-import { filesTable } from "./files";
+import { MAP_SIZE_TIERS, TILE_SIZE } from "@standin/contracts";
+import type { MapLayout } from "@standin/contracts";
+import { mapAssetsTable } from "./map-assets";
 
+export const mapSizeTierEnum = pgEnum("map_size_tier", MAP_SIZE_TIERS);
+
+// A map belongs to exactly one space or one template. It is born blank (or as
+// a copy of a template) and edited inside the system, so it is not a file.
 export const mapsTable = pgTable(
     "maps",
     {
@@ -24,68 +27,23 @@ export const mapsTable = pgTable(
         id: uuidPrimaryKeyColumn(),
 
         // Properties columns
-        name: varchar("name", { length: 255 }).notNull(),
+        // Tiled JSON of the map. Never select it in listings.
+        layout: jsonb("layout").$type<MapLayout>().notNull(),
+        // Goes up on every tile or zone operation (optimistic concurrency).
+        layoutVersion: integer("layout_version").notNull().default(1),
         width: integer("width").notNull(),
         height: integer("height").notNull(),
-        tileSize: integer("tile_size").notNull(),
-
-        // Relations columns
-        organizationId: text("organization_id").references(
-            () => organizationsTable.id,
-        ),
-        mapJsonFileId: text("map_json_file_id")
-            .notNull()
-            .references(() => filesTable.id),
-        thumbnailFileId: text("thumbnail_file_id").references(
-            () => filesTable.id,
-        ),
-        createdBy: text("created_by").references(() => usersTable.id),
+        tileSize: integer("tile_size").notNull().default(TILE_SIZE),
+        sizeTier: mapSizeTierEnum("size_tier").notNull(),
 
         // Date columns
         createdAt: createdAtColumn(),
         updatedAt: updatedAtColumn(),
         deletedAt: deletedAtColumn(),
     },
-    (table) => [
-        index("maps_organization_id_index").on(table.organizationId),
-        index("maps_map_json_file_id_index").on(table.mapJsonFileId),
-    ],
+    (table) => [index("maps_size_tier_index").on(table.sizeTier)],
 );
 
-export const mapsRelations = relations(mapsTable, ({ one }) => ({
-    creator: one(usersTable, {
-        fields: [mapsTable.createdBy],
-        references: [usersTable.id],
-    }),
+export const mapsRelations = relations(mapsTable, ({ many }) => ({
+    assets: many(mapAssetsTable),
 }));
-
-export const mapTilesetsTable = pgTable(
-    "map_tilesets",
-    {
-        // Primary key column
-        id: uuidPrimaryKeyColumn(),
-
-        // Relations columns
-        mapId: text("map_id")
-            .notNull()
-            .references(() => mapsTable.id),
-        fileId: text("file_id")
-            .notNull()
-            .references(() => filesTable.id),
-
-        // Properties columns
-        tilesetName: varchar("tileset_name", { length: 255 }).notNull(),
-
-        // Date columns
-        createdAt: createdAtColumn(),
-    },
-    (table) => [
-        index("map_tilesets_map_id_index").on(table.mapId),
-        index("map_tilesets_file_id_index").on(table.fileId),
-        // Guarantees the JSON <-> tileset name matching stays unique per map
-        uniqueIndex("map_tilesets_map_id_tileset_name_unique").on(
-            table.mapId,
-            table.tilesetName,
-        ),
-    ],
-);
