@@ -32,6 +32,8 @@ import {
     bindPlayerCollision,
     bindPlayerInteractions,
 } from "@/features/game/utils/player";
+import { SeatController } from "@/features/game/lib/SeatController";
+import { buildSeatAreas } from "@/features/game/utils/buildSeatAreas";
 import { resolveDefaultSpawnPoint } from "@/features/game/utils/map";
 import type { MapSceneInitData } from "@/features/game/types/tilemap";
 import { SEND_INTERVAL_MS } from "@/features/game/multiplayer/consts/sync";
@@ -44,6 +46,7 @@ export class MapScene extends Phaser.Scene {
         MAP_CAMERA_CONFIG.NO_HORIZONTAL_FOLLOW_OFFSET;
     private playerController: PlayerController | null = null;
     private interactionController: InteractionController | null = null;
+    private seatController: SeatController | null = null;
     private remoteAvatars = new Map<string, RemoteAvatar>();
     private spawnPoint = { x: 0, y: 0 };
     private broadcastLocalPosition: ((state: PlayerPosition) => void) | null =
@@ -62,6 +65,8 @@ export class MapScene extends Phaser.Scene {
         null;
     private peerDistanceListener:
         ((distances: ReadonlyMap<string, number>) => void) | null = null;
+
+    private mapHeightPx = 0;
 
     cameraController: MapCameraController | null = null;
     player: Player | null = null;
@@ -106,15 +111,30 @@ export class MapScene extends Phaser.Scene {
 
         const spawnPoint = resolveDefaultSpawnPoint(tilemap);
         this.spawnPoint = spawnPoint;
+        this.mapHeightPx = tilemap.heightInPixels;
 
-        this.player = new Player(this, spawnPoint.x, spawnPoint.y);
+        this.player = new Player(
+            this,
+            spawnPoint.x,
+            spawnPoint.y,
+            tilemap.heightInPixels
+        );
 
+        this.seatController = new SeatController(this.player);
         this.playerController = new PlayerController(this, this.player);
         bindKeyboardFocusGuard(this);
 
         this.interactionController = new InteractionController(
             this,
             this.player
+        );
+
+        this.seatController.addAreas(
+            buildSeatAreas(
+                this.mapData.placed ?? [],
+                new Map(assets.map((asset) => [asset.id, asset])),
+                tilemap.heightInPixels
+            )
         );
 
         bindPlayerCollision(this, this.player, solidGroup);
@@ -164,6 +184,8 @@ export class MapScene extends Phaser.Scene {
 
     update(time: number, delta: number): void {
         this.playerController?.update();
+        this.seatController?.update();
+        this.player?.updateDepth();
         this.interactionController?.update();
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.emitLocalPosition();
@@ -175,7 +197,12 @@ export class MapScene extends Phaser.Scene {
 
         this.remoteAvatars.set(
             socketId,
-            new RemoteAvatar(this, this.spawnPoint.x, this.spawnPoint.y)
+            new RemoteAvatar(
+                this,
+                this.spawnPoint.x,
+                this.spawnPoint.y,
+                this.mapHeightPx
+            )
         );
     }
 

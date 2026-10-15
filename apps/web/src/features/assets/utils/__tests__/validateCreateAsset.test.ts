@@ -9,6 +9,15 @@ describe("validateCreateAsset", () => {
         expect(validateCreateAsset(createValues(), size)).toEqual({});
     });
 
+    it("asks for the crop and the footprint to be marked", () => {
+        const errors = validateCreateAsset(
+            createValues({ cropW: 0, cropH: 0, footprintW: 0, footprintH: 0 }),
+            size
+        );
+        expect(errors.cropW).toBeDefined();
+        expect(errors.footprintW).toBeDefined();
+    });
+
     it("asks for the PNG and the name", () => {
         const errors = validateCreateAsset(
             createValues({ image: [], name: "" }),

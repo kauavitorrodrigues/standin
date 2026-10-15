@@ -54,7 +54,9 @@ class FakeLink implements PeerLinkHandle {
     mediaStates() {
         return this.sent
             .map((raw) => JSON.parse(raw))
-            .filter((message) => message.type === PEER_MESSAGE_TYPES.MEDIA_STATE)
+            .filter(
+                (message) => message.type === PEER_MESSAGE_TYPES.MEDIA_STATE
+            )
             .map((message) => message.payload);
     }
 }
@@ -249,7 +251,11 @@ describe("PeerConnectionManager media gating", () => {
 
         const link = connect("a");
 
-        expect(link.tracks).toEqual({ audio: null, camera: null, screen: null });
+        expect(link.tracks).toEqual({
+            audio: null,
+            camera: null,
+            screen: null,
+        });
     });
 
     it("gives each peer only what its own policy allows", () => {
@@ -277,18 +283,26 @@ describe("PeerConnectionManager media gating", () => {
         manager.setLocalTrack(MEDIA_SLOTS.AUDIO, audio);
         manager.setLocalTrack(MEDIA_SLOTS.SCREEN, screen);
         const link = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
         expect(link.tracks.screen).toBe(screen);
 
         manager.setMediaPolicies(new Map());
 
-        expect(link.tracks).toEqual({ audio: null, camera: null, screen: null });
+        expect(link.tracks).toEqual({
+            audio: null,
+            camera: null,
+            screen: null,
+        });
     });
 
     it("a new local track reaches peers that are already allowed", () => {
         const { manager, connect } = setup();
         const link = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
 
         manager.setLocalTrack(MEDIA_SLOTS.SCREEN, screen);
         expect(link.tracks.screen).toBe(screen);
@@ -300,7 +314,9 @@ describe("PeerConnectionManager media gating", () => {
     it("a peer created after the policy is set gets media immediately", () => {
         const { manager, connect } = setup();
         manager.setLocalTrack(MEDIA_SLOTS.AUDIO, audio);
-        manager.setMediaPolicies(new Map([["late", { audio: true, video: false }]]));
+        manager.setMediaPolicies(
+            new Map([["late", { audio: true, video: false }]])
+        );
 
         expect(connect("late").tracks.audio).toBe(audio);
     });
@@ -323,7 +339,9 @@ describe("PeerConnectionManager media gating", () => {
         const { manager, connect } = setup();
         manager.setLocalTrack(MEDIA_SLOTS.CAMERA, camera);
         const first = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
         const alone = (first.encodings.camera as { maxBitrate: number })
             .maxBitrate;
 
@@ -351,7 +369,9 @@ describe("PeerConnectionManager media state announcements", () => {
         const { manager, connect } = setup();
         manager.setLocalTrack(MEDIA_SLOTS.CAMERA, camera);
         const link = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
 
         expect(link.mediaStates()).toHaveLength(0);
     });
@@ -360,7 +380,9 @@ describe("PeerConnectionManager media state announcements", () => {
         const { manager, connect } = setup();
         manager.setLocalTrack(MEDIA_SLOTS.CAMERA, camera);
         const link = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
 
         link.open();
 
@@ -377,12 +399,16 @@ describe("PeerConnectionManager media state announcements", () => {
     it("announces a screen share starting and stopping, once each", () => {
         const { manager, connect } = setup();
         const link = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
         link.open();
         link.sent.length = 0;
 
         manager.setLocalTrack(MEDIA_SLOTS.SCREEN, screen);
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
         manager.setLocalTrack(MEDIA_SLOTS.SCREEN, null);
 
         expect(link.mediaStates().map((state) => state.screenStreamId)).toEqual(
@@ -410,7 +436,9 @@ describe("PeerConnectionManager media state announcements", () => {
         const { manager, connect } = setup();
         manager.setLocalTrack(MEDIA_SLOTS.CAMERA, camera);
         const link = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
         link.open();
         link.sent.length = 0;
 
@@ -444,7 +472,9 @@ describe("PeerConnectionManager media state announcements", () => {
     it("never claims a stream that has no local track behind it", () => {
         const { manager, connect } = setup();
         const link = connect("a");
-        manager.setMediaPolicies(new Map([["a", { audio: true, video: true }]]));
+        manager.setMediaPolicies(
+            new Map([["a", { audio: true, video: true }]])
+        );
         link.open();
 
         expect(link.mediaStates()[0]).toMatchObject({

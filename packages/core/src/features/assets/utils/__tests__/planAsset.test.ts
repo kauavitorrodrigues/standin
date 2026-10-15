@@ -29,7 +29,7 @@ describe("planAsset", () => {
         expect(plan.values).toEqual({
             category: ASSET_CATEGORIES.FOOD_DRINK,
             frame: { w: 32, h: 64 },
-            footprint: { w: 1, h: 1, offsetX: 0 },
+            footprint: { w: 1, h: 1, offsetX: 0, mask: null, solidMask: null },
         });
     });
 
@@ -103,6 +103,75 @@ describe("planAsset", () => {
         expect(codes({ ...mug, actionParams: chairSeats })).toEqual([
             LIBRARY_ISSUE_CODES.ASSET_ACTION_PARAMS_INVALID,
         ]);
+    });
+
+    it("keeps the footprint mask of a static asset", () => {
+        const mask = [
+            [true, true],
+            [true, false],
+        ];
+        const plan = planAsset(
+            { ...mug, footprint: { w: 2, h: 2, mask } },
+            { width: 64, height: 64 }
+        );
+
+        expect(plan.errors).toEqual([]);
+        expect(plan.values?.footprint.mask).toEqual(mask);
+    });
+
+    it("derives the tile mask from a collision mask sent alone", () => {
+        // One tile wide and two high: only cells of the top tile are solid.
+        const solidMask = Array.from({ length: 8 }, (_, row) =>
+            Array.from({ length: 4 }, () => row === 0)
+        );
+        const plan = planAsset(
+            { ...mug, footprint: { w: 1, h: 2, solidMask } },
+            { width: 32, height: 64 }
+        );
+
+        expect(plan.errors).toEqual([]);
+        expect(plan.values?.footprint.solidMask).toEqual(solidMask);
+        expect(plan.values?.footprint.mask).toEqual([[true], [false]]);
+    });
+
+    it("refuses a collision mask on an animated asset", () => {
+        expect(
+            codes(
+                {
+                    ...mug,
+                    footprint: {
+                        w: 1,
+                        h: 1,
+                        solidMask: Array.from({ length: 4 }, () =>
+                            Array(4).fill(true)
+                        ),
+                    },
+                    animation: {
+                        frameCount: 2,
+                        frameDurationMs: 100,
+                        repeat: -1,
+                    },
+                },
+                { width: 64, height: 32 }
+            )
+        ).toEqual([LIBRARY_ISSUE_CODES.ASSET_FOOTPRINT_MASK_ANIMATED]);
+    });
+
+    it("refuses a footprint mask on an animated asset", () => {
+        expect(
+            codes(
+                {
+                    ...mug,
+                    footprint: { w: 1, h: 1, mask: [[true]] },
+                    animation: {
+                        frameCount: 2,
+                        frameDurationMs: 100,
+                        repeat: -1,
+                    },
+                },
+                { width: 64, height: 32 }
+            )
+        ).toEqual([LIBRARY_ISSUE_CODES.ASSET_FOOTPRINT_MASK_ANIMATED]);
     });
 
     it("collects every problem together", () => {

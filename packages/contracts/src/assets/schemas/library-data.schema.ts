@@ -5,11 +5,16 @@ import { ASSET_PLACEMENTS } from "../enums/asset-placement";
 import { ASSET_ROTATIONS } from "../enums/asset-rotation";
 import { ASSET_TYPES } from "../enums/asset-type";
 import { assetAnimationSchema } from "./asset-animation.schema";
+import {
+    isFootprintMaskFitting,
+    isFootprintSolidMaskFitting,
+} from "../utils/footprintMask";
 import { assetColorSchema } from "./asset-color.schema";
 import {
     LibraryDataErrorMessages as Messages,
     TilesetErrorMessages,
 } from "./consts/error-messages";
+import { footprintMaskSchema } from "./footprint-mask.schema";
 import { TileMetaSchema } from "./tile-meta.schema";
 
 const int = (message: string) =>
@@ -28,20 +33,39 @@ const organizationId = z
     .string({ error: Messages.organizationId.invalid })
     .min(1, { error: Messages.organizationId.invalid });
 
-export const LibraryFootprintSchema = z.object(
-    {
-        w: int(Messages.footprint.invalid).positive({
-            error: Messages.footprint.invalid,
-        }),
-        h: int(Messages.footprint.invalid).positive({
-            error: Messages.footprint.invalid,
-        }),
-        offsetX: int(Messages.footprint.invalid)
-            .min(0, { error: Messages.footprint.invalid })
-            .optional(),
-    },
-    { error: Messages.footprint.invalid }
-);
+export const LibraryFootprintSchema = z
+    .object(
+        {
+            w: int(Messages.footprint.invalid).positive({
+                error: Messages.footprint.invalid,
+            }),
+            h: int(Messages.footprint.invalid).positive({
+                error: Messages.footprint.invalid,
+            }),
+            offsetX: int(Messages.footprint.invalid)
+                .min(0, { error: Messages.footprint.invalid })
+                .optional(),
+            // The occupied cells, one flag per cell. Absent means the whole
+            // rectangle. Sent only when the footprint is not a full rectangle.
+            mask: footprintMaskSchema(Messages.footprintMask.invalid)
+                .nullable()
+                .optional(),
+            // The cells that block the way, SOLID_MASK_SUBDIVISION per tile.
+            // Absent means the occupied tiles block whole.
+            solidMask: footprintMaskSchema(Messages.footprintSolidMask.invalid)
+                .nullable()
+                .optional(),
+        },
+        { error: Messages.footprint.invalid }
+    )
+    .refine((footprint) => isFootprintMaskFitting(footprint), {
+        error: Messages.footprintMask.invalid,
+        path: ["mask"],
+    })
+    .refine((footprint) => isFootprintSolidMaskFitting(footprint), {
+        error: Messages.footprintSolidMask.invalid,
+        path: ["solidMask"],
+    });
 
 export const LibraryActionParamsSchema = z.record(z.string(), z.unknown(), {
     error: Messages.update.invalid,

@@ -4,4 +4,6 @@ export const MAP_OBJECT_MARKER_COLORS = {
 } as const;
 
 export const MAP_OBJECT_MARKER_ALPHA = 0.35;
-export const MAP_OBJECT_MARKER_DEPTH = 10;
+// On the floor, just under the placed objects, so the avatars that walk over a
+// marker are not tinted by it.
+export const MAP_OBJECT_MARKER_DEPTH = 0.9;

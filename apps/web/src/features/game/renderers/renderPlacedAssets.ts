@@ -12,9 +12,10 @@ import {
 /**
  * Draws every placed object of the map as a sprite over the texture of its
  * asset: frame 0 when static, the `asset:{assetId}` animation when animated.
- * Solid objects on the ground get a static zone over their footprint in the
- * given group. A view with no physics passes no group and gets the sprites
- * only.
+ * An object whose footprint has a mask is drawn as one cropped sprite per
+ * footprint row, each at its own depth. Solid objects on the ground get a
+ * static zone over each rectangle of their footprint in the given group. A
+ * view with no physics passes no group and gets the sprites only.
  */
 export const renderPlacedAssets = (
     scene: Phaser.Scene,
@@ -40,19 +41,36 @@ export const renderPlacedAssets = (
         const textureKey = buildAssetTextureKey(asset.id);
         if (!scene.textures.exists(textureKey)) continue;
 
-        const sprite = scene.add.sprite(layout.x, layout.bottomY, textureKey);
-        sprite.setOrigin(0, 1);
-        sprite.setDepth(layout.depth);
-        sprite.setName(item.id);
-
         const animationKey = buildAssetAnimationKey(asset.id);
-        if (shouldPlayAnimation(asset, scene.anims.exists(animationKey))) {
-            sprite.play(animationKey);
-        }
-        sprites.push(sprite);
+        const animated = shouldPlayAnimation(
+            asset,
+            scene.anims.exists(animationKey)
+        );
 
-        if (solidGroup && layout.solidRect) {
-            const { x, y, width, height } = layout.solidRect;
+        for (const slice of layout.slices) {
+            const sprite = scene.add.sprite(
+                layout.x,
+                layout.bottomY,
+                textureKey
+            );
+            sprite.setOrigin(0, 1);
+            sprite.setDepth(slice.depth);
+            sprite.setName(item.id);
+            if (slice.crop) {
+                sprite.setCrop(
+                    0,
+                    slice.crop.y,
+                    asset.sprite.w,
+                    slice.crop.height
+                );
+            }
+            if (animated) sprite.play(animationKey);
+            sprites.push(sprite);
+        }
+
+        if (!solidGroup) continue;
+
+        for (const { x, y, width, height } of layout.solidRects) {
             const zone = scene.add.zone(
                 x + width / 2,
                 y + height / 2,

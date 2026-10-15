@@ -22,7 +22,7 @@ export function CreateAssetPage() {
                     </Button>
                 }
             />
-            <PageContainer.Content>
+            <PageContainer.Content className="p-4">
                 <CreateForm />
             </PageContainer.Content>
         </PageContainer.Root>

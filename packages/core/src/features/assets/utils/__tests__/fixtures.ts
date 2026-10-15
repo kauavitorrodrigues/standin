@@ -32,6 +32,8 @@ export const assetRow = (overrides: Partial<AssetRow> = {}): AssetRow => ({
     footprintW: 1,
     footprintH: 1,
     footprintOffsetX: 0,
+    footprintMask: null,
+    footprintSolidMask: null,
     placement: ASSET_PLACEMENTS.SURFACE,
     surfaceHeightPx: 0,
     solid: false,

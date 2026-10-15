@@ -1,5 +1,12 @@
-import { MIN_ANIMATION_FRAME_COUNT, TILE_SIZE } from "@standin/contracts";
+import {
+    isFootprintMaskFitting,
+    isFootprintSolidMaskFitting,
+    MIN_ANIMATION_FRAME_COUNT,
+    TILE_SIZE,
+} from "@standin/contracts";
+import { ASSET_ACTION_BEHAVIOR } from "../consts/actionBehavior";
 import { DEFAULT_CATEGORY_OPTION } from "../consts/createForm";
+import { ASSET_VALIDATION_MESSAGES } from "../consts/validationMessages";
 import type { ImageSize } from "../queries/useImageSize";
 import type { CreateAssetFormValues } from "../types/createForm";
 import { getEffectiveCategory } from "./getEffectiveCategory";
@@ -22,12 +29,41 @@ export const validateCreateAsset = (
     const errors: Errors = {};
     if (values.image.length === 0) errors.image = "Envie o PNG do asset.";
     if (values.name.trim() === "") errors.name = REQUIRED;
+    if (!values.cropW || !values.cropH) {
+        errors.cropW = ASSET_VALIDATION_MESSAGES.CROP_REQUIRED;
+    }
     if (!values.footprintW || values.footprintW <= 0) {
-        errors.footprintW = REQUIRED;
+        errors.footprintW = ASSET_VALIDATION_MESSAGES.FOOTPRINT_REQUIRED;
     }
     if (!values.footprintH || values.footprintH <= 0) {
-        errors.footprintH = REQUIRED;
+        errors.footprintH = ASSET_VALIDATION_MESSAGES.FOOTPRINT_REQUIRED;
     }
+    if (
+        !isFootprintMaskFitting({
+            w: values.footprintW ?? 0,
+            h: values.footprintH ?? 0,
+            mask: values.footprintMask,
+        })
+    ) {
+        errors.footprintMask = ASSET_VALIDATION_MESSAGES.MASK_NOT_FITTING;
+    }
+    if (
+        values.solid &&
+        !values.isAnimated &&
+        !isFootprintSolidMaskFitting({
+            w: values.footprintW ?? 0,
+            h: values.footprintH ?? 0,
+            mask: values.footprintMask,
+            solidMask: values.footprintSolidMask,
+        })
+    ) {
+        errors.footprintSolidMask =
+            ASSET_VALIDATION_MESSAGES.SOLID_MASK_NOT_FITTING;
+    }
+    Object.assign(
+        errors,
+        ASSET_ACTION_BEHAVIOR[values.action].validate(values)
+    );
     if (
         values.type === "DECORATION" &&
         getEffectiveCategory(values) === DEFAULT_CATEGORY_OPTION

@@ -5,7 +5,6 @@ import {
     getFootprintRect,
     getFrameCrop,
     splitsIntoFrames,
-    suggestFootprint,
     toFirstFrameCells,
 } from "../spriteGeometry";
 
@@ -24,16 +23,6 @@ describe("getCropFromCells", () => {
         expect(
             getCropFromCells({ col: 0, row: 0 }, { col: 0, row: 0 })
         ).toEqual({ x: 0, y: 0, w: 32, h: 32 });
-    });
-});
-
-describe("suggestFootprint", () => {
-    it("is as wide as the art and one tile deep", () => {
-        expect(suggestFootprint({ x: 0, y: 0, w: 128, h: 64 })).toEqual({
-            w: 4,
-            h: 1,
-            offsetX: 0,
-        });
     });
 });
 

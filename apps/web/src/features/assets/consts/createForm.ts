@@ -5,8 +5,11 @@ import {
     MIN_ANIMATION_FRAME_COUNT,
     type AssetCategory,
 } from "@standin/contracts";
+import { ASSET_ACTION_META, NO_ACTION } from "./actionMeta";
 import { toMetaOptions } from "../utils/toMetaOptions";
 import { ASSET_CATEGORY_DISPLAY_META } from "./categoryMeta";
+import { NO_FOOTPRINT_MASK, NO_SOLID_MASK } from "./footprintMask";
+import { NO_FOOTPRINT } from "./spriteGeometry";
 import { ASSET_PLACEMENT_META } from "./placementMeta";
 import { ASSET_TYPE_META } from "./typeMeta";
 import type { CreateAssetFormValues } from "../types/createForm";
@@ -22,13 +25,17 @@ export const CREATE_ASSET_DEFAULT_VALUES: CreateAssetFormValues = {
     category: DEFAULT_CATEGORY_OPTION,
     placement: ASSET_PLACEMENTS.GROUND,
     solid: false,
+    action: NO_ACTION,
+    seats: [],
     cropX: 0,
     cropY: 0,
     cropW: 0,
     cropH: 0,
-    footprintW: 1,
-    footprintH: 1,
+    footprintW: NO_FOOTPRINT.w,
+    footprintH: NO_FOOTPRINT.h,
     footprintOffsetX: 0,
+    footprintMask: NO_FOOTPRINT_MASK,
+    footprintSolidMask: NO_SOLID_MASK,
     colorKey: "",
     colorHex: "",
     isAnimated: false,
@@ -39,6 +46,8 @@ export const CREATE_ASSET_DEFAULT_VALUES: CreateAssetFormValues = {
 };
 
 export const TYPE_OPTIONS = toMetaOptions(ASSET_TYPE_META);
+
+export const ACTION_OPTIONS = toMetaOptions(ASSET_ACTION_META);
 
 export const PLACEMENT_OPTIONS = toMetaOptions(ASSET_PLACEMENT_META);
 

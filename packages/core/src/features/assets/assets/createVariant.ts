@@ -70,6 +70,8 @@ export const createLibraryVariant = async (
                 footprintW: footprint.w,
                 footprintH: footprint.h,
                 footprintOffsetX: footprint.offsetX,
+                footprintMask: footprint.mask,
+                footprintSolidMask: footprint.solidMask,
                 placement: base.placement,
                 surfaceHeightPx: base.surfaceHeightPx,
                 solid: base.solid,

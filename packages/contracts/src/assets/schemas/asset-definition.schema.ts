@@ -5,8 +5,13 @@ import { ASSET_PLACEMENTS } from "../enums/asset-placement";
 import { ASSET_ROTATIONS } from "../enums/asset-rotation";
 import { ASSET_TYPES } from "../enums/asset-type";
 import { assetAnimationSchema } from "./asset-animation.schema";
+import {
+    isFootprintMaskFitting,
+    isFootprintSolidMaskFitting,
+} from "../utils/footprintMask";
 import { assetColorHexSchema, assetColorKeySchema } from "./asset-color.schema";
 import { AssetErrorMessages as Messages } from "./consts/error-messages";
+import { footprintMaskSchema } from "./footprint-mask.schema";
 import { TilesetSchema } from "./tileset.schema";
 
 const int = (message: string) =>
@@ -45,6 +50,18 @@ export const AssetDefinitionSchema = z
                 w: int(Messages.footprint.invalid),
                 h: int(Messages.footprint.invalid),
                 offsetX: int(Messages.footprint.invalid),
+                // Occupied cells inside the footprint. Absent or null means
+                // the whole rectangle is occupied.
+                mask: footprintMaskSchema(Messages.footprintMask.invalid)
+                    .nullable()
+                    .optional(),
+                // The cells that block the way, SOLID_MASK_SUBDIVISION per
+                // tile. Absent or null means the occupied tiles block whole.
+                solidMask: footprintMaskSchema(
+                    Messages.footprintSolidMask.invalid
+                )
+                    .nullable()
+                    .optional(),
             },
             { error: Messages.footprint.invalid }
         ),
@@ -70,6 +87,30 @@ export const AssetDefinitionSchema = z
                 code: "custom",
                 path: ["colorKey"],
                 message: Messages.colorFields.inconsistent,
+            });
+        }
+        if (!isFootprintMaskFitting(asset.footprint)) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["footprint", "mask"],
+                message: Messages.footprintMask.invalid,
+            });
+        }
+        if (!isFootprintSolidMaskFitting(asset.footprint)) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["footprint", "solidMask"],
+                message: Messages.footprintSolidMask.invalid,
+            });
+        }
+        if (
+            (asset.footprint.mask || asset.footprint.solidMask) &&
+            asset.animation
+        ) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["footprint", "mask"],
+                message: Messages.footprintMask.animated,
             });
         }
     });

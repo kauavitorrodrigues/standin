@@ -1,35 +1,25 @@
-import { CircleHelpIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import { TreeIllustration } from "./TreeIllustration";
 
-// The difference between the two rectangles, with a drawing of each. The "?"
-// that opens it sits in the toolbar of the editor.
-export const EditorHelpDialog = () => (
-    <Dialog>
-        <DialogTrigger
-            render={
-                <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label="O que são recorte e pegada?"
-                />
-            }
-        >
-            <CircleHelpIcon />
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-2xl">
+type Props = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+};
+
+// The difference between the three layers, with a drawing of each. It opens
+// from the "?" in the toolbar of the editor.
+export const EditorHelpDialog = ({ open, onOpenChange }: Props) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
-                <DialogTitle>Recorte e pegada</DialogTitle>
+                <DialogTitle>Recorte, pegada e colisão</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
                 <section className="flex flex-col gap-4 rounded-xl border p-4">
                     <h3 className="flex items-center gap-2 font-medium">
                         <span className="size-3 rounded-sm border-2 border-dashed border-primary" />
@@ -64,6 +54,26 @@ export const EditorHelpDialog = () => (
                     <p className="mt-auto border-t pt-3 text-sm">
                         <span className="font-medium">Exemplo: </span>
                         na mesma árvore, é só a base do tronco.
+                    </p>
+                </section>
+                <section className="flex flex-col gap-4 rounded-xl border p-4">
+                    <h3 className="flex items-center gap-2 font-medium">
+                        <span className="size-3 rounded-sm border-2 border-red-500 bg-red-500/55" />
+                        Colisão
+                    </h3>
+                    <div className="flex justify-center">
+                        <TreeIllustration highlight="collision" />
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                        Dentro da pegada, as células de 8 px em que a peça é
+                        rígida. Só nelas o avatar esbarra. Ela já vem detectada
+                        pelo desenho, e você ajusta com o pincel, o retângulo e
+                        o balde.
+                    </p>
+                    <p className="mt-auto border-t pt-3 text-sm">
+                        <span className="font-medium">Exemplo: </span>
+                        na mesma árvore, só o tronco bloqueia, não o espaço ao
+                        lado dele.
                     </p>
                 </section>
             </div>

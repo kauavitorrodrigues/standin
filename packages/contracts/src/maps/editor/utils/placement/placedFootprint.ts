@@ -10,4 +10,5 @@ export const placedFootprint = (
     tileY: placed.tileY,
     width: asset.footprint.w,
     height: asset.footprint.h,
+    mask: asset.footprint.mask ?? null,
 });

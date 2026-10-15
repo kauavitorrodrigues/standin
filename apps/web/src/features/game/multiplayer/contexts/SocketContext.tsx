@@ -12,11 +12,7 @@ type Transport = SocketContextType["transport"];
 // session, so connect()/disconnect() are driven from wherever the Space
 // mounts (see useSpaceConnection), not from this provider. This only
 // observes connection status.
-export const SocketProvider = ({
-    children,
-}: {
-    children: React.ReactNode;
-}) => {
+export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [isConnected, setIsConnected] = useState(socket.connected);
     const [transport, setTransport] = useState<Transport>(
         socket.io.engine?.transport?.name ?? "N/A"

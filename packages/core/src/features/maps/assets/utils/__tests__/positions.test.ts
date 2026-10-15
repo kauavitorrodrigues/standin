@@ -180,3 +180,55 @@ describe("acceptsSurfaceItems and assertObjectLimit", () => {
         );
     });
 });
+
+describe("positions with a footprint mask", () => {
+    // The top arm and the left arm are occupied, the inside of the L is free.
+    const corner = item({
+        rowId: "corner",
+        footprintW: 3,
+        footprintH: 3,
+        footprintMask: [
+            [true, true, true],
+            [true, false, false],
+            [true, false, false],
+        ],
+    });
+    const chair = item({
+        rowId: "chair",
+        type: ASSET_TYPES.CHAIR,
+        footprintW: 1,
+        footprintH: 1,
+    });
+    const at = (tileX: number, tileY: number) =>
+        itemFootprint({ ...chair, tileX, tileY });
+
+    it("accepts a ground object in the free part of the L", () => {
+        expect(() =>
+            assertGroundPosition(at(6, 5), map, [corner])
+        ).not.toThrow();
+    });
+
+    it("refuses a ground object over an occupied tile", () => {
+        expect(() => assertGroundPosition(at(5, 5), map, [corner])).toThrow(
+            MapAssetPositionOccupiedError
+        );
+    });
+
+    it("refuses a surface item over a free tile of the parent", () => {
+        const vase = item({
+            rowId: "vase",
+            type: ASSET_TYPES.PLANT,
+            placement: ASSET_PLACEMENTS.SURFACE,
+            footprintW: 1,
+            footprintH: 1,
+            parentId: "corner",
+        });
+        const onGap = itemFootprint({ ...vase, tileX: 6, tileY: 5 });
+        const onArm = itemFootprint({ ...vase, tileX: 5, tileY: 4 });
+
+        expect(() => assertSurfacePosition(onGap, corner, [])).toThrow(
+            MapAssetNotOnDeskTopError
+        );
+        expect(() => assertSurfacePosition(onArm, corner, [])).not.toThrow();
+    });
+});

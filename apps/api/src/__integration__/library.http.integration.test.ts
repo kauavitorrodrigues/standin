@@ -605,6 +605,116 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
             expect(response.body.asset.url).toMatch(/^\/files\/[\w-]+$/);
         });
 
+        it("stores the footprint mask and returns it in the asset", async () => {
+            const mask = [
+                [true, true],
+                [true, false],
+            ];
+            const response = await createAsset({
+                image: png(64, 64),
+                data: mug(`masked-${RUN}`, {
+                    type: "DESK",
+                    category: "TABLES",
+                    placement: "GROUND",
+                    footprint: { w: 2, h: 2, mask },
+                }),
+            });
+
+            expect(response.status).toBe(201);
+            expect(response.body.asset.footprint).toEqual({
+                w: 2,
+                h: 2,
+                offsetX: 0,
+                mask,
+                solidMask: null,
+            });
+        });
+
+        it("stores the collision mask, derives the tile mask and returns both", async () => {
+            // One tile wide and two high: only the top tile has solid cells.
+            const solidMask = Array.from({ length: 8 }, (_, row) =>
+                Array.from({ length: 4 }, (_, column) => row < 4 && column < 2)
+            );
+            const response = await createAsset({
+                image: png(32, 64),
+                data: mug(`solidmask-${RUN}`, {
+                    type: "DESK",
+                    category: "TABLES",
+                    placement: "GROUND",
+                    solid: true,
+                    footprint: { w: 1, h: 2, solidMask },
+                }),
+            });
+
+            expect(response.status).toBe(201);
+            expect(response.body.asset.footprint).toEqual({
+                w: 1,
+                h: 2,
+                offsetX: 0,
+                mask: [[true], [false]],
+                solidMask,
+            });
+        });
+
+        it("refuses a collision mask that does not fit, or on a free tile", async () => {
+            const wrongShape = await createAsset({
+                image: png(32, 32),
+                data: mug(`solidshape-${RUN}`, {
+                    placement: "GROUND",
+                    footprint: { w: 1, h: 1, solidMask: [[true]] },
+                }),
+            });
+            expect(wrongShape.status).toBe(422);
+
+            const solidOnFreeTile = await createAsset({
+                image: png(64, 32),
+                data: mug(`solidfree-${RUN}`, {
+                    placement: "GROUND",
+                    footprint: {
+                        w: 2,
+                        h: 1,
+                        mask: [[true, false]],
+                        solidMask: Array.from({ length: 4 }, () => [
+                            false,
+                            false,
+                            false,
+                            false,
+                            true,
+                            false,
+                            false,
+                            false,
+                        ]),
+                    },
+                }),
+            });
+            expect(solidOnFreeTile.status).toBe(422);
+        });
+
+        it("refuses a footprint mask that does not fit, or on an animated asset", async () => {
+            const wrongShape = await createAsset({
+                image: png(64, 64),
+                data: mug(`maskshape-${RUN}`, {
+                    placement: "GROUND",
+                    footprint: { w: 2, h: 2, mask: [[true, true]] },
+                }),
+            });
+            expect(wrongShape.status).toBe(422);
+
+            const animated = await createAsset({
+                image: png(64, 32),
+                data: mug(`maskanim-${RUN}`, {
+                    placement: "GROUND",
+                    footprint: { w: 1, h: 1, mask: [[true]] },
+                    animation: {
+                        frameCount: 2,
+                        frameDurationMs: 100,
+                        repeat: -1,
+                    },
+                }),
+            });
+            expect(codes(animated)).toEqual(["ASSET_FOOTPRINT_MASK_ANIMATED"]);
+        });
+
         it("creates an animated base from a horizontal strip", async () => {
             const animation = {
                 frameCount: 6,

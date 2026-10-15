@@ -8,13 +8,13 @@ import { LAYOUT_LAYER_NAMES } from "../../schemas/layout.schema";
 import type { EditorModel } from "../types/editor-model";
 import type { TileConflict } from "../types/tile-conflict";
 import type { TileConflictOp } from "../types/tile-conflict-op";
-import { footprintCells } from "./footprintCells";
+import { occupiedCells } from "./occupiedCells";
 import { listPlacedWithAsset } from "./placement/listPlacedWithAsset";
 import { isWallTile } from "./placement/isWallTile";
 
 const cellKey = (x: number, y: number): string => `${x},${y}`;
 
-/** Cells covered by the footprint of the placed objects with a placement. */
+/** Cells occupied by the placed objects with a placement. */
 const coveredCells = (
     model: EditorModel,
     placement: string
@@ -22,7 +22,11 @@ const coveredCells = (
     const covered = new Set<string>();
     for (const { placed, asset } of listPlacedWithAsset(model)) {
         if (asset.placement !== placement) continue;
-        for (const { x, y } of footprintCells(asset, placed.tileX, placed.tileY)) {
+        for (const { x, y } of occupiedCells(
+            asset,
+            placed.tileX,
+            placed.tileY
+        )) {
             covered.add(cellKey(x, y));
         }
     }

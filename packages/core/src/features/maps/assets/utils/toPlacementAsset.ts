@@ -11,5 +11,10 @@ export const toPlacementAsset = (item: Item): AssetDefinition =>
         id: item.rowId,
         type: item.type,
         placement: item.placement,
-        footprint: { w: item.footprintW, h: item.footprintH, offsetX: 0 },
+        footprint: {
+            w: item.footprintW,
+            h: item.footprintH,
+            offsetX: 0,
+            mask: item.footprintMask ?? null,
+        },
     }) as AssetDefinition;

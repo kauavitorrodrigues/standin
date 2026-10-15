@@ -15,6 +15,11 @@ export const createValues = (
     image: [png()],
     name: "Caneca",
     category: "FOOD_DRINK",
+    // A piece of one tile with its crop and footprint already marked.
+    cropW: 32,
+    cropH: 32,
+    footprintW: 1,
+    footprintH: 1,
     ...overrides,
 });
 

@@ -15,6 +15,7 @@ import {
     getTreeOpacity,
     type TreeHighlight,
 } from "../../../utils/getTreeIllustration";
+import { TreeCollisionHighlight } from "./TreeCollisionHighlight";
 import { TreeCropHighlight } from "./TreeCropHighlight";
 import { TreeFootprintHighlight } from "./TreeFootprintHighlight";
 
@@ -24,7 +25,8 @@ type Props = {
 };
 
 // A tree on a 2 x 3 tile grid, the example of the help: the crop is all of
-// it, the footprint is only the bottom row where the trunk stands.
+// it, the footprint is only the bottom row where the trunk stands and the
+// collision is only the cells of the trunk.
 export const TreeIllustration = ({ highlight }: Props) => (
     <svg
         viewBox={`${-TREE_PAD_PX} ${-TREE_PAD_PX} ${TREE_WIDTH_PX + 2 * TREE_PAD_PX} ${TREE_HEIGHT_PX + 2 * TREE_PAD_PX}`}
@@ -83,5 +85,6 @@ export const TreeIllustration = ({ highlight }: Props) => (
         </g>
         <TreeCropHighlight highlight={highlight} />
         <TreeFootprintHighlight highlight={highlight} />
+        <TreeCollisionHighlight highlight={highlight} />
     </svg>
 );

@@ -50,6 +50,13 @@
       "when": 1791988444631,
       "tag": "0006_add_areas",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792002339944,
+      "tag": "0007_add_asset_footprint_masks",
+      "breakpoints": true
     }
   ]
 }

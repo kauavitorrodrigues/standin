@@ -8,7 +8,7 @@ export const CreateForm = () => {
     return (
         <form
             onSubmit={state.submit}
-            className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6"
+            className="flex min-h-0 w-full flex-1 flex-col gap-4"
         >
             <FormIssues message={state.issuesMessage} />
             <FormBody

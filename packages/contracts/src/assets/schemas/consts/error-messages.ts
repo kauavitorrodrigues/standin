@@ -55,6 +55,15 @@ export const AssetErrorMessages = {
     url: { invalid: "The asset image URL is invalid." },
     sprite: { invalid: "The sprite frame size of the asset is invalid." },
     footprint: { invalid: "The footprint of the asset is invalid." },
+    footprintMask: {
+        invalid:
+            "The footprint mask must have one row per footprint row and one flag per footprint column, with at least one occupied cell.",
+        animated: "An animated asset cannot have a footprint mask.",
+    },
+    footprintSolidMask: {
+        invalid:
+            "The collision mask must have four rows and four flags per footprint tile, at least one solid cell, and no solid cell on a free tile.",
+    },
     placement: { invalid: "The asset placement is invalid." },
     surfaceHeightPx: {
         invalid: "The surface height of the asset is invalid.",
@@ -83,6 +92,14 @@ export const LibraryDataErrorMessages = {
     name: { invalid: "The name is invalid." },
     organizationId: { invalid: "The organization id is invalid." },
     footprint: { invalid: "The footprint is invalid." },
+    footprintMask: {
+        invalid:
+            "The footprint mask must have one row per footprint row and one flag per footprint column, with at least one occupied cell.",
+    },
+    footprintSolidMask: {
+        invalid:
+            "The collision mask must have four rows and four flags per footprint tile, at least one solid cell, and no solid cell on a free tile.",
+    },
     variant: { invalid: "The variant data is invalid." },
     update: {
         empty: "Provide at least one field to update.",

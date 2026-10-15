@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import type {
-    CameraState,
-    GameEngineHandle,
-} from "@/features/game/types/game";
+import type { CameraState, GameEngineHandle } from "@/features/game/types/game";
 
 const DEFAULT_CAMERA_STATE: CameraState = {
     canZoomIn: true,

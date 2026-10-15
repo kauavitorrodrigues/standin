@@ -13,11 +13,14 @@ type GhostDisplay =
 // The translucent copy of the object that follows the cursor while placing.
 // It is a sprite of the asset (loaded when first needed) or, until the
 // texture arrives, a rectangle of the footprint size. Valid spots keep the
-// colors of the asset, invalid ones turn red. It moves on the Phaser side only.
+// colors of the asset, invalid ones turn red. An asset whose footprint has a
+// mask also gets a tint over the tiles it occupies, so the free tiles show.
+// It moves on the Phaser side only.
 export class PlacementGhost implements PlacementGhostView {
     private readonly scene: Phaser.Scene;
     private readonly loading = new Set<string>();
     private display: GhostDisplay | null = null;
+    private cells: Phaser.GameObjects.Graphics | null = null;
     private last: PlacementGhostTarget | null = null;
     private destroyed = false;
 
@@ -36,11 +39,13 @@ export class PlacementGhost implements PlacementGhostView {
         display.object.setPosition(target.x, target.bottomY);
         display.object.setVisible(true);
         this.paint(display, target.valid);
+        this.paintOccupiedCells(target);
     }
 
     hide(): void {
         this.last = null;
         this.display?.object.setVisible(false);
+        this.cells?.setVisible(false);
     }
 
     destroy(): void {
@@ -48,6 +53,43 @@ export class PlacementGhost implements PlacementGhostView {
         this.last = null;
         this.display?.object.destroy();
         this.display = null;
+        this.cells?.destroy();
+        this.cells = null;
+    }
+
+    // The tiles the object occupies, over the sprite. The footprint starts
+    // `offsetX` tiles to the right of the left edge of the sprite and ends at
+    // its base. Without a mask there is nothing to show, the sprite says it.
+    private paintOccupiedCells(target: PlacementGhostTarget): void {
+        const { mask, w, h, offsetX } = target.asset.footprint;
+        if (!mask) {
+            this.cells?.setVisible(false);
+            return;
+        }
+
+        const cells =
+            this.cells ??
+            this.scene.add.graphics().setDepth(PLACEMENT_GHOST.DEPTH + 0.5);
+        this.cells = cells;
+
+        const color = target.valid
+            ? PLACEMENT_GHOST.VALID_PLACEHOLDER_COLOR
+            : PLACEMENT_GHOST.INVALID_PLACEHOLDER_COLOR;
+        const left = target.x + offsetX * TILE_SIZE;
+        cells.clear();
+        cells.fillStyle(color, PLACEMENT_GHOST.PLACEHOLDER_FILL_ALPHA);
+        mask.forEach((row, rowIndex) => {
+            row.forEach((occupied, column) => {
+                if (!occupied || column >= w) return;
+                cells.fillRect(
+                    left + column * TILE_SIZE,
+                    target.bottomY - (h - rowIndex) * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
+                );
+            });
+        });
+        cells.setVisible(true);
     }
 
     // A different asset, or a rectangle whose texture has loaded since.

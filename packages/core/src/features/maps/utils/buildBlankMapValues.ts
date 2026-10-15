@@ -11,29 +11,37 @@ import {
 import type { MapSizeTier } from "@standin/contracts";
 import type { DbExecutor } from "../../../lib/types";
 import { globalTilesetSelect } from "../consts/select";
+import { ensureBlankDefaultLibrary } from "./ensureBlankDefaultLibrary";
 import { loadLayoutLibrary } from "./loadLayoutLibrary";
 
 /**
  * The column values of a blank map for a tier, built from the global library
- * defaults. Fails with 422 when the tier is disabled or the library has no
- * default floor.
+ * defaults. When the library has no default floor, the placeholder library is
+ * seeded first. Fails with 422 when the tier is disabled or the defaults stay
+ * invalid.
  */
 export const buildBlankMapValues = async (
     sizeTier: MapSizeTier,
     tx: DbExecutor
 ) => {
-    const globalTilesets = await tx
-        .select(globalTilesetSelect)
-        .from(tilesetsTable)
-        .where(
-            and(
-                isNull(tilesetsTable.deletedAt),
-                isNull(tilesetsTable.organizationId)
+    const loadGlobalTilesets = () =>
+        tx
+            .select(globalTilesetSelect)
+            .from(tilesetsTable)
+            .where(
+                and(
+                    isNull(tilesetsTable.deletedAt),
+                    isNull(tilesetsTable.organizationId)
+                )
             )
-        )
-        .orderBy(tilesetsTable.createdAt);
+            .orderBy(tilesetsTable.createdAt);
 
-    const { defaults, errors } = resolveBlankDefaults(globalTilesets);
+    let resolved = resolveBlankDefaults(await loadGlobalTilesets());
+    if (!resolved.defaults && (await ensureBlankDefaultLibrary())) {
+        resolved = resolveBlankDefaults(await loadGlobalTilesets());
+    }
+
+    const { defaults, errors } = resolved;
     if (!defaults) throw new LayoutValidationError(errors);
 
     const layout = generateBlankLayout(sizeTier, defaults);

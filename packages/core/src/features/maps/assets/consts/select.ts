@@ -24,6 +24,7 @@ export const mapAssetItemSelect = {
     placement: assetsTable.placement,
     footprintW: assetsTable.footprintW,
     footprintH: assetsTable.footprintH,
+    footprintMask: assetsTable.footprintMask,
 };
 
 export const mapAssetDefSelect = {
@@ -35,6 +36,7 @@ export const mapAssetDefSelect = {
     placement: assetsTable.placement,
     footprintW: assetsTable.footprintW,
     footprintH: assetsTable.footprintH,
+    footprintMask: assetsTable.footprintMask,
 };
 
 // What the position checks need from the map: its size and its layout.

@@ -1,3 +1,4 @@
+import type { FootprintMask } from "@standin/contracts";
 import type { assetsTable } from "@standin/database";
 
 type AssetRow = typeof assetsTable.$inferSelect;
@@ -12,4 +13,6 @@ export type AssetDef = {
     placement: AssetRow["placement"];
     footprintW: number;
     footprintH: number;
+    // The occupied tiles inside the footprint, null for the whole rectangle.
+    footprintMask?: FootprintMask | null;
 };
