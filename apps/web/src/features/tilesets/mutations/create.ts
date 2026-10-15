@@ -4,6 +4,7 @@ import type {
     LibraryTilesetSummary,
 } from "@standin/contracts";
 import { api } from "@/lib/axios/api";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 import { buildUploadFormData } from "@/features/assets/utils/buildUploadFormData";
 import { invalidateLibrary } from "@/features/assets/utils/invalidateLibrary";
 
@@ -11,6 +12,7 @@ type CreateTilesetInput = { image: File; data: CreateTilesetData };
 
 export const useCreateTileset = () => {
     const queryClient = useQueryClient();
+    const { apiBase } = useLibraryScope();
 
     return useMutation({
         mutationFn: async ({
@@ -18,7 +20,7 @@ export const useCreateTileset = () => {
             data,
         }: CreateTilesetInput): Promise<LibraryTilesetSummary> => {
             const res = await api.post(
-                "/library/tilesets",
+                `${apiBase}/tilesets`,
                 buildUploadFormData(image, data),
                 { headers: { "Content-Type": "multipart/form-data" } }
             );

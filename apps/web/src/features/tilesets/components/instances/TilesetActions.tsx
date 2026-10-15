@@ -17,11 +17,13 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TilesetActionDialogs } from "../dialogs/ActionDialogs";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 type Props = { tileset: LibraryTilesetSummary };
 
 // The menu of a card: see its details, rename or delete.
 export const TilesetActions = ({ tileset }: Props) => {
+    const { paths } = useLibraryScope();
     const [action, setAction] = useState<TilesetAction>(null);
     const close = (next: boolean) => {
         if (!next) setAction(null);
@@ -40,7 +42,7 @@ export const TilesetActions = ({ tileset }: Props) => {
                     <DropdownMenuItem
                         render={
                             <Link
-                                to="/admin/tilesets/$tilesetId"
+                                to={paths.tileset}
                                 params={{ tilesetId: tileset.id }}
                             />
                         }

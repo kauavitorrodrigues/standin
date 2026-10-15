@@ -5,12 +5,12 @@ import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { FormProvider } from "react-hook-form";
 import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
-import { AREA_LIST_PATH } from "../../consts/composer";
 import type { AreaComposerFormValues } from "../../types/areaComposerForm";
 import { AreaComposerSchema } from "../../utils/areaComposerSchema";
 import { AreaNameField } from "../forms/AreaNameField";
 import { AreaZoneBox } from "../forms/AreaZoneBox";
 import { AreaCreateIllustration } from "../views/AreaCreateIllustration";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 type Props = {
     onContinue: (values: AreaComposerFormValues) => void;
@@ -19,6 +19,7 @@ type Props = {
 // The first step of a new area: its name and the zone it creates. Then the
 // composer takes the whole screen to draw it.
 export const AreaCreateStep = ({ onContinue }: Props) => {
+    const { paths } = useLibraryScope();
     const form = useForm<AreaComposerFormValues>({
         resolver: zodResolver(AreaComposerSchema),
         defaultValues: { name: "", createZone: true },
@@ -32,7 +33,7 @@ export const AreaCreateStep = ({ onContinue }: Props) => {
                 controls={
                     <Button
                         variant="outline"
-                        render={<Link to={AREA_LIST_PATH} />}
+                        render={<Link to={paths.areas} />}
                     >
                         <ArrowLeftIcon />
                         Voltar
@@ -65,7 +66,7 @@ export const AreaCreateStep = ({ onContinue }: Props) => {
                             <Button
                                 type="button"
                                 variant="outline"
-                                render={<Link to={AREA_LIST_PATH} />}
+                                render={<Link to={paths.areas} />}
                             >
                                 Cancelar
                             </Button>

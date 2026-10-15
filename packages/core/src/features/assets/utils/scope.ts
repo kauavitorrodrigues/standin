@@ -19,8 +19,8 @@ export const liveAssetInScope = (organizationId: string | null) =>
     and(assetInScope(organizationId), isNull(assetsTable.deletedAt));
 
 /**
- * An `organizationId` in a request body is refused until the library of the
- * organization exists. Only the global library is writable for now.
+ * The scope of a write comes from the route, never from the body, so an
+ * `organizationId` in a request body is always refused.
  */
 export const assertGlobalScope = (organizationId?: string | null): void => {
     if (organizationId !== undefined && organizationId !== null) {

@@ -4,6 +4,7 @@ import type {
     LibraryFamilyQuerySchemaType,
 } from "@standin/contracts";
 import { api } from "@/lib/axios/api";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 export const LIBRARY_FAMILIES_QUERY_KEY = "libraryFamilies";
 
@@ -20,11 +21,12 @@ export const useLibraryFamilies = (
     params: LibraryFamiliesParams,
     enabled = true
 ) => {
+    const { apiBase, key } = useLibraryScope();
     const query = useInfiniteQuery({
         enabled,
-        queryKey: [LIBRARY_FAMILIES_QUERY_KEY, params],
+        queryKey: [LIBRARY_FAMILIES_QUERY_KEY, key, params],
         queryFn: async ({ pageParam }): Promise<LibraryFamilyList> => {
-            const res = await api.get("/library/assets", {
+            const res = await api.get(`${apiBase}/assets`, {
                 params: { ...params, page: pageParam, pageSize: PAGE_SIZE },
             });
             return res.data;

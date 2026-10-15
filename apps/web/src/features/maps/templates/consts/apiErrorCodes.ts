@@ -1,5 +1,8 @@
-// The codes the template delete answers with.
+// The codes the template delete and publish answer with.
 export const TEMPLATE_API_ERROR_CODES = {
     NOT_DELETABLE: "TEMPLATE_NOT_DELETABLE",
     MAP_LOCKED: "MAP_LOCKED",
+    NOT_DRAFT: "TEMPLATE_NOT_DRAFT",
+    THUMBNAIL_REQUIRED: "TEMPLATE_THUMBNAIL_REQUIRED",
+    USES_NON_GLOBAL_ASSET: "TEMPLATE_USES_NON_GLOBAL_ASSET",
 } as const;

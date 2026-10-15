@@ -4,6 +4,7 @@ import type {
     UpdateLibraryAssetSchemaType,
 } from "@standin/contracts";
 import { api } from "@/lib/axios/api";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 import { invalidateLibrary } from "../utils/invalidateLibrary";
 
 type UpdateAssetInput = {
@@ -13,6 +14,7 @@ type UpdateAssetInput = {
 
 export const useUpdateAsset = () => {
     const queryClient = useQueryClient();
+    const { apiBase } = useLibraryScope();
 
     return useMutation({
         // The answer is every row the edit reached, a whole family or the
@@ -21,7 +23,10 @@ export const useUpdateAsset = () => {
             assetId,
             changes,
         }: UpdateAssetInput): Promise<AssetDefinition[]> => {
-            const res = await api.patch(`/library/assets/${assetId}`, changes);
+            const res = await api.patch(
+                `${apiBase}/assets/${assetId}`,
+                changes
+            );
             return res.data.assets;
         },
         onSuccess: () => invalidateLibrary(queryClient),

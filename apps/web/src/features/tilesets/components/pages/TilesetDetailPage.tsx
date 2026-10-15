@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useLibraryTileset } from "../../queries/useDetails";
 import { TilesetEditor } from "../instances/TilesetEditor";
 import { TilesetDetailStatus } from "../views/detail/Status";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 type Props = { tilesetId: string };
 
 export function TilesetDetailPage({ tilesetId }: Props) {
+    const { paths } = useLibraryScope();
     const { data: tileset, isLoading, isError } = useLibraryTileset(tilesetId);
 
     if (tileset) return <TilesetEditor key={tileset.id} tileset={tileset} />;
@@ -20,7 +22,7 @@ export function TilesetDetailPage({ tilesetId }: Props) {
                 controls={
                     <Button
                         variant="outline"
-                        render={<Link to="/admin/tilesets" />}
+                        render={<Link to={paths.tilesets} />}
                     >
                         <ArrowLeftIcon />
                         Voltar

@@ -12,6 +12,7 @@ import { TilesetGridForm } from "../forms/GridForm";
 import { TilesetEditorMenu } from "../views/detail/Menu";
 import { TilesetEditorControls } from "../views/detail/Controls";
 import { TileSheetWorkspace } from "./editor/Workspace";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 type Props = { tileset: LibraryTilesetDetail };
 
@@ -19,6 +20,7 @@ type Props = { tileset: LibraryTilesetDetail };
 // divide it into cells, saved together, and the actions on it (rename,
 // delete). It fills the area, like the map editor.
 export const TilesetEditor = ({ tileset }: Props) => {
+    const { paths } = useLibraryScope();
     const navigate = useNavigate();
     const gridForm = useTilesetGridForm(tileset);
     const editor = useTilesetEditor(tileset, gridForm);
@@ -40,7 +42,7 @@ export const TilesetEditor = ({ tileset }: Props) => {
                 imageInUse={tileset.inUse}
                 disabled={editor.isSaving}
                 title={tileset.name}
-                onExit={() => navigate({ to: "/admin/tilesets" })}
+                onExit={() => navigate({ to: paths.tilesets })}
                 menu={
                     <TilesetEditorMenu
                         name={tileset.name}
