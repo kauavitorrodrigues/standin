@@ -25,6 +25,10 @@ export const MAP_DRAG_CURSORS = {
     DRAGGING: "grabbing",
 } as const;
 
+// How far the pointer has to move with the button down before it is a drag.
+// Under it the press is a click, so a click on a desk is not read as a pan.
+export const MAP_DRAG_THRESHOLD_PX = 4;
+
 export const CAMERA_EVENTS = {
     STATE_CHANGED: "camera:state-changed",
 } as const;

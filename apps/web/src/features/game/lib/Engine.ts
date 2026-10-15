@@ -15,6 +15,13 @@ import {
     bindCameraStateSubscription,
     getMapCameraController,
 } from "@/features/game/utils/camera";
+import {
+    bindHoverClickSubscription,
+    bindHoverSubscription,
+    bindSelectedSubscription,
+    pinHover,
+    selectHover,
+} from "@/features/game/utils/hover";
 import { focusOnPlayer } from "@/features/game/utils/player";
 import type {
     GameEngineHandle,
@@ -67,5 +74,13 @@ export const createGameEngine = ({
         focusOnPlayer: () => focusOnPlayer(game),
         subscribeToCameraState: (listener) =>
             bindCameraStateSubscription(game, listener),
+        subscribeToHover: (event, listener) =>
+            bindHoverSubscription(game, event, listener),
+        subscribeToSelected: (event, listener) =>
+            bindSelectedSubscription(game, event, listener),
+        subscribeToHoverClick: (event, listener) =>
+            bindHoverClickSubscription(game, event, listener),
+        selectHover: (event, id) => selectHover(game, event, id),
+        pinHover: (event, id) => pinHover(game, event, id),
     };
 };

@@ -35,6 +35,9 @@ import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 import { useSpaceMapLock } from "@/features/maps/organizations/hooks/useSpaceMapLock";
 import { LockBanner } from "@/features/maps/organizations/components/views/LockBanner";
+import { OwnDeskProfileCard } from "@/features/desks/components/instances/OwnDeskProfileCard";
+import { useProfileCard } from "@/features/users/hooks/useProfileCard";
+import { DeskHoverCard } from "@/features/desks/components/instances/DeskHoverCard";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
@@ -71,10 +74,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const gameMap = useGameMapData(space.map);
     const mapLock = useSpaceMapLock(space.map.id);
-    const { containerRef, handle } = useGameEngine(
-        gameMap,
-        -RAIL_WIDTH_PX / 2
-    );
+    const profileCard = useProfileCard();
+    const { containerRef, handle } = useGameEngine(gameMap, -RAIL_WIDTH_PX / 2);
 
     const { handlers: peerChatHandlers, typingByConversation } =
         usePeerChatSync({ organizationId, userId: user.id });
@@ -153,6 +154,23 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                 <LayoutPrimitive.Content style={layout.contentStyle}>
                     <GameCanvas ref={containerRef} />
                     <GameControls handle={handle} />
+                    <DeskHoverCard
+                        handle={handle}
+                        spaceId={space.id}
+                        userId={user.id}
+                        names={names}
+                        onlineUserIds={onlineUserIds}
+                        isMapLocked={mapLock.isLocked}
+                        isProfileOpen={profileCard.isOpen}
+                        onOpenProfile={profileCard.open}
+                        onCloseProfile={profileCard.close}
+                    />
+                    <ProfileCardSlot
+                        isOpen={profileCard.isOpen}
+                        spaceId={space.id}
+                        isMapLocked={mapLock.isLocked}
+                        onClose={profileCard.close}
+                    />
                     <LockBanner locked={mapLock.locked} by={mapLock.by} />
                     <VideoStage
                         tiles={stageTiles}
@@ -178,4 +196,17 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
             </LayoutPrimitive.Body>
         </SpacePageRoot>
     );
+}
+
+type ProfileCardSlotProps = {
+    isOpen: boolean;
+    spaceId: string;
+    isMapLocked: boolean;
+    onClose: () => void;
+};
+
+function ProfileCardSlot({ isOpen, ...props }: ProfileCardSlotProps) {
+    if (!isOpen) return null;
+
+    return <OwnDeskProfileCard {...props} />;
 }

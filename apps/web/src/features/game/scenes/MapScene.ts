@@ -34,6 +34,9 @@ import {
 } from "@/features/game/utils/player";
 import { SeatController } from "@/features/game/lib/SeatController";
 import { buildSeatAreas } from "@/features/game/utils/buildSeatAreas";
+import { buildDeskAreas } from "@/features/game/utils/buildDeskAreas";
+import { HoverTargetController } from "@/features/game/lib/HoverTargetController";
+import { DESK_EVENTS } from "@/features/game/consts/desk";
 import { resolveDefaultSpawnPoint } from "@/features/game/utils/map";
 import type { MapSceneInitData } from "@/features/game/types/tilemap";
 import { SEND_INTERVAL_MS } from "@/features/game/multiplayer/consts/sync";
@@ -47,6 +50,7 @@ export class MapScene extends Phaser.Scene {
     private playerController: PlayerController | null = null;
     private interactionController: InteractionController | null = null;
     private seatController: SeatController | null = null;
+    private deskHoverController: HoverTargetController | null = null;
     private remoteAvatars = new Map<string, RemoteAvatar>();
     private spawnPoint = { x: 0, y: 0 };
     private broadcastLocalPosition: ((state: PlayerPosition) => void) | null =
@@ -137,6 +141,18 @@ export class MapScene extends Phaser.Scene {
             )
         );
 
+        this.deskHoverController = new HoverTargetController(
+            this,
+            DESK_EVENTS.HOVER_CHANGED
+        );
+        this.deskHoverController.addTargets(
+            buildDeskAreas(
+                this.mapData.placed ?? [],
+                new Map(assets.map((asset) => [asset.id, asset])),
+                tilemap.heightInPixels
+            )
+        );
+
         bindPlayerCollision(this, this.player, solidGroup);
 
         bindPlayerInteractions(
@@ -187,6 +203,7 @@ export class MapScene extends Phaser.Scene {
         this.seatController?.update();
         this.player?.updateDepth();
         this.interactionController?.update();
+        this.deskHoverController?.update();
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
