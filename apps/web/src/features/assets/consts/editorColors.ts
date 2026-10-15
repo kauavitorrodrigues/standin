@@ -2,6 +2,9 @@
 // them in the summary.
 export const CROP_COLOR = "var(--primary)";
 export const FOOTPRINT_COLOR = "#EF4444";
+// The collision is a different color from the footprint, since it sits inside
+// it and the two are easy to take for one.
+export const COLLISION_COLOR = "#22C55E";
 export const IMAGE_COLOR = "#A855F7";
 export const NAME_COLOR = "#F59E0B";
 export const GRID_LINE_COLOR = "rgba(255, 255, 255, 0.28)";

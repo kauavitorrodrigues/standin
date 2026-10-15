@@ -2,7 +2,6 @@ import { EDITOR_MODES, type EditorMode } from "../../../consts/editorModes";
 import type { Zoom } from "../../../consts/editorZoom";
 import type {
     FootprintMaskValue,
-    FootprintTile,
     SolidCell,
     SolidMaskValue,
 } from "../../../types/footprintMask";
@@ -20,14 +19,24 @@ type Props = {
     footprint: Footprint;
     mask: FootprintMaskValue;
     solid: boolean;
-    paintable?: boolean;
-    hoveredTile?: FootprintTile | null;
+    // The footprint is painted by cells, as it is for a still piece.
+    byCells?: boolean;
     // The layer being edited is drawn in full, the others dimmed or hidden.
     mode?: EditorMode;
     // The asset has a collision to draw.
     collisionAvailable?: boolean;
     solidMask?: SolidMaskValue;
     hoveredCell?: SolidCell | null;
+};
+
+// The cell under the pointer is only drawn on the layer being edited.
+const getActiveCell = (
+    mode: EditorMode,
+    layer: EditorMode,
+    cell: SolidCell | null
+) => {
+    if (mode !== layer) return null;
+    return cell;
 };
 
 // The footprint is not drawn until it is marked.
@@ -46,8 +55,7 @@ export const CropOverlay = ({
     footprint,
     mask,
     solid,
-    paintable = false,
-    hoveredTile = null,
+    byCells = false,
     mode = EDITOR_MODES.FOOTPRINT,
     collisionAvailable = false,
     solidMask = null,
@@ -71,14 +79,19 @@ export const CropOverlay = ({
             />
             <FootprintLayer
                 opacity={getFootprintOpacity(isFootprintMarked, mode)}
+                active={mode === EDITOR_MODES.FOOTPRINT}
                 zoom={zoom}
                 frame={frame}
                 frameCount={frameCount}
                 footprint={footprint}
                 mask={mask}
                 solid={solid}
-                paintable={paintable}
-                hoveredTile={hoveredTile}
+                byCells={byCells}
+                hoveredCell={getActiveCell(
+                    mode,
+                    EDITOR_MODES.FOOTPRINT,
+                    hoveredCell
+                )}
             />
             <CollisionLayer
                 opacity={getLayerOpacity(EDITOR_MODES.COLLISION, mode)}
@@ -89,7 +102,11 @@ export const CropOverlay = ({
                 footprint={footprint}
                 mask={mask}
                 solidMask={solidMask}
-                hoveredCell={hoveredCell}
+                hoveredCell={getActiveCell(
+                    mode,
+                    EDITOR_MODES.COLLISION,
+                    hoveredCell
+                )}
             />
         </>
     );

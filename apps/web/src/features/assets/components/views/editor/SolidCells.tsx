@@ -1,12 +1,6 @@
-import { FOOTPRINT_COLOR } from "../../../consts/editorColors";
 import type { Zoom } from "../../../consts/editorZoom";
-import type {
-    FootprintMaskValue,
-    SolidCell,
-    SolidMaskValue,
-} from "../../../types/footprintMask";
+import type { SolidCell } from "../../../types/footprintMask";
 import type { Crop, Footprint } from "../../../types/spriteGeometry";
-import { resolveSolidMask } from "../../../utils/solidMask";
 import { getFootprintRect } from "../../../utils/spriteGeometry";
 import { SolidGrid } from "./SolidGrid";
 import { SolidHoveredCell } from "./SolidHoveredCell";
@@ -16,32 +10,29 @@ type Props = {
     zoom: Zoom;
     frame: Crop;
     footprint: Footprint;
-    mask: FootprintMaskValue;
-    solidMask: SolidMaskValue;
+    // The cells of the layer being edited.
+    cells: boolean[][];
+    // The color of the layer, for its cells, its outline and the cell under
+    // the pointer.
+    color: string;
     hoveredCell: SolidCell | null;
 };
 
-// The collision layer being edited: the grid of cells, the footprint outline
-// and the cells that block. The tiles the footprint leaves free are drawn by
-// the footprint layer. Without a collision mask every cell of an occupied tile
-// blocks, so that is what is drawn.
+// A layer painted by cells while it is being edited: the grid of cells, the
+// outline of the footprint and the cells themselves, in the color of the layer.
 export const SolidCells = ({
     zoom,
     frame,
     footprint,
-    mask,
-    solidMask,
+    cells,
+    color,
     hoveredCell,
 }: Props) => {
     const rect = getFootprintRect(frame, footprint);
 
     return (
         <>
-            <SolidRuns
-                zoom={zoom}
-                rect={rect}
-                cells={resolveSolidMask(footprint, mask, solidMask)}
-            />
+            <SolidRuns zoom={zoom} rect={rect} cells={cells} color={color} />
             <SolidGrid zoom={zoom} rect={rect} />
             <div
                 className="pointer-events-none absolute border-2"
@@ -50,10 +41,15 @@ export const SolidCells = ({
                     top: rect.y * zoom,
                     width: rect.w * zoom,
                     height: rect.h * zoom,
-                    borderColor: FOOTPRINT_COLOR,
+                    borderColor: color,
                 }}
             />
-            <SolidHoveredCell zoom={zoom} rect={rect} cell={hoveredCell} />
+            <SolidHoveredCell
+                zoom={zoom}
+                rect={rect}
+                cell={hoveredCell}
+                color={color}
+            />
         </>
     );
 };

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildAssetData } from "../buildData";
 import { buildVariantData } from "../buildVariantData";
 import { describeFootprint, describeFormFootprint } from "../describeFootprint";
-import { fillSolidMask } from "../solidMask";
+import { fillMask } from "../footprintMask";
 import { validateAddVariant } from "../validateAddVariant";
 import { validateCreateAsset } from "../validateCreate";
 import { family, createValues, png } from "./fixtures";
@@ -47,21 +47,28 @@ describe("buildAssetData with a collision mask", () => {
         expect(data.footprint).not.toHaveProperty("solidMask");
     });
 
-    it("keeps sending the tile mask", () => {
+    it("does not send it when it blocks like the footprint", () => {
+        const left = cellsWith([[0, 0]]);
         const data = buildAssetData(
-            stillDesk({ footprintMask: [[true, false]] })
+            stillDesk({ footprintMask: left, footprintSolidMask: left })
         );
-        expect(data.footprint.mask).toEqual([[true, false]]);
+        expect(data.footprint.mask).toEqual(left);
+        expect(data.footprint).not.toHaveProperty("solidMask");
     });
 
-    it("works the tile mask out when it would conflict with the cells", () => {
+    it("sends both masks when the collision is smaller than the footprint", () => {
+        const footprintMask = cellsWith([
+            [0, 0],
+            [1, 0],
+        ]);
         const data = buildAssetData(
             stillDesk({
-                footprintMask: [[false, true]],
+                footprintMask,
                 footprintSolidMask: cellsWith([[0, 0]]),
             })
         );
-        expect(data.footprint.mask).toEqual([[true, false]]);
+        expect(data.footprint.mask).toEqual(footprintMask);
+        expect(data.footprint.solidMask).toEqual(cellsWith([[0, 0]]));
     });
 });
 
@@ -133,9 +140,9 @@ describe("validateCreateAsset with a collision mask", () => {
         expect(errors.footprintSolidMask).toBeDefined();
     });
 
-    it("refuses a solid cell in a free tile", () => {
+    it("refuses a solid cell the footprint leaves free", () => {
         const errors = validateCreateAsset(
-            stillDesk({ footprintMask: [[false, true]] }),
+            stillDesk({ footprintMask: cellsWith([[1, 0]]) }),
             undefined
         );
         expect(errors.footprintSolidMask).toBeDefined();
@@ -174,7 +181,9 @@ describe("describeFootprint with a collision mask", () => {
                     Array.from({ length: 20 }, (_, x) => y < 7 && x < 20)
                 )
             )
-        ).toBe("5 × 4 tiles, 16 ocupados, 140 células sólidas, deslocamento 0");
+        ).toBe(
+            "5 × 4 tiles, 16 células ocupadas, 140 células sólidas, deslocamento 0"
+        );
     });
 
     it("says nothing of cells without a collision mask", () => {
@@ -202,7 +211,7 @@ describe("describeFootprint with a collision mask", () => {
         expect(
             describeFormFootprint(true, {
                 ...values,
-                footprintSolidMask: fillSolidMask(footprint, null),
+                footprintSolidMask: fillMask(footprint),
             })
         ).toBe("2 × 1 tiles, deslocamento 0");
     });

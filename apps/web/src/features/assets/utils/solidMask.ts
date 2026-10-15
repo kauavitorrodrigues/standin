@@ -2,35 +2,21 @@ import { SOLID_MASK_SUBDIVISION } from "@standin/contracts";
 import type {
     FootprintMasks,
     FootprintMaskValue,
-    FootprintTile,
+    MaskLayer,
     SolidCell,
     SolidMaskValue,
     SolidPaintAction,
 } from "../types/footprintMask";
 import type { Footprint } from "../types/spriteGeometry";
-import {
-    countOccupiedTiles,
-    isTileOccupied,
-    normalizeMask,
-    toggleMaskTile,
-    toPayloadMask,
-} from "./footprintMask";
+import { normalizeMask, resolveMask, toPayloadMask } from "./footprintMask";
 
-const CELLS_PER_TILE = SOLID_MASK_SUBDIVISION * SOLID_MASK_SUBDIVISION;
-
-// A run of solid cells on one row, so the editor draws one box for it.
+// A run of cells on one row, so the editor draws one box for it.
 export type SolidRun = { row: number; col: number; length: number };
 
-// The size of the collision mask of a footprint, in cells.
+// The size of the mask of a footprint, in cells.
 export const getSolidGrid = (footprint: Footprint) => ({
     cols: footprint.w * SOLID_MASK_SUBDIVISION,
     rows: footprint.h * SOLID_MASK_SUBDIVISION,
-});
-
-// The tile of the footprint a cell is in.
-export const getTileOfCell = (cell: SolidCell): FootprintTile => ({
-    col: Math.floor(cell.col / SOLID_MASK_SUBDIVISION),
-    row: Math.floor(cell.row / SOLID_MASK_SUBDIVISION),
 });
 
 export const isCellInside = (footprint: Footprint, cell: SolidCell) => {
@@ -38,26 +24,13 @@ export const isCellInside = (footprint: Footprint, cell: SolidCell) => {
     return cell.col >= 0 && cell.col < cols && cell.row >= 0 && cell.row < rows;
 };
 
-// Every cell of the occupied tiles solid, which is how a footprint without a
-// collision mask blocks.
-export const fillSolidMask = (
-    footprint: Footprint,
-    mask: FootprintMaskValue
-): boolean[][] => {
-    const { cols, rows } = getSolidGrid(footprint);
-    return Array.from({ length: rows }, (_, row) =>
-        Array.from({ length: cols }, (_, col) =>
-            isTileOccupied(mask, getTileOfCell({ col, row }))
-        )
-    );
-};
-
-// The cells that block, with the ones of a missing collision mask worked out.
+// The cells that block, with the ones of a missing collision mask worked out:
+// without one, every occupied cell blocks.
 export const resolveSolidMask = (
     footprint: Footprint,
     mask: FootprintMaskValue,
     solidMask: SolidMaskValue
-): boolean[][] => solidMask ?? fillSolidMask(footprint, mask);
+): boolean[][] => solidMask ?? resolveMask(footprint, mask);
 
 export const isSolidCell = (cells: boolean[][], cell: SolidCell): boolean =>
     cells[cell.row]?.[cell.col] ?? false;
@@ -65,21 +38,15 @@ export const isSolidCell = (cells: boolean[][], cell: SolidCell): boolean =>
 export const countSolidCells = (cells: boolean[][]): number =>
     cells.reduce((total, row) => total + row.filter(Boolean).length, 0);
 
-// How many cells the occupied tiles hold, the most that can be solid.
-export const countSolidCapacity = (
-    footprint: Footprint,
-    mask: FootprintMaskValue
-): number => countOccupiedTiles(footprint, mask) * CELLS_PER_TILE;
-
-// The collision mask that blocks exactly like the occupied tiles is no mask.
+// The collision mask that blocks exactly like the occupied cells is no mask.
 export const normalizeSolidMask = (
     footprint: Footprint,
     mask: FootprintMaskValue,
     cells: boolean[][]
 ): SolidMaskValue => {
-    const full = fillSolidMask(footprint, mask);
+    const occupied = resolveMask(footprint, mask);
     const same = cells.every((row, y) =>
-        row.every((solid, x) => solid === full[y][x])
+        row.every((solid, x) => solid === occupied[y][x])
     );
     if (same) return null;
     return cells;
@@ -135,17 +102,22 @@ export const getRectCells = (from: SolidCell, to: SolidCell): SolidCell[] => {
 };
 
 // The cells the bucket reaches from a cell: the ones next to each other that
-// are in the same state, inside the occupied tiles. A cell of a free tile
-// stops it, since filling it would occupy the tile.
+// are in the same state in the layer being edited. The collision only reaches
+// cells the footprint occupies, since a cell outside it cannot block.
 export const getFloodCells = (
     footprint: Footprint,
     masks: FootprintMasks,
-    start: SolidCell
+    start: SolidCell,
+    layer: MaskLayer
 ): SolidCell[] => {
-    const cells = resolveSolidMask(footprint, masks.mask, masks.solidMask);
+    const occupied = resolveMask(footprint, masks.mask);
+    const cells =
+        layer === "footprint"
+            ? occupied
+            : resolveSolidMask(footprint, masks.mask, masks.solidMask);
     const isOpen = (cell: SolidCell) =>
         isCellInside(footprint, cell) &&
-        isTileOccupied(masks.mask, getTileOfCell(cell));
+        (layer === "footprint" || isSolidCell(occupied, cell));
     if (!isOpen(start)) return [];
 
     const state = isSolidCell(cells, start);
@@ -177,85 +149,84 @@ type PaintParams = {
     masks: FootprintMasks;
     cells: SolidCell[];
     action: SolidPaintAction;
+    layer: MaskLayer;
 };
 
-// The masks after a stroke over some cells. Painting makes the cell solid and
-// its tile occupied. Erasing makes it empty, but never the last solid cell,
-// since a collision mask needs one. Cells outside the footprint are ignored.
-export const paintSolidCells = ({
+// The masks after a stroke over some cells. In the footprint layer, painting
+// occupies a cell and erasing frees it, which also stops it from blocking. In
+// the collision layer, painting makes a cell block and occupied, and erasing
+// stops it from blocking. Neither layer ever loses its last cell, and a
+// collision that followed the footprint keeps following it. Cells outside the
+// footprint are ignored.
+export const paintCells = ({
     footprint,
     masks,
     cells,
     action,
+    layer,
 }: PaintParams): FootprintMasks => {
-    const next = resolveSolidMask(footprint, masks.mask, masks.solidMask).map(
+    const occupied = resolveMask(footprint, masks.mask).map((row) => [...row]);
+    const solid = resolveSolidMask(footprint, masks.mask, masks.solidMask).map(
         (row) => [...row]
     );
-    const tiles = Array.from({ length: footprint.h }, (_, row) =>
-        Array.from({ length: footprint.w }, (_, col) =>
-            isTileOccupied(masks.mask, { col, row })
-        )
-    );
-    let remaining = countSolidCells(next);
+    const follows = masks.solidMask === null;
+    let occupiedLeft = countSolidCells(occupied);
+    let solidLeft = countSolidCells(solid);
     let changed = false;
 
-    for (const cell of cells) {
-        if (!isCellInside(footprint, cell)) continue;
-        const solid = next[cell.row][cell.col];
-        const tile = getTileOfCell(cell);
-        if (action === "paint") {
-            if (!solid || !tiles[tile.row][tile.col]) changed = true;
-            next[cell.row][cell.col] = true;
-            tiles[tile.row][tile.col] = true;
-            remaining += solid ? 0 : 1;
+    for (const { col, row } of cells) {
+        if (!isCellInside(footprint, { col, row })) continue;
+        const isOccupied = occupied[row][col];
+        const isSolid = solid[row][col];
+
+        if (layer === "footprint" && action === "paint") {
+            if (isOccupied) continue;
+            occupied[row][col] = true;
+            occupiedLeft += 1;
+            if (follows) {
+                solid[row][col] = true;
+                solidLeft += 1;
+            }
+            changed = true;
             continue;
         }
-        if (!solid || remaining <= 1) continue;
-        next[cell.row][cell.col] = false;
-        remaining -= 1;
+        if (layer === "footprint") {
+            if (!isOccupied || occupiedLeft <= 1) continue;
+            if (isSolid && solidLeft <= 1) continue;
+            occupied[row][col] = false;
+            occupiedLeft -= 1;
+            if (isSolid) {
+                solid[row][col] = false;
+                solidLeft -= 1;
+            }
+            changed = true;
+            continue;
+        }
+        if (action === "paint") {
+            if (isSolid && isOccupied) continue;
+            if (!isOccupied) {
+                occupied[row][col] = true;
+                occupiedLeft += 1;
+            }
+            if (!isSolid) {
+                solid[row][col] = true;
+                solidLeft += 1;
+            }
+            changed = true;
+            continue;
+        }
+        if (!isSolid || solidLeft <= 1) continue;
+        solid[row][col] = false;
+        solidLeft -= 1;
         changed = true;
     }
     if (!changed) return masks;
 
-    const mask = normalizeMask(tiles);
-    return { mask, solidMask: normalizeSolidMask(footprint, mask, next) };
+    const mask = normalizeMask(occupied);
+    return { mask, solidMask: normalizeSolidMask(footprint, mask, solid) };
 };
 
-// The collision mask with the cells of one tile emptied, or none when no
-// solid cell is left.
-export const clearSolidTile = (
-    cells: boolean[][],
-    tile: FootprintTile
-): SolidMaskValue => {
-    const next = cells.map((row, y) =>
-        row.map((solid, x) => {
-            const inTile = getTileOfCell({ col: x, row: y });
-            if (inTile.col === tile.col && inTile.row === tile.row) {
-                return false;
-            }
-            return solid;
-        })
-    );
-    if (countSolidCells(next) === 0) return null;
-    return next;
-};
-
-// The masks after a click on a tile in the footprint mode. Freeing the tile
-// also empties the solid cells inside it.
-export const toggleTileMasks = (
-    footprint: Footprint,
-    masks: FootprintMasks,
-    tile: FootprintTile
-): FootprintMasks => {
-    const mask = toggleMaskTile(footprint, masks.mask, tile);
-    if (mask === masks.mask) return masks;
-    if (!masks.solidMask || isTileOccupied(mask, tile)) {
-        return { mask, solidMask: masks.solidMask };
-    }
-    return { mask, solidMask: clearSolidTile(masks.solidMask, tile) };
-};
-
-// The runs of solid cells, row by row.
+// The runs of cells, row by row.
 export const getSolidRuns = (cells: boolean[][]): SolidRun[] =>
     cells.flatMap((row, y) => {
         const runs: SolidRun[] = [];
@@ -281,7 +252,7 @@ type PayloadParams = {
 };
 
 // The collision mask as it goes up: only for a still asset that blocks the
-// way, and none when it does the same as the occupied tiles.
+// way, and none when it does the same as the occupied cells.
 export const toPayloadSolidMask = ({
     footprint,
     mask,

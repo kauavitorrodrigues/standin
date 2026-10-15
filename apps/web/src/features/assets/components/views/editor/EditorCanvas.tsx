@@ -11,7 +11,6 @@ import type { Zoom } from "../../../consts/editorZoom";
 import type { ImageSize } from "../../../queries/useImageSize";
 import type {
     FootprintMaskValue,
-    FootprintTile,
     SolidCell,
     SolidMaskValue,
 } from "../../../types/footprintMask";
@@ -31,10 +30,8 @@ type Props = {
     footprint: Footprint;
     mask: FootprintMaskValue;
     solid: boolean;
-    // The tiles of the footprint can be clicked to free or occupy them.
-    paintable?: boolean;
-    // The tile under the pointer, which a click would free or occupy.
-    hoveredTile?: FootprintTile | null;
+    // The footprint is painted by cells, as it is for a still piece.
+    byCells?: boolean;
     // The layer being edited, drawn in full over the others, and whether the
     // collision can be drawn.
     mode?: EditorMode;
@@ -62,8 +59,7 @@ export const EditorCanvas = ({
     footprint,
     mask,
     solid,
-    paintable = false,
-    hoveredTile = null,
+    byCells = false,
     mode,
     collisionAvailable = false,
     solidMask = null,
@@ -88,7 +84,7 @@ export const EditorCanvas = ({
             <div
                 className={cn(
                     "relative my-auto shrink-0 touch-none select-none",
-                    getCanvasCursor(hoveredTile, hoveredCell)
+                    getCanvasCursor(hoveredCell)
                 )}
                 style={{
                     width: px(size?.w ?? 0),
@@ -117,8 +113,7 @@ export const EditorCanvas = ({
                     footprint={footprint}
                     mask={mask}
                     solid={solid}
-                    paintable={paintable}
-                    hoveredTile={hoveredTile}
+                    byCells={byCells}
                     mode={mode}
                     collisionAvailable={collisionAvailable}
                     solidMask={solidMask}

@@ -5,13 +5,8 @@ import {
     SOLID_CELL_PX,
     SOLID_COVERAGE_MIN,
 } from "../consts/solidMask";
-import type {
-    FootprintMaskValue,
-    SolidMaskValue,
-} from "../types/footprintMask";
 import type { Crop, Footprint } from "../types/spriteGeometry";
-import { isTileOccupied } from "./footprintMask";
-import { countSolidCells, getSolidGrid, getTileOfCell } from "./solidMask";
+import { countSolidCells, getSolidGrid } from "./solidMask";
 import { getFootprintRect } from "./spriteGeometry";
 
 // The pixels of an image, in the shape of an ImageData.
@@ -44,23 +39,19 @@ const getCellCoverage = (
     return drawn / (SOLID_CELL_PX * SOLID_CELL_PX);
 };
 
-// The collision mask drawn by the art: a cell of the footprint is solid when
-// enough of its pixels are drawn. Cells of a tile the tile mask leaves free
-// are never solid. Null when no cell is solid, since there is nothing to keep.
-export const detectSolidMask = (
+// The cells drawn by the art: a cell of the footprint is occupied when enough
+// of its pixels are drawn, so the transparent parts of the image are left out.
+// Null when no cell is drawn, since there is nothing to keep.
+export const detectFootprintMask = (
     pixels: PixelData,
     frame: Crop,
-    footprint: Footprint,
-    mask: FootprintMaskValue
-): SolidMaskValue => {
+    footprint: Footprint
+): boolean[][] | null => {
     const origin = getFootprintRect(frame, footprint);
     const { cols, rows } = getSolidGrid(footprint);
 
     const cells = Array.from({ length: rows }, (_, row) =>
         Array.from({ length: cols }, (_, col) => {
-            if (!isTileOccupied(mask, getTileOfCell({ col, row }))) {
-                return false;
-            }
             const coverage = getCellCoverage(
                 pixels,
                 origin.x + col * SOLID_CELL_PX,

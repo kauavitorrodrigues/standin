@@ -1,11 +1,12 @@
 import { EDITOR_MODES, type EditorMode } from "../consts/editorModes";
 import { SPRITE_TOOLS, type SpriteTool } from "../consts/spriteTools";
 
-// The tools of a layer. The brush of the footprint paints its tiles, so it
-// only exists where the footprint has more than one tile.
+// The tools of a layer. The footprint of a still piece is painted by cells,
+// like the collision, so it has the same tools. The footprint of an animated
+// piece is a rectangle, so it only has the rectangle.
 export const getModeTools = (
     mode: EditorMode,
-    canPaintTiles: boolean
+    canPaintCells: boolean
 ): SpriteTool[] => {
     switch (mode) {
         case EDITOR_MODES.COLLISION:
@@ -16,10 +17,11 @@ export const getModeTools = (
                 SPRITE_TOOLS.ERASE,
             ];
         case EDITOR_MODES.FOOTPRINT:
-            if (canPaintTiles) {
+            if (canPaintCells) {
                 return [
-                    SPRITE_TOOLS.RECT,
                     SPRITE_TOOLS.BRUSH,
+                    SPRITE_TOOLS.RECT,
+                    SPRITE_TOOLS.BUCKET,
                     SPRITE_TOOLS.ERASE,
                 ];
             }
@@ -34,9 +36,9 @@ export const getModeTools = (
 export const getEffectiveTool = (
     mode: EditorMode,
     chosenTool: SpriteTool,
-    canPaintTiles: boolean
+    canPaintCells: boolean
 ): SpriteTool => {
-    const tools = getModeTools(mode, canPaintTiles);
+    const tools = getModeTools(mode, canPaintCells);
     if (tools.includes(chosenTool)) return chosenTool;
     return tools[0];
 };

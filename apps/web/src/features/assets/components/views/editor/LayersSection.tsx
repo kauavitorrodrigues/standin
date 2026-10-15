@@ -6,7 +6,11 @@ import {
 } from "lucide-react";
 import { TILE_SIZE } from "@standin/contracts";
 import { ToolbarButton } from "@/features/editor/components/views/ToolbarButton";
-import { CROP_COLOR, FOOTPRINT_COLOR } from "../../../consts/editorColors";
+import {
+    COLLISION_COLOR,
+    CROP_COLOR,
+    FOOTPRINT_COLOR,
+} from "../../../consts/editorColors";
 import { EDITOR_MODES, type EditorMode } from "../../../consts/editorModes";
 import type { Crop, Footprint } from "../../../types/spriteGeometry";
 import { hasCrop } from "../../../utils/spriteGeometry";
@@ -77,7 +81,7 @@ const getLayers = ({
             layer: EDITOR_MODES.COLLISION,
             label: "Colisão",
             icon: Grid3x3Icon,
-            color: FOOTPRINT_COLOR,
+            color: COLLISION_COLOR,
             description: "Onde a peça bloqueia a passagem, célula a célula.",
             blocker: collisionBlocker,
         },

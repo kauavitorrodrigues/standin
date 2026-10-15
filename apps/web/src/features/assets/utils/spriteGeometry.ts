@@ -41,6 +41,14 @@ export const getFootprintFromCells = (
     };
 };
 
+// The footprint that covers a whole frame, which is the one a still piece
+// starts with: the cells of it are then read from the drawing.
+export const getFootprintOfFrame = (frame: Crop): Footprint => ({
+    w: frame.w / TILE_SIZE,
+    h: frame.h / TILE_SIZE,
+    offsetX: 0,
+});
+
 // The footprint on the image, in px: it sits on the bottom rows of the crop,
 // shifted right by `offsetX` tiles.
 export const getFootprintRect = (crop: Crop, footprint: Footprint): Crop => ({
