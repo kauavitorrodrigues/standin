@@ -3,11 +3,11 @@ import type {
     SolidMaskValue,
 } from "../types/footprintMask";
 import type { Footprint } from "../types/spriteGeometry";
-import { countOccupiedTiles, toPayloadMask } from "./footprintMask";
+import { countOccupiedCells, toPayloadMask } from "./footprintMask";
 import { countSolidCells, toPayloadSolidMask } from "./solidMask";
 
 // The footprint in words for the summary. With a mask it also says how many
-// tiles are occupied, and with a collision mask how many cells block.
+// cells are occupied, and with a collision mask how many cells block.
 export const describeFootprint = (
     footprint: Footprint,
     mask: FootprintMaskValue,
@@ -15,7 +15,7 @@ export const describeFootprint = (
 ): string => {
     const parts = [`${footprint.w} × ${footprint.h} tiles`];
     if (mask) {
-        parts.push(`${countOccupiedTiles(footprint, mask)} ocupados`);
+        parts.push(`${countOccupiedCells(footprint, mask)} células ocupadas`);
     }
     if (solidMask) {
         parts.push(`${countSolidCells(solidMask)} células sólidas`);

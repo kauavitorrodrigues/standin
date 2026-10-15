@@ -1,5 +1,6 @@
 import {
     ASSET_PLACEMENTS,
+    BELOW_AVATAR_TYPES,
     TILE_SIZE,
     type AssetDefinition,
     type PlacedAsset,
@@ -40,11 +41,28 @@ type PlacedRef = Pick<
 >;
 type AssetRef = Pick<
     AssetDefinition,
-    "id" | "footprint" | "placement" | "surfaceHeightPx" | "solid" | "sprite"
+    | "id"
+    | "type"
+    | "footprint"
+    | "placement"
+    | "surfaceHeightPx"
+    | "solid"
+    | "sprite"
 >;
 
 const clamp = (value: number, min: number, max: number): number =>
     Math.min(max, Math.max(min, value));
+
+const isBelowAvatar = (asset: Pick<AssetDefinition, "type">): boolean =>
+    (BELOW_AVATAR_TYPES as readonly string[]).includes(asset.type);
+
+// Depth of a flat piece: the order of its base on the map, kept inside the
+// band under every object and avatar.
+const getFloorDepthAt = (bottomY: number, mapHeightPx: number): number => {
+    const { MIN, MAX, FLOOR_MIN, FLOOR_MAX } = PLACED_ASSET_DEPTH;
+    const ratio = (getDepthAt(bottomY, mapHeightPx) - MIN) / (MAX - MIN);
+    return FLOOR_MIN + (FLOOR_MAX - FLOOR_MIN) * ratio;
+};
 
 const getGroundBottomY = (placed: PlacedRef): number =>
     (placed.tileY + 1) * TILE_SIZE;
@@ -110,6 +128,17 @@ export const resolvePlacedLayout = (
     }
 
     const bottomY = getGroundBottomY(placed) + placed.offsetY;
+
+    if (isBelowAvatar(asset)) {
+        const depth = getFloorDepthAt(bottomY, mapHeightPx);
+        return {
+            x,
+            bottomY,
+            depth,
+            slices: [{ crop: null, depth }],
+            solidRects: [],
+        };
+    }
 
     return {
         x,

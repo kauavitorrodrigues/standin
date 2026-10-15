@@ -18,6 +18,9 @@ export type EditorSelection = readonly string[];
 export type EditorState = {
     tool: EditorTool;
     selection: EditorSelection;
+    // The object being dragged, or null. Its box is not drawn while the ghost
+    // shows where it would land, so there are never two boxes on the map.
+    draggedId: string | null;
     // The tab of the side panel that is open. The eraser follows it.
     panelTab: PanelTab;
     // Claimed desks the user tried to remove, waiting for the confirmation

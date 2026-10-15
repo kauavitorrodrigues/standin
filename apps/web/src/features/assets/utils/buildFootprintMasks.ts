@@ -1,7 +1,3 @@
-import {
-    deriveTileMask,
-    isFootprintSolidMaskFitting,
-} from "@standin/contracts";
 import type {
     FootprintMaskValue,
     SolidMaskValue,
@@ -19,10 +15,9 @@ type Params = {
     isAnimated: boolean;
 };
 
-// The `mask` and `solidMask` keys of a footprint payload. The collision mask
-// only goes up for a still asset that blocks the way. If the tile mask would
-// leave free a tile that holds a solid cell, the tile mask is worked out from
-// the cells, so the API never gets two masks that disagree.
+// The `mask` and `solidMask` keys of a footprint payload. Both go up as cells,
+// four per tile per side. The footprint mask goes up for any still asset, and
+// the collision mask only for one that blocks the way and differs from it.
 export const buildFootprintMasks = ({
     w,
     h,
@@ -32,22 +27,15 @@ export const buildFootprintMasks = ({
     solid,
     isAnimated,
 }: Params) => {
-    const tileMask = toPayloadMask(mask, isAnimated);
+    const footprintMask = toPayloadMask(mask, isAnimated);
     const cells = toPayloadSolidMask({
         footprint: { w, h, offsetX },
-        mask: tileMask,
+        mask: footprintMask,
         solidMask,
         solid,
         isAnimated,
     });
-    if (!cells) return buildMaskField(tileMask);
+    if (!cells) return buildMaskField(footprintMask);
 
-    const fits = isFootprintSolidMaskFitting({
-        w,
-        h,
-        mask: tileMask,
-        solidMask: cells,
-    });
-    const safeMask = fits ? tileMask : deriveTileMask(cells, w, h);
-    return { ...buildMaskField(safeMask), solidMask: cells };
+    return { ...buildMaskField(footprintMask), solidMask: cells };
 };

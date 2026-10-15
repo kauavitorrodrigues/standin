@@ -10,6 +10,7 @@ import {
     MapAssetPositionOccupiedError,
     MapAssetSurfaceOccupiedError,
     MapAssetSurfaceRequiredError,
+    expandTileMask,
     generateBlankLayout,
 } from "@standin/contracts";
 import type { Item } from "../../types/item";
@@ -187,11 +188,11 @@ describe("positions with a footprint mask", () => {
         rowId: "corner",
         footprintW: 3,
         footprintH: 3,
-        footprintMask: [
+        footprintMask: expandTileMask([
             [true, true, true],
             [true, false, false],
             [true, false, false],
-        ],
+        ]),
     });
     const chair = item({
         rowId: "chair",

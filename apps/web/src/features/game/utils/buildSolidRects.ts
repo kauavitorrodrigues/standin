@@ -70,23 +70,19 @@ const gridToRects = (
 };
 
 // The grid that says what blocks: the collision mask when there is one, else
-// the tile mask. Null when the whole footprint blocks.
+// the footprint mask. Both have the same cells. Null when the whole footprint
+// blocks.
 const pickGrid = ({ mask, solidMask }: FootprintRef): Grid | null => {
-    if (solidMask) {
-        return {
-            cells: solidMask,
-            cellPx: TILE_SIZE / SOLID_MASK_SUBDIVISION,
-        };
-    }
-    if (mask) return { cells: mask, cellPx: TILE_SIZE };
-    return null;
+    const cells = solidMask ?? mask;
+    if (!cells) return null;
+    return { cells, cellPx: TILE_SIZE / SOLID_MASK_SUBDIVISION };
 };
 
 /**
  * The rectangles, in px, that block the way for an object on the ground. An
- * object without a mask is one rectangle over its whole footprint. With a tile
- * mask each run of occupied tiles is a rectangle, and with a collision mask
- * each run of solid cells (an eighth of a tile wide), so the player bumps into
+ * object without a mask is one rectangle over its whole footprint. With a mask
+ * each run of occupied cells (an eighth of a tile wide) is a rectangle, and
+ * with a collision mask each run of solid cells, so the player bumps into
  * the drawn part of the piece and not into the air around it. The anchor is the
  * bottom left cell of the footprint.
  */

@@ -96,6 +96,7 @@ export const SeatsEditor = ({
                         footprint={footprint}
                         mask={mask}
                         solid={solid}
+                        byCells={frameCount <= 1}
                         className="flex-1"
                         pointerHandlers={markers.pointerHandlers}
                     >

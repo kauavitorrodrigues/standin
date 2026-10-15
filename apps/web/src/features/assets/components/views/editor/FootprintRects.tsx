@@ -1,5 +1,4 @@
 import type { Zoom } from "../../../consts/editorZoom";
-import type { FootprintMaskValue } from "../../../types/footprintMask";
 import type { Crop, Footprint } from "../../../types/spriteGeometry";
 import { getFootprintBoxStyle } from "../../../utils/getFootprintBoxStyle";
 import { getFootprintRect } from "../../../utils/spriteGeometry";
@@ -9,24 +8,18 @@ type Props = {
     frame: Crop;
     frameCount: number;
     footprint: Footprint;
-    mask: FootprintMaskValue;
     solid: boolean;
-    paintable?: boolean;
 };
 
-// The footprint as one rectangle on each frame of the crop. Left out when it
-// has a mask or its tiles can be painted, since then it is drawn tile by tile.
+// The footprint as one rectangle on each frame of the crop, for a piece whose
+// footprint is not painted by cells.
 export const FootprintRects = ({
     zoom,
     frame,
     frameCount,
     footprint,
-    mask,
     solid,
-    paintable = false,
 }: Props) => {
-    if (mask || paintable) return null;
-
     return (
         <>
             {Array.from({ length: frameCount }, (_, index) => {

@@ -12,6 +12,7 @@ export * from "./chunkCells";
 export * from "./getFootprintCells";
 export * from "./footprintCells";
 export * from "./getOccupiedCells";
+export * from "./getOccupiedFineCells";
 export * from "./occupiedCells";
 export * from "./cellsOverlap";
 export * from "./pixelAnchor";

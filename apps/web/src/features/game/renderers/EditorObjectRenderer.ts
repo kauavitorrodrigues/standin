@@ -37,6 +37,9 @@ export class EditorObjectRenderer {
     private readonly placedById = new Map<string, PlacedAsset>();
     private readonly assetsById = new Map<string, AssetDefinition>();
     private readonly drops = new Map<string, Phaser.Tweens.TweenChain>();
+    // The whole sprite that stands in for the slices of an object while it
+    // drops, so the squash scales one image and not several.
+    private readonly dropProxies = new Map<string, Phaser.GameObjects.Sprite>();
     private readonly loading = new Set<string>();
     private readonly pendingLoads = new Set<Promise<void>>();
     private readonly scene: Phaser.Scene;
@@ -127,6 +130,8 @@ export class EditorObjectRenderer {
         this.destroyed = true;
         this.drops.forEach((drop) => drop.stop());
         this.drops.clear();
+        this.dropProxies.forEach((proxy) => proxy.destroy());
+        this.dropProxies.clear();
         this.displays.forEach((displays) =>
             displays.forEach((display) => display.destroy())
         );
@@ -153,6 +158,8 @@ export class EditorObjectRenderer {
     private destroyDisplay(id: string): void {
         this.drops.get(id)?.stop();
         this.drops.delete(id);
+        this.dropProxies.get(id)?.destroy();
+        this.dropProxies.delete(id);
         this.displays.get(id)?.forEach((display) => display.destroy());
         this.displays.delete(id);
     }
@@ -199,7 +206,12 @@ export class EditorObjectRenderer {
             return;
         }
 
-        const sprites = displays as Phaser.GameObjects.Sprite[];
+        // An object cut into slices drops as one whole sprite: scaling each
+        // slice on its own makes the edges between them shimmer.
+        const sliced = displays as Phaser.GameObjects.Sprite[];
+        const proxy =
+            sliced.length > 1 ? this.createDropProxy(id, sliced) : null;
+        const sprites = proxy ? [proxy] : sliced;
         const baseX = sprites[0]!.x;
         const keepCentered = () => {
             sprites.forEach((sprite) => {
@@ -230,9 +242,34 @@ export class EditorObjectRenderer {
                     sprite.x = baseX;
                 });
                 this.drops.delete(id);
+                if (!proxy) return;
+                proxy.destroy();
+                this.dropProxies.delete(id);
+                sliced.forEach((slice) => slice.setVisible(true));
             },
         });
         this.drops.set(id, drop);
+    }
+
+    // A sprite of the whole image where the slices are, hiding them until the
+    // drop ends. It sits at the depth of the base of the object.
+    private createDropProxy(
+        id: string,
+        slices: Phaser.GameObjects.Sprite[]
+    ): Phaser.GameObjects.Sprite {
+        const first = slices[0]!;
+        const proxy = this.scene.add.sprite(
+            first.x,
+            first.y,
+            first.texture.key,
+            first.frame.name
+        );
+        proxy.setOrigin(0, 1);
+        proxy.setDepth(Math.max(...slices.map((slice) => slice.depth)));
+        proxy.setName(id);
+        slices.forEach((slice) => slice.setVisible(false));
+        this.dropProxies.set(id, proxy);
+        return proxy;
     }
 
     private createSprites(

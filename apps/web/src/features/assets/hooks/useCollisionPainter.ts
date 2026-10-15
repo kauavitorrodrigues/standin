@@ -4,6 +4,7 @@ import { SOLID_CELL_PX } from "../consts/solidMask";
 import { SPRITE_TOOLS, type SpriteTool } from "../consts/spriteTools";
 import type {
     FootprintMasks,
+    MaskLayer,
     SolidCell,
     SolidPaintAction,
 } from "../types/footprintMask";
@@ -13,7 +14,7 @@ import {
     getFloodCells,
     getRectCells,
     isCellInside,
-    paintSolidCells,
+    paintCells,
 } from "../utils/solidMask";
 import { getFootprintRect } from "../utils/spriteGeometry";
 
@@ -22,6 +23,8 @@ type Params = {
     frame: Crop;
     footprint: Footprint;
     masks: FootprintMasks;
+    // The grid the strokes change: the footprint or the collision.
+    layer: MaskLayer;
     tool: SpriteTool;
     // What the tool does to the cells: paint them solid or erase them.
     action: SolidPaintAction;
@@ -39,7 +42,7 @@ type Stroke = {
     masks: FootprintMasks;
 };
 
-// What a press and a drag do in the collision layer. The brush acts on every
+// What a press and a drag do in a layer painted by cells. The brush acts on every
 // cell the pointer crosses, the rectangle on the block between the press and
 // the pointer (and follows the pointer, so it can shrink), the bucket on the
 // whole area around the cell, with one click.
@@ -48,6 +51,7 @@ export const useCollisionPainter = ({
     frame,
     footprint,
     masks,
+    layer,
     tool,
     action,
     onChange,
@@ -94,7 +98,7 @@ export const useCollisionPainter = ({
     };
 
     const paint = (from: FootprintMasks, cells: SolidCell[]) =>
-        paintSolidCells({ footprint, masks: from, cells, action });
+        paintCells({ footprint, masks: from, cells, action, layer });
 
     const onPointerDown = (event: PointerEvent<HTMLElement>) => {
         const cell = getCell(event);
@@ -110,7 +114,7 @@ export const useCollisionPainter = ({
         if (tool === SPRITE_TOOLS.BUCKET) {
             commit(
                 current,
-                paint(masks, getFloodCells(footprint, masks, cell))
+                paint(masks, getFloodCells(footprint, masks, cell, layer))
             );
             return;
         }

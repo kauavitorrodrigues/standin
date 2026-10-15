@@ -8,8 +8,20 @@ type MaskedFootprint = {
 };
 
 /**
- * True when the mask of a footprint is absent, or has one row per footprint
- * row, one flag per footprint column and at least one occupied cell.
+ * True when the tile mask of a footprint is absent, or has one row per
+ * footprint row, one flag per footprint column and at least one occupied tile.
+ * It is the mask the sprite editor works with, before it goes up as cells.
+ */
+export const isTileMaskFitting = ({ w, h, mask }: MaskedFootprint): boolean => {
+    if (!mask) return true;
+    if (mask.length !== h) return false;
+    if (mask.some((row) => row.length !== w)) return false;
+    return mask.some((row) => row.some(Boolean));
+};
+
+/**
+ * True when the mask of a footprint is absent, or has SOLID_MASK_SUBDIVISION
+ * rows and flags per footprint tile and at least one occupied cell.
  */
 export const isFootprintMaskFitting = ({
     w,
@@ -17,8 +29,10 @@ export const isFootprintMaskFitting = ({
     mask,
 }: MaskedFootprint): boolean => {
     if (!mask) return true;
-    if (mask.length !== h) return false;
-    if (mask.some((row) => row.length !== w)) return false;
+    if (mask.length !== h * SOLID_MASK_SUBDIVISION) return false;
+    if (mask.some((row) => row.length !== w * SOLID_MASK_SUBDIVISION)) {
+        return false;
+    }
     return mask.some((row) => row.some(Boolean));
 };
 
@@ -29,7 +43,7 @@ type SolidMaskedFootprint = MaskedFootprint & {
 /**
  * True when the collision mask of a footprint is absent, or has
  * SOLID_MASK_SUBDIVISION rows and flags per footprint tile, at least one solid
- * cell, and no solid cell inside a tile the footprint mask leaves free.
+ * cell, and no solid cell where the footprint mask leaves the cell free.
  */
 export const isFootprintSolidMaskFitting = ({
     w,
@@ -46,41 +60,49 @@ export const isFootprintSolidMaskFitting = ({
     if (!mask) return true;
 
     return solidMask.every((row, y) =>
-        row.every((solid, x) => {
-            if (!solid) return true;
-            const tileRow = Math.floor(y / SOLID_MASK_SUBDIVISION);
-            const tileColumn = Math.floor(x / SOLID_MASK_SUBDIVISION);
-            return mask[tileRow]?.[tileColumn] === true;
-        })
+        row.every((solid, x) => !solid || mask[y]?.[x] === true)
     );
 };
 
 /**
- * The tile mask a collision mask implies: a tile is occupied when at least one
- * of its cells is solid. Null when every tile is occupied.
+ * The footprint mask a tile mask stands for: every tile becomes a block of
+ * SOLID_MASK_SUBDIVISION cells per side. Null when every tile is occupied.
  */
-export const deriveTileMask = (
-    solidMask: FootprintMask,
-    w: number,
-    h: number
+export const expandTileMask = (
+    tileMask: FootprintMask | null | undefined
 ): FootprintMask | null => {
-    const tiles = Array.from({ length: h }, (_, row) =>
-        Array.from({ length: w }, (_, column) =>
-            solidMask
-                .slice(
-                    row * SOLID_MASK_SUBDIVISION,
-                    (row + 1) * SOLID_MASK_SUBDIVISION
-                )
-                .some((cells) =>
-                    cells
-                        .slice(
-                            column * SOLID_MASK_SUBDIVISION,
-                            (column + 1) * SOLID_MASK_SUBDIVISION
-                        )
-                        .some(Boolean)
-                )
+    if (!tileMask) return null;
+    return tileMask.flatMap((row) => {
+        const cells = row.flatMap((occupied) =>
+            Array.from({ length: SOLID_MASK_SUBDIVISION }, () => occupied)
+        );
+        return Array.from({ length: SOLID_MASK_SUBDIVISION }, () => [
+            ...cells,
+        ]);
+    });
+};
+
+/**
+ * True when at least one cell of the tile at that column and row of the
+ * footprint is occupied.
+ */
+export const isTileOccupiedByMask = (
+    mask: FootprintMask | null | undefined,
+    column: number,
+    row: number
+): boolean => {
+    if (!mask) return true;
+    return mask
+        .slice(
+            row * SOLID_MASK_SUBDIVISION,
+            (row + 1) * SOLID_MASK_SUBDIVISION
         )
-    );
-    if (tiles.every((row) => row.every(Boolean))) return null;
-    return tiles;
+        .some((cells) =>
+            cells
+                .slice(
+                    column * SOLID_MASK_SUBDIVISION,
+                    (column + 1) * SOLID_MASK_SUBDIVISION
+                )
+                .some(Boolean)
+        );
 };

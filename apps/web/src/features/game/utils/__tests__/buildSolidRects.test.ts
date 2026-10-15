@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { expandTileMask } from "@standin/contracts";
 import { buildSolidRects } from "@/features/game/utils/buildSolidRects";
 
 const placed = { tileX: 4, tileY: 5, offsetX: 0, offsetY: 0 };
@@ -19,11 +20,11 @@ describe("buildSolidRects", () => {
         ).toEqual([{ x: 138, y: 154, width: 32, height: 32 }]);
     });
 
-    it("uses one rectangle per run of occupied tiles, merged by rows", () => {
-        const mask = [
+    it("uses one rectangle per run of occupied cells, merged by rows", () => {
+        const mask = expandTileMask([
             [true, true, true],
             [true, false, false],
-        ];
+        ]) as boolean[][];
         expect(buildSolidRects(placed, { w: 3, h: 2, mask })).toEqual([
             { x: 128, y: 128, width: 96, height: 32 },
             { x: 128, y: 160, width: 32, height: 32 },
@@ -57,7 +58,7 @@ describe("buildSolidRects", () => {
         ]);
     });
 
-    it("prefers the collision mask over the tile mask", () => {
+    it("prefers the collision mask over the footprint mask", () => {
         const solidMask = Array.from({ length: 4 }, () => [
             true,
             false,
@@ -68,7 +69,7 @@ describe("buildSolidRects", () => {
             buildSolidRects(placed, {
                 w: 1,
                 h: 1,
-                mask: [[true]],
+                mask: expandTileMask([[true]]),
                 solidMask,
             })
         ).toEqual([{ x: 128, y: 160, width: 8, height: 32 }]);

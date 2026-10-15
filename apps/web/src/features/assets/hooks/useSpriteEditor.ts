@@ -3,23 +3,15 @@ import { TILE_SIZE } from "@standin/contracts";
 import { DEFAULT_ZOOM, type Zoom } from "../consts/editorZoom";
 import { EDITOR_MODES, type EditorMode } from "../consts/editorModes";
 import { SPRITE_TOOLS, type SpriteTool } from "../consts/spriteTools";
-import { NO_FOOTPRINT } from "../consts/spriteGeometry";
 import type { ImageSize } from "../queries/useImageSize";
 import type {
     FootprintMasks,
-    FootprintTile,
+    MaskLayer,
     SolidPaintAction,
 } from "../types/footprintMask";
 import type { Cell, Crop, Footprint } from "../types/spriteGeometry";
 import { getEditorMode } from "../utils/getEditorMode";
-import {
-    canHaveMask,
-    countOccupiedTiles,
-    getTileAtCell,
-    isTileOccupied,
-} from "../utils/footprintMask";
 import { getEffectiveTool } from "../utils/getModeTools";
-import { getCellsBetween } from "../utils/solidMask";
 import { useCollisionPainter } from "./useCollisionPainter";
 import {
     getCropFromCells,
@@ -42,14 +34,11 @@ type Params = {
     // The eraser on the crop layer. Left out when the crop is fixed.
     onEraseCrop?: () => void;
     footprint: Footprint;
-    // Frees or occupies a tile of the footprint, left out when the footprint
-    // cannot have a mask.
-    onToggleTile?: (tile: FootprintTile) => void;
     // The crop is already the whole image, so only the footprint is marked.
     footprintOnly?: boolean;
-    // The two masks of the footprint, which the collision mode paints.
+    // The two masks of the footprint, which the painter changes.
     masks: FootprintMasks;
-    // Left out when the collision cannot be painted.
+    // Left out when the cells cannot be painted.
     onChangeSolid?: (masks: FootprintMasks) => void;
     // Whether the collision mode is available for this asset.
     canCollide: boolean;
@@ -58,10 +47,9 @@ type Params = {
 const clamp = (value: number, max: number) => Math.min(Math.max(value, 0), max);
 
 // The state of the visual editor and what a drag over the image does. The
-// layer being edited and its tool decide: the rectangle marks the crop (and
-// suggests a footprint for it) or the footprint inside the crop, the brush
-// occupies or frees the tiles of the footprint, and the collision layer
-// paints cells.
+// layer being edited and its tool decide: the rectangle marks the crop, or the
+// footprint of an animated piece, and the footprint and collision layers of a
+// still piece paint cells.
 export const useSpriteEditor = ({
     size,
     crop,
@@ -70,7 +58,6 @@ export const useSpriteEditor = ({
     onMarkFootprint,
     onEraseCrop,
     footprint,
-    onToggleTile,
     footprintOnly = false,
     masks,
     onChangeSolid,
@@ -80,12 +67,6 @@ export const useSpriteEditor = ({
     const [chosenMode, setMode] = useState<EditorMode>(EDITOR_MODES.CROP);
     const [chosenTool, setTool] = useState<SpriteTool>(SPRITE_TOOLS.RECT);
     const dragStart = useRef<Cell | null>(null);
-    // The cell the last pointer event of a tile stroke reached, and the tiles
-    // it already changed, so a tile changes once per stroke.
-    const lastCell = useRef<Cell | null>(null);
-    const visitedTiles = useRef<Set<string>>(new Set());
-    // The tile under the pointer when the brush would change it.
-    const [hoveredTile, setHoveredTile] = useState<FootprintTile | null>(null);
 
     const mode = getEditorMode({
         chosenMode,
@@ -93,27 +74,31 @@ export const useSpriteEditor = ({
         footprintOnly,
         canCollide,
     });
-    const canPaintTiles = onToggleTile !== undefined && canHaveMask(footprint);
-    const tool = getEffectiveTool(mode, chosenTool, canPaintTiles);
+    // A still piece has its footprint painted by cells, like the collision. The
+    // footprint of an animated one is a rectangle, since it has no mask.
+    const canPaintCells =
+        onChangeSolid !== undefined &&
+        frameCount <= 1 &&
+        hasFootprint(footprint);
+    const tool = getEffectiveTool(mode, chosenTool, canPaintCells);
     // The eraser paints "erase", every other tool paints.
     const action: SolidPaintAction =
         tool === SPRITE_TOOLS.ERASE ? "erase" : "paint";
+    const isPainting =
+        mode === EDITOR_MODES.COLLISION ||
+        (mode === EDITOR_MODES.FOOTPRINT && canPaintCells);
+    const layer: MaskLayer =
+        mode === EDITOR_MODES.COLLISION ? "collision" : "footprint";
     const painter = useCollisionPainter({
         zoom,
         frame: getFrameCrop(crop, frameCount),
         footprint,
         masks,
+        layer,
         tool,
         action,
         onChange: onChangeSolid,
     });
-    const isPainting = mode === EDITOR_MODES.COLLISION;
-    // The brush and the eraser of the footprint work tile by tile.
-    const isTileBrush =
-        mode === EDITOR_MODES.FOOTPRINT &&
-        hasFootprint(footprint) &&
-        (tool === SPRITE_TOOLS.BRUSH || tool === SPRITE_TOOLS.ERASE);
-
     const getCell = (event: PointerEvent<HTMLElement>): Cell => {
         const rect = event.currentTarget.getBoundingClientRect();
         const cellPx = TILE_SIZE * zoom;
@@ -143,33 +128,6 @@ export const useSpriteEditor = ({
         onMarkFootprint(getFootprintFromCells(frame, from, to));
     };
 
-    // The tile of the footprint under a cell.
-    const getTile = (cell: Cell): FootprintTile | null => {
-        const frame = getFrameCrop(crop, frameCount);
-        const [inFrame] = toFirstFrameCells(crop, frame, cell, cell);
-        return getTileAtCell(frame, footprint, inFrame);
-    };
-
-    // Occupies or frees the tiles a stroke crosses, each only once and only
-    // when it is not already the way the tool leaves it. Erasing the last
-    // occupied tile takes the whole footprint away.
-    const brushTiles = (cells: Cell[]) => {
-        const wanted = action === "paint";
-        for (const cell of cells) {
-            const tile = getTile(cell);
-            if (!tile) continue;
-            const key = `${tile.col},${tile.row}`;
-            if (visitedTiles.current.has(key)) continue;
-            visitedTiles.current.add(key);
-            if (isTileOccupied(masks.mask, tile) === wanted) continue;
-            if (!wanted && countOccupiedTiles(footprint, masks.mask) <= 1) {
-                onMarkFootprint(NO_FOOTPRINT);
-                continue;
-            }
-            onToggleTile?.(tile);
-        }
-    };
-
     const onPointerDown = (event: PointerEvent<HTMLElement>) => {
         if (isPainting) return painter.pointerHandlers.onPointerDown(event);
         if (mode === EDITOR_MODES.CROP && tool === SPRITE_TOOLS.ERASE) {
@@ -177,55 +135,27 @@ export const useSpriteEditor = ({
         }
         // Only the rectangle marks. The other tools never start a mark, even
         // where they have nothing to act on.
-        if (tool !== SPRITE_TOOLS.RECT && !isTileBrush) return;
+        if (tool !== SPRITE_TOOLS.RECT) return;
         event.currentTarget.setPointerCapture(event.pointerId);
         const cell = getCell(event);
         dragStart.current = cell;
-        if (isTileBrush) {
-            visitedTiles.current = new Set();
-            lastCell.current = cell;
-            brushTiles([cell]);
-            return;
-        }
         mark(cell, cell);
-    };
-
-    const updateHoveredTile = (tile: FootprintTile | null) => {
-        setHoveredTile((current) => {
-            if (current?.col === tile?.col && current?.row === tile?.row) {
-                return current;
-            }
-            return tile;
-        });
     };
 
     const onPointerMove = (event: PointerEvent<HTMLElement>) => {
         if (isPainting) return painter.pointerHandlers.onPointerMove(event);
-        const cell = getCell(event);
         const start = dragStart.current;
-        if (!start) {
-            updateHoveredTile(isTileBrush ? getTile(cell) : null);
-            return;
-        }
-        if (isTileBrush) {
-            brushTiles(getCellsBetween(lastCell.current ?? cell, cell));
-            lastCell.current = cell;
-            return;
-        }
-        mark(start, cell);
+        if (!start) return;
+        mark(start, getCell(event));
     };
 
     const onPointerUp = () => {
         if (isPainting) return painter.pointerHandlers.onPointerUp();
         if (!dragStart.current) return;
         dragStart.current = null;
-        lastCell.current = null;
     };
 
-    const onPointerLeave = () => {
-        updateHoveredTile(null);
-        painter.pointerHandlers.onPointerLeave();
-    };
+    const onPointerLeave = () => painter.pointerHandlers.onPointerLeave();
 
     return {
         zoom,
@@ -234,8 +164,7 @@ export const useSpriteEditor = ({
         setMode,
         tool,
         setTool,
-        canPaintTiles,
-        hoveredTile,
+        canPaintCells,
         hoveredCell: painter.hoveredCell,
         pointerHandlers: {
             onPointerDown,

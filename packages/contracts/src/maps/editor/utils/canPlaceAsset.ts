@@ -47,6 +47,9 @@ export const canPlaceAsset = (
         case ASSET_PLACEMENTS.WALL:
             return checkWallPlacement(model, footprint);
         default:
-            return checkGroundPlacement(model, footprint, opts.ignoreId);
+            return checkGroundPlacement(model, footprint, opts.ignoreId, {
+                x: opts.offsetX ?? 0,
+                y: opts.offsetY ?? 0,
+            });
     }
 };

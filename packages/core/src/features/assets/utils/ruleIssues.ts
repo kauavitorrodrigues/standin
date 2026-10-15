@@ -2,7 +2,6 @@ import {
     ACTION_PARAMS_SCHEMAS,
     ActionParamsInvalidIssue,
     ActionParamsWithoutActionIssue,
-    deriveTileMask,
     FootprintInvalidIssue,
     FootprintMaskAnimatedIssue,
     TILE_SIZE,
@@ -46,18 +45,14 @@ export const findFootprintMaskIssue = (
 };
 
 /**
- * The masks of a footprint as they are stored. A collision mask without a tile
- * mask implies one: a tile is occupied when one of its cells is solid.
+ * The masks of a footprint as they are stored. Both go up as cells and are
+ * kept as they come: no footprint mask means the whole rectangle, and no
+ * collision mask means the occupied cells block whole.
  */
-export const resolveFootprintMasks = (footprint: Footprint) => {
-    const solidMask = footprint.solidMask ?? null;
-    if (footprint.mask) return { mask: footprint.mask, solidMask };
-    if (!solidMask) return { mask: null, solidMask: null };
-    return {
-        mask: deriveTileMask(solidMask, footprint.w, footprint.h),
-        solidMask,
-    };
-};
+export const resolveFootprintMasks = (footprint: Footprint) => ({
+    mask: footprint.mask ?? null,
+    solidMask: footprint.solidMask ?? null,
+});
 
 /** `actionParams` need an action, and have to match the schema of it. */
 export const findActionParamsIssue = (

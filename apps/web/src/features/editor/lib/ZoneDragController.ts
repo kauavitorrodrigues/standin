@@ -3,7 +3,6 @@ import {
     getAreaRefusal,
     buildZoneResizeOps,
     type EditorOp,
-    type Zone,
 } from "@standin/contracts";
 import { ZONE_MESSAGES } from "@/features/editor/consts/messages";
 import { ZONE_KINDS } from "@/features/editor/consts/zone-kinds";

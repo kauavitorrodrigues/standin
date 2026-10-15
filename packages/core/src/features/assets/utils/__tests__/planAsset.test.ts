@@ -5,6 +5,7 @@ import {
     ASSET_PLACEMENTS,
     ASSET_TYPES,
     LIBRARY_ISSUE_CODES,
+    expandTileMask,
 } from "@standin/contracts";
 import type { CreateAssetData } from "@standin/contracts";
 import { planAsset } from "../planAsset";
@@ -106,10 +107,10 @@ describe("planAsset", () => {
     });
 
     it("keeps the footprint mask of a static asset", () => {
-        const mask = [
+        const mask = expandTileMask([
             [true, true],
             [true, false],
-        ];
+        ]);
         const plan = planAsset(
             { ...mug, footprint: { w: 2, h: 2, mask } },
             { width: 64, height: 64 }
@@ -119,7 +120,7 @@ describe("planAsset", () => {
         expect(plan.values?.footprint.mask).toEqual(mask);
     });
 
-    it("derives the tile mask from a collision mask sent alone", () => {
+    it("keeps a collision mask sent alone, with the footprint whole", () => {
         // One tile wide and two high: only cells of the top tile are solid.
         const solidMask = Array.from({ length: 8 }, (_, row) =>
             Array.from({ length: 4 }, () => row === 0)
@@ -131,7 +132,7 @@ describe("planAsset", () => {
 
         expect(plan.errors).toEqual([]);
         expect(plan.values?.footprint.solidMask).toEqual(solidMask);
-        expect(plan.values?.footprint.mask).toEqual([[true], [false]]);
+        expect(plan.values?.footprint.mask).toBeNull();
     });
 
     it("refuses a collision mask on an animated asset", () => {
