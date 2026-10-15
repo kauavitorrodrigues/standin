@@ -28,6 +28,8 @@ export class HoverTargetController {
     private readonly event: string;
     private readonly outline: Phaser.GameObjects.Graphics;
     private targets: HoverTarget[] = [];
+    // Off while the decorator is open, so a desk is a plain object to select.
+    private enabled = true;
     private isPointerOver = false;
     // The target whose card the mouse is on, which keeps its outline.
     private pinnedId: string | null = null;
@@ -59,6 +61,7 @@ export class HoverTargetController {
         scene.input.on(
             Phaser.Input.Events.POINTER_UP,
             (pointer: Phaser.Input.Pointer) => {
+                if (!this.enabled) return;
                 if (pointer.getDistance() >= MAP_DRAG_THRESHOLD_PX) return;
 
                 scene.game.events.emit(
@@ -86,8 +89,16 @@ export class HoverTargetController {
         });
     }
 
-    addTargets(targets: HoverTarget[]): void {
-        this.targets = [...this.targets, ...targets];
+    // Swaps the targets for the ones of the objects now on the map. A target
+    // that is gone stops being hovered, pinned or outlined on the next frame.
+    setTargets(targets: HoverTarget[]): void {
+        this.targets = targets;
+    }
+
+    // A disabled controller sees no target: nothing is hovered, outlined or
+    // clicked, and the page is told once that the hover is gone.
+    setEnabled(enabled: boolean): void {
+        this.enabled = enabled;
     }
 
     update(): void {
@@ -103,6 +114,7 @@ export class HoverTargetController {
     }
 
     private findTargetUnderPointer(): HoverTarget | null {
+        if (!this.enabled) return null;
         return this.findPointedTarget() ?? this.findPinnedTarget();
     }
 
@@ -123,10 +135,15 @@ export class HoverTargetController {
         return findHoveredTarget(this.targets, world);
     }
 
+    private findSelectedTarget(): HoverTarget | null {
+        if (!this.enabled) return null;
+
+        return this.targets.find(({ id }) => id === this.selectedId) ?? null;
+    }
+
     // The selected target and the hovered one, which can be the same.
     private drawOutlines(hovered: HoverTarget | null): void {
-        const selected =
-            this.targets.find(({ id }) => id === this.selectedId) ?? null;
+        const selected = this.findSelectedTarget();
         const outlined = [selected, hovered].filter(
             (target): target is HoverTarget => target !== null
         );
@@ -150,8 +167,7 @@ export class HoverTargetController {
     // Where the selected target is on the canvas, or null with none. Only a
     // change is emitted, like the hover.
     private emitSelected(): void {
-        const selected =
-            this.targets.find(({ id }) => id === this.selectedId) ?? null;
+        const selected = this.findSelectedTarget();
         const state = selected
             ? toHoverState(selected, this.scene.cameras.main)
             : null;

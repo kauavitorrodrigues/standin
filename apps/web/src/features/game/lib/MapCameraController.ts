@@ -66,6 +66,13 @@ export class MapCameraController {
         this.onStateChange(this.resolveState(this.camera.zoom));
     }
 
+    /** Centers the view on a point of the map and lets go of the player. */
+    focusPoint(x: number, y: number, offsetXPixels = 0): void {
+        this.stopFollow();
+        this.camera.centerOn(x, y);
+        this.camera.scrollX += offsetXPixels / this.camera.zoom;
+    }
+
     pan(deltaX: number, deltaY: number): void {
         this.camera.scrollX -= deltaX / this.camera.zoom;
         this.camera.scrollY -= deltaY / this.camera.zoom;

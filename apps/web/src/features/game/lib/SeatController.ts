@@ -1,5 +1,5 @@
 import type { Player } from "@/features/game/lib/Player";
-import type { SeatArea } from "@/features/game/utils/buildSeatAreas";
+import type { SeatArea, SeatSpot } from "@/features/game/utils/buildSeatAreas";
 import { findNearestSeat } from "@/features/game/utils/findNearestSeat";
 import { isWithinReach } from "@/features/game/utils/isWithinReach";
 
@@ -10,17 +10,39 @@ import { isWithinReach } from "@/features/game/utils/isWithinReach";
 // footprint before it can sit again, or it would sit back at once.
 // The position is checked every frame, not from the overlaps of the physics,
 // which only run on the frames that step it.
+export type SeatedPlayer = Pick<
+    Player,
+    "x" | "y" | "isSitting" | "moveAxis" | "sitAt" | "standUp"
+>;
+
 export class SeatController {
-    private readonly player: Player;
+    private readonly player: SeatedPlayer;
     private areas: SeatArea[] = [];
     private armed = true;
+    // The seat the avatar was sat at, to tell when its piece went away.
+    private seat: SeatSpot | null = null;
 
-    constructor(player: Player) {
+    constructor(player: SeatedPlayer) {
         this.player = player;
     }
 
-    addAreas(areas: SeatArea[]): void {
-        this.areas = [...this.areas, ...areas];
+    // Swaps the seats for the ones of the objects now on the map. An avatar
+    // sat on a seat that is gone (piece deleted or moved) gets up on the spot.
+    setAreas(areas: SeatArea[]): void {
+        this.areas = areas;
+        if (!this.player.isSitting || this.hasSeat(this.seat)) return;
+
+        this.seat = null;
+        this.armed = false;
+        this.player.standUp();
+    }
+
+    private hasSeat(seat: SeatSpot | null): boolean {
+        if (!seat) return false;
+
+        return this.areas.some((area) =>
+            area.seats.some((spot) => spot.x === seat.x && spot.y === seat.y)
+        );
     }
 
     private findAreaUnderPlayer(): SeatArea | null {
@@ -48,6 +70,7 @@ export class SeatController {
         if (!seat) return;
 
         this.armed = false;
+        this.seat = seat;
         this.player.sitAt(seat);
     }
 }

@@ -25,7 +25,7 @@ type AssetRef = Pick<
  * The placed desks as hover targets, with the rectangle their sprite covers. Only assets of the DESK type can be claimed.
  */
 export const buildDeskAreas = (
-    placed: PlacedRef[],
+    placed: readonly PlacedRef[],
     assetsById: ReadonlyMap<string, AssetRef>,
     mapHeightPx: number
 ): HoverTarget[] => {

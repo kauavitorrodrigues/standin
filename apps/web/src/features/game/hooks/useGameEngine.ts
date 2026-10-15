@@ -3,6 +3,7 @@ import { usePerformanceSettingsPreference } from "@/features/settings/performanc
 import { getFpsLimit } from "@/features/settings/performance/lib/performanceValues";
 import { applyFpsLimit } from "@/features/game/utils/fpsLimit";
 import { createGameEngine } from "@/features/game/lib/Engine";
+import { useMapRenderSync } from "@/features/game/hooks/useMapRenderSync";
 import type { GameEngineHandle } from "@/features/game/types/game";
 import type { GameMapData } from "@/features/game/types/tilemap";
 
@@ -41,6 +42,8 @@ export const useGameEngine = (
         },
         [map]
     );
+
+    useMapRenderSync(handle, map?.id ?? "");
 
     return { containerRef, handle };
 };

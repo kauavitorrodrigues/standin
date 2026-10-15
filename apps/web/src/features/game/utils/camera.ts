@@ -24,9 +24,12 @@ export const bindCameraStateSubscription = (
     return () => game.events.off(CAMERA_EVENTS.STATE_CHANGED, listener);
 };
 
+// `canPan` can hold the camera still for a press, such as one that drags an
+// object while decorating. It is asked on every move of the press.
 export const bindMapDragPan = (
     scene: Phaser.Scene,
-    controller: MapCameraController
+    controller: MapCameraController,
+    canPan: () => boolean = () => true
 ): void => {
     const canvas = scene.game.canvas;
     canvas.style.cursor = MAP_DRAG_CURSORS.IDLE;
@@ -45,6 +48,7 @@ export const bindMapDragPan = (
         Phaser.Input.Events.POINTER_MOVE,
         (pointer: Phaser.Input.Pointer) => {
             if (!pointer.leftButtonDown()) return;
+            if (!canPan()) return;
 
             // A press that has not moved past the threshold is still a click.
             if (!isDragging) {

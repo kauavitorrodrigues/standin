@@ -8,3 +8,5 @@ export * from "@/features/game/renderers/fitWorldBoundsToMap";
 export * from "@/features/game/renderers/registerAssetAnimations";
 export * from "@/features/game/renderers/ensureAssetTextures";
 export * from "@/features/game/renderers/renderPlacedAssets";
+export * from "@/features/game/renderers/diffPlaced";
+export * from "@/features/game/renderers/EditorObjectRenderer";
