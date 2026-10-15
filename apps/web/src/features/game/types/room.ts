@@ -1,4 +1,5 @@
 import type { RoomDoorState } from "@standin/contracts";
+import type { PlacedRect } from "@/features/game/utils/placed";
 
 type Point = { x: number; y: number };
 
@@ -26,6 +27,9 @@ export type GameRoomDoor = {
     y: number;
     width: number;
     height: number;
+    // What a locked door blocks, when it is less than its whole cell: the trace
+    // of the wall around it, in px. Missing means the whole cell blocks.
+    solidRects?: PlacedRect[];
 };
 
 // What the rest of the game reads of the doors, kept in sync with the server.

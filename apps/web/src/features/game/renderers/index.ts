@@ -10,3 +10,6 @@ export * from "@/features/game/renderers/ensureAssetTextures";
 export * from "@/features/game/renderers/renderPlacedAssets";
 export * from "@/features/game/renderers/diffPlaced";
 export * from "@/features/game/renderers/EditorObjectRenderer";
+export * from "@/features/game/renderers/renderWallTiles";
+export * from "@/features/game/renderers/WallTileRenderer";
+export * from "@/features/game/renderers/buildTileColliders";
