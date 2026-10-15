@@ -9,4 +9,10 @@ export const ASSET_VALIDATION_MESSAGES = {
     MASK_NOT_FITTING: "A máscara precisa caber na pegada.",
     SOLID_MASK_NOT_FITTING:
         "A colisão precisa caber na pegada, só em tiles ocupados e com ao menos uma célula sólida.",
+    DOOR_MIN_FRAMES:
+        "A porta precisa de ao menos 2 frames: o primeiro é a porta fechada e o último a aberta.",
+    DOOR_FRAMES_DIVIDE:
+        "A largura da imagem precisa dividir igualmente pela quantidade de frames da porta.",
+    DOOR_FOOTPRINT_WIDTH:
+        "A pegada da porta precisa ter 1 tile ou mais de largura.",
 } as const;

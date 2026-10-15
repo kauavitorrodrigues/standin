@@ -1,11 +1,13 @@
 import {
     ASSET_ACTIONS,
+    ASSET_TYPES,
     getFamilyBase,
     isFootprintMaskFitting,
     isFootprintSolidMaskFitting,
     type AssetDefinition,
     type LibraryFamilyDetail,
 } from "@standin/contracts";
+import type { ImageSize } from "../queries/useImageSize";
 import { VARIANT_VALIDATION_MESSAGES } from "../consts/variantValidationMessages";
 import type { AddVariantFormValues } from "../types/addVariantForm";
 import { getVariantKind, VARIANT_KINDS } from "./getVariantKind";
@@ -47,8 +49,12 @@ const validateNewRotation = (
     values: AddVariantFormValues
 ): Errors => {
     const errors: Errors = {};
+    const base = getFamilyBase(family.variants);
     if (!values.footprintW || values.footprintW <= 0) {
-        errors.footprintW = REQUIRED;
+        errors.footprintW =
+            base.type === ASSET_TYPES.DOOR
+                ? VARIANT_VALIDATION_MESSAGES.DOOR_FOOTPRINT_WIDTH
+                : REQUIRED;
     }
     if (!values.footprintH || values.footprintH <= 0) {
         errors.footprintH = REQUIRED;
@@ -61,7 +67,6 @@ const validateNewRotation = (
     if (!fitsMask) {
         errors.footprintMask = VARIANT_VALIDATION_MESSAGES.MASK_NOT_FITTING;
     }
-    const base = getFamilyBase(family.variants);
     const fitsSolidMask = isFootprintSolidMaskFitting({
         w: values.footprintW ?? 0,
         h: values.footprintH ?? 0,
@@ -83,12 +88,27 @@ const validateColor = (values: AddVariantFormValues): Errors => {
     return errors;
 };
 
+// A door variation is a strip of the frames of the door, so its width has to
+// divide evenly by them.
+const validateDoorStrip = (
+    family: Pick<LibraryFamilyDetail, "variants">,
+    imageSize: ImageSize | undefined
+): Errors => {
+    const base = getFamilyBase(family.variants);
+    const frames = base.animation?.frameCount ?? 0;
+    if (base.type !== ASSET_TYPES.DOOR || !imageSize || frames < 1) return {};
+    if (imageSize.w % frames === 0) return {};
+    return { image: VARIANT_VALIDATION_MESSAGES.DOOR_FRAMES_DIVIDE };
+};
+
 // Only what saves a round trip. The API decides the rest (sizes, duplicates).
 export const validateAddVariant = (
     family: Pick<LibraryFamilyDetail, "variants" | "colors">,
-    values: AddVariantFormValues
+    values: AddVariantFormValues,
+    imageSize?: ImageSize
 ): Errors => {
     const errors: Errors = {};
+    Object.assign(errors, validateDoorStrip(family, imageSize));
     if (values.image.length === 0) {
         errors.image = VARIANT_VALIDATION_MESSAGES.IMAGE_REQUIRED;
     }

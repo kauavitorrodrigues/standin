@@ -24,6 +24,8 @@ type Props = {
     selectedId?: string | null;
     // Leaves the library's own Tiles tab out.
     hideTilesTab?: boolean;
+    // Why a family cannot be picked, or null when it can.
+    getDisabledReason?: (asset: AssetDefinition) => string | null;
     look?: PaletteLook;
 };
 
@@ -37,6 +39,7 @@ export const PaletteTabs = ({
     onPick,
     selectedId,
     hideTilesTab = false,
+    getDisabledReason,
     look = PALETTE_LOOKS.EDITOR,
 }: Props) => {
     const [selected, setSelected] = useState(getDefaultPaletteTab(categories));
@@ -63,6 +66,7 @@ export const PaletteTabs = ({
                     families={current?.families ?? []}
                     onPick={onPick}
                     selectedId={selectedId}
+                    getDisabledReason={getDisabledReason}
                     showNames={look.names}
                 />
                 <PaletteTilesContent

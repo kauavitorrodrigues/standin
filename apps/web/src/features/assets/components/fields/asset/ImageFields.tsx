@@ -20,6 +20,7 @@ import type { FootprintMasks } from "@/features/assets/types/footprintMask";
 import type { CreateAssetFormValues } from "@/features/assets/types/createForm";
 import type { Crop, Footprint } from "@/features/assets/types/spriteGeometry";
 import { InlineError } from "@/features/assets/components/views/form/InlineError";
+import { canSaveImage } from "@/features/assets/utils/canSaveImage";
 import { footprintFitsCrop } from "@/features/assets/utils/footprintFitsCrop";
 import {
     getFootprintOfFrame,
@@ -33,15 +34,16 @@ type Props = {
     form: UseFormReturn<CreateAssetFormValues>;
     file: File;
     disabled: boolean;
-    // The buttons that close the form, floating over the image.
-    actions: ReactNode;
+    // The buttons that close the form, floating over the image. It is told
+    // whether what the editor marked can be saved.
+    renderActions: (canSave: boolean) => ReactNode;
 };
 
 // The visual editor tied to the form: the crop and the footprint it marks
 // are kept in the fields of the form, so the summary, the validation and the
 // upload read them from there. For an animated asset the way the strip
 // plays sits right under the image, since it describes the image.
-export const ImageFields = ({ form, file, disabled, actions }: Props) => {
+export const ImageFields = ({ form, file, disabled, renderActions }: Props) => {
     useResetMarksOnAnimation(form);
     const [cropX, cropY, cropW, cropH, footprintW, footprintH, offsetX] =
         useWatch({
@@ -76,6 +78,7 @@ export const ImageFields = ({ form, file, disabled, actions }: Props) => {
 
     const seatState = useAssetSeats(form);
     const editorFrameCount = getEditorFrameCount(isAnimated, frameCount);
+    const canSave = canSaveImage(crop, footprint, editorFrameCount);
     const activeEditor = getActiveEditor({
         action,
         picked: seatState.picked,
@@ -176,7 +179,7 @@ export const ImageFields = ({ form, file, disabled, actions }: Props) => {
                         onSelect={seatState.setSelected}
                         onRemoveImage={removeImage}
                         leading={getTabs()}
-                        actions={actions}
+                        actions={renderActions(canSave)}
                         fill
                         side={
                             <SeatsList
@@ -215,7 +218,7 @@ export const ImageFields = ({ form, file, disabled, actions }: Props) => {
             onMarkCrop={markCrop}
             onMarkFootprint={setFootprint}
             leading={getTabs()}
-            actions={actions}
+            actions={renderActions(canSave)}
             onClear={clearMarks}
             onRemoveImage={removeImage}
         />

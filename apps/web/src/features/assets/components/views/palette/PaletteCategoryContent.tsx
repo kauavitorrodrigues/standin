@@ -9,6 +9,8 @@ type Props = {
     // The family to show as picked.
     selectedId?: string | null;
     showNames?: boolean;
+    // Why a family cannot be picked, or null when it can.
+    getDisabledReason?: (asset: AssetDefinition) => string | null;
 };
 
 // The families of the picked category: all of them, or only the ones that
@@ -19,6 +21,7 @@ export const PaletteCategoryContent = ({
     onPick,
     selectedId,
     showNames,
+    getDisabledReason,
 }: Props) => {
     if (search.trim() === "") {
         return (
@@ -27,6 +30,7 @@ export const PaletteCategoryContent = ({
                 onPick={onPick}
                 selectedId={selectedId}
                 showNames={showNames}
+                getDisabledReason={getDisabledReason}
             />
         );
     }
@@ -38,6 +42,7 @@ export const PaletteCategoryContent = ({
             onPick={onPick}
             selectedId={selectedId}
             showNames={showNames}
+            getDisabledReason={getDisabledReason}
         />
     );
 };

@@ -8,6 +8,8 @@ type Props = {
     // The family to show as picked.
     selectedId?: string | null;
     showNames?: boolean;
+    // Why a family cannot be picked, or null when it can.
+    getDisabledReason?: (asset: AssetDefinition) => string | null;
 };
 
 export const PaletteFamilies = ({
@@ -15,6 +17,7 @@ export const PaletteFamilies = ({
     onPick,
     selectedId,
     showNames = true,
+    getDisabledReason,
 }: Props) => (
     <div className={cn("grid grid-cols-3 gap-2", { "gap-0": !showNames })}>
         {families.map((asset) => (
@@ -24,6 +27,7 @@ export const PaletteFamilies = ({
                 onPick={onPick}
                 selected={asset.id === selectedId}
                 showName={showNames}
+                disabledReason={getDisabledReason?.(asset) ?? null}
             />
         ))}
     </div>
