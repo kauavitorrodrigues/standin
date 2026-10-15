@@ -1,6 +1,9 @@
 import { ASSET_PLACEMENTS } from "../../../../assets/enums/asset-placement";
 import { LAYOUT_ISSUE_MESSAGES as Messages } from "../../../layout/consts/issue-messages";
-import { LAYOUT_ISSUE_CODES as Code, createIssue } from "../../../layout/issues";
+import {
+    LAYOUT_ISSUE_CODES as Code,
+    createIssue,
+} from "../../../layout/issues";
 import type { PlacedAsset } from "../../../render/render-payload.schema";
 import type { EditorOp } from "../../schemas/editorOp.schema";
 import type { EditorModel } from "../../types/editor-model";

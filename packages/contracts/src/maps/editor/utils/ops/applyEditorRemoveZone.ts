@@ -21,7 +21,8 @@ export const applyEditorRemoveZone: EditorOpHandler<
 
     // Removing the zone that took the last id gives that id back, so undoing
     // a set_zone and redoing it yields the same id.
-    const wasLastId = existing && op.zoneId === (run.layout.nextobjectid ?? 1) - 1;
+    const wasLastId =
+        existing && op.zoneId === (run.layout.nextobjectid ?? 1) - 1;
     const layout = wasLastId
         ? { ...run.layout, nextobjectid: op.zoneId }
         : run.layout;

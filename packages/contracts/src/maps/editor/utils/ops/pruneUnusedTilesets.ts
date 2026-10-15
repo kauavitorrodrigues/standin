@@ -8,8 +8,9 @@ const isTilesetUsed = (
     library: LayoutLibrary,
     name: string
 ): boolean => {
-    const firstgid = layout.tilesets.find((item) => item.name === name)
-        ?.firstgid;
+    const firstgid = layout.tilesets.find(
+        (item) => item.name === name
+    )?.firstgid;
     if (firstgid === undefined) return false;
     const end = firstgid + library.tilesets[name]?.tileCount;
 

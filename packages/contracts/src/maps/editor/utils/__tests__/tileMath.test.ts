@@ -55,8 +55,12 @@ describe("lineCells", () => {
         expect(cells[0]).toEqual([6, 1]);
         expect(cells[cells.length - 1]).toEqual([0, 4]);
         for (let i = 1; i < cells.length; i++) {
-            expect(Math.abs(cells[i][0] - cells[i - 1][0])).toBeLessThanOrEqual(1);
-            expect(Math.abs(cells[i][1] - cells[i - 1][1])).toBeLessThanOrEqual(1);
+            expect(Math.abs(cells[i][0] - cells[i - 1][0])).toBeLessThanOrEqual(
+                1
+            );
+            expect(Math.abs(cells[i][1] - cells[i - 1][1])).toBeLessThanOrEqual(
+                1
+            );
         }
     });
 

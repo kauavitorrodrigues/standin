@@ -12,8 +12,7 @@ import type { EditorModel } from "../../types/editor-model";
 import { toLayoutLibrary } from "../toLayoutLibrary";
 
 type LayoutOpRun =
-    | { ok: true; layout: MapLayout }
-    | { ok: false; errors: LayoutIssue[] };
+    { ok: true; layout: MapLayout } | { ok: false; errors: LayoutIssue[] };
 
 /**
  * Runs an operation through the layout engine (maps/layout/applyOp), the only
@@ -32,7 +31,11 @@ export const runLayoutOp = (model: EditorModel, op: LayoutOp): LayoutOpRun => {
         };
     }
 
-    const result = applyOp(model.layout, op, toLayoutLibrary(model.library, model.usedTilesets));
+    const result = applyOp(
+        model.layout,
+        op,
+        toLayoutLibrary(model.library, model.usedTilesets)
+    );
     if (result.errors.length > 0) return { ok: false, errors: result.errors };
     return { ok: true, layout: result.layout };
 };

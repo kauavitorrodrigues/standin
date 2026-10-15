@@ -18,8 +18,7 @@ import { chunkCells } from "../chunkCells";
 import { findTileLayer } from "../../../layout/ops/findTileLayer";
 
 type TileInverse =
-    | { ok: true; inverse: EditorOp[] }
-    | { ok: false; errors: LayoutIssue[] };
+    { ok: true; inverse: EditorOp[] } | { ok: false; errors: LayoutIssue[] };
 
 // The wall top lives on the foreground, so that layer goes last: painting a
 // wall on the other layers writes its top again.
@@ -35,8 +34,7 @@ const readGid = (
     layerName: string,
     x: number,
     y: number
-): number =>
-    findTileLayer(layout, layerName)?.data[y * layout.width + x] ?? 0;
+): number => findTileLayer(layout, layerName)?.data[y * layout.width + x] ?? 0;
 
 /**
  * True when the foreground gid of the change is the top that the wall on the
@@ -57,9 +55,9 @@ const isDerivedTop = (
     );
     if (!wall) return false;
 
-    const top = library.tilesets[wall.tilesetId]?.tileMeta?.[
-        String(wall.tileIndex)
-    ]?.top;
+    const top =
+        library.tilesets[wall.tilesetId]?.tileMeta?.[String(wall.tileIndex)]
+            ?.top;
     const tileset = before.tilesets.find(({ name }) => name === wall.tilesetId);
     if (top === undefined || !tileset) return false;
 
