@@ -3,7 +3,6 @@ import { DecoratorObjects } from "@/features/decorator/components/instances/Deco
 import { HistoryButtons } from "@/features/decorator/components/views/HistoryButtons";
 import { PanelFooter } from "@/features/decorator/components/views/PanelFooter";
 import { PanelHeader } from "@/features/decorator/components/views/PanelHeader";
-import { PanelMenu } from "@/features/decorator/components/views/PanelMenu";
 import { UsageText } from "@/features/decorator/components/views/UsageText";
 import { EDITOR_DIALOG } from "@/features/editor/consts/editor-dialog";
 import { useDraftStore } from "@/features/editor/hooks/useDraftStore";
@@ -19,7 +18,7 @@ type DecoratorPanelProps = {
 };
 
 // The panel on the right: the title with the X, the library, and on the foot
-// undo, redo and how much of the object limit is used. Undo and redo wait
+// undo, redo, discard and how much of the object limit is used. Undo, redo and discard wait
 // while the decoration is applied or the lock is lost.
 export const DecoratorPanel = ({ mapId, onClose }: DecoratorPanelProps) => {
     const store = useEditorStore();
@@ -32,19 +31,16 @@ export const DecoratorPanel = ({ mapId, onClose }: DecoratorPanelProps) => {
 
     return (
         <Panel>
-            <PanelHeader onClose={onClose}>
-                <PanelMenu
-                    hasChanges={hasChanges && editable}
-                    onDiscard={() => store.openDialog(EDITOR_DIALOG.DISCARD)}
-                />
-            </PanelHeader>
+            <PanelHeader onClose={onClose} />
             <DecoratorObjects mapId={mapId} />
             <PanelFooter>
                 <HistoryButtons
                     canUndo={canUndo && editable}
                     canRedo={canRedo && editable}
+                    canDiscard={hasChanges && editable}
                     onUndo={() => draftStore.undo()}
                     onRedo={() => draftStore.redo()}
+                    onDiscard={() => store.openDialog(EDITOR_DIALOG.DISCARD)}
                 />
                 <UsageText percent={usage.percent} level={usage.level} />
             </PanelFooter>
