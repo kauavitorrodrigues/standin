@@ -28,6 +28,13 @@ router.get(
     MapController.library
 );
 
+// The stamp of one area to place, for whoever can read the map.
+router.get(
+    "/:mapId/areas/:areaId",
+    RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    MapController.area
+);
+
 // Who is editing the map, for whoever can read it.
 router.get(
     "/:mapId/lock",

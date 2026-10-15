@@ -43,6 +43,13 @@
       "when": 1791982492213,
       "tag": "0005_add_map_asset_offset",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791988444631,
+      "tag": "0006_add_areas",
+      "breakpoints": true
     }
   ]
 }

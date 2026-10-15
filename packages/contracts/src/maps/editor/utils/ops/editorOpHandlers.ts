@@ -2,6 +2,7 @@ import type { EditorOpHandlers } from "../../types/editor-op-handler";
 import { applyEditorErase } from "./applyEditorErase";
 import { applyEditorMoveAsset } from "./applyEditorMoveAsset";
 import { applyEditorPaint } from "./applyEditorPaint";
+import { applyEditorPaintTiles } from "./applyEditorPaintTiles";
 import { applyEditorPlaceAsset } from "./applyEditorPlaceAsset";
 import { applyEditorRemoveAsset } from "./applyEditorRemoveAsset";
 import { applyEditorRemoveZone } from "./applyEditorRemoveZone";
@@ -15,6 +16,7 @@ import { applyEditorSetZone } from "./applyEditorSetZone";
  */
 export const EDITOR_OP_HANDLERS: EditorOpHandlers = {
     paint: applyEditorPaint,
+    paint_tiles: applyEditorPaintTiles,
     erase: applyEditorErase,
     set_background: applyEditorSetBackground,
     set_zone: applyEditorSetZone,

@@ -89,6 +89,13 @@ export const useEditorEngine = (map: GameMapData, sceneLink?: SceneLink) => {
         return engine.captureThumbnail();
     }, []);
 
+    const captureNativeSnapshot = useCallback((): Promise<Blob> => {
+        const engine = engineRef.current;
+        if (!engine)
+            return Promise.reject(new Error(THUMBNAIL_MESSAGES.CAPTURE_FAILED));
+        return engine.captureNativeSnapshot();
+    }, []);
+
     return {
         containerRef,
         coordinatesRef,
@@ -98,6 +105,7 @@ export const useEditorEngine = (map: GameMapData, sceneLink?: SceneLink) => {
         fitCamera,
         focusCell,
         captureThumbnail,
+        captureNativeSnapshot,
         zoneNameRequest,
         confirmZoneName,
         cancelZoneName,

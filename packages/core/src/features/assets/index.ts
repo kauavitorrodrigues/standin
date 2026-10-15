@@ -9,7 +9,11 @@ import { getLibraryFamily } from "./getFamily";
 import { listLibraryFamilies } from "./listFamilies";
 import { listLibraryFamilyFacets } from "./listFamilyFacets";
 import { getLibraryOverview } from "./overview";
-import { buildMapPalette, getMapPaletteVersion } from "./palette";
+import {
+    buildGlobalPalette,
+    buildMapPalette,
+    getMapPaletteVersion,
+} from "./palette";
 import { seedLibrary } from "./seed/seedLibrary";
 import { createLibraryTileset } from "./tilesets/createTileset";
 import { getLibraryTileset } from "./tilesets/getTileset";
@@ -39,6 +43,7 @@ export const AssetService = {
     deleteAsset: deleteLibraryAsset,
     setParts: setLibraryAssetParts,
     getMapPalette: buildMapPalette,
+    getGlobalPalette: buildGlobalPalette,
     getMapPaletteVersion,
     seed: seedLibrary,
 };

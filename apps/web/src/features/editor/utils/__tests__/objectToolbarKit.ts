@@ -64,6 +64,7 @@ export const buildToolbarModel = (
         tilesets: [],
         assets,
         categories: [],
+        areas: [],
     } as unknown as LibraryPalette,
     desks,
 });

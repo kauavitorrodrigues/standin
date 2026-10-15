@@ -112,6 +112,15 @@ export const createEditorEngine = ({
             }
             return scene.captureThumbnail();
         },
+        captureNativeSnapshot: () => {
+            const scene = game.scene.getScene(EDITOR_SCENE_KEYS.EDITOR);
+            if (!(scene instanceof EditorScene)) {
+                return Promise.reject(
+                    new Error(THUMBNAIL_MESSAGES.CAPTURE_FAILED)
+                );
+            }
+            return scene.captureNativeSnapshot();
+        },
         destroy: () => {
             onSceneLost?.();
             game.events.off(

@@ -7,10 +7,15 @@ import { useDraftStore } from "@/features/editor/hooks/useDraftStore";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { VerticalToolbar } from "@/features/editor/components/layout/VerticalToolbar";
+import type { EditorToolMeta } from "@/features/editor/types/tool-meta";
 
-// The tools of the map editor: one over the other, then the clear button, then
+type EditorToolRailProps = {
+    tools: readonly EditorToolMeta[];
+};
+
+// The tools given by the shell: one over the other, then the clear button, then
 // undo and redo, then the grid and the zones.
-export const EditorToolRail = () => {
+export const EditorToolRail = ({ tools }: EditorToolRailProps) => {
     const store = useEditorStore();
     const draftStore = useDraftStore();
     const tool = useEditorSelector((state) => state.tool);
@@ -25,6 +30,7 @@ export const EditorToolRail = () => {
     return (
         <VerticalToolbar>
             <ToolRail
+                tools={tools}
                 tool={tool}
                 locked={locked}
                 onToolChange={store.setTool}

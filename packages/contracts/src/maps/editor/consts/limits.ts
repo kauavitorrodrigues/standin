@@ -27,3 +27,18 @@ export const EDITOR_DEFAULT_BACKGROUND_COLOR = "#000000";
 
 // How often the server removes expired editor locks (milliseconds).
 export const LOCK_SWEEP_INTERVAL_MS = 5000;
+
+// Stamp format version written by the area composer (version number).
+export const STAMP_VERSION = 1;
+
+// Smallest side of a stamp (tiles). Matches ZONE_AREA_MIN_TILES.
+export const STAMP_MIN_SIZE = 2;
+
+// Widest stamp (tiles).
+export const STAMP_MAX_WIDTH = 40;
+
+// Tallest stamp (tiles).
+export const STAMP_MAX_HEIGHT = 30;
+
+// Most objects one stamp may hold (objects).
+export const STAMP_MAX_OBJECTS = 200;

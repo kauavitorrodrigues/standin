@@ -44,6 +44,7 @@ const palette = {
     ),
     assets: [crate, bigCrate, desk, vase, poster, sofa],
     categories: [],
+    areas: [],
 } as unknown as LibraryPalette;
 
 const placedAt = (
@@ -90,8 +91,6 @@ const paintWall = (model: EditorModel, x: number, y: number, index: number) => {
 const clearWalls = (model: EditorModel) => {
     findTileLayer(model.layout, "walls")!.data.fill(0);
 };
-
-
 
 const clean = (placed: PlacedAsset[] = []) => {
     const model = buildModel(placed);
@@ -158,9 +157,9 @@ describe("tile and object conflicts", () => {
     it("refuses replacing a mounted wall with a non wall tile", () => {
         const model = clean([placedAt("p", "poster", 5, 5)]);
         paintWall(model, 5, 5, 0);
-        expect(
-            codesOf(model, { ...wallOp([[5, 5]]), tileIndex: 2 })
-        ).toEqual([Code.WALL_HAS_MOUNTED_OBJECT]);
+        expect(codesOf(model, { ...wallOp([[5, 5]]), tileIndex: 2 })).toEqual([
+            Code.WALL_HAS_MOUNTED_OBJECT,
+        ]);
     });
 
     it("allows erasing a wall with nothing mounted", () => {
@@ -184,9 +183,7 @@ describe("tile and object conflicts", () => {
 
     it("changes nothing without objects", () => {
         const model = clean();
-        expect(findTileConflicts(model, wallOp([[5, 5]]))).toEqual(
-            []
-        );
+        expect(findTileConflicts(model, wallOp([[5, 5]]))).toEqual([]);
         expect(applyEditorOp(model, wallOp([[5, 5]])).ok).toBe(true);
     });
 });

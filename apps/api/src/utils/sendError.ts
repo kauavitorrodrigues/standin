@@ -1,6 +1,7 @@
 import type { Response } from "express";
 import { z, type ZodError } from "zod/v4";
 import {
+    AreaValidationError,
     BaseError,
     LayoutValidationError,
     LibraryError,
@@ -64,6 +65,16 @@ export const sendError = ({
         });
     }
     
+    // An area upload answers with the same shape as the library.
+    if (reportError instanceof AreaValidationError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
+            errors: reportError.errors,
+            warnings: reportError.warnings,
+        });
+    }
+
     // The library answers with the same shape, and its other errors with
     // their code and details.
     if (reportError instanceof LibraryValidationError) {

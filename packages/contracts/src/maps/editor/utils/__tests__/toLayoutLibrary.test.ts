@@ -22,6 +22,7 @@ describe("toLayoutLibrary", () => {
             tilesets: [tileset("floor", 16, meta), tileset("wall", 8, null)],
             assets: [],
             categories: [],
+            areas: [],
         } as unknown as LibraryPalette;
 
         expect(toLayoutLibrary(palette)).toEqual({
@@ -47,6 +48,7 @@ describe("toLayoutLibrary", () => {
             tilesets: [],
             assets: [],
             categories: [],
+            areas: [],
         };
         expect(toLayoutLibrary(palette)).toEqual({ tilesets: {} });
     });

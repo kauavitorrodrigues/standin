@@ -30,6 +30,7 @@ const buildBase = (): EditorModel => ({
         tilesets: [],
         assets: [],
         categories: [],
+        areas: [],
     } as unknown as LibraryPalette,
     desks: [],
     limits: { objectsUsed: 0, objectsMax: 10 },

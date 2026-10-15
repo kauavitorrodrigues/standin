@@ -45,6 +45,18 @@ describe("getOpFocusCell", () => {
         ).toBeNull();
     });
 
+    it("goes to the first cell of the first tile group of a paint_tiles", () => {
+        const op: EditorOp = {
+            type: "paint_tiles",
+            layer: "ground",
+            tiles: [
+                { tilesetId: "t", tileIndex: 0, cells: [[6, 7]] },
+                { tilesetId: "t", tileIndex: 1, cells: [[1, 1]] },
+            ],
+        };
+        expect(getOpFocusCell(op, PLACED)).toEqual([6, 7]);
+    });
+
     it("goes to the tile of a new or moved object", () => {
         expect(
             getOpFocusCell(
@@ -122,6 +134,17 @@ describe("describePublishIssue", () => {
         };
         expect(describePublishIssue(issue, op, [40, 2])).toBe(
             "Pintura em chão na célula (40, 2): Célula fora do mapa"
+        );
+    });
+
+    it("names a paint_tiles by its layer", () => {
+        const op: EditorOp = {
+            type: "paint_tiles",
+            layer: "ground",
+            tiles: [{ tilesetId: "t", tileIndex: 0, cells: [[6, 7]] }],
+        };
+        expect(describePublishIssue(issue, op, [6, 7])).toBe(
+            "Área colocada em chão na célula (6, 7): Célula fora do mapa"
         );
     });
 

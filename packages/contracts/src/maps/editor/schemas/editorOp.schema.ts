@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import {
     EraseOpSchema,
+    LayerNameSchema,
     PaintOpSchema,
     RemoveZoneOpSchema,
     SetBackgroundOpSchema,
@@ -72,6 +73,34 @@ const PaintEditorOpSchema = PaintOpSchema.extend({
     cells: PaintOpSchema.shape.cells.max(MAX_CELLS_PER_OP, cellsLimit),
 });
 
+const PaintTilesItemSchema = z.object({
+    tilesetId: PaintOpSchema.shape.tilesetId,
+    tileIndex: PaintOpSchema.shape.tileIndex,
+    cells: PaintOpSchema.shape.cells,
+});
+
+const PaintTilesEditorOpSchema = z
+    .object({
+        type: z.literal("paint_tiles"),
+        layer: LayerNameSchema,
+        tiles: z
+            .array(PaintTilesItemSchema, { error: Messages.tiles.invalid })
+            .min(1, { error: Messages.tiles.empty }),
+    })
+    .superRefine((op, ctx) => {
+        const total = op.tiles.reduce(
+            (sum, item) => sum + item.cells.length,
+            0
+        );
+        if (total > MAX_CELLS_PER_OP) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["tiles"],
+                message: Messages.tiles.max,
+            });
+        }
+    });
+
 const EraseEditorOpSchema = EraseOpSchema.extend({
     cells: EraseOpSchema.shape.cells.max(MAX_CELLS_PER_OP, cellsLimit),
 });
@@ -135,6 +164,7 @@ export const EditorOpSchema = z.discriminatedUnion(
     "type",
     [
         PaintEditorOpSchema,
+        PaintTilesEditorOpSchema,
         EraseEditorOpSchema,
         SetEditorZoneOpSchema,
         RemoveZoneOpSchema,

@@ -3,15 +3,16 @@ import { MapPalette } from "@/features/assets/components/instances/palette/MapPa
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
+import type { EditorPalette } from "@/features/editor/types/editor-palette";
 
 type ObjectsTabProps = {
-    mapId: string;
+    palette: EditorPalette;
 };
 
 // The library of objects. Picking one puts the editor in placing mode with
 // that asset, and the pick stays highlighted until Esc, a click on it again
 // or a change of tool cancels it.
-export const ObjectsTab = ({ mapId }: ObjectsTabProps) => {
+export const ObjectsTab = ({ palette }: ObjectsTabProps) => {
     const store = useEditorStore();
     const placing = useEditorSelector((state) => state.placing);
 
@@ -28,7 +29,8 @@ export const ObjectsTab = ({ mapId }: ObjectsTabProps) => {
 
     return (
         <MapPalette
-            mapId={mapId}
+            tilesets={palette.tilesets}
+            categories={palette.categories}
             onPick={handlePick}
             selectedId={placing}
             hideTilesTab
