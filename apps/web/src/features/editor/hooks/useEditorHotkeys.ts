@@ -68,6 +68,9 @@ export const useEditorHotkeys = (
     useHotkey(MAP_TOOL_KEYS[EDITOR_TOOLS.RECT], () =>
         store.setTool(EDITOR_TOOLS.RECT)
     );
+    useHotkey(MAP_TOOL_KEYS[EDITOR_TOOLS.RECT_OUTLINE], () =>
+        store.setTool(EDITOR_TOOLS.RECT_OUTLINE)
+    );
     useHotkey(MAP_TOOL_KEYS[EDITOR_TOOLS.BUCKET], () =>
         store.setTool(EDITOR_TOOLS.BUCKET)
     );

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { LAYOUT_LAYER_NAMES } from "@standin/contracts";
 import {
     buildTilemap,
     ensureAssetTextures,
@@ -6,6 +7,7 @@ import {
     registerAssetAnimations,
     renderObjectLayers,
     renderTileLayers,
+    renderWallTiles,
 } from "@/features/game/renderers";
 import { EDITOR_EVENTS } from "@/features/editor/consts/events";
 import { EDITOR_SCENE_KEYS } from "@/features/editor/consts/scene-keys";
@@ -20,6 +22,7 @@ import type { EditorStore } from "@/features/editor/lib/EditorStore";
 import { EditorToolRouter } from "@/features/editor/lib/EditorToolRouter";
 import { EditorObjectRenderer } from "@/features/game/renderers/EditorObjectRenderer";
 import { EditorTileRenderer } from "@/features/editor/lib/EditorTileRenderer";
+import { WallTileMetaSource } from "@/features/editor/lib/WallTileMetaSource";
 import { GridOverlay } from "@/features/editor/lib/GridOverlay";
 import { SelectionAnchorTracker } from "@/features/editor/lib/SelectionAnchorTracker";
 import { SelectionOverlay } from "@/features/editor/lib/SelectionOverlay";
@@ -100,7 +103,16 @@ export class EditorScene extends Phaser.Scene {
         ensureAssetTextures(this.textures, assets);
         registerAssetAnimations(this, assets);
 
-        const tileLayers = renderTileLayers(tilemap, tilesets);
+        const tileLayers = renderTileLayers(tilemap, tilesets, {
+            skip: [LAYOUT_LAYER_NAMES.WALLS],
+        });
+        const wallMeta = new WallTileMetaSource(tilemap);
+        const wallTiles = renderWallTiles(
+            this,
+            tilemap,
+            tileLayers,
+            wallMeta.get
+        );
         renderObjectLayers(this, tilemap);
 
         this.tileRenderer = new EditorTileRenderer(
@@ -108,7 +120,9 @@ export class EditorScene extends Phaser.Scene {
             tilemap,
             tileLayers,
             this.mapData.id,
-            this.mapData.layout as unknown as MapLayout
+            this.mapData.layout as unknown as MapLayout,
+            wallTiles,
+            wallMeta
         );
         this.objectRenderer = new EditorObjectRenderer(
             this,
@@ -427,7 +441,11 @@ export class EditorScene extends Phaser.Scene {
         try {
             return await capture(
                 this,
-                [...tileRenderer.getLayers(), ...objectRenderer.getDisplays()],
+                [
+                    ...tileRenderer.getLayers(),
+                    ...tileRenderer.getWallDisplays(),
+                    ...objectRenderer.getDisplays(),
+                ],
                 this.mapSizePx
             );
         } finally {

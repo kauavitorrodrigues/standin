@@ -5,6 +5,7 @@ export const EDITOR_TOOLS = {
     PAINT: "paint",
     ERASE: "erase",
     RECT: "rect",
+    RECT_OUTLINE: "rectOutline",
     BUCKET: "bucket",
     PICKER: "picker",
     ZONE: "zone",

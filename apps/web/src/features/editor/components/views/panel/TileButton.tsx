@@ -5,6 +5,7 @@ import { TILE_PALETTE_ZOOM } from "@/features/editor/consts/tilePalette";
 import type { PaletteTile } from "@/features/editor/types/palette-tile";
 import { resolveFileUrl } from "@/lib/api/assetUrl";
 import { API_BASE_URL } from "@/lib/api/url";
+import { describePaletteTile } from "@/features/editor/utils/describePaletteTile";
 import { getPaletteTileCutout } from "@/features/editor/utils/getPaletteTileCutout";
 
 type TileButtonProps = {
@@ -48,11 +49,12 @@ export const TileButton = ({
     return (
         <button
             type="button"
-            title={`${categoryLabel} ${tile.index}`}
-            aria-label={`Tile ${tile.index}, ${categoryLabel}`}
+            title={describePaletteTile(tile, categoryLabel)}
+            aria-label={describePaletteTile(tile, categoryLabel)}
+            disabled={(tile.style?.missing.length ?? 0) > 0}
             aria-pressed={selected}
             onClick={() => onPick(tile.index)}
-            className="relative shrink-0 rounded-sm bg-muted/40 ring-1 ring-border hover:ring-foreground/40 aria-pressed:ring-2 aria-pressed:ring-primary"
+            className="relative shrink-0 rounded-sm bg-muted/40 ring-1 ring-border hover:ring-foreground/40 aria-pressed:ring-2 aria-pressed:ring-primary disabled:opacity-40"
             style={{
                 width: size,
                 height: size,
