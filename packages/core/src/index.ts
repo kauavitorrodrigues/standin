@@ -4,5 +4,6 @@ export * from "./features/spaces";
 export * from "./features/files";
 export * from "./features/maps";
 export * from "./features/assets";
+export * from "./features/areas";
 export * from "./features/messages";
 export * from "./features/conversations";

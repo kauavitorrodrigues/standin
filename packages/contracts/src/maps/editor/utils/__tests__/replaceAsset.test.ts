@@ -126,6 +126,7 @@ const palette = {
         vase,
     ],
     categories: [],
+    areas: [],
 } as unknown as LibraryPalette;
 
 const placedAt = (

@@ -8,6 +8,7 @@ import { PanelToggle } from "@/features/editor/components/views/panel/PanelToggl
 import { UsageFooter } from "@/features/editor/components/views/panel/UsageFooter";
 import { PANEL_TABS } from "@/features/editor/consts/panelTabs";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
+import { useMapPalette } from "@/features/assets/queries/useMapPalette";
 import { useRequestExit } from "@/features/maps/__shared__/hooks/useRequestExit";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 
@@ -31,6 +32,7 @@ export const EditorSidePanel = ({
     const store = useEditorStore();
     const open = useEditorSelector((state) => state.panelOpen);
     const panelTab = useEditorSelector((state) => state.panelTab);
+    const palette = useMapPalette(mapId);
     const requestExit = useRequestExit(onExit);
 
     return (
@@ -54,7 +56,7 @@ export const EditorSidePanel = ({
                     <PanelTabList />
                     <PanelToggle open={open} onToggle={store.togglePanel} />
                 </SidePanelHeader>
-                <PanelTabs mapId={mapId} />
+                <PanelTabs palette={palette} />
             </Tabs>
             <UsageFooter />
         </EditorLayout.Panel>

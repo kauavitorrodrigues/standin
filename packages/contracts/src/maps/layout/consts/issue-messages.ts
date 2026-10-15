@@ -6,6 +6,13 @@ import {
     MIN_MAP_TILES,
     TILE_SIZE,
 } from "../../consts/constants";
+import {
+    STAMP_MAX_HEIGHT,
+    STAMP_MAX_OBJECTS,
+    STAMP_MAX_WIDTH,
+    STAMP_MIN_SIZE,
+} from "../../editor/consts/limits";
+import { AREA_NAME_MAX } from "../../../areas/consts/limits";
 import { SPAWN_MIN_DISTANCE_TILES } from "./thresholds";
 
 // Every message a layout issue can carry. Callers pick one by name and never
@@ -70,6 +77,24 @@ export const LAYOUT_ISSUE_MESSAGES = {
     assetNotInLibrary: "The asset does not exist in the map library.",
     deskClaimed:
         "The desk is claimed by a user. Release it to remove the object.",
+    stampInvalid: "The area stamp is invalid.",
+    stampTooSmall: `The area must be at least ${STAMP_MIN_SIZE} x ${STAMP_MIN_SIZE} tiles.`,
+    stampTooLarge: `The area cannot exceed ${STAMP_MAX_WIDTH} x ${STAMP_MAX_HEIGHT} tiles.`,
+    stampEmpty: "The area has no tiles and no objects.",
+    stampTooManyObjects: `The area cannot hold more than ${STAMP_MAX_OBJECTS} objects.`,
+    stampObjectCrossesEdge:
+        "An object is only partly inside the area. Move it fully inside.",
+    stampParentOutside:
+        "An object that sits on top of another needs that object inside the area.",
+    stampOutOfBounds: "The area does not fit inside the map here.",
+    stampAreaNotEmpty:
+        "There are objects in the way. Remove them before placing the area.",
+    stampCoversSpawn: "The area cannot cover the spawn point.",
+    stampTilesetUnavailable:
+        "The area uses a tileset that is not available for this map.",
+    stampAssetUnavailable:
+        "The area uses an asset that is not available for this map.",
+    areaNameInvalid: `The area name must have 1 to ${AREA_NAME_MAX} characters.`,
     invalidPng: (key: string) => `The image "${key}" is not a valid PNG.`,
     gridMismatch: (key: string) =>
         `The grid of tileset "${key}" does not match the image size (${TILE_SIZE} px tiles).`,

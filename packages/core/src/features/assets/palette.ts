@@ -1,5 +1,6 @@
 import {
     db,
+    areasTable,
     assetsTable,
     filesTable,
     tilesetsTable,
@@ -17,13 +18,14 @@ import {
 import type { LibraryPalette } from "@standin/contracts";
 import { MAP_OWNER_KINDS } from "../maps/consts/owner";
 import type { MapAccess } from "../maps/types/map-access";
+import { buildFileUrl } from "../../lib/buildFileUrl";
 import { tilesetSelect } from "./consts/select";
 import { loadAssetRows } from "./utils/loadRows";
 import { toAssetDefinitions, toTilesets } from "./utils/toDefinitions";
 
 // A template map only sees the global library (a template is published to
 // every organization). A space map also sees the library of its organization.
-const paletteScopeOf = (access: MapAccess): string | null =>
+export const paletteScopeOf = (access: MapAccess): string | null =>
     access.owner.kind === MAP_OWNER_KINDS.TEMPLATE
         ? null
         : access.owner.organizationId;
@@ -34,6 +36,14 @@ const visibleTilesets = (organizationId: string | null) =>
         : or(
               isNull(tilesetsTable.organizationId),
               eq(tilesetsTable.organizationId, organizationId)
+          );
+
+export const visibleAreas = (organizationId: string | null) =>
+    organizationId === null
+        ? isNull(areasTable.organizationId)
+        : or(
+              isNull(areasTable.organizationId),
+              eq(areasTable.organizationId, organizationId)
           );
 
 const visibleAssets = (organizationId: string | null) =>
@@ -62,23 +72,27 @@ export const getMapPaletteVersion = async (
         .from(assetsTable)
         .where(visibleAssets(organizationId));
 
+    const [areas] = await db
+        .select({ latest: max(areasTable.updatedAt), total: count() })
+        .from(areasTable)
+        .where(visibleAreas(organizationId));
+
     const latest = Math.max(
         tilesets?.latest?.getTime() ?? 0,
-        assets?.latest?.getTime() ?? 0
+        assets?.latest?.getTime() ?? 0,
+        areas?.latest?.getTime() ?? 0
     );
-    return `W/"${latest}-${tilesets?.total ?? 0}-${assets?.total ?? 0}"`;
+    return `W/"${latest}-${tilesets?.total ?? 0}-${assets?.total ?? 0}-${areas?.total ?? 0}"`;
 };
 
 /**
- * What the editor needs to build its palette for one map: the live tilesets,
- * and every live asset row (a base and its variations), plus the tabs ready
- * to render. Deleted rows are left out.
+ * The live palette of one scope: the live tilesets, and every live asset row
+ * (a base and its variations), plus the tabs ready to render. Deleted rows are
+ * left out. A null scope is the global library alone.
  */
-export const buildMapPalette = async (
-    access: MapAccess
+export const buildPalette = async (
+    organizationId: string | null
 ): Promise<LibraryPalette> => {
-    const organizationId = paletteScopeOf(access);
-
     const tilesetRows = await db
         .select(tilesetSelect)
         .from(tilesetsTable)
@@ -104,5 +118,38 @@ export const buildMapPalette = async (
         })
     );
 
-    return { tilesets: await toTilesets(tilesetRows), assets, categories };
+    const areaRows = await db
+        .select({
+            id: areasTable.id,
+            name: areasTable.name,
+            width: areasTable.width,
+            height: areasTable.height,
+            objectCount: areasTable.objectCount,
+            thumbnailFileId: areasTable.thumbnailFileId,
+            updatedAt: areasTable.updatedAt,
+        })
+        .from(areasTable)
+        .where(
+            and(isNull(areasTable.deletedAt), visibleAreas(organizationId))
+        )
+        .orderBy(areasTable.name);
+
+    return {
+        tilesets: await toTilesets(tilesetRows),
+        assets,
+        categories,
+        areas: areaRows.map(({ thumbnailFileId, updatedAt, ...area }) => ({
+            ...area,
+            thumbnailUrl: buildFileUrl(thumbnailFileId),
+            version: updatedAt.getTime(),
+        })),
+    };
 };
+
+/** What the editor needs to build its palette for one map. */
+export const buildMapPalette = (access: MapAccess): Promise<LibraryPalette> =>
+    buildPalette(paletteScopeOf(access));
+
+/** The global library, for the area composer, which has no map. */
+export const buildGlobalPalette = (): Promise<LibraryPalette> =>
+    buildPalette(null);

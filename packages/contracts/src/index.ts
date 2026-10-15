@@ -9,3 +9,4 @@ export * from "./maps";
 export * from "./assets";
 export * from "./game";
 export * from "./chat";
+export * from "./areas";

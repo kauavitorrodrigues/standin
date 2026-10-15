@@ -7,6 +7,8 @@ const describeOp = (op: EditorOp | undefined): string => {
     switch (op.type) {
         case "paint":
             return `Pintura em ${getLayerLabel(op.layer)}`;
+        case "paint_tiles":
+            return `Área colocada em ${getLayerLabel(op.layer)}`;
         case "erase":
             return `Borracha em ${getLayerLabel(op.layer)}`;
         case "place_asset":

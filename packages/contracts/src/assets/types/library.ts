@@ -59,11 +59,25 @@ export type LibraryPaletteCategory = {
     families: AssetDefinition[];
 };
 
+// One area as the palette lists it. The stamp is fetched when placing.
+export type LibraryPaletteArea = {
+    id: string;
+    name: string;
+    // Size in tiles.
+    width: number;
+    height: number;
+    objectCount: number;
+    thumbnailUrl: string;
+    // The area version, as a timestamp in milliseconds.
+    version: number;
+};
+
 export type LibraryPalette = {
     tilesets: Tileset[];
     assets: AssetDefinition[];
     // Only the categories that have at least one family, in tab order.
     categories: LibraryPaletteCategory[];
+    areas: LibraryPaletteArea[];
 };
 
 // What a card of the library shows: one family, already grouped and counted.

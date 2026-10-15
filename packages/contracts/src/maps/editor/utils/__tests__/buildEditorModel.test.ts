@@ -5,7 +5,12 @@ import { buildLayout } from "../../../layout/__tests__/fixtures";
 import type { MapRenderPayload } from "../../../render/render-payload.schema";
 import type { LibraryPalette } from "../../../../assets/types/library";
 
-const palette: LibraryPalette = { tilesets: [], assets: [], categories: [] };
+const palette: LibraryPalette = {
+    tilesets: [],
+    assets: [],
+    categories: [],
+    areas: [],
+};
 
 const buildRender = (): MapRenderPayload => ({
     map: {

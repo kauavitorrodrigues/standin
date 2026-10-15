@@ -22,6 +22,7 @@ const palette = {
     ),
     assets: [],
     categories: [],
+    areas: [],
 } as unknown as LibraryPalette;
 
 const buildModel = (): EditorModel => {
@@ -67,9 +68,7 @@ describe("applyEditorOp: paint and erase", () => {
         expect(result.diff).toEqual([
             { layer: "ground", x: 3, y: 3, before: 1, after: 2 },
         ]);
-        expect(undo(result.model, result.inverse).layout).toEqual(
-            model.layout
-        );
+        expect(undo(result.model, result.inverse).layout).toEqual(model.layout);
     });
 
     it("writes the wall top on the foreground and the inverse removes it", () => {
@@ -88,9 +87,7 @@ describe("applyEditorOp: paint and erase", () => {
             "foreground",
             "walls",
         ]);
-        expect(undo(result.model, result.inverse).layout).toEqual(
-            model.layout
-        );
+        expect(undo(result.model, result.inverse).layout).toEqual(model.layout);
     });
 
     it("adds a new tileset and the inverse takes it back out", () => {
@@ -106,9 +103,7 @@ describe("applyEditorOp: paint and erase", () => {
         expect(result.model.layout.tilesets).toHaveLength(
             model.layout.tilesets.length + 1
         );
-        expect(undo(result.model, result.inverse).layout).toEqual(
-            model.layout
-        );
+        expect(undo(result.model, result.inverse).layout).toEqual(model.layout);
     });
 
     it("erases a wall together with its derived top, and the inverse restores both", () => {
@@ -304,7 +299,10 @@ describe("applyEditorOp: zones", () => {
                 rect: { x: 4, y: 5, w: 3, h: 2 },
             },
         });
-        const removed = apply(created.model, { type: "remove_zone", zoneId: 2 });
+        const removed = apply(created.model, {
+            type: "remove_zone",
+            zoneId: 2,
+        });
 
         expect(undo(removed.model, removed.inverse).layout).toEqual(
             created.model.layout

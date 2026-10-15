@@ -70,6 +70,7 @@ export const buildModel = (
         tilesets: [],
         assets: [crate, desk, monitor, wideItem],
         categories: [],
+        areas: [],
     } as unknown as LibraryPalette,
     desks: [],
     limits: { objectsUsed: placed.length, objectsMax },
