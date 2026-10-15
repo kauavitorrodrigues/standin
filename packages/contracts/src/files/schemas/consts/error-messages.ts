@@ -1,5 +1,5 @@
 export const FileErrorMessages = {
     id: {
-        invalid: "O ID do arquivo é inválido.",
+        invalid: "The file ID is invalid.",
     },
 };

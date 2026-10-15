@@ -3,7 +3,7 @@ import { BaseError } from "../errors/base";
 export class SocketNotInitializedError extends BaseError {
     constructor() {
         super(
-            "O Socket.IO ainda não foi inicializado.",
+            "Socket.IO has not been initialized yet.",
             "SOCKET_NOT_INITIALIZED",
             500
         );
@@ -15,7 +15,7 @@ export class SocketNotInitializedError extends BaseError {
 export class SpaceNotJoinedError extends BaseError {
     constructor() {
         super(
-            "Você precisa entrar no space antes de continuar.",
+            "You must join the space before continuing.",
             "SPACE_NOT_JOINED",
             400
         );
@@ -27,7 +27,7 @@ export class SpaceNotJoinedError extends BaseError {
 export class DuplicateSessionError extends BaseError {
     constructor() {
         super(
-            "Você entrou nesse espaço em outra aba ou dispositivo. Essa conexão foi encerrada.",
+            "You joined this space from another tab or device. This connection was closed.",
             "SPACE_DUPLICATE_SESSION",
             409
         );

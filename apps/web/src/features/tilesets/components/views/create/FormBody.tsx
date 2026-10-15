@@ -5,6 +5,8 @@ import { TilesetFormFields } from "../../fields/FormFields";
 import { TileSheetWorkspace } from "../../instances/editor/Workspace";
 import type { CreateTilesetFormValues } from "../../../types/createForm";
 import type { TileSheetGrid } from "../../../types/sheet";
+import { TilesetCreateFrame } from "./Frame";
+import { TilesetFormFooter } from "./FormFooter";
 import { TilesetUploadStep } from "./UploadStep";
 
 type Props = {
@@ -15,12 +17,14 @@ type Props = {
     grid: TileSheetGrid | null;
     tileMeta: TileMeta;
     isSubmitting: boolean;
+    onCancel: () => void;
     onFileChosen: (file: File) => void;
 };
 
 // What the form of a new tileset shows, by how far along it is: the upload
 // step until there is a sheet, only the fields while the sheet does not read
-// as a grid, and the editor beside the fields once it does.
+// as a grid, and the editor over the whole area once it does, with the fields
+// in its side panel.
 export const TilesetFormBody = ({
     form,
     file,
@@ -29,15 +33,18 @@ export const TilesetFormBody = ({
     grid,
     tileMeta,
     isSubmitting,
+    onCancel,
     onFileChosen,
 }: Props) => {
     if (!file) {
         return (
-            <TilesetUploadStep
-                control={form.control}
-                disabled={isSubmitting}
-                onFileChosen={onFileChosen}
-            />
+            <TilesetCreateFrame>
+                <TilesetUploadStep
+                    control={form.control}
+                    disabled={isSubmitting}
+                    onFileChosen={onFileChosen}
+                />
+            </TilesetCreateFrame>
         );
     }
 
@@ -50,8 +57,23 @@ export const TilesetFormBody = ({
             disabled={isSubmitting}
         />
     );
+    const footer = (
+        <TilesetFormFooter
+            show
+            canCreate={grid !== null}
+            isSubmitting={isSubmitting}
+            onCancel={onCancel}
+        />
+    );
     if (!grid || !url) {
-        return <div className="mx-auto w-full max-w-xl">{fields}</div>;
+        return (
+            <TilesetCreateFrame>
+                <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+                    {fields}
+                    <div className="flex justify-end gap-2">{footer}</div>
+                </div>
+            </TilesetCreateFrame>
+        );
     }
 
     return (
@@ -65,6 +87,9 @@ export const TilesetFormBody = ({
             savedMeta={null}
             imageInUse={false}
             disabled={isSubmitting}
+            title="Novo tileset"
+            onExit={onCancel}
+            actions={footer}
         >
             {fields}
         </TileSheetWorkspace>

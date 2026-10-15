@@ -5,35 +5,35 @@ import {
 
 export const MapTemplateErrorMessages = {
     id: {
-        invalid: "O ID do template é inválido.",
+        invalid: "The template ID is invalid.",
     },
     name: {
-        required: "O nome do template é obrigatório.",
-        max: `O nome do template não pode ter mais de ${MAX_MAP_TEMPLATE_NAME_LENGTH} caracteres.`,
+        required: "The template name is required.",
+        max: `The template name cannot be longer than ${MAX_MAP_TEMPLATE_NAME_LENGTH} characters.`,
     },
     description: {
-        invalid: "A descrição do template é inválida.",
-        max: `A descrição do template não pode ter mais de ${MAX_MAP_TEMPLATE_DESCRIPTION_LENGTH} caracteres.`,
+        invalid: "The template description is invalid.",
+        max: `The template description cannot be longer than ${MAX_MAP_TEMPLATE_DESCRIPTION_LENGTH} characters.`,
     },
     status: {
-        invalid: "O status do template é inválido.",
+        invalid: "The template status is invalid.",
     },
     organizationId: {
-        invalid: "O ID da organização do template é inválido.",
+        invalid: "The template organization ID is invalid.",
     },
     mapId: {
-        invalid: "O ID do mapa do template é inválido.",
+        invalid: "The template map ID is invalid.",
     },
     width: {
-        invalid: "A largura do template é inválida.",
+        invalid: "The template width is invalid.",
     },
     height: {
-        invalid: "A altura do template é inválida.",
+        invalid: "The template height is invalid.",
     },
     thumbnailUrl: {
-        invalid: "A URL da miniatura do template é inválida.",
+        invalid: "The template thumbnail URL is invalid.",
     },
     createdAt: {
-        invalid: "A data de criação do template é inválida.",
+        invalid: "The template creation date is invalid.",
     },
 };

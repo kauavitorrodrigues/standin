@@ -1,15 +1,8 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { isSpaceKeyTarget } from "@/utils/isSpaceKeyTarget";
 import type { TileTool } from "../../types/sheet";
 
 const MIDDLE_BUTTON = 1;
-
-// Keys that use the space bar themselves, so it must not pan over them.
-const isTyping = (target: EventTarget | null) => {
-    if (!(target instanceof HTMLElement)) return false;
-    return target.closest("input, textarea, select, button, [contenteditable]")
-        ? true
-        : false;
-};
 
 type Params = {
     scrollRef: RefObject<HTMLDivElement | null>;
@@ -74,7 +67,8 @@ export const useTileSheetPan = ({ scrollRef, tool }: Params) => {
         };
 
         const onKeyDown = (event: KeyboardEvent) => {
-            if (event.code !== "Space" || isTyping(event.target)) return;
+            if (event.code !== "Space" || isSpaceKeyTarget(event.target))
+                return;
             event.preventDefault();
             spaceRef.current = true;
             setSpaceHeld(true);

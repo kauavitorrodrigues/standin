@@ -2,14 +2,14 @@ import { BaseError } from "../errors/base";
 
 export class OrganizationNotFoundError extends BaseError {
     constructor() {
-        super("Organização não encontrada.", "ORGANIZATION_NOT_FOUND", 404);
+        super("Organization not found.", "ORGANIZATION_NOT_FOUND", 404);
     }
 }
 
 export class OrganizationAccessDeniedError extends BaseError {
     constructor() {
         super(
-            "Você não tem acesso a esta organização.",
+            "You do not have access to this organization.",
             "ORGANIZATION_ACCESS_DENIED",
             403
         );

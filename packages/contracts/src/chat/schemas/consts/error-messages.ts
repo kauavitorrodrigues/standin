@@ -6,24 +6,24 @@ import {
 
 export const MessageErrorMessages = {
     id: {
-        invalid: "O ID da mensagem é inválido.",
+        invalid: "The message ID is invalid.",
     },
     conversationId: {
-        invalid: "O ID da conversa é inválido.",
+        invalid: "The conversation ID is invalid.",
     },
     senderId: {
-        invalid: "O ID do remetente é inválido.",
+        invalid: "The sender ID is invalid.",
     },
     content: {
-        required: "O conteúdo da mensagem é obrigatório.",
-        max: `A mensagem não pode ter mais de ${MAX_MESSAGE_CONTENT_LENGTH} caracteres.`,
+        required: "The message content is required.",
+        max: `The message cannot be longer than ${MAX_MESSAGE_CONTENT_LENGTH} characters.`,
         orAttachmentRequired: "Envie um texto ou pelo menos um anexo.",
     },
     createdAt: {
-        invalid: "A data de criação da mensagem é inválida.",
+        invalid: "The message creation date is invalid.",
     },
     editedAt: {
-        invalid: "A data de edição da mensagem é inválida.",
+        invalid: "The message edit date is invalid.",
     },
     contentOrAttachment: {
         required: "Envie um texto ou pelo menos um anexo.",
@@ -33,24 +33,24 @@ export const MessageErrorMessages = {
 export const ReactionErrorMessages = {
     emoji: {
         required: "Selecione um emoji para reagir.",
-        max: `O emoji não pode ter mais de ${MAX_REACTION_EMOJI_LENGTH} caracteres.`,
-        invalid: "A reação precisa ser um emoji.",
+        max: `The emoji cannot be longer than ${MAX_REACTION_EMOJI_LENGTH} characters.`,
+        invalid: "The reaction must be an emoji.",
     },
 };
 
 export const DirectConversationErrorMessages = {
     recipientUserId: {
-        required: "Selecione com quem você quer conversar.",
+        required: "Select who you want to chat with.",
     },
 };
 
 export const MessageListQueryErrorMessages = {
     cursor: {
-        invalid: "O cursor de paginação é inválido.",
+        invalid: "The pagination cursor is invalid.",
     },
     limit: {
-        invalid: "O limite deve ser um número inteiro.",
-        min: "O limite deve ser de pelo menos 1.",
-        max: `O limite não pode ser maior que ${MAX_MESSAGE_LIST_LIMIT}.`,
+        invalid: "The limit must be an integer.",
+        min: "The limit must be at least 1.",
+        max: `The limit cannot be greater than ${MAX_MESSAGE_LIST_LIMIT}.`,
     },
 };

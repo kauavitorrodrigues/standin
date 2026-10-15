@@ -1,8 +1,9 @@
+import { HistoryButtons } from "@/components/editor/HistoryButtons";
+import { ToolbarButton } from "@/components/editor/ToolbarButton";
+import { ToolbarDivider } from "@/components/editor/ToolbarDivider";
+import { VerticalToolbar } from "@/components/editor/VerticalToolbar";
 import { TILE_TOOL_META } from "../../../../consts/toolMeta";
 import type { TileTool } from "../../../../types/sheet";
-import { FloatingPanel } from "../../../layout/FloatingPanel";
-import { TileHistoryButtons } from "./History";
-import { TileToolButton } from "./Button";
 import { TileToolHelp } from "../help/Help";
 
 type Props = {
@@ -14,9 +15,8 @@ type Props = {
     onRedo: () => void;
 };
 
-// The panel floating on the right of the sheet: the tools one over the other,
-// then undo, redo and the help. A tool says how a drag over the sheet behaves.
-// It keeps clear of the zoom below it, and scrolls if the editor is too short.
+// The tools of the tile editor: one over the other, then undo, redo and the
+// help. A tool says how a drag over the sheet behaves.
 export const TileToolSwitch = ({
     tool,
     canUndo,
@@ -25,22 +25,23 @@ export const TileToolSwitch = ({
     onUndo,
     onRedo,
 }: Props) => (
-    <FloatingPanel className="top-3 right-3 flex max-h-[calc(100%-6.5rem)] flex-col items-center gap-1 overflow-y-auto p-1">
-        {TILE_TOOL_META.map((meta) => (
-            <TileToolButton
-                key={meta.value}
-                meta={meta}
-                active={tool === meta.value}
-                onClick={() => onToolChange(meta.value)}
+    <VerticalToolbar>
+        {TILE_TOOL_META.map(({ value, ...meta }) => (
+            <ToolbarButton
+                key={value}
+                {...meta}
+                anchorId={value}
+                active={tool === value}
+                onClick={() => onToolChange(value)}
             />
         ))}
-        <div className="bg-border my-0.5 h-px w-6" />
-        <TileHistoryButtons
+        <ToolbarDivider />
+        <HistoryButtons
             canUndo={canUndo}
             canRedo={canRedo}
             onUndo={onUndo}
             onRedo={onRedo}
         />
         <TileToolHelp />
-    </FloatingPanel>
+    </VerticalToolbar>
 );

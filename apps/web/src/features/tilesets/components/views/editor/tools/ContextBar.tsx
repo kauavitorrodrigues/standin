@@ -1,6 +1,7 @@
+import { ToolOptionsPanel } from "@/components/editor/ToolOptionsPanel";
+import { ToolOptionToggle } from "@/components/editor/ToolOptionToggle";
 import type { TileTool } from "../../../../types/sheet";
-import { FloatingPanel } from "../../../layout/FloatingPanel";
-import { TileContextBucket } from "./ContextBucket";
+import { getBucketScopeLabel } from "../../../../utils/editor/getBucketScopeLabel";
 
 type Props = {
     tool: TileTool;
@@ -16,11 +17,11 @@ export const TileContextBar = ({
     contiguous,
     onContiguousChange,
 }: Props) => (
-    <FloatingPanel open={tool === "bucket"} className="static p-1.5">
-        <TileContextBucket
-            tool={tool}
-            contiguous={contiguous}
-            onContiguousChange={onContiguousChange}
+    <ToolOptionsPanel open={tool === "bucket"}>
+        <ToolOptionToggle
+            label={getBucketScopeLabel(contiguous)}
+            active={contiguous}
+            onClick={() => onContiguousChange(!contiguous)}
         />
-    </FloatingPanel>
+    </ToolOptionsPanel>
 );

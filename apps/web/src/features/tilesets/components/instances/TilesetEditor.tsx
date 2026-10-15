@@ -1,5 +1,5 @@
 import { pruneTileMeta, type LibraryTilesetDetail } from "@standin/contracts";
-import { PageContainer } from "@/components/layout/page-container";
+import { useNavigate } from "@tanstack/react-router";
 import { resolveFileUrl } from "@/lib/api/assetUrl";
 import { API_BASE_URL } from "@/lib/api/url";
 import { FormIssues } from "@/features/assets/components/views/form/FormIssues";
@@ -9,6 +9,7 @@ import { toTileSheetGrid } from "../../utils/grid/toSheetGrid";
 import { TilesetEditorDialogs } from "../dialogs/EditorDialogs";
 import { UnsavedChangesDialog } from "../dialogs/UnsavedChangesDialog";
 import { TilesetGridForm } from "../forms/GridForm";
+import { TilesetEditorMenu } from "../views/detail/Menu";
 import { TilesetEditorControls } from "../views/detail/Controls";
 import { TileSheetWorkspace } from "./editor/Workspace";
 
@@ -16,8 +17,9 @@ type Props = { tileset: LibraryTilesetDetail };
 
 // A tileset that exists: its sheet to mark the categories of the tiles and
 // divide it into cells, saved together, and the actions on it (rename,
-// delete).
+// delete). It fills the area, like the map editor.
 export const TilesetEditor = ({ tileset }: Props) => {
+    const navigate = useNavigate();
     const gridForm = useTilesetGridForm(tileset);
     const editor = useTilesetEditor(tileset, gridForm);
     // The sheet shows the grid being typed, with only the marks that fit in it,
@@ -28,46 +30,46 @@ export const TilesetEditor = ({ tileset }: Props) => {
         : editor.meta;
 
     return (
-        <PageContainer.Root className="gap-0">
-            <PageContainer.Header
+        <div className="min-h-0 flex-1">
+            <TileSheetWorkspace
+                url={resolveFileUrl(tileset.url, API_BASE_URL)}
+                grid={grid}
+                meta={meta}
+                onChange={editor.setMeta}
+                savedMeta={tileset.tileMeta}
+                imageInUse={tileset.inUse}
+                disabled={editor.isSaving}
                 title={tileset.name}
-                description="Marque a categoria de cada tile da folha. É o que diz ao mapa o que é chão, parede, teto, decoração e vazio."
-                controls={
+                onExit={() => navigate({ to: "/admin/tilesets" })}
+                menu={
+                    <TilesetEditorMenu
+                        onRename={() => editor.setDialog("rename")}
+                        onDelete={() => editor.setDialog("delete")}
+                    />
+                }
+                actions={
                     <TilesetEditorControls
                         dirty={editor.dirty}
                         canSave={
                             !gridForm.changed || gridForm.draftGrid !== null
                         }
                         isSaving={editor.isSaving}
-                        onRename={() => editor.setDialog("rename")}
-                        onDelete={() => editor.setDialog("delete")}
                         onDiscard={editor.discard}
                         onSave={editor.save}
                     />
                 }
-            />
-            <PageContainer.Content className="lg:overflow-hidden">
+            >
                 <FormIssues message={editor.issuesMessage} />
-                <TileSheetWorkspace
-                    url={resolveFileUrl(tileset.url, API_BASE_URL)}
+                <TilesetGridForm
+                    tileset={tileset}
                     grid={grid}
-                    meta={meta}
-                    onChange={editor.setMeta}
-                    savedMeta={tileset.tileMeta}
-                    imageInUse={tileset.inUse}
-                    disabled={editor.isSaving}
-                >
-                    <TilesetGridForm
-                        tileset={tileset}
-                        grid={grid}
-                        form={gridForm.form}
-                        draftGrid={gridForm.draftGrid}
-                        changed={gridForm.changed}
-                        taggedCount={Object.keys(meta).length}
-                        isSaving={gridForm.isSaving}
-                    />
-                </TileSheetWorkspace>
-            </PageContainer.Content>
+                    form={gridForm.form}
+                    draftGrid={gridForm.draftGrid}
+                    changed={gridForm.changed}
+                    taggedCount={Object.keys(meta).length}
+                    isSaving={gridForm.isSaving}
+                />
+            </TileSheetWorkspace>
             <TilesetEditorDialogs
                 tileset={tileset}
                 dialog={editor.dialog}
@@ -79,6 +81,6 @@ export const TilesetEditor = ({ tileset }: Props) => {
                 onStay={editor.guard.stay}
                 onLeave={editor.guard.leave}
             />
-        </PageContainer.Root>
+        </div>
     );
 };
