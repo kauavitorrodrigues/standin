@@ -6,6 +6,12 @@ export class AssetNotFoundError extends BaseError {
     }
 }
 
+export class TilesetNotFoundError extends BaseError {
+    constructor() {
+        super("Tileset not found.", "TILESET_NOT_FOUND", 404);
+    }
+}
+
 export class AssetFamilyNotFoundError extends BaseError {
     constructor() {
         super("Asset family not found.", "ASSET_FAMILY_NOT_FOUND", 404);
@@ -121,6 +127,23 @@ export class ScopeForbiddenError extends LibraryError {
 export class AssetKeyTakenError extends LibraryError {
     constructor() {
         super("This asset key already exists.", "ASSET_KEY_TAKEN", 409);
+    }
+}
+
+export class TilesetKeyTakenError extends LibraryError {
+    constructor() {
+        super("This tileset key already exists.", "TILESET_KEY_TAKEN", 409);
+    }
+}
+
+// Maps already painted with the tileset, so its tileMeta can only grow.
+export class TilesetInUseError extends LibraryError {
+    constructor() {
+        super(
+            "The tileset is used by maps: tileMeta only accepts new entries or a blankDefault change.",
+            "TILESET_IN_USE",
+            409
+        );
     }
 }
 

@@ -12,6 +12,7 @@ type Props = {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    "aria-label"?: string;
 };
 
 export function NumberField({
@@ -24,6 +25,7 @@ export function NumberField({
     placeholder,
     disabled,
     className,
+    "aria-label": ariaLabel,
 }: Props) {
     return (
         <NumericFormat
@@ -42,6 +44,7 @@ export function NumberField({
             disabled={disabled}
             value={value ?? ""}
             onValueChange={({ floatValue }) => onChange(floatValue)}
+            aria-label={ariaLabel}
             className={cn(className)}
         />
     );

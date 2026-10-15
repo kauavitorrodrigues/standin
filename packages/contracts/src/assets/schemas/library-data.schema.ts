@@ -6,7 +6,11 @@ import { ASSET_ROTATIONS } from "../enums/asset-rotation";
 import { ASSET_TYPES } from "../enums/asset-type";
 import { assetAnimationSchema } from "./asset-animation.schema";
 import { assetColorSchema } from "./asset-color.schema";
-import { LibraryDataErrorMessages as Messages } from "./consts/error-messages";
+import {
+    LibraryDataErrorMessages as Messages,
+    TilesetErrorMessages,
+} from "./consts/error-messages";
+import { TileMetaSchema } from "./tile-meta.schema";
 
 const int = (message: string) =>
     z.number({ error: message }).int({ error: message });
@@ -41,6 +45,21 @@ export const LibraryFootprintSchema = z.object(
 
 export const LibraryActionParamsSchema = z.record(z.string(), z.unknown(), {
     error: Messages.update.invalid,
+});
+
+const gridValue = int(TilesetErrorMessages.grid.invalid).min(0, {
+    error: TilesetErrorMessages.grid.invalid,
+});
+
+// `data` part of `POST /library/tilesets`.
+export const CreateTilesetDataSchema = z.object({
+    key: key.optional(),
+    name,
+    margin: gridValue.optional(),
+    spacing: gridValue.optional(),
+    tileMeta: TileMetaSchema.optional(),
+    // Only the global library exists for now. Any value is a 403.
+    organizationId: organizationId.optional(),
 });
 
 // `data` part of `POST /library/assets`. The server derives the key from the
@@ -92,6 +111,19 @@ export const CreateVariantDataSchema = z
         actionParams: LibraryActionParamsSchema.optional(),
     })
     .strict();
+
+export const RenameTilesetSchema = z.object({ name });
+
+export const ReplaceTileMetaSchema = z.object({
+    tileMeta: TileMetaSchema,
+});
+
+// Body of `PUT /library/tilesets/:id/grid`: the margin and the spacing of the
+// sheet, both of them, because the grid is read from the pair.
+export const ReplaceTilesetGridSchema = z.object({
+    margin: gridValue,
+    spacing: gridValue,
+});
 
 // Body of `PATCH /library/assets/:id`. `key`, `type` and `frameCount` never
 // change, but `frameCount` is accepted here so the service can answer with
@@ -156,8 +188,14 @@ export const SetAssetPartsSchema = z.object({
     ),
 });
 
+export type CreateTilesetData = z.infer<typeof CreateTilesetDataSchema>;
 export type CreateAssetData = z.infer<typeof CreateAssetDataSchema>;
 export type CreateVariantData = z.infer<typeof CreateVariantDataSchema>;
+export type RenameTilesetSchemaType = z.infer<typeof RenameTilesetSchema>;
+export type ReplaceTileMetaSchemaType = z.infer<typeof ReplaceTileMetaSchema>;
+export type ReplaceTilesetGridSchemaType = z.infer<
+    typeof ReplaceTilesetGridSchema
+>;
 export type UpdateLibraryAssetSchemaType = z.infer<
     typeof UpdateLibraryAssetSchema
 >;

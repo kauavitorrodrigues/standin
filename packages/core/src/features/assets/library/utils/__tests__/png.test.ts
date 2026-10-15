@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { TILE_SIZE } from "@standin/contracts";
 import { readPngSize } from "../../../../../lib/readPngSize";
 import { buildChunk } from "../buildChunk";
+import { buildColorTileset } from "../buildColorTileset";
 import { crc32 } from "../crc32";
 import { encodePng } from "../encodePng";
 
@@ -31,5 +33,20 @@ describe("encodePng", () => {
         );
 
         expect(readPngSize(png)).toEqual({ width: 3, height: 2 });
+    });
+});
+
+describe("buildColorTileset", () => {
+    it("lays one tile per color in a single row", () => {
+        const tileset = buildColorTileset([
+            [1, 2, 3, 255],
+            [4, 5, 6, 255],
+            [7, 8, 9, 255],
+        ]);
+
+        expect(readPngSize(tileset)).toEqual({
+            width: 3 * TILE_SIZE,
+            height: TILE_SIZE,
+        });
     });
 });

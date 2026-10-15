@@ -1,5 +1,41 @@
 import type { AssetCategory } from "../enums/asset-category";
+import type { TileMeta } from "../schemas/tile-meta.schema";
 import type { AssetDefinition } from "./index";
+
+export type LibraryTilesetSummary = {
+    id: string;
+    key: string;
+    name: string;
+    url: string;
+    widthPx: number;
+    heightPx: number;
+    tileCount: number;
+    columns: number;
+    // How many tiles already have a category in their `tileMeta`.
+    taggedCount: number;
+    // The share of the tiles with a category, from 0 to 100.
+    progressPercent: number;
+    inUse: boolean;
+};
+
+// Options of each filter of the tilesets, counted over every tileset of the
+// scope, whatever the filters chosen on the list.
+export type LibraryTilesetFacets = {
+    usage: LibraryFacetOption[];
+    progress: LibraryFacetOption[];
+};
+
+export type LibraryTilesetList = {
+    tilesets: LibraryTilesetSummary[];
+    total: number;
+    facets: LibraryTilesetFacets;
+};
+
+export type LibraryTilesetDetail = LibraryTilesetSummary & {
+    margin: number;
+    spacing: number;
+    tileMeta: TileMeta | null;
+};
 
 export type LibraryAssetPart = {
     partAssetId: string;

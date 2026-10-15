@@ -28,3 +28,16 @@ export type LibraryFamilySort =
 export const DEFAULT_LIBRARY_FAMILY_PAGE_SIZE = 24;
 export const MAX_LIBRARY_FAMILY_PAGE_SIZE = 100;
 export const MAX_LIBRARY_SEARCH_LENGTH = 100;
+
+// How far a tileset is in having a category on its tiles.
+export const LIBRARY_TILESET_PROGRESS = {
+    COMPLETE: "complete",
+    INCOMPLETE: "incomplete",
+} as const;
+
+export const LIBRARY_TILESET_PROGRESSES = Object.values(
+    LIBRARY_TILESET_PROGRESS
+);
+
+export type LibraryTilesetProgress =
+    (typeof LIBRARY_TILESET_PROGRESS)[keyof typeof LIBRARY_TILESET_PROGRESS];
