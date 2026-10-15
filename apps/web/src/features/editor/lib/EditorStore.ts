@@ -19,6 +19,7 @@ import { ZONE_MESSAGES } from "@/features/editor/consts/messages";
 import { removeObjects } from "@/features/editor/utils/removeObjects";
 import type { ArrowDirection } from "@/features/editor/types/arrow-direction";
 import type { PanelTab } from "@/features/editor/types/panel-tab";
+import type { PlacingArea } from "@/features/editor/types/placing-area";
 import type { SelectionHost } from "@/features/editor/types/SelectionHost";
 import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
 import { PUBLISHED_BADGE_MS } from "@/features/editor/consts/publish";
@@ -80,6 +81,7 @@ export class EditorStore {
         status: EDITOR_STATUS.LOADING,
         draft: EMPTY_DRAFT_SUMMARY,
         placing: null,
+        placingArea: null,
         brush: null,
         zoneKind: ZONE_KINDS.SPAWN,
         layerVisibility: DEFAULT_LAYER_VISIBILITY,
@@ -116,12 +118,13 @@ export class EditorStore {
     setTool = (tool: EditorTool): void => {
         if (!this.canUseTool(tool)) return;
         if (keepsSelectionOnToolChange(tool)) {
-            this.update({ tool, placing: null });
+            this.update({ tool, placing: null, placingArea: null });
             return;
         }
         this.update({
             tool,
             placing: null,
+            placingArea: null,
             selection: EMPTY_SELECTION,
             selectionNotice: null,
         });
@@ -180,7 +183,13 @@ export class EditorStore {
 
     startPlacing = (assetId: string): void => {
         if (this.state.locked) return;
-        this.update({ placing: assetId });
+        this.update({ placing: assetId, placingArea: null });
+    };
+
+    // Picking an area drops the object being placed, and the other way round.
+    startPlacingArea = (placingArea: PlacingArea): void => {
+        if (this.state.locked) return;
+        this.update({ placing: null, placingArea });
     };
 
     setZoneKind = (zoneKind: ZoneKind): void => {
@@ -191,11 +200,16 @@ export class EditorStore {
         this.update({ placing: null });
     };
 
+    cancelPlacingArea = (): void => {
+        this.update({ placingArea: null });
+    };
+
     // Esc and the clear button: leaves the placing mode and drops the
     // selection, so the editor is back to a plain select.
     clearSelectionAndPlacing = (): void => {
         this.update({
             placing: null,
+            placingArea: null,
             selection: EMPTY_SELECTION,
             selectionNotice: null,
         });
@@ -254,6 +268,7 @@ export class EditorStore {
             locked,
             tool: EDITOR_TOOLS.PAN,
             placing: null,
+            placingArea: null,
         });
     };
 

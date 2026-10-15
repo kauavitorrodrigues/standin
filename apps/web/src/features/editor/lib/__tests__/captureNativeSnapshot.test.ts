@@ -9,6 +9,11 @@ vi.mock("@/features/editor/utils/scaleImageToBlob", () => ({
     scaleImageToBlob,
 }));
 
+const cropImageToBlob = vi.hoisted(() => vi.fn());
+vi.mock("@/features/editor/utils/cropImageToBlob", () => ({
+    cropImageToBlob,
+}));
+
 const MAP_SIZE = { width: 12 * 32, height: 8 * 32 };
 
 const buildScene = (image: unknown) => {
@@ -32,6 +37,8 @@ const buildScene = (image: unknown) => {
 describe("captureNativeSnapshot", () => {
     beforeEach(() => {
         scaleImageToBlob.mockReset();
+        cropImageToBlob.mockReset();
+        cropImageToBlob.mockResolvedValue(new Blob(["crop"]));
         scaleImageToBlob.mockResolvedValue(new Blob(["png"]));
     });
 
@@ -59,6 +66,17 @@ describe("captureNativeSnapshot", () => {
         await captureNativeSnapshot(scene, [], MAP_SIZE);
 
         expect(scaleImageToBlob).toHaveBeenCalledWith(image, MAP_SIZE);
+    });
+
+    it("encodes only the requested region of tiles when given a rectangle", async () => {
+        const image = new Image();
+        const { scene } = buildScene(image);
+        const rect = { x: 2, y: 1, w: 4, h: 3 };
+
+        await captureNativeSnapshot(scene, [], MAP_SIZE, rect);
+
+        expect(cropImageToBlob).toHaveBeenCalledWith(image, rect);
+        expect(scaleImageToBlob).not.toHaveBeenCalled();
     });
 
     it("keeps the thumbnail variant scaled down", async () => {

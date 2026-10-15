@@ -1,5 +1,6 @@
-import { GridIcon, SquareDashedIcon } from "lucide-react";
+import { GridIcon } from "lucide-react";
 import { ToolbarButton } from "@/features/editor/components/views/ToolbarButton";
+import { ZonesToggle } from "@/features/editor/components/views/toolbar/ZonesToggle";
 import { MAP_EDITOR_KEYS } from "@/features/editor/consts/editorKeys";
 
 type ViewTogglesProps = {
@@ -7,6 +8,8 @@ type ViewTogglesProps = {
     zonesVisible: boolean;
     onToggleGrid: () => void;
     onToggleZones: () => void;
+    // An editor without zones leaves their toggle out.
+    withZones?: boolean;
 };
 
 // Show or hide the grid and the zones over the map.
@@ -15,6 +18,7 @@ export const ViewToggles = ({
     zonesVisible,
     onToggleGrid,
     onToggleZones,
+    withZones = true,
 }: ViewTogglesProps) => (
     <>
         <ToolbarButton
@@ -25,13 +29,10 @@ export const ViewToggles = ({
             activeLook="toggle"
             onClick={onToggleGrid}
         />
-        <ToolbarButton
-            label="Alternar as zonas"
-            icon={SquareDashedIcon}
-            shortcut={MAP_EDITOR_KEYS.TOGGLE_ZONES[0].toUpperCase()}
-            active={zonesVisible}
-            activeLook="toggle"
-            onClick={onToggleZones}
+        <ZonesToggle
+            enabled={withZones}
+            visible={zonesVisible}
+            onToggle={onToggleZones}
         />
     </>
 );

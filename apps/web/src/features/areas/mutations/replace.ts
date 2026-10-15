@@ -11,7 +11,7 @@ export const useReplace = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        // The size cannot change, so the server refuses another one.
+        // The stamp and the PNG carry the size, which may differ from the saved one.
         mutationFn: async ({
             areaId,
             image,

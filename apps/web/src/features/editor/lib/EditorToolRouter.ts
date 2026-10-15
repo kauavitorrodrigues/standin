@@ -25,6 +25,8 @@ export class EditorToolRouter {
     private editable: boolean;
     // A press the router accepted, until the button goes up or it is cancelled.
     private gesturing = false;
+    // A press the interceptor took, until the button goes up.
+    private intercepting = false;
     // A press that moves the view. Everything up to its release is ignored.
     private panning = false;
     private hovering = false;
@@ -51,6 +53,8 @@ export class EditorToolRouter {
     // Esc. Always works, so a preview never stays behind.
     cancel = (): void => {
         this.gesturing = false;
+        this.intercepting = false;
+        this.options.interceptor?.cancel();
         this.controller?.onCancel?.();
     };
 
@@ -128,6 +132,12 @@ export class EditorToolRouter {
     }
 
     private handleDown = (input: ToolPointerInput): void => {
+        if (this.options.interceptor?.press(input)) {
+            this.intercepting = true;
+            this.leaveMap();
+            return;
+        }
+
         const spaceHeld = this.options.isSpaceHeld();
         if (isPanPointer({ ...input, spaceHeld, tool: this.tool })) {
             this.panning = true;
@@ -146,7 +156,12 @@ export class EditorToolRouter {
     };
 
     private handleMove = (input: ToolPointerInput): void => {
+        if (this.intercepting) {
+            this.options.interceptor?.move(input);
+            return;
+        }
         if (this.panning) return;
+        this.options.interceptor?.hover(input);
 
         const cell = this.getCell(input);
         if (!cell) {
@@ -173,6 +188,11 @@ export class EditorToolRouter {
     };
 
     private handleUp = (input: ToolPointerInput): void => {
+        if (this.intercepting) {
+            this.intercepting = false;
+            this.options.interceptor?.release(input);
+            return;
+        }
         if (this.panning) {
             this.panning = false;
             return;

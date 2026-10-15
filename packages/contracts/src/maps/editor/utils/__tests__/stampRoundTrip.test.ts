@@ -91,6 +91,22 @@ describe("stamp round trip", () => {
         expect(again.ok && again.stamp).toEqual(stamp);
     });
 
+    it("opens a stamp on a canvas bigger than it and captures it back", () => {
+        const stamp = captured();
+        const opened = stampToModel(stamp, palette, { width: 12, height: 9 });
+        if (!opened.ok) throw new Error(JSON.stringify(opened.errors));
+
+        expect(opened.model.width).toBe(12);
+        expect(opened.model.height).toBe(9);
+
+        const again = captureStamp(
+            opened.model,
+            { x: 0, y: 0, w: 4, h: 4 },
+            { zoneLabel: opened.zoneLabel }
+        );
+        expect(again.ok && again.stamp).toEqual(stamp);
+    });
+
     it("answers a null zone label for a stamp without a zone", () => {
         const opened = stampToModel({ ...buildStamp(), zone: null }, palette);
 

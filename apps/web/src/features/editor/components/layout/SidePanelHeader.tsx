@@ -3,7 +3,8 @@ import { ArrowLeftIcon } from "lucide-react";
 import { ToolbarButton } from "@/features/editor/components/views/ToolbarButton";
 
 type Props = {
-    title: string;
+    // Usually the name as text. An editor of something new puts a field here.
+    title: ReactNode;
     onExit: () => void;
     // The menu of whoever owns what is being edited, beside the title.
     actions?: ReactNode;

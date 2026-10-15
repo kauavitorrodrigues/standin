@@ -1,7 +1,6 @@
 import {
     AreaBodySchema,
     AreaNameInvalidIssue,
-    AreaSizeImmutableIssue,
     AreaValidationError,
     StampSchema,
     TILE_SIZE,
@@ -18,13 +17,11 @@ type Valid = { name: string; stamp: Stamp };
 
 /**
  * Every problem of an area upload, collected before anything is written: the
- * PNG, the name, the stamp against the global palette, the thumbnail size and,
- * on a replacement, the size of the stored area.
+ * PNG, the name, the stamp against the global palette, the thumbnail size.
  */
 export const validateAreaUpload = async (
     image: UploadedImage,
-    data: AreaData,
-    current?: { width: number; height: number }
+    data: AreaData
 ): Promise<Valid> => {
     const { size, issues } = readUploadedPng(image.buffer);
     const errors: AreaIssue[] = [...issues];
@@ -43,9 +40,6 @@ export const validateAreaUpload = async (
                 size.height !== height * TILE_SIZE)
         ) {
             errors.push(new ThumbnailSizeMismatchIssue());
-        }
-        if (current && (current.width !== width || current.height !== height)) {
-            errors.push(new AreaSizeImmutableIssue());
         }
     }
 

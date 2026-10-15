@@ -9,6 +9,7 @@ import { UsageFooter } from "@/features/editor/components/views/panel/UsageFoote
 import { PANEL_TABS } from "@/features/editor/consts/panelTabs";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useMapPalette } from "@/features/assets/queries/useMapPalette";
+import { fetchMapAreaStamp } from "@/features/maps/__shared__/utils/fetchMapAreaStamp";
 import { useRequestExit } from "@/features/maps/__shared__/hooks/useRequestExit";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 
@@ -21,7 +22,7 @@ type EditorSidePanelProps = {
 };
 
 // The side panel. The title bar has the button that leaves, the name of the map and
-// its menu on the left, and on the right the switch between objects and tiles and the button
+// its menu on the left, and on the right the switch between objects, tiles and areas and the button
 // that closes the panel.
 export const EditorSidePanel = ({
     mapId,
@@ -32,7 +33,12 @@ export const EditorSidePanel = ({
     const store = useEditorStore();
     const open = useEditorSelector((state) => state.panelOpen);
     const panelTab = useEditorSelector((state) => state.panelTab);
-    const palette = useMapPalette(mapId);
+    const mapPalette = useMapPalette(mapId);
+    const palette = {
+        ...mapPalette,
+        fetchAreaStamp: (areaId: string, version: number) =>
+            fetchMapAreaStamp(mapId, areaId, version),
+    };
     const requestExit = useRequestExit(onExit);
 
     return (
@@ -43,6 +49,7 @@ export const EditorSidePanel = ({
                     switch (value) {
                         case PANEL_TABS.OBJECTS:
                         case PANEL_TABS.TILES:
+                        case PANEL_TABS.AREAS:
                             store.setPanelTab(value);
                     }
                 }}
