@@ -10,6 +10,12 @@ try {
 
 export default defineConfig({
     ...nodeVitestConfig,
+    test: {
+        ...nodeVitestConfig.test,
+        // The integration files share one real database (and its global
+        // asset library), so they run one after the other.
+        fileParallelism: !process.env.INTEGRATION_DATABASE_URL,
+    },
     resolve: {
         alias: {
             "@": resolve(__dirname, "./src"),

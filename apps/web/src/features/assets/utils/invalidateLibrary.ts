@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { MAP_PALETTE_QUERY_KEY } from "../queries/useMapPalette";
 import { LIBRARY_TILESET_QUERY_KEY } from "@/features/tilesets/queries/useDetails";
 import { LIBRARY_TILESETS_QUERY_KEY } from "@/features/tilesets/queries/useList";
 import { LIBRARY_FAMILIES_QUERY_KEY } from "../queries/useLibraryFamilies";
@@ -26,4 +27,5 @@ export const invalidateLibrary = (queryClient: QueryClient) =>
         queryClient.invalidateQueries({
             queryKey: [LIBRARY_OVERVIEW_QUERY_KEY],
         }),
+        queryClient.invalidateQueries({ queryKey: [MAP_PALETTE_QUERY_KEY] }),
     ]);

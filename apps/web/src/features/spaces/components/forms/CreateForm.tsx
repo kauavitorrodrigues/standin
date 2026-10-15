@@ -1,16 +1,14 @@
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-    MAX_SPACE_NAME_LENGTH,
+    ENABLED_SIZE_TIERS,
     SpaceDataSchema,
     type SpaceDataSchemaType,
 } from "@standin/contracts";
-import { TextFormField } from "@/components/fields/TextFormField";
-import { GenericFormField } from "@/components/fields/GenericFormField";
-import { MapSelectionGrid } from "@/features/maps/components/instances/MapSelectionGrid";
+import { SpaceFormFields } from "../fields/FormFields";
 import { SpaceMutations } from "../../mutations";
 import { SpacesQueries } from "../../queries";
 import { CreateMessages } from "./Messages";
@@ -22,7 +20,9 @@ export const CreateSpaceForm = () => {
 
     const form = useForm<SpaceDataSchemaType>({
         resolver: zodResolver(SpaceDataSchema),
-        defaultValues: { name: "", mapId: "" },
+        // The map flow is not built on the client yet. Until then every new
+        // space starts from a blank map of the smallest enabled tier.
+        defaultValues: { name: "", sizeTier: ENABLED_SIZE_TIERS[0] },
     });
 
     const onSubmit = async (data: SpaceDataSchemaType) => {
@@ -37,40 +37,13 @@ export const CreateSpaceForm = () => {
     };
 
     const { isSubmitting } = form.formState;
-    const name = useWatch({ control: form.control, name: "name" });
 
     return (
         <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-8"
         >
-            <div className="flex flex-col gap-1">
-                <TextFormField
-                    control={form.control}
-                    name="name"
-                    label="Nome"
-                    required
-                    placeholder="Nome do espaço"
-                    disabled={isSubmitting}
-                    maxLength={MAX_SPACE_NAME_LENGTH}
-                />
-                <span className="self-end text-xs text-muted-foreground">
-                    {name?.length ?? 0}/{MAX_SPACE_NAME_LENGTH}
-                </span>
-            </div>
-
-            <GenericFormField
-                control={form.control}
-                name="mapId"
-                label="Mapa"
-                required
-                render={(field) => (
-                    <MapSelectionGrid
-                        value={field.value ?? null}
-                        onChange={field.onChange}
-                    />
-                )}
-            />
+            <SpaceFormFields form={form} disabled={isSubmitting} />
 
             <div className="flex justify-end gap-2">
                 <Button

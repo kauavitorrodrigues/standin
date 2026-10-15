@@ -16,10 +16,9 @@ import { Route as AppDefaultRouteImport } from './routes/_app/_default'
 import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
 import { Route as AppSpacesNewRouteImport } from './routes/_app/spaces/new'
-import { Route as AppDefaultMapsIndexRouteImport } from './routes/_app/_default/maps/index'
-import { Route as AppDefaultMapsNewRouteImport } from './routes/_app/_default/maps/new'
 import { Route as AppAdminAdminAssetsIndexRouteImport } from './routes/_app/_admin/admin/assets/index'
 import { Route as AppAdminAdminAssetsNewRouteImport } from './routes/_app/_admin/admin/assets/new'
+import { Route as AppAdminAdminMapsIndexRouteImport } from './routes/_app/_admin/admin/maps/index'
 import { Route as AppAdminAdminTilesetsIndexRouteImport } from './routes/_app/_admin/admin/tilesets/index'
 import { Route as AppAdminAdminTilesetsTilesetIdRouteImport } from './routes/_app/_admin/admin/tilesets/$tilesetId'
 import { Route as AppAdminAdminTilesetsNewRouteImport } from './routes/_app/_admin/admin/tilesets/new'
@@ -56,16 +55,6 @@ const AppSpacesNewRoute = AppSpacesNewRouteImport.update({
   path: '/spaces/new',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDefaultMapsIndexRoute = AppDefaultMapsIndexRouteImport.update({
-  id: '/maps/',
-  path: '/maps/',
-  getParentRoute: () => AppDefaultRoute,
-} as any)
-const AppDefaultMapsNewRoute = AppDefaultMapsNewRouteImport.update({
-  id: '/maps/new',
-  path: '/maps/new',
-  getParentRoute: () => AppDefaultRoute,
-} as any)
 const AppAdminAdminAssetsIndexRoute =
   AppAdminAdminAssetsIndexRouteImport.update({
     id: '/admin/assets/',
@@ -75,6 +64,11 @@ const AppAdminAdminAssetsIndexRoute =
 const AppAdminAdminAssetsNewRoute = AppAdminAdminAssetsNewRouteImport.update({
   id: '/admin/assets/new',
   path: '/admin/assets/new',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAdminMapsIndexRoute = AppAdminAdminMapsIndexRouteImport.update({
+  id: '/admin/maps/',
+  path: '/admin/maps/',
   getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminAdminTilesetsIndexRoute =
@@ -101,12 +95,11 @@ export interface FileRoutesByFullPath {
   '/home': typeof AppDefaultHomeRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
-  '/maps/new': typeof AppDefaultMapsNewRoute
-  '/maps/': typeof AppDefaultMapsIndexRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
+  '/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -114,12 +107,11 @@ export interface FileRoutesByTo {
   '/home': typeof AppDefaultHomeRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
-  '/maps/new': typeof AppDefaultMapsNewRoute
-  '/maps': typeof AppDefaultMapsIndexRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/admin/assets': typeof AppAdminAdminAssetsIndexRoute
+  '/admin/maps': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets': typeof AppAdminAdminTilesetsIndexRoute
 }
 export interface FileRoutesById {
@@ -131,12 +123,11 @@ export interface FileRoutesById {
   '/_app/_default/home': typeof AppDefaultHomeRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spaces/new': typeof AppSpacesNewRoute
-  '/_app/_default/maps/new': typeof AppDefaultMapsNewRoute
-  '/_app/_default/maps/': typeof AppDefaultMapsIndexRoute
   '/_app/_admin/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
   '/_app/_admin/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/_app/_admin/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/_app/_admin/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
+  '/_app/_admin/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/_app/_admin/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
 }
 export interface FileRouteTypes {
@@ -146,12 +137,11 @@ export interface FileRouteTypes {
     | '/home'
     | '/spaces/$spaceId'
     | '/spaces/new'
-    | '/maps/new'
-    | '/maps/'
     | '/admin/assets/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
     | '/admin/assets/'
+    | '/admin/maps/'
     | '/admin/tilesets/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -159,12 +149,11 @@ export interface FileRouteTypes {
     | '/home'
     | '/spaces/$spaceId'
     | '/spaces/new'
-    | '/maps/new'
-    | '/maps'
     | '/admin/assets/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
     | '/admin/assets'
+    | '/admin/maps'
     | '/admin/tilesets'
   id:
     | '__root__'
@@ -175,12 +164,11 @@ export interface FileRouteTypes {
     | '/_app/_default/home'
     | '/_app/spaces/$spaceId'
     | '/_app/spaces/new'
-    | '/_app/_default/maps/new'
-    | '/_app/_default/maps/'
     | '/_app/_admin/admin/assets/new'
     | '/_app/_admin/admin/tilesets/$tilesetId'
     | '/_app/_admin/admin/tilesets/new'
     | '/_app/_admin/admin/assets/'
+    | '/_app/_admin/admin/maps/'
     | '/_app/_admin/admin/tilesets/'
   fileRoutesById: FileRoutesById
 }
@@ -240,20 +228,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSpacesNewRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/_default/maps/': {
-      id: '/_app/_default/maps/'
-      path: '/maps'
-      fullPath: '/maps/'
-      preLoaderRoute: typeof AppDefaultMapsIndexRouteImport
-      parentRoute: typeof AppDefaultRoute
-    }
-    '/_app/_default/maps/new': {
-      id: '/_app/_default/maps/new'
-      path: '/maps/new'
-      fullPath: '/maps/new'
-      preLoaderRoute: typeof AppDefaultMapsNewRouteImport
-      parentRoute: typeof AppDefaultRoute
-    }
     '/_app/_admin/admin/assets/': {
       id: '/_app/_admin/admin/assets/'
       path: '/admin/assets'
@@ -266,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/assets/new'
       fullPath: '/admin/assets/new'
       preLoaderRoute: typeof AppAdminAdminAssetsNewRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/maps/': {
+      id: '/_app/_admin/admin/maps/'
+      path: '/admin/maps'
+      fullPath: '/admin/maps/'
+      preLoaderRoute: typeof AppAdminAdminMapsIndexRouteImport
       parentRoute: typeof AppAdminRoute
     }
     '/_app/_admin/admin/tilesets/': {
@@ -297,6 +278,7 @@ interface AppAdminRouteChildren {
   AppAdminAdminTilesetsTilesetIdRoute: typeof AppAdminAdminTilesetsTilesetIdRoute
   AppAdminAdminTilesetsNewRoute: typeof AppAdminAdminTilesetsNewRoute
   AppAdminAdminAssetsIndexRoute: typeof AppAdminAdminAssetsIndexRoute
+  AppAdminAdminMapsIndexRoute: typeof AppAdminAdminMapsIndexRoute
   AppAdminAdminTilesetsIndexRoute: typeof AppAdminAdminTilesetsIndexRoute
 }
 
@@ -305,6 +287,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminAdminTilesetsTilesetIdRoute: AppAdminAdminTilesetsTilesetIdRoute,
   AppAdminAdminTilesetsNewRoute: AppAdminAdminTilesetsNewRoute,
   AppAdminAdminAssetsIndexRoute: AppAdminAdminAssetsIndexRoute,
+  AppAdminAdminMapsIndexRoute: AppAdminAdminMapsIndexRoute,
   AppAdminAdminTilesetsIndexRoute: AppAdminAdminTilesetsIndexRoute,
 }
 
@@ -314,14 +297,10 @@ const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
 
 interface AppDefaultRouteChildren {
   AppDefaultHomeRoute: typeof AppDefaultHomeRoute
-  AppDefaultMapsNewRoute: typeof AppDefaultMapsNewRoute
-  AppDefaultMapsIndexRoute: typeof AppDefaultMapsIndexRoute
 }
 
 const AppDefaultRouteChildren: AppDefaultRouteChildren = {
   AppDefaultHomeRoute: AppDefaultHomeRoute,
-  AppDefaultMapsNewRoute: AppDefaultMapsNewRoute,
-  AppDefaultMapsIndexRoute: AppDefaultMapsIndexRoute,
 }
 
 const AppDefaultRouteWithChildren = AppDefaultRoute._addFileChildren(

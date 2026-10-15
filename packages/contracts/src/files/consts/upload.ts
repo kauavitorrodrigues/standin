@@ -5,6 +5,7 @@ import {
 } from "../enums/allowed-mime-types";
 
 export const MAX_UPLOAD_SIZE_IN_BYTES = 10 * 1024 * 1024; // 10 MB
+export const MAX_THUMBNAIL_SIZE_IN_BYTES = 3 * 1024 * 1024; // 3 MB
 
 export const UPLOAD_LIMITS = {
     generic: {
@@ -14,6 +15,11 @@ export const UPLOAD_LIMITS = {
     mapJson: {
         allowedMimeTypes: MAP_JSON_MIME_TYPES,
         maxSizeInBytes: MAX_UPLOAD_SIZE_IN_BYTES,
+    },
+    // Rendered by the editor and always a PNG, up to 3 MB.
+    thumbnail: {
+        allowedMimeTypes: TILESET_IMAGE_MIME_TYPES,
+        maxSizeInBytes: MAX_THUMBNAIL_SIZE_IN_BYTES,
     },
     tilesetImage: {
         allowedMimeTypes: TILESET_IMAGE_MIME_TYPES,

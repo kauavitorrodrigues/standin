@@ -2,8 +2,10 @@ import type { Response } from "express";
 import { z, type ZodError } from "zod/v4";
 import {
     BaseError,
+    LayoutValidationError,
     LibraryError,
     LibraryValidationError,
+    StaleLayoutVersionError,
 } from "@standin/contracts";
 import { ErrorMessages } from "@/enums/errorMessages";
 import {
@@ -48,6 +50,15 @@ export const sendError = ({
     if (reportError) console.error(reportError);
     if (error) return res.status(code).json(z.flattenError(error));
 
+    // Layout validation answers with every error and warning, and a stale
+    // layout with the version to reload.
+    if (reportError instanceof LayoutValidationError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            errors: reportError.errors,
+            warnings: reportError.warnings,
+        });
+    }
     // The library answers with the same shape, and its other errors with
     // their code and details.
     if (reportError instanceof LibraryValidationError) {
@@ -63,6 +74,13 @@ export const sendError = ({
             error: reportError.message,
             code: reportError.code,
             ...reportError.details,
+        });
+    }
+    if (reportError instanceof StaleLayoutVersionError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
+            version: reportError.currentVersion,
         });
     }
 

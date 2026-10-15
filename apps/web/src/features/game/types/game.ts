@@ -1,9 +1,9 @@
 import type Phaser from "phaser";
-import type { MapAssetManifest } from "@/features/game/types/tilemap";
+import type { GameMapData } from "@/features/game/types/tilemap";
 
 export type GameEngineOptions = {
     container: HTMLElement;
-    map: MapAssetManifest;
+    map: GameMapData;
     initialCameraOffsetX: number;
 };
 

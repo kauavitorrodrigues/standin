@@ -1,5 +1,10 @@
 import type { RemotePlayer } from "./player";
-import type { SpaceJoinSchema, WebrtcSignalSchema } from "../schemas/space";
+import type { MapServerEvents } from "../../maps/types/events";
+import type {
+    MapJoinSchema,
+    SpaceJoinSchema,
+    WebrtcSignalSchema,
+} from "../schemas/space";
 import type { z } from "zod/v4";
 import type {
     ChatMessageSeenPayload,
@@ -18,6 +23,7 @@ export const SpaceEvents = {
 export type SpaceEvent = (typeof SpaceEvents)[keyof typeof SpaceEvents];
 
 export type SpaceJoinPayload = z.infer<typeof SpaceJoinSchema>;
+export type MapJoinPayload = z.infer<typeof MapJoinSchema>;
 export type WebrtcSignalInput = z.infer<typeof WebrtcSignalSchema>;
 
 export type SpaceJoinedPayload = {
@@ -39,6 +45,8 @@ export type WebrtcSignalOutput = {
 export type ClientToServerEvents = {
     "space:join": (payload: SpaceJoinPayload) => void;
     "webrtc:signal": (payload: WebrtcSignalInput) => void;
+    // Joins the room of a template map, the only map without a space room.
+    "map:join": (payload: MapJoinPayload) => void;
 };
 
 export type ServerToClientEvents = {
@@ -53,4 +61,4 @@ export type ServerToClientEvents = {
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
     "chat:unread-changed": (payload: ChatUnreadChangedPayload) => void;
     "chat:message-seen": (payload: ChatMessageSeenPayload) => void;
-};
+} & MapServerEvents;

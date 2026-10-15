@@ -22,11 +22,97 @@ export const MapErrorMessages = {
         positive: "O tamanho do tile do mapa deve ser maior que zero.",
         invalid: "O tamanho do tile do mapa é inválido.",
     },
-    mapJsonFileId: {
-        invalid: "O ID do arquivo JSON do mapa é inválido.",
+    sizeTier: {
+        invalid: "O tamanho do mapa é inválido.",
+        disabled: "Esse tamanho de mapa ainda não está disponível.",
     },
-    thumbnailFileId: {
-        invalid: "O ID do arquivo de miniatura do mapa é inválido.",
+    layoutVersion: {
+        invalid: "A versão do layout do mapa é inválida.",
+    },
+    layout: {
+        invalid: "O layout do mapa é inválido.",
+    },
+    tilesets: {
+        invalid: "Os tilesets do mapa são inválidos.",
+    },
+};
+
+export const MapLayoutErrorMessages = {
+    orientation: {
+        invalid: "O mapa deve ser ortogonal.",
+    },
+    infinite: {
+        invalid: "O mapa não pode ser infinito.",
+    },
+    tileSize: {
+        invalid: "O tamanho do tile do mapa deve ser de 32 pixels.",
+    },
+    width: {
+        invalid: "A largura do layout é inválida.",
+    },
+    height: {
+        invalid: "A altura do layout é inválida.",
+    },
+    backgroundColor: {
+        invalid: "A cor de fundo do layout é inválida.",
+    },
+    tilesets: {
+        invalid: "Os tilesets do layout são inválidos.",
+    },
+    layers: {
+        invalid: "As camadas do layout são inválidas.",
+    },
+    renderOrder: {
+        invalid: "A ordem de renderização do layout é inválida.",
+    },
+    nextId: {
+        invalid: "O próximo ID do layout é inválido.",
+    },
+    tileset: {
+        name: {
+            invalid: "O nome do tileset do layout é inválido.",
+        },
+        firstGid: {
+            invalid: "O primeiro GID do tileset do layout é inválido.",
+        },
+    },
+    object: {
+        id: { invalid: "O ID do objeto da camada é inválido." },
+        name: { invalid: "O nome do objeto da camada é inválido." },
+        type: { invalid: "O tipo do objeto da camada é inválido." },
+        x: { invalid: "A posição X do objeto da camada é inválida." },
+        y: { invalid: "A posição Y do objeto da camada é inválida." },
+        width: { invalid: "A largura do objeto da camada é inválida." },
+        height: { invalid: "A altura do objeto da camada é inválida." },
+        rotation: { invalid: "A rotação do objeto da camada é inválida." },
+        visible: { invalid: "A visibilidade do objeto da camada é inválida." },
+        polygon: { invalid: "O polígono do objeto da camada é inválido." },
+        point: { invalid: "Os pontos do polígono devem ser números." },
+        properties: {
+            invalid: "As propriedades do objeto da camada são inválidas.",
+        },
+        objects: { invalid: "Os objetos da camada são inválidos." },
+    },
+    layer: {
+        id: { invalid: "O ID da camada do layout é inválido." },
+        visible: { invalid: "A visibilidade da camada do layout é inválida." },
+        opacity: { invalid: "A opacidade da camada do layout é inválida." },
+        type: {
+            invalid: "O tipo da camada do layout é inválido.",
+        },
+        name: {
+            invalid: "O nome da camada do layout é inválido.",
+        },
+        width: {
+            invalid: "A largura da camada do layout é inválida.",
+        },
+        height: {
+            invalid: "A altura da camada do layout é inválida.",
+        },
+        data: {
+            invalid: "Os dados da camada do layout são inválidos.",
+            tile: "Os tiles da camada do layout devem ser números inteiros.",
+        },
     },
 };
 
@@ -139,4 +225,58 @@ export const TiledMapJsonErrorMessages = {
         required: "O nome do tileset é obrigatório.",
         invalid: "O nome do tileset é inválido.",
     },
+};
+
+export const LayoutOpErrorMessages = {
+    baseVersion: { invalid: "A versão base do layout é inválida." },
+    ops: {
+        invalid: "As operações do layout são inválidas.",
+        required: "Envie ao menos uma operação.",
+    },
+    op: { invalid: "A operação do layout é inválida." },
+    layer: { invalid: "A camada da operação é inválida." },
+    tilesetId: { invalid: "O tileset do tile é inválido." },
+    tileIndex: { invalid: "O índice do tile é inválido." },
+    cells: { invalid: "As células da operação são inválidas." },
+    cell: { invalid: "Cada célula deve ser um par de números inteiros." },
+    zoneId: { invalid: "O ID da zona é inválido." },
+    color: { invalid: "A cor de fundo deve estar no formato #RRGGBB." },
+    zone: {
+        invalid: "A zona é inválida.",
+        kind: { invalid: "O tipo da zona é inválido." },
+        position: { invalid: "A posição da zona é inválida." },
+        size: { invalid: "O tamanho da zona é inválido." },
+        rotation: { invalid: "A rotação da zona é inválida." },
+        polygon: { invalid: "O polígono da zona é inválido." },
+        label: { invalid: "O nome da zona é inválido." },
+        key: { invalid: "A chave da zona é inválida." },
+        target: { invalid: "O destino da zona é inválido." },
+    },
+};
+
+export const MapRenderErrorMessages = {
+    map: { invalid: "Os dados do mapa são inválidos." },
+    layoutVersion: { invalid: "A versão do layout é inválida." },
+    tilesets: { invalid: "Os tilesets do mapa são inválidos." },
+    assets: { invalid: "Os recursos do mapa são inválidos." },
+    placed: { invalid: "Os objetos posicionados são inválidos." },
+    desks: { invalid: "As mesas do mapa são inválidas." },
+    access: { invalid: "As permissões do mapa são inválidas." },
+    id: { invalid: "O ID do objeto posicionado é inválido." },
+    assetId: { invalid: "O ID do recurso posicionado é inválido." },
+    tile: { invalid: "A posição do objeto no mapa é inválida." },
+    parentId: { invalid: "O ID do objeto pai é inválido." },
+    userId: { invalid: "O ID do usuário da mesa é inválido." },
+    canEdit: { invalid: "A permissão de edição é inválida." },
+    ownDesk: { invalid: "A mesa do usuário é inválida." },
+};
+
+export const MapAssetErrorMessages = {
+    assetId: { invalid: "Escolha um recurso para posicionar." },
+    tile: { invalid: "A posição do objeto deve ser um número inteiro." },
+    parentId: { invalid: "O ID do objeto pai é inválido." },
+    changes: { required: "Informe ao menos uma alteração." },
+    userId: { invalid: "Escolha a pessoa que vai receber a mesa." },
+    releaseDesk: { invalid: 'O campo "releaseDesk" é inválido.' },
+    swap: { invalid: 'O campo "swap" é inválido.' },
 };

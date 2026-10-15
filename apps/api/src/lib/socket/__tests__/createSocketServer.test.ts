@@ -6,6 +6,7 @@ const {
     setMock,
     requiresSocketAuthMock,
     registerJoinSpaceMock,
+    registerJoinMapMock,
     registerWebrtcSignalMock,
     registerDisconnectMock,
 } = vi.hoisted(() => {
@@ -27,6 +28,7 @@ const {
         setMock: vi.fn(),
         requiresSocketAuthMock: vi.fn(),
         registerJoinSpaceMock: vi.fn(),
+        registerJoinMapMock: vi.fn(),
         registerWebrtcSignalMock: vi.fn(),
         registerDisconnectMock: vi.fn(),
     };
@@ -50,6 +52,10 @@ vi.mock("../middlewares/requiresAuth", () => ({
 
 vi.mock("../handlers/joinSpace", () => ({
     registerJoinSpace: registerJoinSpaceMock,
+}));
+
+vi.mock("../handlers/joinMap", () => ({
+    registerJoinMap: registerJoinMapMock,
 }));
 
 vi.mock("../handlers/webrtcSignal", () => ({
@@ -114,6 +120,7 @@ describe("createSocketServer", () => {
             serverInstanceMock,
             fakeSocket
         );
+        expect(registerJoinMapMock).toHaveBeenCalledWith(fakeSocket);
         expect(registerWebrtcSignalMock).toHaveBeenCalledWith(
             serverInstanceMock,
             fakeSocket

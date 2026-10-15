@@ -10,6 +10,11 @@ export const GameErrorMessages = {
             required: "O identificador do usuário é obrigatório.",
         },
     },
+    mapJoin: {
+        mapId: {
+            required: "O identificador do mapa é obrigatório.",
+        },
+    },
     webrtcSignal: {
         targetSocketId: {
             required: "O socket de destino é obrigatório.",

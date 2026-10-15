@@ -5,3 +5,6 @@ export * from "@/features/game/renderers/renderObjectLayers";
 export * from "@/features/game/renderers/buildObjectPhysicsGroups";
 export * from "@/features/game/renderers/fitCameraToMap";
 export * from "@/features/game/renderers/fitWorldBoundsToMap";
+export * from "@/features/game/renderers/registerAssetAnimations";
+export * from "@/features/game/renderers/ensureAssetTextures";
+export * from "@/features/game/renderers/renderPlacedAssets";

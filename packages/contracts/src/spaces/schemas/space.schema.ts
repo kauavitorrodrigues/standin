@@ -1,9 +1,12 @@
 import { z } from "zod/v4";
 import { SpaceErrorMessages } from "./consts/error-messages";
-import { SpaceDataSchema } from "./space.data.schema";
+import { SpaceUpdateSchema } from "./space.update.schema";
 
-export const SpaceSchema = SpaceDataSchema.extend({
+export const SpaceSchema = SpaceUpdateSchema.extend({
     id: z.string({ error: SpaceErrorMessages.id.invalid }),
-    organizationId: z.string(),
-    createdAt: z.iso.datetime(),
+    organizationId: z.string({
+        error: SpaceErrorMessages.organizationId.invalid,
+    }),
+    mapId: z.string({ error: SpaceErrorMessages.mapId.invalid }),
+    createdAt: z.iso.datetime({ error: SpaceErrorMessages.createdAt.invalid }),
 });

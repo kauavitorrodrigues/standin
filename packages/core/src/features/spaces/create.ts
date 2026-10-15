@@ -3,6 +3,7 @@ import { db, spacesTable } from "@standin/database";
 import type { Space, SpaceDataSchemaType } from "@standin/contracts";
 import { OrganizationMemberService } from "../organizations/members";
 import { ConversationService } from "../conversations";
+import { createSpaceMap } from "./utils/createSpaceMap";
 import { serializeSpace } from "./utils/serializeSpace";
 
 export const createSpace = async (
@@ -11,11 +12,13 @@ export const createSpace = async (
     data: SpaceDataSchemaType
 ): Promise<Space> => {
     return db.transaction(async (tx) => {
+        const map = await createSpaceMap(organizationId, data, tx);
+
         const [space] = await tx
             .insert(spacesTable)
             .values({
                 name: data.name,
-                mapId: data.mapId,
+                mapId: map.id,
                 organizationId,
                 createdBy,
             })

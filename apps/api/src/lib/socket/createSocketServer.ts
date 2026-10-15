@@ -10,6 +10,7 @@ import { corsSocketOptions } from "@/consts/server";
 import { requiresSocketAuth } from "@/lib/socket/middlewares/requiresAuth";
 import { registerDisconnect } from "@/lib/socket/handlers/disconnect";
 import { registerJoinSpace } from "@/lib/socket/handlers/joinSpace";
+import { registerJoinMap } from "@/lib/socket/handlers/joinMap";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
@@ -33,6 +34,7 @@ export function createSocketServer(httpServer: ReturnType<typeof createServer>) 
         socket.join(buildUserRoom(socket.data.userId));
 
         registerJoinSpace(io, socket);
+        registerJoinMap(socket);
         registerWebrtcSignal(io, socket);
         registerDisconnect(socket);
     });
