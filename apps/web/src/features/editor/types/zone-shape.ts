@@ -10,4 +10,7 @@ export type ZoneAreaShape = {
     label: string;
 };
 
-export type ZoneShape = ZoneSpawnShape | ZoneAreaShape;
+// A room (a private zone) is drawn as an outline like an area, in its own color.
+export type ZoneRoomShape = Omit<ZoneAreaShape, "kind"> & { kind: "room" };
+
+export type ZoneShape = ZoneSpawnShape | ZoneAreaShape | ZoneRoomShape;

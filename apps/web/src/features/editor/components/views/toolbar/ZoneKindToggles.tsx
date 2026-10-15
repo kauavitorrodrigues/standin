@@ -7,7 +7,7 @@ type ZoneKindTogglesProps = {
     onZoneKindChange: (zoneKind: ZoneKind) => void;
 };
 
-// Spawn or area: what the zone tool creates.
+// Spawn, area or room: what the zone tool creates.
 export const ZoneKindToggles = ({
     zoneKind,
     onZoneKindChange,
@@ -22,6 +22,11 @@ export const ZoneKindToggles = ({
             label="Área"
             active={zoneKind === ZONE_KINDS.AREA}
             onClick={() => onZoneKindChange(ZONE_KINDS.AREA)}
+        />
+        <ToolOptionToggle
+            label="Sala"
+            active={zoneKind === ZONE_KINDS.ROOM}
+            onClick={() => onZoneKindChange(ZONE_KINDS.ROOM)}
         />
     </>
 );

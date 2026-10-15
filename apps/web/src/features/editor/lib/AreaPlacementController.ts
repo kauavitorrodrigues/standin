@@ -6,9 +6,11 @@ import type {
     ToolController,
 } from "@/features/editor/types/ToolController";
 import type { ToolEnv } from "@/features/editor/types/ToolEnv";
+import { createRoomKey } from "@/features/editor/utils/createRoomKey";
 import { createTempId } from "@/features/editor/utils/createTempId";
 import { describeAreaPlacementIssues } from "@/features/editor/utils/describeAreaPlacementIssues";
 import { describeAreaPlacementReason } from "@/features/editor/utils/describeAreaPlacementReason";
+import { getLayoutZoneKeys } from "@/features/editor/utils/getLayoutZoneKeys";
 
 const PRIMARY_BUTTON = 0;
 
@@ -77,7 +79,12 @@ export class AreaPlacementController implements ToolController {
             placing.stamp,
             tileX,
             tileY,
-            createTempId
+            createTempId,
+            undefined,
+            () =>
+                createRoomKey({
+                    taken: getLayoutZoneKeys(context.model.layout),
+                })
         );
         if (!built.ok) {
             context.setHint(describeAreaPlacementIssues(built.errors));

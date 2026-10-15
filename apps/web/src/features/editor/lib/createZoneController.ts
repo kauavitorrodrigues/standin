@@ -3,6 +3,9 @@ import { EDITOR_EVENTS } from "@/features/editor/consts/events";
 import { ZONE_MESSAGES } from "@/features/editor/consts/messages";
 import { ZONE_KINDS } from "@/features/editor/consts/zone-kinds";
 import { ZonePreview } from "@/features/editor/lib/ZonePreview";
+import { buildNamedZone } from "@/features/editor/utils/buildNamedZone";
+import { getLayoutZoneKeys } from "@/features/editor/utils/getLayoutZoneKeys";
+import { getTooSmallHint } from "@/features/editor/utils/getTooSmallHint";
 import { getZoneAnchor } from "@/features/editor/utils/getZoneAnchor";
 import { getZoneRect } from "@/features/editor/utils/getZoneRect";
 import { isAreaBigEnough } from "@/features/editor/utils/isAreaBigEnough";
@@ -17,11 +20,19 @@ import type { ToolEnv } from "@/features/editor/types/ToolEnv";
 
 type Drag = { kind: ZoneKind; start: Cell };
 
-type Pending = { rect: ZoneRect; dispatch: ToolContext["dispatch"] };
+type Pending = {
+    kind: ZoneKind;
+    rect: ZoneRect;
+    // The keys the map had when the name was asked, so a new room gets a
+    // key of its own.
+    takenKeys: readonly string[];
+    dispatch: ToolContext["dispatch"];
+};
 
-// The zone tool. Spawn: a click makes a 1 x 1 zone. Area: a drag draws the
-// rectangle and, on release, the scene asks React for the name (an event on
-// `game.events`) and waits for the answer. Nothing here selects, moves or
+// The zone tool. Spawn: a click makes a 1 x 1 zone. Area and room: a drag
+// draws the rectangle and, on release, the scene asks React for the name (an
+// event on `game.events`) and waits for the answer. A room gets a key made
+// here, never typed. Nothing here selects, moves or
 // resizes a zone.
 export const createZoneController = (env: ToolEnv): ToolController => {
     const events = env.scene.game.events;
@@ -53,23 +64,32 @@ export const createZoneController = (env: ToolEnv): ToolController => {
         const name = label.trim();
         if (name === "") return;
 
-        const { rect, dispatch } = pending;
+        const { kind, rect, takenKeys, dispatch } = pending;
         stopWaiting();
-        create(dispatch, { kind: ZONE_KINDS.AREA, rect, label: name });
+        create(
+            dispatch,
+            buildNamedZone({ kind, rect, label: name, takenKeys })
+        );
     }
 
     function handleCancelled() {
         stopWaiting();
     }
 
-    const askName = (rect: ZoneRect, dispatch: ToolContext["dispatch"]) => {
-        pending = { rect, dispatch };
-        preview.showArea(rect, true);
+    const askName = (kind: ZoneKind, rect: ZoneRect, context: ToolContext) => {
+        pending = {
+            kind,
+            rect,
+            takenKeys: getLayoutZoneKeys(context.model.layout),
+            dispatch: context.dispatch,
+        };
+        preview.showArea(rect, true, kind);
         events.on(EDITOR_EVENTS.ZONE_NAME_CONFIRMED, handleConfirmed);
         events.on(EDITOR_EVENTS.ZONE_NAME_CANCELLED, handleCancelled);
 
         const camera = env.scene.cameras.main;
         const request: ZoneNameRequest = {
+            kind,
             anchor: getZoneAnchor({
                 rect,
                 worldView: camera.worldView,
@@ -87,14 +107,14 @@ export const createZoneController = (env: ToolEnv): ToolController => {
         preview.hide();
     };
 
-    const finishArea = (start: Cell, context: ToolContext) => {
+    const finishArea = (kind: ZoneKind, start: Cell, context: ToolContext) => {
         const rect = getZoneRect(start, context.cell);
         if (!isAreaBigEnough(rect)) {
             preview.hide();
-            env.setHint(ZONE_MESSAGES.AREA_TOO_SMALL);
+            env.setHint(getTooSmallHint(kind));
             return;
         }
-        askName(rect, context.dispatch);
+        askName(kind, rect, context);
     };
 
     const finishSpawn = (context: ToolContext) => {
@@ -114,7 +134,8 @@ export const createZoneController = (env: ToolEnv): ToolController => {
             drag = { kind: zoneKind, start: cell };
             switch (zoneKind) {
                 case ZONE_KINDS.AREA:
-                    preview.showArea(getZoneRect(cell, cell), false);
+                case ZONE_KINDS.ROOM:
+                    preview.showArea(getZoneRect(cell, cell), false, zoneKind);
                     break;
                 case ZONE_KINDS.SPAWN:
                     preview.showSpawn(cell);
@@ -128,13 +149,14 @@ export const createZoneController = (env: ToolEnv): ToolController => {
                 case ZONE_KINDS.SPAWN:
                     preview.showSpawn(cell);
                     break;
-                case ZONE_KINDS.AREA: {
+                case ZONE_KINDS.AREA:
+                case ZONE_KINDS.ROOM: {
                     if (!drag) {
                         preview.hide();
                         break;
                     }
                     const rect = getZoneRect(drag.start, cell);
-                    preview.showArea(rect, isAreaBigEnough(rect));
+                    preview.showArea(rect, isAreaBigEnough(rect), kind);
                     break;
                 }
             }
@@ -148,7 +170,8 @@ export const createZoneController = (env: ToolEnv): ToolController => {
                     finishSpawn(context);
                     break;
                 case ZONE_KINDS.AREA:
-                    finishArea(current.start, context);
+                case ZONE_KINDS.ROOM:
+                    finishArea(current.kind, current.start, context);
                     break;
             }
         },

@@ -7,4 +7,7 @@ export type PlacementGhostTarget = {
     x: number;
     bottomY: number;
     valid: boolean;
+    // A valid spot that works but is not the ideal one, such as a door whose
+    // family has no rotation for the wall. Drawn amber instead of green.
+    warning?: boolean;
 };

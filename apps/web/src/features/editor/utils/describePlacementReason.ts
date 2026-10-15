@@ -1,8 +1,8 @@
-import type { LayoutIssueCode } from "@standin/contracts";
+import type { PlacementReason } from "@/features/editor/types/PlacementReason";
 import { PLACEMENT_MESSAGES } from "@/features/editor/consts/messages";
 
 // The reason a spot is refused, in words for the footer hint.
-export const describePlacementReason = (code: LayoutIssueCode): string => {
+export const describePlacementReason = (code: PlacementReason): string => {
     switch (code) {
         case "CELL_OUT_OF_BOUNDS":
             return PLACEMENT_MESSAGES.OUT_OF_BOUNDS;
@@ -19,6 +19,12 @@ export const describePlacementReason = (code: LayoutIssueCode): string => {
             return PLACEMENT_MESSAGES.BLOCKED_BY_WALL;
         case "ASSET_NOT_IN_LIBRARY":
             return PLACEMENT_MESSAGES.NOT_IN_LIBRARY;
+        case "DOOR_OUTSIDE_PRIVATE_ZONE":
+            return PLACEMENT_MESSAGES.DOOR_OUTSIDE_ROOM;
+        case "DOOR_AMBIGUOUS_ROOM":
+            return PLACEMENT_MESSAGES.DOOR_AMBIGUOUS_ROOM;
+        case "DOOR_AREA_NOT_ROOM":
+            return PLACEMENT_MESSAGES.DOOR_AREA_NOT_ROOM;
         default:
             return PLACEMENT_MESSAGES.GENERIC;
     }

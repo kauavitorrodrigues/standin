@@ -1,4 +1,5 @@
-import type { EditorOp, LayoutIssueCode } from "@standin/contracts";
+import type { EditorOp } from "@standin/contracts";
+import type { PlacementReason } from "@/features/editor/types/PlacementReason";
 
 // Where a move would land and whether the model accepts it.
 export type MovePlan = {
@@ -9,5 +10,5 @@ export type MovePlan = {
     offsetX: number;
     offsetY: number;
     parentId: string | null;
-    reason: LayoutIssueCode | null;
+    reason: PlacementReason | null;
 };

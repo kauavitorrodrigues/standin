@@ -2,6 +2,7 @@ import { AreaPlacementController } from "@/features/editor/lib/AreaPlacementCont
 import { AreaPlacementGhost } from "@/features/editor/lib/AreaPlacementGhost";
 import { SELECTION_PROVIDERS } from "@/features/editor/consts/selectionProviders";
 import { HoverOutline } from "@/features/editor/lib/HoverOutline";
+import { DoorSlotOverlay } from "@/features/editor/lib/DoorSlotOverlay";
 import { PlacementController } from "@/features/editor/lib/PlacementController";
 import { PlacementGhost } from "@/features/editor/lib/PlacementGhost";
 import { ZoneDragController } from "@/features/editor/lib/ZoneDragController";
@@ -24,7 +25,8 @@ import type { ToolEnv } from "@/features/editor/types/ToolEnv";
 export const createSelectController = (env: ToolEnv): ToolController => {
     const placement = new PlacementController(
         env,
-        new PlacementGhost(env.scene)
+        new PlacementGhost(env.scene),
+        new DoorSlotOverlay(env.scene)
     );
     const areaPlacement = new AreaPlacementController(
         env,

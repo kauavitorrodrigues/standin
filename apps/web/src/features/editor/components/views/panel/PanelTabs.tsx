@@ -8,18 +8,24 @@ import { AreasTabPanel } from "./AreasTabPanel";
 type PanelTabsProps = {
     palette: EditorPalette;
     withAreas: boolean;
+    // Only in the area composer, see ObjectsTab.
+    areaIsRoom?: boolean;
 };
 
 // The lists of the panel, with the palette it is given. The switch between
 // them is in the title bar. The panel does not scroll: each list keeps its
 // search and tabs at the top and scrolls only what is under them.
-export const PanelTabs = ({ palette, withAreas }: PanelTabsProps) => (
+export const PanelTabs = ({
+    palette,
+    withAreas,
+    areaIsRoom,
+}: PanelTabsProps) => (
     <>
         <TabsContent
             value={PANEL_TABS.OBJECTS}
             className="flex min-h-0 flex-col"
         >
-            <ObjectsTab palette={palette} />
+            <ObjectsTab palette={palette} areaIsRoom={areaIsRoom} />
         </TabsContent>
         <TabsContent value={PANEL_TABS.TILES} className="flex min-h-0 flex-col">
             <TilesTab palette={palette} />

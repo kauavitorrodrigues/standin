@@ -1,3 +1,4 @@
+import { DoorSlotOverlay } from "@/features/editor/lib/DoorSlotOverlay";
 import { PlacementController } from "@/features/editor/lib/PlacementController";
 import { PlacementGhost } from "@/features/editor/lib/PlacementGhost";
 import type { ToolController } from "@/features/editor/types/ToolController";
@@ -8,4 +9,8 @@ import type { ToolEnv } from "@/features/editor/types/ToolEnv";
 // registered controller (createSelectController) composes this one with the
 // selection. It does nothing while `placing` is null.
 export const createPlacementController = (env: ToolEnv): ToolController =>
-    new PlacementController(env, new PlacementGhost(env.scene));
+    new PlacementController(
+        env,
+        new PlacementGhost(env.scene),
+        new DoorSlotOverlay(env.scene)
+    );
