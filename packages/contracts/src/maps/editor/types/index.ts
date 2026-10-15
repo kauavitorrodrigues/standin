@@ -31,3 +31,7 @@ export * from "./capture-stamp-options";
 export * from "./capture-stamp-result";
 export * from "./stamp-to-model-result";
 export * from "./can-place-stamp-result";
+export * from "./edit-scope";
+export * from "./edit-actor";
+export * from "./scope-issue";
+export * from "./object-change-summary";

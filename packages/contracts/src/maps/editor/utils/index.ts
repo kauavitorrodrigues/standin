@@ -38,3 +38,6 @@ export * from "./buildZoneMoveOps";
 export * from "./buildZoneRemoveOps";
 export * from "./getAreaRefusal";
 export * from "./findAreaObjects";
+export * from "./assertOpsInScope";
+export * from "./summarizeObjectChanges";
+export * from "./assertDiffInScope";
