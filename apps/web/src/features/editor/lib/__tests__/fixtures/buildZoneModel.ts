@@ -8,21 +8,23 @@ import { buildTileModel } from "@/features/editor/lib/__tests__/fixtures/buildTi
 
 type ZoneSpec = {
     id: number;
-    kind: "spawn" | "area";
+    kind: "spawn" | "area" | "private";
     x: number;
     y: number;
     w: number;
     h: number;
     label?: string;
+    key?: string;
 };
 
-const toZone = ({ kind, x, y, w, h, label }: ZoneSpec): Zone => ({
+const toZone = ({ kind, x, y, w, h, label, key }: ZoneSpec): Zone => ({
     kind,
     x: x * TILE_SIZE,
     y: y * TILE_SIZE,
     width: w * TILE_SIZE,
     height: h * TILE_SIZE,
     label,
+    key,
 });
 
 // A square map (tile layers empty) with a zones group holding these zones,

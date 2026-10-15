@@ -3,7 +3,8 @@ import { MapPinIcon } from "lucide-react";
 import { SwitchCardField } from "@/components/fields/SwitchCardField";
 import type { AreaComposerFormValues } from "../../types/areaComposerForm";
 
-// Whether placing the area also creates a zone of the area, named after it.
+// Whether placing the area also creates a zone, named after the area. The kind
+// of the zone is chosen beside the name (see AreaNameRow).
 export const AreaZoneBox = () => {
     const { control } = useFormContext<AreaComposerFormValues>();
 

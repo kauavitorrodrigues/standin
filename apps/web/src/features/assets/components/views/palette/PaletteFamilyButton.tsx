@@ -14,6 +14,9 @@ type Props = {
     selected?: boolean;
     // The name under the picture. Off, it stays for screen readers only.
     showName?: boolean;
+    // Why the family cannot be picked. Given, the button is disabled and the
+    // reason shows as its tooltip.
+    disabledReason?: string | null;
 };
 
 const FamilyName = ({ name, visible }: { name: string; visible: boolean }) => {
@@ -34,14 +37,16 @@ export function PaletteFamilyButton({
     onPick,
     selected = false,
     showName = true,
+    disabledReason = null,
 }: Props) {
     return (
         <button
             type="button"
-            title={asset.name}
+            title={disabledReason ?? asset.name}
+            disabled={disabledReason !== null}
             aria-pressed={selected}
             onClick={() => onPick(asset)}
-            className="group flex w-full flex-col items-center gap-1 text-xs outline-none"
+            className="group flex w-full disabled:cursor-not-allowed disabled:opacity-50 flex-col items-center gap-1 text-xs outline-none"
         >
             <div
                 className={cn(

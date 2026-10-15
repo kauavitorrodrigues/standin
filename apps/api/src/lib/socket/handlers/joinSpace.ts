@@ -1,7 +1,10 @@
 import type { Server, Socket } from "socket.io";
-import { SpaceEvents, SpaceJoinSchema } from "@standin/contracts";
+import { RoomEvents, SpaceEvents, SpaceJoinSchema } from "@standin/contracts";
 import { buildSpaceRoom } from "../utils/buildSpaceRoom";
+import { RoomStates } from "../utils/roomStates";
 import { canJoinSpace } from "../services/canJoinSpace";
+import { isSpaceOwner } from "../services/isSpaceOwner";
+import { applyJoinEffects, sendEntitlements } from "../utils/applyJoinEffects";
 
 // No avatar customization feature exists yet, so every peer resolves to a
 // null avatarConfig until one does. See AvatarConfig in @standin/contracts.
@@ -60,6 +63,8 @@ export function registerJoinSpace(io: Server, socket: Socket) {
             const allowed = await canJoinSpace(userId, organizationId, spaceId);
             if (!allowed) return;
 
+            const owner = await isSpaceOwner(userId, organizationId);
+
             const previousSpaceId = socket.data.spaceId;
             if (previousSpaceId) {
                 const previousRoom = buildSpaceRoom(previousSpaceId);
@@ -68,6 +73,14 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                     userId,
                 });
                 await socket.leave(previousRoom);
+                const { changes, effects } = RoomStates.removeSocket(
+                    previousSpaceId,
+                    socket.id
+                );
+                changes.forEach((change) => {
+                    socket.to(previousRoom).emit(RoomEvents.ROOM_STATE, change);
+                });
+                applyJoinEffects(() => io.sockets.sockets, previousSpaceId, effects);
             }
 
             const room = buildSpaceRoom(spaceId);
@@ -89,6 +102,11 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                 userId,
                 avatarConfig: null,
             });
+            socket.emit(RoomEvents.ROOM_STATES, {
+                rooms: RoomStates.listNotOpen(spaceId),
+            });
+            if (owner) RoomStates.setOwner(spaceId, socket.id);
+            sendEntitlements(new Map([[socket.id, socket]]), spaceId, userId);
         } catch (error) {
             console.error(error);
         }

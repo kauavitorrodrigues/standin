@@ -6,21 +6,14 @@ export type ChatNotifyMode = (typeof CHAT_NOTIFY_MODE_IDS)[number];
 export const CHAT_SOUND_MODE_IDS = ["all", "direct", "never"] as const;
 export type ChatSoundMode = (typeof CHAT_SOUND_MODE_IDS)[number];
 
-// Whether someone coming into range while the tab is in the background is
-// announced.
-export const NEARBY_NOTIFY_MODE_IDS = ["all", "none"] as const;
-export type NearbyNotifyMode = (typeof NEARBY_NOTIFY_MODE_IDS)[number];
-
 export type NotificationSettings = {
     chatNotify: ChatNotifyMode;
     chatSound: ChatSoundMode;
-    nearbyNotify: NearbyNotifyMode;
 };
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
     chatNotify: "direct",
     chatSound: "direct",
-    nearbyNotify: "all",
 };
 
 export const NOTIFICATION_SETTINGS_STORAGE_KEY = "notification_settings";

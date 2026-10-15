@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import type { AreaComposerFormValues } from "../../types/areaComposerForm";
 import { AreaComposerSchema } from "../../utils/areaComposerSchema";
-import { AreaNameField } from "../forms/AreaNameField";
+import { AreaNameRow } from "../forms/AreaNameRow";
 import { AreaZoneBox } from "../forms/AreaZoneBox";
 import { AreaCreateIllustration } from "../views/AreaCreateIllustration";
 import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
@@ -22,7 +22,7 @@ export const AreaCreateStep = ({ onContinue }: Props) => {
     const { paths } = useLibraryScope();
     const form = useForm<AreaComposerFormValues>({
         resolver: zodResolver(AreaComposerSchema),
-        defaultValues: { name: "", createZone: true },
+        defaultValues: { name: "", createZone: true, zoneKind: "area" },
     });
 
     return (
@@ -58,7 +58,7 @@ export const AreaCreateStep = ({ onContinue }: Props) => {
                         </div>
 
                         <div className="flex w-full flex-col gap-4">
-                            <AreaNameField />
+                            <AreaNameRow />
                             <AreaZoneBox />
                         </div>
 

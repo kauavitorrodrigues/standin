@@ -14,6 +14,7 @@ import { getAssetCrop } from "../utils/getCrop";
 import { getSpriteSize } from "../utils/getSpriteSize";
 import { validateCreateAsset } from "../utils/validateCreate";
 import { validateUploadFile } from "../utils/validateUploadFile";
+import { useAssetTypePreset } from "./useAssetTypePreset";
 import { useAutoColor } from "./useAutoColor";
 import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
@@ -29,6 +30,7 @@ export const useCreateAssetForm = () => {
         defaultValues: CREATE_ASSET_DEFAULT_VALUES,
     });
     useAutoColor(form);
+    useAssetTypePreset(form);
 
     const [file] = useWatch({ control: form.control, name: "image" });
 

@@ -34,9 +34,15 @@ const table = {
     placement: "GROUND",
     footprint: { w: 2, h: 1, offsetX: 0 },
 } as AssetDefinition;
+const door = {
+    id: "door",
+    type: "DOOR",
+    placement: "GROUND",
+    footprint: { w: 1, h: 2, offsetX: 0 },
+} as AssetDefinition;
 const library = {
     tilesets: [],
-    assets: [table],
+    assets: [table, door],
     categories: [],
     areas: [],
 } as LibraryPalette;
@@ -50,6 +56,12 @@ const placeTable = (tileX: number, tileY: number) => ({
     offsetX: 0,
     offsetY: 0,
     parentId: null,
+});
+
+const placeDoor = (tileX: number, tileY: number) => ({
+    ...placeTable(tileX, tileY),
+    tempId: `door-${tileX}-${tileY}`,
+    assetId: "door",
 });
 
 type Saving = ReturnType<typeof useComposerSave>;
@@ -72,6 +84,7 @@ const setup = (areaId?: string, values?: Partial<AreaComposerFormValues>) => {
             defaultValues: {
                 name: "Sala de reunião",
                 createZone: true,
+                zoneKind: "area",
                 ...values,
             },
         });
@@ -185,6 +198,42 @@ describe("useComposerSave", () => {
         expect(saveArea.mock.calls[0][0].data.stamp.zone).toEqual({
             label: "Sala de reunião",
         });
+    });
+
+    it("sends the kind of a room", async () => {
+        const { draftStore } = setup(undefined, { zoneKind: "private" });
+        draftStore.dispatchGesture([placeTable(2, 2)]);
+        await act(async () => {
+            await current.save();
+        });
+        expect(saveArea.mock.calls[0][0].data.stamp.zone).toEqual({
+            label: "Sala de reunião",
+            kind: "private",
+        });
+    });
+
+    it("saves a room with a door on the border of the frame", async () => {
+        const { draftStore } = setup(undefined, { zoneKind: "private" });
+        draftStore.dispatchGesture([placeTable(2, 2), placeDoor(3, 7)]);
+        await act(async () => {
+            await current.save();
+        });
+
+        expect(current.issues).toEqual([]);
+        expect(saveArea).toHaveBeenCalledTimes(1);
+    });
+
+    it("refuses a door in an area that is not a room", async () => {
+        const { draftStore } = setup();
+        draftStore.dispatchGesture([placeTable(2, 2), placeDoor(3, 7)]);
+        await act(async () => {
+            await current.save();
+        });
+
+        expect(current.issues.map((issue) => issue.code)).toEqual([
+            "STAMP_DOOR_NEEDS_ROOM",
+        ]);
+        expect(saveArea).not.toHaveBeenCalled();
     });
 
     it("drops the zone when the box is off", async () => {

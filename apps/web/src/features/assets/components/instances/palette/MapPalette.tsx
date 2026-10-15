@@ -19,6 +19,8 @@ type Props = {
     hideTilesTab?: boolean;
     // The text of the search box.
     searchPlaceholder?: string;
+    // Why a family cannot be picked, or null when it can.
+    getDisabledReason?: (asset: AssetDefinition) => string | null;
     look?: PaletteLook;
 };
 
@@ -35,6 +37,7 @@ export function MapPalette({
     selectedId,
     hideTilesTab = false,
     searchPlaceholder = "Buscar peça",
+    getDisabledReason,
     look = PALETTE_LOOKS.EDITOR,
 }: Props) {
     const { register, control } = useForm<SearchValues>({
@@ -58,6 +61,7 @@ export function MapPalette({
                 onPick={onPick}
                 selectedId={selectedId}
                 hideTilesTab={hideTilesTab}
+                getDisabledReason={getDisabledReason}
                 look={look}
             />
         </div>

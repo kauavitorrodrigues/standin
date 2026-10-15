@@ -57,7 +57,7 @@ export const TILE_HINTS = {
 // Hints and failures of the zone tool.
 export const ZONE_MESSAGES = {
     AREA_TOO_SMALL: `A área precisa ter pelo menos ${ZONE_AREA_MIN_TILES} x ${ZONE_AREA_MIN_TILES} células`,
-    NAME_REQUIRED: "Dê um nome à área",
+    NAME_REQUIRED: "Dê um nome",
     CREATE_FAILED: "Não foi possível criar a zona",
     EDIT_FAILED: "Não foi possível alterar a zona",
     REMOVE_FAILED: "Não foi possível apagar a zona",
@@ -65,6 +65,11 @@ export const ZONE_MESSAGES = {
     DROP_READY: "Solte para aplicar",
     AREA_HAS_CLAIMED_DESKS:
         "Esta área tem mesas com dono. Libere as mesas antes de apagar a área",
+    ROOM_AREA_TOO_SMALL: `A sala precisa ter pelo menos ${ZONE_AREA_MIN_TILES} x ${ZONE_AREA_MIN_TILES} células`,
+    ROOM_HAS_DOORS:
+        "Esta sala tem portas. Remova as portas antes de apagar a sala",
+    ROOM_DOORS_LEFT_OUT:
+        "Esta sala tem portas que ficariam fora da borda. Mova as portas antes de mover ou redimensionar a sala",
 } as const;
 
 // What the footer hint says while an object is being placed: the reason a
@@ -79,6 +84,29 @@ export const PLACEMENT_MESSAGES = {
     BLOCKED_BY_WALL: "Há uma parede neste lugar",
     NOT_IN_LIBRARY: "Este objeto não está disponível neste mapa",
     GENERIC: "Não é possível colocar aqui",
+    DOOR_OUTSIDE_ROOM: "A porta só pode ser colocada na borda de uma sala",
+    DOOR_AMBIGUOUS_ROOM: "Esta porta ficaria entre duas salas",
+    DOOR_AREA_NOT_ROOM:
+        "Esta área não é uma sala. Escolha Sala nas propriedades para usar portas",
+    DOOR_NO_SLOT: "Não há vão para a porta aqui",
+    DOOR_NEEDS_ROOM:
+        "Para colocar uma porta, crie uma sala primeiro: ferramenta de zona, opção Sala.",
+} as const;
+
+// The palette and the zone rules around doors.
+export const DOOR_MESSAGES = {
+    AREA_NOT_ROOM: "Escolha Sala nas propriedades da área para usar portas",
+} as const;
+
+// The room panel, shown when a room is selected. The warnings sit beside the
+// door controls.
+export const ROOM_PANEL_MESSAGES = {
+    NO_DOOR: "Esta sala não tem porta",
+    NO_SLOT: "Não há vão na parede onde a porta caiba",
+    NOT_EXACT: "A porta pode não combinar com a parede (falta a rotação)",
+    NO_DOOR_ASSET: "Cadastre uma porta na biblioteca (tipo Porta).",
+    ADD_FAILED: "Não foi possível colocar a porta",
+    REMOVE_FAILED: "Não foi possível remover a porta",
 } as const;
 
 // Hints and failures of the select tool and of the eraser on objects.

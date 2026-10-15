@@ -8,6 +8,10 @@ vi.mock("../../services/canJoinSpace", () => ({
     canJoinSpace: canJoinSpaceMock,
 }));
 
+vi.mock("../../services/isSpaceOwner", () => ({
+    isSpaceOwner: vi.fn().mockResolvedValue(false),
+}));
+
 import { registerJoinSpace } from "../joinSpace";
 
 function createFakeSocket(id: string, userId: string) {

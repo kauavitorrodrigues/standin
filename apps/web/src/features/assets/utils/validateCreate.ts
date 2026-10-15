@@ -1,4 +1,5 @@
 import {
+    ASSET_TYPES,
     isFootprintMaskFitting,
     isFootprintSolidMaskFitting,
     MIN_ANIMATION_FRAME_COUNT,
@@ -20,6 +21,26 @@ import { validateColorPair } from "./validateColorPair";
 type Errors = Partial<Record<keyof CreateAssetFormValues, string>>;
 
 const REQUIRED = "Campo obrigatório.";
+
+// What a door needs on top of the rest: its closed and open frames, a strip
+// that divides evenly into them and a footprint at least one tile wide.
+const validateDoor = (
+    values: CreateAssetFormValues,
+    imageSize: ImageSize | undefined
+): Errors => {
+    if (values.type !== ASSET_TYPES.DOOR) return {};
+    const errors: Errors = {};
+    const frames = values.frameCount ?? 0;
+    if (!values.isAnimated || frames < MIN_ANIMATION_FRAME_COUNT) {
+        errors.frameCount = ASSET_VALIDATION_MESSAGES.DOOR_MIN_FRAMES;
+    } else if (imageSize && imageSize.w % frames !== 0) {
+        errors.frameCount = ASSET_VALIDATION_MESSAGES.DOOR_FRAMES_DIVIDE;
+    }
+    if (!values.footprintW || values.footprintW < 1) {
+        errors.footprintW = ASSET_VALIDATION_MESSAGES.DOOR_FOOTPRINT_WIDTH;
+    }
+    return errors;
+};
 
 // Only what saves a round trip. The API decides the rest.
 export const validateCreateAsset = (
@@ -84,6 +105,8 @@ export const validateCreateAsset = (
             errors.frameDurationMs = REQUIRED;
         }
     }
+
+    Object.assign(errors, validateDoor(values, imageSize));
 
     if (!imageSize || errors.frameCount) return errors;
 

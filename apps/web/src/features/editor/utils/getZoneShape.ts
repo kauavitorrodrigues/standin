@@ -21,7 +21,8 @@ const getOutline = (zone: Zone) => {
 
 /**
  * What to draw for a zone, in pixels: a point for a spawn (the center of its
- * rectangle) and an outline for every other kind, with the text of its label,
+ * rectangle) and an outline for every other kind (a room is told apart from
+ * an area so it gets its own color), with the text of its label,
  * or of its name when it has none.
  */
 export const getZoneShape = (zone: Zone): ZoneShape => {
@@ -33,8 +34,10 @@ export const getZoneShape = (zone: Zone): ZoneShape => {
         };
     }
 
+    const kind = zone.kind === LAYOUT_ZONE_KINDS.PRIVATE ? "room" : "area";
+
     return {
-        kind: "area",
+        kind,
         outline: getOutline(zone),
         labelX: zone.x,
         labelY: zone.y,

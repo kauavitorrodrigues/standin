@@ -5,6 +5,7 @@ export const EDITOR_ZONES = {
     OUTLINE_ALPHA: 0.9,
     FILL_ALPHA: 0.08,
     AREA_COLOR: 0xffffff,
+    ROOM_COLOR: 0xf59e0b,
     SPAWN_COLOR: 0xffffff,
     SPAWN_RADIUS: 8,
     SPAWN_STROKE_COLOR: 0x000000,

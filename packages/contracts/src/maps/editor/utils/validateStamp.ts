@@ -9,6 +9,7 @@ import { StampSchema } from "../schemas/stamp.schema";
 import type { Stamp } from "../types/stamp";
 import { buildBlankEditorModel } from "./buildBlankEditorModel";
 import { buildStampOps } from "./buildStampOps";
+import { findStampDoorIssues } from "./stamp/findStampDoorIssues";
 import { findUnavailableStampItems } from "./stamp/findUnavailableStampItems";
 import { stampSchemaIssueCode } from "./stamp/stampSchemaIssueCode";
 
@@ -20,7 +21,7 @@ const isEmpty = (stamp: Stamp): boolean =>
 
 /**
  * Every problem of a stamp: its structure (StampSchema), then the items the
- * library does not list, then the placement rules, by laying the stamp on a
+ * library does not list, then the doors, then the placement rules, by laying the stamp on a
  * blank model of its own size. An empty list means the stamp is valid.
  */
 export const validateStamp = (
@@ -45,6 +46,9 @@ export const validateStamp = (
 
     const unavailable = findUnavailableStampItems(value, library);
     if (unavailable.length > 0) return unavailable;
+
+    const doorIssues = findStampDoorIssues(value, library);
+    if (doorIssues.length > 0) return doorIssues;
 
     const blank = buildBlankEditorModel({
         width: value.width,

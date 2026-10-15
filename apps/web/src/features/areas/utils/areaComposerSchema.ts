@@ -9,4 +9,6 @@ export const AreaComposerSchema = z.object({
         .min(1, { error: Messages.NAME_REQUIRED })
         .max(AREA_NAME_MAX, { error: Messages.NAME_TOO_LONG }),
     createZone: z.boolean(),
+    // The kind of the zone: a plain area zone or a room, where doors work.
+    zoneKind: z.enum(["area", "private"]),
 });

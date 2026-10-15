@@ -1,4 +1,19 @@
 import type { RemotePlayer } from "./player";
+import type {
+    RoomEntitlementsPayload,
+    RoomJoinAnswerPayload,
+    RoomJoinCancelledPayload,
+    RoomJoinDecisionPayload,
+    RoomJoinRequestPayload,
+    RoomJoinRequestedPayload,
+    RoomCrossedPayload,
+    RoomLockPayload,
+    RoomOpenPayload,
+    RoomPresentPayload,
+    RoomStatePayload,
+    RoomStatesPayload,
+    RoomUnlockPayload,
+} from "./room";
 import type { MapServerEvents } from "../../maps/types/events";
 import type {
     MapJoinSchema,
@@ -60,6 +75,17 @@ export type WebrtcSignalOutput = {
 export type ClientToServerEvents = {
     "space:join": (payload: SpaceJoinPayload) => void;
     "webrtc:signal": (payload: WebrtcSignalInput) => void;
+    // An avatar went across the threshold of a room, or stepped on the cell of
+    // a closed door. The server decides the state, the client only proposes.
+    "room:crossed": (payload: RoomCrossedPayload) => void;
+    "room:open": (payload: RoomOpenPayload) => void;
+    // The avatar spawned or reloaded inside the room. Changes no door state.
+    "room:present": (payload: RoomPresentPayload) => void;
+    // Only an avatar that is inside the room can lock or unlock it.
+    "room:lock": (payload: RoomLockPayload) => void;
+    "room:unlock": (payload: RoomUnlockPayload) => void;
+    "room:join-request": (payload: RoomJoinRequestPayload) => void;
+    "room:join-answer": (payload: RoomJoinAnswerPayload) => void;
     // Joins the room of a template map, the only map without a space room.
     "map:join": (payload: MapJoinPayload) => void;
     "editor:acquire": (
@@ -86,6 +112,12 @@ export type ServerToClientEvents = {
     // server-initiated disconnect, so no rejoin loop follows.
     "space:duplicate-session": () => void;
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
+    "room:state": (payload: RoomStatePayload) => void;
+    "room:states": (payload: RoomStatesPayload) => void;
+    "room:join-requested": (payload: RoomJoinRequestedPayload) => void;
+    "room:join-cancelled": (payload: RoomJoinCancelledPayload) => void;
+    "room:join-decision": (payload: RoomJoinDecisionPayload) => void;
+    "room:entitlements": (payload: RoomEntitlementsPayload) => void;
     "chat:unread-changed": (payload: ChatUnreadChangedPayload) => void;
     "chat:message-seen": (payload: ChatMessageSeenPayload) => void;
     // Sent to the editing session that lost its lock (expired, or taken over

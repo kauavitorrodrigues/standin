@@ -44,6 +44,10 @@ export const LAYOUT_ISSUE_MESSAGES = {
     zoneKeyDuplicated: "A zone with this key already exists on the map.",
     zonePolygonInvalid: "The zone polygon needs at least 3 points.",
     zoneRotated: "The zone cannot be rotated.",
+    doorOutsidePrivateZone:
+        "A door must be placed on the border of a private area.",
+    doorBetweenRooms:
+        "A door cannot be on the border of two private areas at once.",
     tooManyZones: `The map cannot have more than ${MAX_ZONES_PER_MAP} zones.`,
     spawnMissing: "The map needs at least one spawn point.",
     spawnTooClose: `There are spawn points less than ${SPAWN_MIN_DISTANCE_TILES} tiles apart.`,
@@ -100,6 +104,10 @@ export const LAYOUT_ISSUE_MESSAGES = {
         "The area uses a tileset that is not available for this map.",
     stampAssetUnavailable:
         "The area uses an asset that is not available for this map.",
+    stampDoorNeedsRoom:
+        "An area with a door must be a room. Make the area zone a room.",
+    stampDoorOutsideRoom:
+        "A door of the area must stand on the border of the area.",
     areaNameInvalid: `The area name must have 1 to ${AREA_NAME_MAX} characters.`,
     invalidPng: (key: string) => `The image "${key}" is not a valid PNG.`,
     gridMismatch: (key: string) =>

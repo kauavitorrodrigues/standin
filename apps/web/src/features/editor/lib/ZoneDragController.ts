@@ -22,16 +22,19 @@ import { getZoneDragRect } from "@/features/editor/utils/getZoneDragRect";
 import { getZoneTileRect } from "@/features/editor/utils/getZoneTileRect";
 import { hitTestZoneHandle } from "@/features/editor/utils/hitTestZoneHandle";
 import { isSameZoneRect } from "@/features/editor/utils/isSameZoneRect";
+import { leavesRoomDoorless } from "@/features/editor/utils/leavesRoomDoorless";
 import { parseZoneSelectionId } from "@/features/editor/utils/parseZoneSelectionId";
 
-// Moving a zone by its body and resizing an area by a handle, for the select
-// tool. Both show a preview while the pointer drags (imperative, in Phaser)
+// Moving a zone by its body and resizing an area or a room by a handle, for
+// the select tool. Both show a preview while the pointer drags (imperative, in Phaser)
 // and, on release, send ONE gesture with a set_zone that carries the id of the
 // zone. Moving an area carries everything inside it: a picture of the area
 // follows the pointer and the release moves its tiles and objects in the same
 // gesture. A release where the zone started changes nothing. The rectangle is
 // kept inside the map and an area never goes below the minimum, so a drag
-// past the limit stops at it.
+// past the limit stops at it. A room moves and resizes alone, with no tiles
+// or objects carried. A room with doors is refused a move or a resize that
+// would leave a door without its room.
 export class ZoneDragController {
     private readonly env: ToolEnv;
     private readonly preview: ZonePreview;
@@ -61,7 +64,7 @@ export class ZoneDragController {
         if (zoneId === null) return false;
 
         const zone = findEditableZone(context.model.layout, zoneId);
-        if (!zone || zone.kind !== ZONE_KINDS.AREA) return false;
+        if (!zone || zone.kind === ZONE_KINDS.SPAWN) return false;
 
         const rect = getZoneTileRect(zone);
         const handle = hitTestZoneHandle({
@@ -150,10 +153,19 @@ export class ZoneDragController {
         rect: ZoneRect,
         context: ToolContext
     ): { ok: true; ops: EditorOp[] } | { ok: false; reason: string } {
+        if (
+            leavesRoomDoorless({ model: context.model, zone: drag.zone, rect })
+        ) {
+            return { ok: false, reason: ZONE_MESSAGES.ROOM_DOORS_LEFT_OUT };
+        }
+
         const zoneOp = buildZoneSetOp({ zone: drag.zone, rect });
 
         switch (drag.mode) {
             case "resize": {
+                if (drag.zone.kind === ZONE_KINDS.ROOM) {
+                    return { ok: true, ops: [zoneOp] };
+                }
                 const refusal = getAreaRefusal(context.model, rect, {
                     zoneId: drag.zone.id ?? -1,
                     except: drag.rect,
@@ -206,6 +218,9 @@ export class ZoneDragController {
         switch (drag.zone.kind) {
             case ZONE_KINDS.SPAWN:
                 this.preview.showSpawn([rect.x, rect.y]);
+                break;
+            case ZONE_KINDS.ROOM:
+                this.preview.showArea(rect, true, ZONE_KINDS.ROOM);
                 break;
             default:
                 this.preview.showArea(rect, true);

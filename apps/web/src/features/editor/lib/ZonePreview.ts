@@ -2,9 +2,20 @@ import type Phaser from "phaser";
 import { TILE_SIZE, type Cell } from "@standin/contracts";
 import { EDITOR_ZONE_PREVIEW } from "@/features/editor/consts/zone-preview";
 import { EDITOR_ZONES } from "@/features/editor/consts/zones";
+import { ZONE_KINDS } from "@/features/editor/consts/zone-kinds";
+import type { ZoneKind } from "@/features/editor/types/zone-kind";
 import type { ZoneRect } from "@/features/editor/types/zone-rect";
 
 const HALF = 2;
+
+const getZoneColor = (kind: ZoneKind): number => {
+    switch (kind) {
+        case ZONE_KINDS.ROOM:
+            return EDITOR_ZONES.ROOM_COLOR;
+        default:
+            return EDITOR_ZONES.AREA_COLOR;
+    }
+};
 
 // What the zone tool shows while it works: a ghost marker where a spawn would
 // go, and the rectangle being dragged for an area. It lives on the Phaser side
@@ -32,10 +43,15 @@ export class ZonePreview {
         this.graphics.setVisible(true);
     }
 
-    // `valid` false draws it in red: the area is too small to be created.
-    showArea(rect: ZoneRect, valid: boolean): void {
+    // `valid` false draws it in red: the area is too small to be created. A
+    // room is drawn in its own color.
+    showArea(
+        rect: ZoneRect,
+        valid: boolean,
+        kind: ZoneKind = ZONE_KINDS.AREA
+    ): void {
         const color = valid
-            ? EDITOR_ZONES.AREA_COLOR
+            ? getZoneColor(kind)
             : EDITOR_ZONE_PREVIEW.INVALID_COLOR;
         const x = rect.x * TILE_SIZE;
         const y = rect.y * TILE_SIZE;

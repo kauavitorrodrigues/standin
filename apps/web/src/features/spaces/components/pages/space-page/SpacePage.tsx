@@ -8,6 +8,11 @@ import { usePeerChatContextValues } from "@/features/chat/hooks/usePeerChatConte
 import { SpaceUnavailable } from "@/features/spaces/components/pages/space-page/Unavailable";
 import { GameCanvas } from "@/features/game/components/GameCanvas";
 import { GameControls } from "@/features/game/components/GameControls";
+import { RoomHeader } from "@/features/game/components/RoomHeader";
+import { LockedDoorDialog } from "@/features/game/components/dialogs/LockedDoorDialog";
+import { RoomJoinRequests } from "@/features/game/components/RoomJoinRequests";
+import { useLockedDoorPrompt } from "@/features/game/multiplayer/hooks/useLockedDoorPrompt";
+import { useCurrentRoom } from "@/features/game/multiplayer/hooks/useCurrentRoom";
 import { SpacePageRoot } from "@/features/spaces/components/pages/space-page/Root";
 import { SpacePageLayout as LayoutPrimitive } from "@/features/spaces/components/pages/space-page/layout";
 import { SpaceSidebar } from "@/features/spaces/components/pages/space-page/sidebar";
@@ -27,7 +32,6 @@ import {
     StageViewToggle,
     VideoStage,
 } from "@/features/spaces/components/pages/space-page/stage";
-import { useNearbyNotifications } from "@/features/notifications/hooks/useNearbyNotifications";
 import { OrganizationsQueries } from "@/features/organizations/queries";
 import { buildNameLookup } from "@/features/spaces/utils/buildStageTiles";
 import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
@@ -96,14 +100,14 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
             ...peerChatHandlers,
         });
 
+    const currentRoom = useCurrentRoom(handle?.game ?? null);
+    const lockedDoor = useLockedDoorPrompt(handle?.game ?? null, currentRoom);
+
     const stageTiles = useStageTiles({ video, selfUserId: user.id });
 
     const { members } = OrganizationsQueries.useMembers();
     const names = buildNameLookup(members);
-    useNearbyNotifications({
-        nearbyUserIds: video.nearbyUserIds,
-        getName: (userId) => names.get(userId) ?? "Alguém",
-    });
+    const avatars = new Map(members.map((m) => [m.id, m.avatarUrl]));
 
     const {
         isGridOpen,
@@ -163,6 +167,19 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                 <LayoutPrimitive.Content style={layout.contentStyle}>
                     <GameCanvas ref={containerRef} />
                     <GameControls handle={handle} />
+                    <RoomHeader
+                        roomLabel={currentRoom.roomLabel}
+                        state={currentRoom.state}
+                        onLock={currentRoom.onLock}
+                        onUnlock={currentRoom.onUnlock}
+                    />
+                    <RoomJoinRequests
+                        requests={currentRoom.pendingRequests}
+                        names={names}
+                        avatars={avatars}
+                        onAnswer={currentRoom.onAnswer}
+                    />
+                    <LockedDoorDialog {...lockedDoor} />
                     <DeskHoverCard
                         handle={handle}
                         spaceId={space.id}

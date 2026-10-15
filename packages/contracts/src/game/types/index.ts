@@ -3,3 +3,4 @@ export * from "./socket";
 export * from "./events";
 export * from "./peer-message";
 export * from "./ice";
+export * from "./room";

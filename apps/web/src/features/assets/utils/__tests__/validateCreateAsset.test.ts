@@ -91,3 +91,45 @@ describe("validateCreateAsset", () => {
         ]);
     });
 });
+
+describe("validateCreateAsset for a door", () => {
+    const door = (overrides = {}) =>
+        createValues({
+            type: "DOOR",
+            category: "",
+            isAnimated: true,
+            frameCount: 4,
+            frameDurationMs: 80,
+            loopForever: false,
+            repeatCount: 0,
+            ...overrides,
+        });
+
+    it("accepts a strip that divides into its frames", () => {
+        expect(validateCreateAsset(door(), { w: 128, h: 32 })).toEqual({});
+    });
+
+    it("needs at least 2 frames", () => {
+        const errors = validateCreateAsset(door({ frameCount: 1 }), {
+            w: 32,
+            h: 32,
+        });
+        expect(errors.frameCount).toContain("2 frames");
+    });
+
+    it("needs the width to divide evenly by the frames", () => {
+        const errors = validateCreateAsset(door({ frameCount: 3 }), {
+            w: 128,
+            h: 32,
+        });
+        expect(errors.frameCount).toContain("dividir");
+    });
+
+    it("needs a footprint at least one tile wide", () => {
+        const errors = validateCreateAsset(door({ footprintW: 0 }), {
+            w: 128,
+            h: 32,
+        });
+        expect(errors.footprintW).toContain("1 tile");
+    });
+});

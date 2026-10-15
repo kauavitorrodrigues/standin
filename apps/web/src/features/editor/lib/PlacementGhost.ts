@@ -42,7 +42,7 @@ export class PlacementGhost implements PlacementGhostView {
 
         display.object.setPosition(target.x, target.bottomY);
         display.object.setVisible(true);
-        this.paint(display, target.valid);
+        this.paint(display, target.valid, target.warning === true);
         this.paintOccupiedCells(target);
     }
 
@@ -76,9 +76,10 @@ export class PlacementGhost implements PlacementGhostView {
             this.scene.add.graphics().setDepth(PLACEMENT_GHOST.DEPTH + 0.5);
         this.cells = cells;
 
-        const color = target.valid
-            ? PLACEMENT_GHOST.VALID_PLACEHOLDER_COLOR
-            : PLACEMENT_GHOST.INVALID_PLACEHOLDER_COLOR;
+        const color = this.getPlaceholderColor(
+            target.valid,
+            target.warning === true
+        );
         const left = target.x + offsetX * TILE_SIZE;
         cells.clear();
         cells.fillStyle(color, PLACEMENT_GHOST.PLACEHOLDER_FILL_ALPHA);
@@ -133,21 +134,42 @@ export class PlacementGhost implements PlacementGhostView {
         this.requestTexture(asset);
     }
 
-    private paint(display: GhostDisplay, valid: boolean): void {
+    private getPlaceholderColor(valid: boolean, warning: boolean): number {
+        if (!valid) return PLACEMENT_GHOST.INVALID_PLACEHOLDER_COLOR;
+        if (warning) return PLACEMENT_GHOST.WARNING_PLACEHOLDER_COLOR;
+        return PLACEMENT_GHOST.VALID_PLACEHOLDER_COLOR;
+    }
+
+    private paintSprite(
+        sprite: Phaser.GameObjects.Sprite,
+        valid: boolean,
+        warning: boolean
+    ): void {
+        if (!valid) {
+            sprite.setTint(PLACEMENT_GHOST.INVALID_TINT);
+            sprite.setAlpha(PLACEMENT_GHOST.INVALID_ALPHA);
+            return;
+        }
+        if (warning) {
+            sprite.setTint(PLACEMENT_GHOST.WARNING_TINT);
+            sprite.setAlpha(PLACEMENT_GHOST.WARNING_ALPHA);
+            return;
+        }
+        sprite.clearTint();
+        sprite.setAlpha(PLACEMENT_GHOST.VALID_ALPHA);
+    }
+
+    private paint(
+        display: GhostDisplay,
+        valid: boolean,
+        warning: boolean
+    ): void {
         if (display.kind === "sprite") {
-            if (valid) display.object.clearTint();
-            else display.object.setTint(PLACEMENT_GHOST.INVALID_TINT);
-            display.object.setAlpha(
-                valid
-                    ? PLACEMENT_GHOST.VALID_ALPHA
-                    : PLACEMENT_GHOST.INVALID_ALPHA
-            );
+            this.paintSprite(display.object, valid, warning);
             return;
         }
 
-        const color = valid
-            ? PLACEMENT_GHOST.VALID_PLACEHOLDER_COLOR
-            : PLACEMENT_GHOST.INVALID_PLACEHOLDER_COLOR;
+        const color = this.getPlaceholderColor(valid, warning);
         display.object.setFillStyle(
             color,
             PLACEMENT_GHOST.PLACEHOLDER_FILL_ALPHA

@@ -11,3 +11,6 @@ export * from "./applyOps";
 export * from "./blankDefaults";
 export * from "./ops.schema";
 export * from "./ops/ensureAreaFloorLayer";
+export * from "./findDoorRoom";
+export * from "./readWallCells";
+export * from "./findDoorSlots";

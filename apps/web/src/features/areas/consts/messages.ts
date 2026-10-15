@@ -44,4 +44,8 @@ export const AREA_ISSUE_MESSAGES = {
         "Um objeto do quadro não está mais disponível na biblioteca.",
     STAMP_TILESET_UNAVAILABLE:
         "Um tile do quadro não está mais disponível na biblioteca.",
+    STAMP_DOOR_NEEDS_ROOM:
+        "Uma área com porta precisa ser uma sala. Escolha Sala nas propriedades.",
+    STAMP_DOOR_OUTSIDE_ROOM:
+        "Uma porta precisa ficar na borda do quadro, que é a parede da sala.",
 } as const;

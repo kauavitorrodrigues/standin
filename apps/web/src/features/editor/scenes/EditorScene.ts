@@ -32,6 +32,7 @@ import {
 } from "@/features/editor/consts/frame";
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
 import { isPanMode } from "@/features/editor/utils/isPanMode";
+import { getFrameDoorRooms } from "@/features/editor/utils/getFrameDoorRooms";
 import type { FrameConfig } from "@/features/editor/types/FrameConfig";
 import { ZoneOverlay } from "@/features/editor/lib/ZoneOverlay";
 import { TOOL_REGISTRY } from "@/features/editor/consts/toolRegistry";
@@ -266,6 +267,7 @@ export class EditorScene extends Phaser.Scene {
                 scene: this,
                 store: this.store,
                 getBounds: () => this.frameConfig?.store.getRect() ?? null,
+                getDoorRooms: () => getFrameDoorRooms(this.frameConfig),
                 captureSnapshot: (rect) => this.captureNativeSnapshot(rect),
             },
             columns: tilemap.width,

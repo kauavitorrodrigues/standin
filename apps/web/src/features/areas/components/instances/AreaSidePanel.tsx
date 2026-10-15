@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Tabs } from "@/components/ui/tabs";
 import { EditorLayout } from "@/features/editor/components/layout";
 import { SidePanelHeader } from "@/features/editor/components/layout/SidePanelHeader";
@@ -11,6 +12,8 @@ import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { AreaPropertiesDialog } from "../dialogs/AreaPropertiesDialog";
 import { AreaTitleButton } from "../views/AreaTitleButton";
+import type { AreaComposerFormValues } from "../../types/areaComposerForm";
+import { isRoomArea } from "../../utils/isRoomArea";
 import type { AreaPalette } from "../../types/areaPalette";
 
 type Props = {
@@ -26,6 +29,12 @@ export const AreaSidePanel = ({ palette, onExit }: Props) => {
     const open = useEditorSelector((state) => state.panelOpen);
     const panelTab = useEditorSelector((state) => state.panelTab);
     const [propertiesOpen, setPropertiesOpen] = useState(false);
+    const { control } = useFormContext<AreaComposerFormValues>();
+    const [createZone, zoneKind] = useWatch({
+        control,
+        name: ["createZone", "zoneKind"],
+    });
+    const areaIsRoom = isRoomArea({ createZone, zoneKind });
 
     return (
         <EditorLayout.Panel open={open}>
@@ -51,7 +60,11 @@ export const AreaSidePanel = ({ palette, onExit }: Props) => {
                     <PanelToggle open={open} onToggle={store.togglePanel} />
                 </SidePanelHeader>
                 <PanelTabList withAreas={false} />
-                <PanelTabs palette={palette} withAreas={false} />
+                <PanelTabs
+                    palette={palette}
+                    withAreas={false}
+                    areaIsRoom={areaIsRoom}
+                />
             </Tabs>
             <UsageFooter />
             <AreaPropertiesDialog

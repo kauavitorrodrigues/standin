@@ -14,6 +14,13 @@ import { registerJoinMap } from "@/lib/socket/handlers/joinMap";
 import { registerEditorAcquire } from "@/lib/socket/handlers/editorAcquire";
 import { registerEditorHeartbeat } from "@/lib/socket/handlers/editorHeartbeat";
 import { registerEditorRelease } from "@/lib/socket/handlers/editorRelease";
+import { registerRoomCrossed } from "@/lib/socket/handlers/roomCrossed";
+import { registerRoomOpen } from "@/lib/socket/handlers/roomOpen";
+import { registerRoomPresent } from "@/lib/socket/handlers/roomPresent";
+import { registerRoomLock } from "@/lib/socket/handlers/roomLock";
+import { registerRoomUnlock } from "@/lib/socket/handlers/roomUnlock";
+import { registerRoomJoinRequest } from "@/lib/socket/handlers/roomJoinRequest";
+import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
@@ -42,6 +49,13 @@ export function createSocketServer(httpServer: ReturnType<typeof createServer>) 
         registerEditorHeartbeat(socket);
         registerEditorRelease(socket);
         registerWebrtcSignal(io, socket);
+        registerRoomCrossed(io, socket);
+        registerRoomOpen(io, socket);
+        registerRoomPresent(io, socket);
+        registerRoomLock(io, socket);
+        registerRoomUnlock(io, socket);
+        registerRoomJoinRequest(io, socket);
+        registerRoomJoinAnswer(io, socket);
         registerDisconnect(socket);
     });
 }
