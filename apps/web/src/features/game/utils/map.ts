@@ -148,5 +148,14 @@ export const buildTilesetAssetKey = (
         ASSET_KEY_SEPARATOR
     );
 
+// One texture per asset: the whole PNG, a single frame when static or a
+// horizontal strip of frames when animated.
+export const buildAssetTextureKey = (assetId: string): string =>
+    [ASSET_KEY_PREFIXES.ASSET_TEXTURE, assetId].join(ASSET_KEY_SEPARATOR);
+
+// One animation per animated asset, played from the strip of its texture.
+export const buildAssetAnimationKey = (assetId: string): string =>
+    [ASSET_KEY_PREFIXES.ASSET_ANIMATION, assetId].join(ASSET_KEY_SEPARATOR);
+
 export const getMapScene = (game: Phaser.Game): MapScene | null =>
     game.scene.getScene<MapScene>(GAME_SCENE_KEYS.MAP) ?? null;

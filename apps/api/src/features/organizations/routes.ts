@@ -4,7 +4,6 @@ import { RequiresOrgMember } from "@/middlewares/requiresOrgMember";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { OrganizationController } from "./controllers";
 import { spacesRouter } from "../spaces/routes";
-import { mapsRouter } from "../maps/routes";
 import { conversationsRouter } from "../chat/routes";
 
 const router = Router();
@@ -41,8 +40,6 @@ router.get(
 );
 
 router.use("/:organizationId/spaces", RequiresOrgMember, spacesRouter);
-
-router.use("/:organizationId/maps", RequiresOrgMember, mapsRouter);
 
 router.use(
     "/:organizationId/conversations",

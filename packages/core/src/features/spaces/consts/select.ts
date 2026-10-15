@@ -7,3 +7,9 @@ export const spaceSelect = {
     mapId: spacesTable.mapId,
     createdAt: spacesTable.createdAt,
 };
+
+export const spaceRefSelect = {
+    id: spacesTable.id,
+    mapId: spacesTable.mapId,
+    organizationId: spacesTable.organizationId,
+};

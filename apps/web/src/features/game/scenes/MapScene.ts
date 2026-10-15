@@ -7,10 +7,13 @@ import {
 import {
     buildObjectPhysicsGroups,
     buildTilemap,
+    ensureAssetTextures,
     fitCameraToMap,
     fitWorldBoundsToMap,
     loadMapAssets,
+    registerAssetAnimations,
     renderObjectLayers,
+    renderPlacedAssets,
     renderTileLayers,
 } from "@/features/game/renderers";
 import { MapCameraController } from "@/features/game/lib/MapCameraController";
@@ -79,6 +82,10 @@ export class MapScene extends Phaser.Scene {
     create(): void {
         const { tilemap, tilesets } = buildTilemap(this, this.mapData);
 
+        const assets = this.mapData.assets ?? [];
+        ensureAssetTextures(this.textures, assets);
+        registerAssetAnimations(this, assets);
+
         renderTileLayers(tilemap, tilesets);
         renderObjectLayers(this, tilemap);
         fitCameraToMap(this.cameras.main, tilemap);
@@ -87,6 +94,14 @@ export class MapScene extends Phaser.Scene {
         const { solidGroup, interactableGroup } = buildObjectPhysicsGroups(
             this,
             tilemap
+        );
+
+        renderPlacedAssets(
+            this,
+            this.mapData.placed ?? [],
+            assets,
+            tilemap.heightInPixels,
+            solidGroup
         );
 
         const spawnPoint = resolveDefaultSpawnPoint(tilemap);

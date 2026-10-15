@@ -73,6 +73,8 @@ export const AssetErrorMessages = {
         invalid: "The animation frame duration is invalid.",
     },
     animationRepeat: { invalid: "The animation repeat is invalid." },
+    tilesets: { invalid: "The library tilesets are invalid." },
+    assets: { invalid: "The library assets are invalid." },
 };
 
 export const LibraryDataErrorMessages = {

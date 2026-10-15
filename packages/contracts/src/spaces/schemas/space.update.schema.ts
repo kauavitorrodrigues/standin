@@ -1,6 +1,12 @@
 import { z } from "zod/v4";
-import { SpaceDataSchema } from "./space.data.schema";
+import { SpaceErrorMessages } from "./consts/error-messages";
+import { MAX_SPACE_NAME_LENGTH } from "./consts/fields";
 
-export const SpaceUpdateSchema = SpaceDataSchema.pick({ name: true });
+export const SpaceUpdateSchema = z.object({
+    name: z
+        .string({ error: SpaceErrorMessages.name.required })
+        .min(2, { error: SpaceErrorMessages.name.required })
+        .max(MAX_SPACE_NAME_LENGTH, { error: SpaceErrorMessages.name.max }),
+});
 
 export type SpaceUpdateSchemaType = z.infer<typeof SpaceUpdateSchema>;

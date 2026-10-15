@@ -1,15 +1,19 @@
 import { z } from "zod/v4";
+import { MapSizeTierSchema } from "../../maps/schemas/map-size-tier.schema";
 import { SpaceErrorMessages } from "./consts/error-messages";
-import { MAX_SPACE_NAME_LENGTH } from "./consts/fields";
+import { SpaceUpdateSchema } from "./space.update.schema";
 
-export const SpaceDataSchema = z.object({
-    name: z
-        .string({ error: SpaceErrorMessages.name.required })
-        .min(2, { error: SpaceErrorMessages.name.required })
-        .max(MAX_SPACE_NAME_LENGTH, { error: SpaceErrorMessages.name.max }),
-    mapId: z
-        .string({ error: SpaceErrorMessages.mapId.required })
-        .min(1, { error: SpaceErrorMessages.mapId.required }),
+// A space starts either from a published template or from a blank map of the
+// chosen size tier, never both.
+export const SpaceDataSchema = SpaceUpdateSchema.extend({
+    templateId: z
+        .string({ error: SpaceErrorMessages.templateId.invalid })
+        .min(1, { error: SpaceErrorMessages.templateId.invalid })
+        .optional(),
+    sizeTier: MapSizeTierSchema.optional(),
+}).refine((data) => Boolean(data.templateId) !== Boolean(data.sizeTier), {
+    error: SpaceErrorMessages.source.required,
+    path: ["templateId"],
 });
 
 export type SpaceDataSchemaType = z.infer<typeof SpaceDataSchema>;

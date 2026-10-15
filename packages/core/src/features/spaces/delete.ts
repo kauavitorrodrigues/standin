@@ -4,6 +4,7 @@ import { SpaceNotFoundError } from "@standin/contracts";
 import type { Space } from "@standin/contracts";
 import { serializeSpace } from "./utils/serializeSpace";
 import { ConversationService } from "../conversations";
+import { MapService } from "../maps";
 
 export const deleteSpace = async (
     organizationId: string,
@@ -25,6 +26,7 @@ export const deleteSpace = async (
         if (!space) throw new SpaceNotFoundError();
 
         await ConversationService.deleteBySpaceIds([space.id], tx);
+        await MapService.deleteByIds([space.mapId], tx);
 
         return serializeSpace(space);
     });

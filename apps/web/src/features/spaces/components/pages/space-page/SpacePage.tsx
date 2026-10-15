@@ -33,6 +33,7 @@ import { buildNameLookup } from "@/features/spaces/utils/buildStageTiles";
 import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
+import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
     return (
@@ -66,8 +67,9 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const peoplePanel = usePeoplePanel({ view, selectView });
 
+    const gameMap = useGameMapData(space.map);
     const { containerRef, handle } = useGameEngine(
-        space.map,
+        gameMap,
         -RAIL_WIDTH_PX / 2
     );
 

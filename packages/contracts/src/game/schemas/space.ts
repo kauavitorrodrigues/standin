@@ -13,6 +13,12 @@ export const SpaceJoinSchema = z.object({
         .min(1, { error: GameErrorMessages.spaceJoin.userId.required }),
 });
 
+export const MapJoinSchema = z.object({
+    mapId: z
+        .string({ error: GameErrorMessages.mapJoin.mapId.required })
+        .min(1, { error: GameErrorMessages.mapJoin.mapId.required }),
+});
+
 export const WebrtcSignalSchema = z.object({
     targetSocketId: z
         .string({
