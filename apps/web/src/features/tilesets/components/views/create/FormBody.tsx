@@ -48,10 +48,14 @@ export const TilesetFormBody = ({
         );
     }
 
+    const removeImage = () => {
+        form.setValue("image", []);
+        form.setValue("tileMeta", {});
+    };
+
     const fields = (
         <TilesetFormFields
             form={form}
-            file={file}
             size={size}
             grid={grid}
             disabled={isSubmitting}
@@ -90,6 +94,7 @@ export const TilesetFormBody = ({
             title="Novo tileset"
             onExit={onCancel}
             actions={footer}
+            onRemoveImage={removeImage}
         >
             {fields}
         </TileSheetWorkspace>
