@@ -90,6 +90,8 @@ export const applyEditorMoveAsset: EditorOpHandler<
     const delta = pixelDistance(target, movedTarget);
     const rootCheck = canPlaceAsset(working, targetAsset, op.tileX, op.tileY, {
         parentId,
+        offsetX: movedTarget.offsetX,
+        offsetY: movedTarget.offsetY,
     });
     if (!rootCheck.ok) {
         return {
@@ -112,7 +114,11 @@ export const applyEditorMoveAsset: EditorOpHandler<
                 childAsset,
                 next.tileX,
                 next.tileY,
-                { parentId: child.parentId }
+                {
+                    parentId: child.parentId,
+                    offsetX: next.offsetX,
+                    offsetY: next.offsetY,
+                }
             );
             if (!check.ok) {
                 return {
