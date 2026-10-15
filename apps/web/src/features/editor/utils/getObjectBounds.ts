@@ -2,6 +2,7 @@ import { TILE_SIZE, type PlacedAsset } from "@standin/contracts";
 import { resolvePlacedLayout } from "@/features/game/utils/placed";
 import type { ObjectBounds } from "@/features/editor/types/ObjectBounds";
 import type { ObjectLookup } from "@/features/editor/types/ObjectLookup";
+import { buildObjectShape } from "@/features/editor/utils/buildObjectShape";
 import type { ObjectSurface } from "@/features/editor/types/ObjectSurface";
 
 // The box the sprite of a placed object covers, by the same layout rule the
@@ -35,5 +36,7 @@ export const getObjectBounds = (
         width: frame.width,
         height: frame.height,
         depth: layout.depth,
+        slices: layout.slices,
+        shape: buildObjectShape(placed, asset),
     };
 };

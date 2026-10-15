@@ -1,5 +1,9 @@
 import type Phaser from "phaser";
-import { TILE_SIZE, type AssetDefinition } from "@standin/contracts";
+import {
+    SOLID_MASK_SUBDIVISION,
+    TILE_SIZE,
+    type AssetDefinition,
+} from "@standin/contracts";
 import { buildAssetTextureKey } from "@/features/game/utils/map";
 import { PLACEMENT_GHOST } from "@/features/editor/consts/placement-ghost";
 import { loadAssetTexture } from "@/features/editor/lib/loadAssetTexture";
@@ -57,7 +61,7 @@ export class PlacementGhost implements PlacementGhostView {
         this.cells = null;
     }
 
-    // The tiles the object occupies, over the sprite. The footprint starts
+    // The cells the object occupies, over the sprite. The footprint starts
     // `offsetX` tiles to the right of the left edge of the sprite and ends at
     // its base. Without a mask there is nothing to show, the sprite says it.
     private paintOccupiedCells(target: PlacementGhostTarget): void {
@@ -78,14 +82,15 @@ export class PlacementGhost implements PlacementGhostView {
         const left = target.x + offsetX * TILE_SIZE;
         cells.clear();
         cells.fillStyle(color, PLACEMENT_GHOST.PLACEHOLDER_FILL_ALPHA);
+        const cellPx = TILE_SIZE / SOLID_MASK_SUBDIVISION;
         mask.forEach((row, rowIndex) => {
             row.forEach((occupied, column) => {
-                if (!occupied || column >= w) return;
+                if (!occupied || column >= w * SOLID_MASK_SUBDIVISION) return;
                 cells.fillRect(
-                    left + column * TILE_SIZE,
-                    target.bottomY - (h - rowIndex) * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
+                    left + column * cellPx,
+                    target.bottomY - h * TILE_SIZE + rowIndex * cellPx,
+                    cellPx,
+                    cellPx
                 );
             });
         });
