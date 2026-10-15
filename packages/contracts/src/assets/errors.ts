@@ -1,0 +1,235 @@
+import { BaseError } from "../errors/base";
+
+export class AssetNotFoundError extends BaseError {
+    constructor() {
+        super("Asset not found.", "ASSET_NOT_FOUND", 404);
+    }
+}
+
+export class AssetFamilyNotFoundError extends BaseError {
+    constructor() {
+        super("Asset family not found.", "ASSET_FAMILY_NOT_FOUND", 404);
+    }
+}
+
+const COLOR_CHANGE_INVALID_TARGET_CODE = "COLOR_CHANGE_INVALID_TARGET";
+const COLOR_CHANGE_INVALID_TARGET_STATUS = 422;
+
+// The target of a color change must be a colored sibling of the same family
+// and rotation, with a different color.
+export class AssetColorChangeInvalidTargetError extends BaseError {
+    constructor() {
+        super(
+            "The new color must be another variant of the same model and rotation.",
+            COLOR_CHANGE_INVALID_TARGET_CODE,
+            COLOR_CHANGE_INVALID_TARGET_STATUS
+        );
+    }
+}
+
+// Problems found while validating an upload or a family. Several can come
+// together in one 422 (see `LibraryValidationError`).
+export const LIBRARY_ISSUE_CODES = {
+    DATA_INVALID: "DATA_INVALID",
+    IMAGE_FILE_REQUIRED: "IMAGE_FILE_REQUIRED",
+    PNG_INVALID: "PNG_INVALID",
+    PNG_DIMENSIONS_EXCEEDED: "PNG_DIMENSIONS_EXCEEDED",
+    SPRITE_SIZE_NOT_MULTIPLE_OF_TILE: "SPRITE_SIZE_NOT_MULTIPLE_OF_TILE",
+    ANIMATION_FRAME_WIDTH_INVALID: "ANIMATION_FRAME_WIDTH_INVALID",
+    GRID_MISMATCH: "GRID_MISMATCH",
+    TILE_META_OUT_OF_RANGE: "TILE_META_OUT_OF_RANGE",
+    BLANK_DEFAULT_DUPLICATED: "BLANK_DEFAULT_DUPLICATED",
+    CATEGORY_REQUIRED: "CATEGORY_REQUIRED",
+    CATEGORY_INVALID: "CATEGORY_INVALID",
+    ASSET_FOOTPRINT_INVALID: "ASSET_FOOTPRINT_INVALID",
+    ASSET_ACTION_PARAMS_INVALID: "ASSET_ACTION_PARAMS_INVALID",
+    VARIANT_BASE_INVALID: "VARIANT_BASE_INVALID",
+    BASE_COLOR_REQUIRED: "BASE_COLOR_REQUIRED",
+    COLOR_MISSING: "COLOR_MISSING",
+    VARIANT_DUPLICATED: "VARIANT_DUPLICATED",
+    VARIANT_SIZE_MISMATCH: "VARIANT_SIZE_MISMATCH",
+    VARIANT_OVERRIDE_NOT_ALLOWED: "VARIANT_OVERRIDE_NOT_ALLOWED",
+    FOOTPRINT_REQUIRED_FOR_NEW_ROTATION: "FOOTPRINT_REQUIRED_FOR_NEW_ROTATION",
+    ANIMATION_IMMUTABLE: "ANIMATION_IMMUTABLE",
+    COLOR_FIELDS_INCONSISTENT: "COLOR_FIELDS_INCONSISTENT",
+    COLOR_KEY_INVALID: "COLOR_KEY_INVALID",
+    COLOR_HEX_INVALID: "COLOR_HEX_INVALID",
+    FAMILY_BASE_MISSING: "FAMILY_BASE_MISSING",
+    FAMILY_FIELD_DIVERGES: "FAMILY_FIELD_DIVERGES",
+    ROTATION_FIELD_DIVERGES: "ROTATION_FIELD_DIVERGES",
+} as const;
+
+export type LibraryIssueCode =
+    (typeof LIBRARY_ISSUE_CODES)[keyof typeof LIBRARY_ISSUE_CODES];
+
+export type LibraryIssue = {
+    code: LibraryIssueCode;
+    // Where the problem is: a data field, an asset key or an image part.
+    path: string;
+    message: string;
+};
+
+// What `validateFamily` returns.
+export type FamilyIssue = LibraryIssue;
+
+const LIBRARY_INVALID_STATUS = 422;
+
+// 422 carrying every error and warning, in the same shape as a layout
+// validation: `{ errors: [{ code, path, message }], warnings: [] }`.
+export class LibraryValidationError extends BaseError {
+    public readonly errors: LibraryIssue[];
+    public readonly warnings: LibraryIssue[];
+
+    constructor(errors: LibraryIssue[], warnings: LibraryIssue[] = []) {
+        super(
+            errors[0]?.message ?? "The library upload is invalid.",
+            errors[0]?.code ?? LIBRARY_ISSUE_CODES.DATA_INVALID,
+            LIBRARY_INVALID_STATUS
+        );
+        this.errors = errors;
+        this.warnings = warnings;
+    }
+}
+
+// A library error that answers with its code (and extra details) in the
+// body, so a client can tell the cases apart.
+export class LibraryError extends BaseError {
+    public readonly details: Record<string, unknown>;
+
+    constructor(
+        message: string,
+        code: string,
+        status: number,
+        details: Record<string, unknown> = {}
+    ) {
+        super(message, code, status);
+        this.details = details;
+    }
+}
+
+// An `organizationId` was sent before the organization library exists.
+export class ScopeForbiddenError extends LibraryError {
+    constructor() {
+        super(
+            "Only the global library is available for now.",
+            "SCOPE_FORBIDDEN",
+            403
+        );
+    }
+}
+
+export class AssetKeyTakenError extends LibraryError {
+    constructor() {
+        super("This asset key already exists.", "ASSET_KEY_TAKEN", 409);
+    }
+}
+
+// Structural fields of an asset in use cannot change: maps already point at it.
+export class AssetInUseImmutableError extends LibraryError {
+    constructor(fields: string[]) {
+        super(
+            `The asset is used by maps and only accepts a change of name, promptText and category (fields: ${fields.join(", ")}).`,
+            "ASSET_IN_USE_IMMUTABLE",
+            409,
+            { fields }
+        );
+    }
+}
+
+// The fields of a family are edited on its base asset. A variation only
+// changes its own rotation and the action params of its rotation.
+export class VariationFamilyFieldError extends LibraryError {
+    constructor(fields: string[]) {
+        super(
+            `A variation cannot change the fields of its family, edit the base asset instead (fields: ${fields.join(", ")}).`,
+            "VARIATION_FAMILY_FIELD",
+            422,
+            { fields }
+        );
+    }
+}
+
+// The image of an asset in use cannot be replaced.
+export class AssetImageInUseError extends LibraryError {
+    constructor() {
+        super(
+            "The asset is used by maps and its image cannot be replaced.",
+            "ASSET_IN_USE_IMMUTABLE",
+            409
+        );
+    }
+}
+
+export class BaseHasVariantsError extends LibraryError {
+    constructor() {
+        super(
+            "The asset has variations. Delete the whole family with ?family=true.",
+            "BASE_HAS_VARIANTS",
+            422
+        );
+    }
+}
+
+const ASSET_PART_INVALID_CODE = "ASSET_PART_INVALID";
+const ASSET_PART_INVALID_STATUS = 422;
+
+export class AssetPartSelfReferenceError extends LibraryError {
+    constructor() {
+        super(
+            "An asset cannot be a part of itself.",
+            ASSET_PART_INVALID_CODE,
+            ASSET_PART_INVALID_STATUS
+        );
+    }
+}
+
+export class AssetPartOutOfScopeError extends LibraryError {
+    constructor() {
+        super(
+            "Every part must be an asset visible in the same scope as the bundle.",
+            ASSET_PART_INVALID_CODE,
+            ASSET_PART_INVALID_STATUS
+        );
+    }
+}
+
+export class AssetPartNotGroundError extends LibraryError {
+    constructor() {
+        super(
+            "The parts of a bundle are placed on the ground (GROUND).",
+            ASSET_PART_INVALID_CODE,
+            ASSET_PART_INVALID_STATUS
+        );
+    }
+}
+
+export class AssetPartIsBundleError extends LibraryError {
+    constructor() {
+        super(
+            "A part cannot be a bundle itself.",
+            ASSET_PART_INVALID_CODE,
+            ASSET_PART_INVALID_STATUS
+        );
+    }
+}
+
+// 413: the PNG is over `MAX_UPLOAD_BYTES`.
+export class PngTooLargeError extends LibraryError {
+    constructor() {
+        super(
+            "The uploaded file exceeds the allowed size.",
+            "PNG_TOO_LARGE",
+            413
+        );
+    }
+}
+
+export class LibraryUnsupportedMediaError extends LibraryError {
+    constructor() {
+        super(
+            "File type or form part not accepted.",
+            "UNSUPPORTED_MEDIA_TYPE",
+            415
+        );
+    }
+}

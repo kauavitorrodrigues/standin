@@ -12,7 +12,18 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserAvatarInfo } from "./UserAvatarInfo";
 
-export function UserMenu() {
+type Props = {
+    side?: "bottom" | "right";
+    align?: "start" | "end";
+    // Only the avatar on the trigger, for narrow spots like a rail.
+    compact?: boolean;
+};
+
+export function UserMenu({
+    side = "bottom",
+    align = "end",
+    compact = false,
+}: Props) {
     const { user } = useAuth();
     const logout = useLogout();
 
@@ -28,11 +39,12 @@ export function UserMenu() {
                             id={user.id}
                             name={user.name}
                             size="sm"
+                            hideInfo={compact}
                         />
                     </button>
                 }
             />
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent side={side} align={align} className="w-56">
                 <DropdownMenuGroup>
                     <DropdownMenuLabel className="py-1.5">
                         <UserAvatarInfo

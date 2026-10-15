@@ -1,6 +1,10 @@
 import type { Response } from "express";
 import { z, type ZodError } from "zod/v4";
-import { BaseError } from "@standin/contracts";
+import {
+    BaseError,
+    LibraryError,
+    LibraryValidationError,
+} from "@standin/contracts";
 import { ErrorMessages } from "@/enums/errorMessages";
 import {
     ACTION_LABELS,
@@ -43,6 +47,24 @@ export const sendError = ({
 }: SendErrorOptions) => {
     if (reportError) console.error(reportError);
     if (error) return res.status(code).json(z.flattenError(error));
+
+    // The library answers with the same shape, and its other errors with
+    // their code and details.
+    if (reportError instanceof LibraryValidationError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
+            errors: reportError.errors,
+            warnings: reportError.warnings,
+        });
+    }
+    if (reportError instanceof LibraryError) {
+        return res.status(reportError.status).json({
+            error: reportError.message,
+            code: reportError.code,
+            ...reportError.details,
+        });
+    }
 
     if (reportError instanceof BaseError) {
         return res

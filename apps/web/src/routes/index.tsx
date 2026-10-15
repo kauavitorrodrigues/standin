@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { USER_ROLES } from "@standin/contracts";
 import { AuthPage } from "@/components/pages/AuthPage";
 import { getMeQueryOptions } from "@/features/auth/queries/getMe";
 
@@ -9,7 +10,8 @@ export const Route = createFileRoute("/")({
             .catch(() => null);
 
         if (user) {
-            throw redirect({ to: "/home" });
+            const isAdmin = user.role === USER_ROLES.ADMIN;
+            throw redirect({ to: isAdmin ? "/admin/assets" : "/home" });
         }
     },
     component: AuthPage,
