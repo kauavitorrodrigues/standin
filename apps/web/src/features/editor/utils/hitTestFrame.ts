@@ -10,16 +10,20 @@ type Params = {
     worldY: number;
     // The camera zoom, so the reach stays the same on the screen.
     zoom: number;
+    // Whether a press inside the frame, away from its edges, moves it.
+    body: boolean;
 };
 
-// What a press at a world point grabs on the frame: the grip first, then a
-// corner, then the edge the point is near, or null. The whole edge is a handle,
-// not only its middle, because the frame is the thing being sized.
+// What a press at a world point grabs on the frame: a corner first, then the
+// edge the point is near, then the inside when `body` is on, or null. The whole
+// edge is a handle, not only its middle, because the frame is the thing being
+// sized.
 export const hitTestFrame = ({
     rect,
     worldX,
     worldY,
     zoom,
+    body,
 }: Params): FrameGrab | null => {
     const left = rect.x * TILE_SIZE;
     const top = rect.y * TILE_SIZE;
@@ -27,16 +31,6 @@ export const hitTestFrame = ({
     const bottom = top + rect.h * TILE_SIZE;
     const edge = EDITOR_FRAME.EDGE_REACH / zoom;
     const corner = EDITOR_FRAME.CORNER_REACH / zoom;
-    const grip = EDITOR_FRAME.GRIP_SIZE / zoom;
-    const inset = EDITOR_FRAME.GRIP_INSET / zoom;
-
-    const onGrip =
-        worldX >= left + inset &&
-        worldX <= left + inset + grip &&
-        worldY >= top + inset &&
-        worldY <= top + inset + grip;
-    if (onGrip) return "move";
-
     const nearLeft = Math.abs(worldX - left) <= corner;
     const nearRight = Math.abs(worldX - right) <= corner;
     const nearTop = Math.abs(worldY - top) <= corner;
@@ -53,6 +47,10 @@ export const hitTestFrame = ({
     if (withinX && Math.abs(worldY - bottom) <= edge) return ZONE_HANDLES.SOUTH;
     if (withinY && Math.abs(worldX - left) <= edge) return ZONE_HANDLES.WEST;
     if (withinY && Math.abs(worldX - right) <= edge) return ZONE_HANDLES.EAST;
+
+    const inside =
+        worldX >= left && worldX <= right && worldY >= top && worldY <= bottom;
+    if (body && inside) return "move";
 
     return null;
 };

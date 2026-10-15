@@ -29,6 +29,14 @@ vi.mock("@/features/editor/lib/AreaPlacementGhost", () => ({
     },
 }));
 
+vi.mock("@/features/editor/lib/ZoneMoveGhost", () => ({
+    ZoneMoveGhost: class {
+        prepare = vi.fn();
+        show = vi.fn();
+        release = vi.fn();
+    },
+}));
+
 vi.mock("@/features/editor/lib/ZonePreview", () => ({
     ZonePreview: class {
         showArea = vi.fn();

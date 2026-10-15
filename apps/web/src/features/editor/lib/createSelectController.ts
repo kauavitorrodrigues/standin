@@ -5,6 +5,7 @@ import { HoverOutline } from "@/features/editor/lib/HoverOutline";
 import { PlacementController } from "@/features/editor/lib/PlacementController";
 import { PlacementGhost } from "@/features/editor/lib/PlacementGhost";
 import { ZoneDragController } from "@/features/editor/lib/ZoneDragController";
+import { ZoneMoveGhost } from "@/features/editor/lib/ZoneMoveGhost";
 import { ZonePreview } from "@/features/editor/lib/ZonePreview";
 import { SelectController } from "@/features/editor/lib/SelectController";
 import type {
@@ -33,7 +34,11 @@ export const createSelectController = (env: ToolEnv): ToolController => {
         env,
         SELECTION_PROVIDERS.map((create) => create(env)),
         new PlacementGhost(env.scene),
-        new ZoneDragController(env, new ZonePreview(env.scene)),
+        new ZoneDragController(
+            env,
+            new ZonePreview(env.scene),
+            new ZoneMoveGhost(env.scene)
+        ),
         new HoverOutline(env.scene)
     );
     let pressed: ToolController | null = null;

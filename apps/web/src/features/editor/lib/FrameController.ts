@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { FRAME_MESSAGES } from "@/features/editor/consts/messages";
 import type { FrameStore } from "@/features/editor/lib/FrameStore";
+import type { FrameGrab } from "@/features/editor/types/frame-grab";
 import type { FrameDrag } from "@/features/editor/types/frame-drag";
 import type { FrameLimits } from "@/features/editor/types/frame-limits";
 import type { PointerInterceptor } from "@/features/editor/types/PointerInterceptor";
@@ -12,6 +13,8 @@ import { hitTestFrame } from "@/features/editor/utils/hitTestFrame";
 import { moveFrameRect } from "@/features/editor/utils/moveFrameRect";
 import { resizeFrameRect } from "@/features/editor/utils/resizeFrameRect";
 
+type PointerPoint = Pick<ToolPointerInput, "worldX" | "worldY">;
+
 type Options = {
     scene: Phaser.Scene;
     store: FrameStore;
@@ -20,10 +23,15 @@ type Options = {
     rows: number;
     // Whether the editor takes edits now, the same rule the tools follow.
     isEditable: () => boolean;
+    // Whether a drag inside the frame moves it: the pan tool or space held. With
+    // any other tool the inside belongs to the tool.
+    canMoveFromBody: () => boolean;
+    // Called when a press takes a handle or an edge to resize the frame.
+    onResizeStart: () => void;
     onHint: (text: string | null) => void;
 };
 
-// Drags the frame of an area by its edges, its corners and its grip. It takes
+// Drags the frame of an area by its edges, its corners and, while panning, its inside. It takes
 // the press before the active tool, so the frame works whatever the tool is.
 // The frame follows the pointer live, snapped to tiles, and Esc puts it back
 // where the drag began. A drag is not an edit of the draft, so it is not on the
@@ -31,6 +39,7 @@ type Options = {
 export class FrameController implements PointerInterceptor {
     private readonly options: Options;
     private drag: FrameDrag | null = null;
+    private restoreCursor: string | null = null;
 
     constructor(options: Options) {
         this.options = options;
@@ -45,8 +54,14 @@ export class FrameController implements PointerInterceptor {
             worldX: input.worldX,
             worldY: input.worldY,
             zoom: this.options.scene.cameras.main.zoom,
+            body: this.options.canMoveFromBody(),
         });
         if (!grab) return false;
+
+        // The tool changes first: that rewrites the cursor of the canvas, and the
+        // cursor of the grab has to be the one that stays.
+        if (grab !== "move") this.options.onResizeStart();
+        this.showCursor(grab);
 
         this.drag = { grab, start, from: this.getCell(input) };
         this.options.onHint(FRAME_MESSAGES.size(start.w, start.h));
@@ -70,16 +85,10 @@ export class FrameController implements PointerInterceptor {
         this.end();
     };
 
+    isOver = (input: PointerPoint): boolean => this.getGrab(input) !== null;
+
     hover = (input: ToolPointerInput): void => {
-        const grab = this.options.isEditable()
-            ? hitTestFrame({
-                  rect: this.options.store.getRect(),
-                  worldX: input.worldX,
-                  worldY: input.worldY,
-                  zoom: this.options.scene.cameras.main.zoom,
-              })
-            : null;
-        this.options.scene.input.setDefaultCursor(getFrameCursor(grab));
+        this.showCursor(this.getGrab(input));
     };
 
     cancel = (): void => {
@@ -99,7 +108,35 @@ export class FrameController implements PointerInterceptor {
     private end(): void {
         this.drag = null;
         this.options.onHint(null);
-        this.options.scene.input.setDefaultCursor(getFrameCursor(null));
+        this.showCursor(null);
+    }
+
+    private getGrab(input: PointerPoint): FrameGrab | null {
+        if (!this.options.isEditable()) return null;
+
+        return hitTestFrame({
+            rect: this.options.store.getRect(),
+            worldX: input.worldX,
+            worldY: input.worldY,
+            zoom: this.options.scene.cameras.main.zoom,
+            body: this.options.canMoveFromBody(),
+        });
+    }
+
+    // Writes the cursor of the grab on the canvas, which is where the tools and
+    // the camera write theirs. The one that was there is kept and put back when
+    // the pointer leaves the frame.
+    private showCursor(grab: FrameGrab | null): void {
+        const canvas = this.options.scene.game.canvas;
+        if (!grab) {
+            if (this.restoreCursor === null) return;
+            canvas.style.cursor = this.restoreCursor;
+            this.restoreCursor = null;
+            return;
+        }
+
+        this.restoreCursor ??= canvas.style.cursor;
+        canvas.style.cursor = getFrameCursor(grab);
     }
 
     private getCell(input: ToolPointerInput) {

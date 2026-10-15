@@ -35,10 +35,10 @@ export const STAMP_VERSION = 1;
 export const STAMP_MIN_SIZE = 2;
 
 // Widest stamp (tiles).
-export const STAMP_MAX_WIDTH = 40;
+export const STAMP_MAX_WIDTH = 16;
 
 // Tallest stamp (tiles).
-export const STAMP_MAX_HEIGHT = 30;
+export const STAMP_MAX_HEIGHT = 12;
 
 // Most objects one stamp may hold (objects).
-export const STAMP_MAX_OBJECTS = 200;
+export const STAMP_MAX_OBJECTS = 150;

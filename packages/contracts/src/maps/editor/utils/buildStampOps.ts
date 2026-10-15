@@ -21,7 +21,10 @@ export const buildStampOps = (
     stamp: Stamp,
     tileX: number,
     tileY: number,
-    newTempId: () => string
+    newTempId: () => string,
+    // The layer the ground of the stamp goes on. A map takes it on the floor
+    // layer of its areas, the composer on its ground.
+    groundLayer?: string
 ): BuildStampOpsResult => {
     if (!isStampInsideMap(model, stamp, tileX, tileY)) {
         return {
@@ -37,8 +40,8 @@ export const buildStampOps = (
     }
 
     const ops: EditorOp[] = [
-        ...buildStampClearOps(model, stamp, tileX, tileY),
-        ...buildStampPaintOps(stamp, tileX, tileY),
+        ...buildStampClearOps(model, stamp, tileX, tileY, groundLayer),
+        ...buildStampPaintOps(stamp, tileX, tileY, groundLayer),
         ...buildStampObjectOps(stamp, tileX, tileY, newTempId),
     ];
 

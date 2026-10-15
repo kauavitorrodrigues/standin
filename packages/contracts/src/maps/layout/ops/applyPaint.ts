@@ -1,5 +1,6 @@
 import { TILE_CATEGORIES } from "../../../assets/enums/tile-category";
 import {
+    LAYOUT_AREA_FLOOR_LAYER_NAME,
     LAYOUT_LAYER_NAMES,
     type MapLayout,
 } from "../../schemas/layout.schema";
@@ -15,6 +16,7 @@ import {
 import type { LayoutLibrary } from "../library";
 import type { PaintOp } from "./types";
 import { findOutsideCell } from "./findOutsideCell";
+import { ensureAreaFloorLayer } from "./ensureAreaFloorLayer";
 import { findTileLayer } from "./findTileLayer";
 
 export const applyPaint = (
@@ -34,7 +36,14 @@ export const applyPaint = (
         ];
     }
 
-    if (LAYER_BY_CATEGORY[tile.category] !== op.layer) {
+    // The floor of an area takes floor tiles, like the ground.
+    const expectedLayer =
+        op.layer === LAYOUT_AREA_FLOOR_LAYER_NAME
+            ? LAYER_BY_CATEGORY[tile.category] === LAYOUT_LAYER_NAMES.GROUND
+                ? LAYOUT_AREA_FLOOR_LAYER_NAME
+                : null
+            : LAYER_BY_CATEGORY[tile.category];
+    if (expectedLayer !== op.layer) {
         return [
             createIssue(
                 Code.CATEGORY_LAYER_MISMATCH,
@@ -50,7 +59,10 @@ export const applyPaint = (
     // A tileset is added after the last one, never reordered or removed.
     layout.tilesets = ensureTileset(layout, op.tilesetId, library).tilesets;
 
-    const target = findTileLayer(layout, op.layer);
+    const target =
+        op.layer === LAYOUT_AREA_FLOOR_LAYER_NAME
+            ? ensureAreaFloorLayer(layout)
+            : findTileLayer(layout, op.layer);
     if (!target) return [];
 
     const gid = computeGid(layout, op.tilesetId, op.tileIndex, library);

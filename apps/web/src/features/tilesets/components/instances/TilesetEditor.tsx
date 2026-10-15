@@ -43,6 +43,7 @@ export const TilesetEditor = ({ tileset }: Props) => {
                 onExit={() => navigate({ to: "/admin/tilesets" })}
                 menu={
                     <TilesetEditorMenu
+                        name={tileset.name}
                         onRename={() => editor.setDialog("rename")}
                         onDelete={() => editor.setDialog("delete")}
                     />

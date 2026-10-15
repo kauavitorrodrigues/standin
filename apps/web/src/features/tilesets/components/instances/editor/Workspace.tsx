@@ -22,7 +22,7 @@ type Props = {
     disabled: boolean;
     title: string;
     onExit: () => void;
-    // The menu of the tileset, beside the title.
+    // The name as the button that opens the menu of the tileset.
     menu?: ReactNode;
     // The actions on the bottom of the sheet (discard, save).
     actions: ReactNode;

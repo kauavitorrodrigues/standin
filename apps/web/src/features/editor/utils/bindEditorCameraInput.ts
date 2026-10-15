@@ -21,7 +21,10 @@ export const bindEditorCameraInput = (
     scene: Phaser.Scene,
     controller: EditorCameraController,
     store: EditorStore,
-    panState: EditorPanState = { spaceHeld: false }
+    panState: EditorPanState = { spaceHeld: false },
+    // Whether a left press at a world point belongs to something else, such as
+    // the frame of an area, so the view must not move with it.
+    isOverFrame: (worldX: number, worldY: number) => boolean = () => false
 ): (() => void) => {
     const canvas = scene.game.canvas;
     let dragging = false;
@@ -54,7 +57,9 @@ export const bindEditorCameraInput = (
     };
 
     const handleDown = (pointer: Phaser.Input.Pointer) => {
-        if (!shouldDrag(pointer)) return;
+        const leftOnFrame =
+            pointer.button === 0 && isOverFrame(pointer.worldX, pointer.worldY);
+        if (leftOnFrame || !shouldDrag(pointer)) return;
         dragging = true;
         refreshCursor();
     };

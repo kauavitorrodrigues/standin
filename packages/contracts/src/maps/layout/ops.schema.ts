@@ -1,12 +1,18 @@
 import { z } from "zod/v4";
-import { LAYOUT_LAYER_NAMES } from "../schemas/layout.schema";
+import {
+    LAYOUT_AREA_FLOOR_LAYER_NAME,
+    LAYOUT_LAYER_NAMES,
+} from "../schemas/layout.schema";
 import { LayoutOpErrorMessages as Messages } from "../schemas/consts/error-messages";
 
 const int = (message: string) =>
     z.number({ error: message }).int({ error: message });
 
 export const LayerNameSchema = z.enum(
-    Object.values(LAYOUT_LAYER_NAMES) as [string, ...string[]],
+    [LAYOUT_AREA_FLOOR_LAYER_NAME, ...Object.values(LAYOUT_LAYER_NAMES)] as [
+        string,
+        ...string[],
+    ],
     {
         error: Messages.layer.invalid,
     }

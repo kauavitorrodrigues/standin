@@ -58,7 +58,6 @@ describe("buildComposerStart", () => {
         expect(result.start.values).toEqual({
             name: "",
             createZone: true,
-            zoneLabel: "",
         });
     });
 
@@ -82,24 +81,15 @@ describe("buildComposerStart", () => {
         expect(result.start.values).toEqual({
             name: "Sala",
             createZone: true,
-            zoneLabel: "Reunião",
         });
     });
 
-    it("leaves the label empty when it is the name, and unchecks the box without a zone", () => {
-        const sameAsName = buildComposerStart({
-            palette,
-            area: area({ stamp: { ...stamp, zone: { label: "Sala" } } }),
-        });
+    it("unchecks the box when the area has no zone", () => {
         const noZone = buildComposerStart({
             palette,
             area: area({ stamp: { ...stamp, zone: null } }),
         });
 
-        expect(sameAsName.ok && sameAsName.start.values).toMatchObject({
-            createZone: true,
-            zoneLabel: "",
-        });
         expect(noZone.ok && noZone.start.values).toMatchObject({
             createZone: false,
         });

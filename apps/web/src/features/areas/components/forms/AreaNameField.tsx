@@ -1,26 +1,19 @@
-import { Controller, useFormContext } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { AREA_NAME_MAX } from "@standin/contracts";
-import { Input } from "@/components/ui/input";
+import { TextFormField } from "@/components/fields/TextFormField";
 import type { AreaComposerFormValues } from "../../types/areaComposerForm";
 
-// The name of the area, in the place of the title of the side panel.
+// The name of the area, the first field of the properties of the area.
 export const AreaNameField = () => {
     const { control } = useFormContext<AreaComposerFormValues>();
 
     return (
-        <Controller
+        <TextFormField
             control={control}
             name="name"
-            render={({ field, fieldState }) => (
-                <Input
-                    {...field}
-                    aria-label="Nome da área"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Nome da área"
-                    maxLength={AREA_NAME_MAX}
-                    className="h-8 min-w-0 text-sm font-semibold"
-                />
-            )}
+            label="Nome da área"
+            placeholder="Nome da área"
+            maxLength={AREA_NAME_MAX}
         />
     );
 };

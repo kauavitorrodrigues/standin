@@ -83,6 +83,16 @@ describe("floodFill", () => {
         );
     });
 
+    it("stays inside the rectangle it is given", () => {
+        const layout = buildLayout();
+        const within = { x: 1, y: 1, w: 3, h: 2 };
+
+        expect(floodFill(layout, "ground", [2, 1], within)).toEqual(
+            rectCells([1, 1], [3, 2])
+        );
+        expect(floodFill(layout, "ground", [0, 0], within)).toEqual([]);
+    });
+
     it("fills only a region of a different gid", () => {
         const { layout } = setGid("ground", rectCells([1, 1], [2, 2]), 99);
         expect(floodFill(layout, "ground", [1, 1])).toEqual(

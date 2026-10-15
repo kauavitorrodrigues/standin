@@ -23,7 +23,8 @@ type Props = {
 };
 
 // The composer with its canvas loaded: tool rail, side panel, canvas with the
-// frame of the area, and the bar of discard and save.
+// frame of the area, and the bar of discard and save. The properties of the
+// area are asked before, and open again from the title of the side panel.
 export const AreaWorkspace = ({
     areaId,
     map,

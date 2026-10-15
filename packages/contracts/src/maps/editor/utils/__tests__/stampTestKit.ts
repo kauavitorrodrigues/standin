@@ -146,13 +146,20 @@ export const applyAll = (model: EditorModel, ops: EditorOp[]) => {
 };
 
 // A map model with the standard stamp already placed at (x, y).
-export const buildModelWithStamp = (x = 3, y = 2): EditorModel => {
+// The ground of the stamp goes on the ground layer, as in the composer. A map
+// takes it on the floor layer of the areas: pass "area-floor".
+export const buildModelWithStamp = (
+    x = 3,
+    y = 2,
+    groundLayer = "ground"
+): EditorModel => {
     const result = buildStampOps(
         buildMapModel(),
         buildStamp(),
         x,
         y,
-        tempIds()
+        tempIds(),
+        groundLayer
     );
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
     return result.model;
