@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import type { SpaceDetails } from "@standin/contracts";
 import { CountBadge } from "@/components/ui/count-badge";
+import { DecorateMenuItem } from "@/features/decorator/components/instances/DecorateMenuItem";
+import type { DecorateAvailability } from "@/features/decorator/types/decorate-availability";
 import { EditMapMenuItem } from "@/features/maps/organizations/components/instances/EditMapMenuItem";
 import { ChatQueries } from "@/features/chat/queries";
 import { SettingsDialog } from "@/features/settings/components/dialogs/SettingsDialog";
@@ -22,6 +24,9 @@ type Props = {
     onSelectView: (view: SpaceView) => void;
     isPeopleOpen: boolean;
     onTogglePeople: () => void;
+    // Opens the decorator with no focus, from the space menu.
+    onDecorate: () => void;
+    decorateAvailability: DecorateAvailability;
 };
 
 type FrameProps = { children: ReactNode };
@@ -40,6 +45,8 @@ export const Rail = ({
     onSelectView,
     isPeopleOpen,
     onTogglePeople,
+    onDecorate,
+    decorateAvailability,
 }: Props) => {
     const { total: unreadTotal } = ChatQueries.useUnreadCounts();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -47,6 +54,10 @@ export const Rail = ({
     return (
         <RailFrame>
             <SpaceMenu>
+                <DecorateMenuItem
+                    availability={decorateAvailability}
+                    onDecorate={onDecorate}
+                />
                 <EditMapMenuItem spaceId={space.id} mapId={space.map.id} />
             </SpaceMenu>
             <RailButton icon={SearchIcon} label="Buscar" disabled />
