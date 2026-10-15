@@ -10,6 +10,10 @@ type Props = {
     onSelect: (category: string) => void;
     // Leaves the library's own Tiles entry out.
     hideTilesTab?: boolean;
+    // No band behind the icons and no chevron where there is nothing to scroll.
+    plain?: boolean;
+    // The categories with no match for the search, which cannot be picked.
+    disabledCategories?: string[];
 };
 
 // Every category, even the ones with no asset, as floating icons that the
@@ -19,14 +23,17 @@ export const PaletteCategoryCarousel = ({
     selected,
     onSelect,
     hideTilesTab = false,
+    plain = false,
+    disabledCategories = [],
 }: Props) => (
-    <CarouselStrip>
+    <CarouselStrip plain={plain}>
         {categories.map(({ category, label, icon }) => (
             <CarouselIconItem
                 key={category}
                 icon={CATEGORY_ICONS[icon]}
                 label={label}
                 selected={category === selected}
+                disabled={disabledCategories.includes(category)}
                 onSelect={() => onSelect(category)}
             />
         ))}
