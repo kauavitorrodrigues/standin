@@ -34,6 +34,8 @@ export const assetRowSelect = {
     footprintW: assetsTable.footprintW,
     footprintH: assetsTable.footprintH,
     footprintOffsetX: assetsTable.footprintOffsetX,
+    footprintMask: assetsTable.footprintMask,
+    footprintSolidMask: assetsTable.footprintSolidMask,
     placement: assetsTable.placement,
     surfaceHeightPx: assetsTable.surfaceHeightPx,
     solid: assetsTable.solid,

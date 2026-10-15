@@ -18,3 +18,9 @@ export const ASSET_FORM_MESSAGES = {
     COLOR_UPDATED: "Cor atualizada.",
     COLOR_UPDATE_FAILED: "Não foi possível atualizar a cor.",
 } as const;
+
+// What the collision painter tells the user when it reads the drawing.
+export const SOLID_DETECT_MESSAGES = {
+    EMPTY: "Nenhuma célula do desenho ficou sólida. A colisão anterior foi mantida.",
+    FAILED: "Não foi possível ler o desenho para detectar a colisão.",
+} as const;

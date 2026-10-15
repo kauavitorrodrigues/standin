@@ -89,6 +89,43 @@ describe("planVariant, a color on a rotation the family has", () => {
     });
 });
 
+describe("planVariant, the footprint mask of a color", () => {
+    it("copies the mask of the sibling", () => {
+        const mask = [[true, false]];
+        const sibling = assetRow({ footprintW: 2, footprintMask: mask });
+        const plan = planVariant(
+            sibling,
+            [sibling],
+            { color: BLUE },
+            { width: 32, height: 32 }
+        );
+
+        expect(plan.errors).toEqual([]);
+        expect(plan.values?.footprint.mask).toEqual(mask);
+    });
+});
+
+describe("planVariant, the collision mask of a color", () => {
+    it("copies the collision mask of the sibling", () => {
+        const solidMask = Array.from({ length: 4 }, () => [
+            true,
+            false,
+            false,
+            false,
+        ]);
+        const sibling = assetRow({ footprintSolidMask: solidMask });
+        const plan = planVariant(
+            sibling,
+            [sibling],
+            { color: BLUE },
+            { width: 32, height: 32 }
+        );
+
+        expect(plan.errors).toEqual([]);
+        expect(plan.values?.footprint.solidMask).toEqual(solidMask);
+    });
+});
+
 describe("planVariant, a new rotation", () => {
     const chair = assetRow({
         id: "chair",
@@ -133,6 +170,24 @@ describe("planVariant, a new rotation", () => {
             footprint: { w: 1, h: 2, offsetX: 0 },
             copiesSibling: false,
         });
+    });
+
+    it("takes the footprint mask of the new rotation", () => {
+        const mask = [[true], [false]];
+        const plan = planVariant(
+            chair,
+            [chair],
+            {
+                rotation: ASSET_ROTATIONS.DEG_90,
+                color: oak,
+                footprint: { w: 1, h: 2, mask },
+                actionParams: chairSeats,
+            },
+            { width: 32, height: 64 }
+        );
+
+        expect(plan.errors).toEqual([]);
+        expect(plan.values?.footprint.mask).toEqual(mask);
     });
 
     it("refuses a footprint that does not fit its own frame", () => {

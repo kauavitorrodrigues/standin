@@ -393,9 +393,7 @@ describe("PeerLink ICE recovery", () => {
 
         for (let attempt = 0; attempt < ICE_RESTART_MAX_ATTEMPTS; attempt++) {
             pc.setIceState("failed");
-            vi.advanceTimersByTime(
-                ICE_RESTART_BASE_DELAY_MS * 2 ** attempt
-            );
+            vi.advanceTimersByTime(ICE_RESTART_BASE_DELAY_MS * 2 ** attempt);
         }
         expect(pc.restartIce).toHaveBeenCalledTimes(ICE_RESTART_MAX_ATTEMPTS);
         expect(events.onClose).not.toHaveBeenCalled();
@@ -409,9 +407,7 @@ describe("PeerLink ICE recovery", () => {
 
         for (let attempt = 0; attempt < ICE_RESTART_MAX_ATTEMPTS; attempt++) {
             pc.setIceState("failed");
-            vi.advanceTimersByTime(
-                ICE_RESTART_BASE_DELAY_MS * 2 ** attempt
-            );
+            vi.advanceTimersByTime(ICE_RESTART_BASE_DELAY_MS * 2 ** attempt);
         }
         pc.setIceState("connected");
         pc.setIceState("failed");

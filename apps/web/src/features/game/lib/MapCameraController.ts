@@ -4,12 +4,12 @@ import { resolveClampedZoom } from "@/features/game/utils/zoom";
 import type { CameraState } from "@/features/game/types/game";
 
 export class MapCameraController {
-    
     private readonly camera: Phaser.Cameras.Scene2D.Camera;
     private readonly mapWidth: number;
     private readonly mapHeight: number;
     private readonly onStateChange: (state: CameraState) => void;
-    private followOffsetXPixels: number = MAP_CAMERA_CONFIG.NO_HORIZONTAL_FOLLOW_OFFSET;
+    private followOffsetXPixels: number =
+        MAP_CAMERA_CONFIG.NO_HORIZONTAL_FOLLOW_OFFSET;
     private isFollowing = false;
 
     constructor(
@@ -140,7 +140,10 @@ export class MapCameraController {
             this.resolveMaxZoom()
         );
 
-        this.camera.zoomTo(targetZoom, MAP_CAMERA_CONFIG.ZOOM_TWEEN_DURATION_MS);
+        this.camera.zoomTo(
+            targetZoom,
+            MAP_CAMERA_CONFIG.ZOOM_TWEEN_DURATION_MS
+        );
         this.camera.followOffset.x = -this.followOffsetXPixels / targetZoom;
         this.onStateChange(this.resolveState(targetZoom));
     }

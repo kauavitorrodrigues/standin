@@ -1,7 +1,8 @@
 import {
     ASSET_PLACEMENTS,
     MapAssetModelTooSmallError,
-    isFootprintInside,
+    cellsInside,
+    getOccupiedCells,
     type Footprint,
 } from "@standin/contracts";
 import type { AssetDef } from "../types/asset-def";
@@ -23,7 +24,10 @@ export const assertModelFitsChildren = (
     const fits =
         acceptsSurfaceItems(nextAsset.type) &&
         surfaceChildren.every((child) =>
-            isFootprintInside(itemFootprint(child), footprint)
+            cellsInside(
+                getOccupiedCells(itemFootprint(child)),
+                getOccupiedCells(footprint)
+            )
         );
     if (!fits) throw new MapAssetModelTooSmallError();
 };

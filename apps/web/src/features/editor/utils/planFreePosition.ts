@@ -1,11 +1,15 @@
 import {
     ASSET_PLACEMENTS,
+    cellsInside,
+    occupiedCells,
     splitPixelAnchor,
     TILE_SIZE,
     type AssetDefinition,
     type PixelAnchor,
     type PlacedAsset,
 } from "@standin/contracts";
+
+import { findNearestSurfaceCell } from "@/features/editor/utils/findNearestSurfaceCell";
 
 const clamp = (value: number, min: number, max: number): number => {
     // An item bigger than the top has no spot that fits: keep the value and
@@ -18,6 +22,8 @@ export type SurfaceParent = { placed: PlacedAsset; asset: AssetDefinition };
 
 // Keeps the footprint of a SURFACE item inside the top of its parent, down to
 // the pixel. `left` and `bottom` are the edges of the footprint in world px.
+// When the parent has a footprint mask and the item would stand on a free tile,
+// it moves to the grid position of the nearest cells the parent occupies.
 export const clampToSurface = (
     left: number,
     bottom: number,
@@ -32,9 +38,38 @@ export const clampToSurface = (
     const parentTop = parentBottom - parent.asset.footprint.h * TILE_SIZE;
     const parentWidth = parent.asset.footprint.w * TILE_SIZE;
 
-    return {
+    const inside = {
         left: clamp(left, parentLeft, parentLeft + parentWidth - width),
         bottom: clamp(bottom, parentTop + height, parentBottom),
+    };
+    if (!parent.asset.footprint.mask) return inside;
+
+    return snapToOccupied(inside, asset, parent);
+};
+
+const snapToOccupied = (
+    inside: { left: number; bottom: number },
+    asset: AssetDefinition,
+    parent: SurfaceParent
+): { left: number; bottom: number } => {
+    const { tileX, tileY } = splitPixelAnchor(inside.left, inside.bottom);
+    const surface = occupiedCells(
+        parent.asset,
+        parent.placed.tileX,
+        parent.placed.tileY
+    );
+    if (cellsInside(occupiedCells(asset, tileX, tileY), surface)) return inside;
+
+    const nearest = findNearestSurfaceCell(
+        [tileX, tileY],
+        asset,
+        parent.placed,
+        parent.asset
+    );
+    if (!nearest) return inside;
+    return {
+        left: nearest[0] * TILE_SIZE,
+        bottom: (nearest[1] + 1) * TILE_SIZE,
     };
 };
 

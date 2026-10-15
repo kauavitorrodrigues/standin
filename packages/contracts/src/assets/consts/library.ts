@@ -8,6 +8,10 @@ export const MAX_TILESET_IMAGE_PX = 4096;
 export const MAX_LIBRARY_KEY_LENGTH = 100;
 export const MIN_ANIMATION_FRAME_COUNT = 2;
 
+// How many collision cells fit in one tile, per side. The collision mask of a
+// footprint has this many cells per tile, so with 4 a cell is 8 px.
+export const SOLID_MASK_SUBDIVISION = 4;
+
 // The two parts of an upload request, by form field name.
 export const LIBRARY_UPLOAD_PARTS = {
     IMAGE: "image",

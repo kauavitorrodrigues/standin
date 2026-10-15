@@ -4,14 +4,14 @@ import { LAYOUT_ISSUE_CODES as Code } from "../../../layout/issues";
 import type { CanPlaceAssetResult } from "../../types/can-place-asset-result";
 import type { EditorModel } from "../../types/editor-model";
 import type { Footprint } from "../../types/footprint";
-import { footprintsOverlap } from "../footprintsOverlap";
-import { isFootprintInside } from "../isFootprintInside";
+import { cellsInside, cellsOverlap } from "../cellsOverlap";
+import { getOccupiedCells } from "../getOccupiedCells";
 import { listPlacedWithAsset } from "./listPlacedWithAsset";
 import { placedFootprint } from "./placedFootprint";
 
 /**
- * SURFACE: the parent accepts items on top, the item sits inside the parent
- * footprint and no other SURFACE item of that parent uses the same cells.
+ * SURFACE: the parent accepts items on top, the item sits on cells the parent
+ * occupies and no other SURFACE item of that parent uses the same cells.
  */
 export const checkSurfacePlacement = (
     model: EditorModel,
@@ -26,12 +26,11 @@ export const checkSurfacePlacement = (
         (SURFACE_TYPES as readonly string[]).includes(parent.asset.type);
     if (!parent || !accepts) return { ok: false, reason: Code.NOT_ON_SURFACE };
 
-    if (
-        !isFootprintInside(
-            footprint,
-            placedFootprint(parent.placed, parent.asset)
-        )
-    ) {
+    const cells = getOccupiedCells(footprint);
+    const surface = getOccupiedCells(
+        placedFootprint(parent.placed, parent.asset)
+    );
+    if (!cellsInside(cells, surface)) {
         return { ok: false, reason: Code.NOT_ON_SURFACE };
     }
 
@@ -39,7 +38,10 @@ export const checkSurfacePlacement = (
         ({ placed, asset }) =>
             placed.parentId === parent.placed.id &&
             asset.placement === ASSET_PLACEMENTS.SURFACE &&
-            footprintsOverlap(footprint, placedFootprint(placed, asset))
+            cellsOverlap(
+                cells,
+                getOccupiedCells(placedFootprint(placed, asset))
+            )
     );
     if (taken) return { ok: false, reason: Code.FOOTPRINT_OVERLAP };
 

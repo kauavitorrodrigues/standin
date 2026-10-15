@@ -9,3 +9,6 @@ export const GRID_LINE_COLOR = "rgba(255, 255, 255, 0.28)";
 // The checkerboard behind the image, so transparent areas read as such.
 export const CHECKER_DARK = "#1a1a1a";
 export const CHECKER_LIGHT = "#242424";
+
+// The 8 px cells of the collision painter, finer than the grid of the tiles.
+export const SOLID_GRID_LINE_COLOR = "rgba(255, 255, 255, 0.14)";

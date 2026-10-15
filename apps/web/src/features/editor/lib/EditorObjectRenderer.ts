@@ -11,6 +11,7 @@ import {
 import {
     resolvePlacedLayout,
     shouldPlayAnimation,
+    type PlacedLayout,
 } from "@/features/game/utils/placed";
 import { EDITOR_OBJECT_PLACEHOLDER } from "@/features/editor/consts/placed-objects";
 import { loadAssetTexture } from "@/features/editor/lib/loadAssetTexture";
@@ -26,11 +27,13 @@ export type PlacedDisplay =
 
 // The placed objects of the map as sprites, updated one by one. Position and
 // depth follow the rules of the game (`resolvePlacedLayout`), so an item on a
-// desk sits on its parent and draws just over it. A rectangle of the footprint
-// size stands in until the texture of the asset loads, except for an object
-// that already has a sprite: a swap keeps the old one until the new is ready.
+// desk sits on its parent and draws just over it. An object whose footprint has
+// a mask is several sprites, one cropped slice per footprint row. A rectangle of
+// the footprint size stands in until the texture of the asset loads, except for
+// an object that already has a sprite: a swap keeps the old one until the new
+// is ready.
 export class EditorObjectRenderer {
-    private readonly displays = new Map<string, PlacedDisplay>();
+    private readonly displays = new Map<string, PlacedDisplay[]>();
     private readonly placedById = new Map<string, PlacedAsset>();
     private readonly assetsById = new Map<string, AssetDefinition>();
     private readonly drops = new Map<string, Phaser.Tweens.TweenChain>();
@@ -109,7 +112,7 @@ export class EditorObjectRenderer {
 
     // The sprites and placeholders on screen, for the map photo.
     getDisplays(): PlacedDisplay[] {
-        return [...this.displays.values()];
+        return [...this.displays.values()].flat();
     }
 
     // Resolves when no texture is loading, so a photo shows sprites and not
@@ -124,7 +127,9 @@ export class EditorObjectRenderer {
         this.destroyed = true;
         this.drops.forEach((drop) => drop.stop());
         this.drops.clear();
-        this.displays.forEach((display) => display.destroy());
+        this.displays.forEach((displays) =>
+            displays.forEach((display) => display.destroy())
+        );
         this.displays.clear();
         this.placedById.clear();
     }
@@ -148,7 +153,7 @@ export class EditorObjectRenderer {
     private destroyDisplay(id: string): void {
         this.drops.get(id)?.stop();
         this.drops.delete(id);
-        this.displays.get(id)?.destroy();
+        this.displays.get(id)?.forEach((display) => display.destroy());
         this.displays.delete(id);
     }
 
@@ -174,31 +179,35 @@ export class EditorObjectRenderer {
             // A swap keeps the sprite it had until the new texture arrives,
             // so the object never blinks into a placeholder. The load
             // redraws it when it settles.
-            if (this.displays.get(id)?.type === SPRITE_TYPE) return;
+            if (this.displays.get(id)?.[0]?.type === SPRITE_TYPE) return;
             this.destroyDisplay(id);
-            this.displays.set(id, this.createPlaceholder(asset, layout));
+            this.displays.set(id, [this.createPlaceholder(asset, layout)]);
             return;
         }
 
         this.destroyDisplay(id);
 
-        this.displays.set(id, this.createSprite(placed, asset, layout));
+        this.displays.set(id, this.createSprites(placed, asset, layout));
     }
 
     // The squash: the sprite is anchored at its feet, so pressing it down
     // keeps it on the ground, and its x follows the width change to stay
     // centered. A placeholder (texture still loading) has no effect.
     private playDrop(id: string): void {
-        const display = this.displays.get(id);
-        if (display?.type !== SPRITE_TYPE || prefersReducedMotion()) return;
+        const displays = this.displays.get(id);
+        if (displays?.[0]?.type !== SPRITE_TYPE || prefersReducedMotion()) {
+            return;
+        }
 
-        const sprite = display as Phaser.GameObjects.Sprite;
-        const baseX = sprite.x;
+        const sprites = displays as Phaser.GameObjects.Sprite[];
+        const baseX = sprites[0]!.x;
         const keepCentered = () => {
-            sprite.x = baseX + (sprite.width * (1 - sprite.scaleX)) / 2;
+            sprites.forEach((sprite) => {
+                sprite.x = baseX + (sprite.width * (1 - sprite.scaleX)) / 2;
+            });
         };
         const drop = this.scene.tweens.chain({
-            targets: sprite,
+            targets: sprites,
             tweens: [
                 {
                     scaleX: OBJECT_DROP.SQUASH_SCALE_X,
@@ -216,38 +225,52 @@ export class EditorObjectRenderer {
                 },
             ],
             onComplete: () => {
-                sprite.setScale(1);
-                sprite.x = baseX;
+                sprites.forEach((sprite) => {
+                    sprite.setScale(1);
+                    sprite.x = baseX;
+                });
                 this.drops.delete(id);
             },
         });
         this.drops.set(id, drop);
     }
 
-    private createSprite(
+    private createSprites(
         placed: PlacedAsset,
         asset: AssetDefinition,
-        layout: { x: number; bottomY: number; depth: number }
-    ): Phaser.GameObjects.Sprite {
-        const sprite = this.scene.add.sprite(
-            layout.x,
-            layout.bottomY,
-            buildAssetTextureKey(asset.id)
-        );
-        sprite.setOrigin(0, 1);
-        sprite.setDepth(layout.depth);
-        sprite.setName(placed.id);
-
+        layout: PlacedLayout
+    ): Phaser.GameObjects.Sprite[] {
         const animationKey = buildAssetAnimationKey(asset.id);
-        if (shouldPlayAnimation(asset, this.scene.anims.exists(animationKey))) {
-            sprite.play(animationKey);
-        }
-        return sprite;
+        const animated = shouldPlayAnimation(
+            asset,
+            this.scene.anims.exists(animationKey)
+        );
+
+        return layout.slices.map((slice) => {
+            const sprite = this.scene.add.sprite(
+                layout.x,
+                layout.bottomY,
+                buildAssetTextureKey(asset.id)
+            );
+            sprite.setOrigin(0, 1);
+            sprite.setDepth(slice.depth);
+            sprite.setName(placed.id);
+            if (slice.crop) {
+                sprite.setCrop(
+                    0,
+                    slice.crop.y,
+                    asset.sprite.w,
+                    slice.crop.height
+                );
+            }
+            if (animated) sprite.play(animationKey);
+            return sprite;
+        });
     }
 
     private createPlaceholder(
         asset: AssetDefinition,
-        layout: { x: number; bottomY: number; depth: number }
+        layout: PlacedLayout
     ): Phaser.GameObjects.Rectangle {
         const rect = this.scene.add.rectangle(
             layout.x,

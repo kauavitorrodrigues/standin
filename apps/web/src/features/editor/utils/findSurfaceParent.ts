@@ -1,12 +1,13 @@
 import {
-    footprintCells,
+    occupiedCells,
     SURFACE_TYPES,
     type Cell,
     type EditorModel,
     type PlacedAsset,
 } from "@standin/contracts";
 
-// The object whose top covers the cell, when it accepts items on top.
+// The object whose top covers the cell, when it accepts items on top. A free
+// tile of a masked footprint is not covered.
 export const findSurfaceParent = (
     model: EditorModel,
     cell: Cell
@@ -19,7 +20,7 @@ export const findSurfaceParent = (
         if (!(SURFACE_TYPES as readonly string[]).includes(asset.type)) {
             return false;
         }
-        return footprintCells(asset, placed.tileX, placed.tileY).some(
+        return occupiedCells(asset, placed.tileX, placed.tileY).some(
             ({ x, y }) => x === cell[0] && y === cell[1]
         );
     });

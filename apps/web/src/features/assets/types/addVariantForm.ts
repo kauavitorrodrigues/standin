@@ -1,3 +1,4 @@
+import type { FootprintMaskValue, SolidMaskValue } from "./footprintMask";
 import type { Seat } from "./seat";
 
 export type AddVariantFormValues = {
@@ -10,6 +11,8 @@ export type AddVariantFormValues = {
     footprintW: number | undefined;
     footprintH: number | undefined;
     footprintOffsetX: number | undefined;
+    footprintMask: FootprintMaskValue;
+    footprintSolidMask: SolidMaskValue;
     // The params of the action of the base, only for a new rotation. Seats
     // are marked on the image, the target of a teleport is a map cell.
     seats: Seat[];

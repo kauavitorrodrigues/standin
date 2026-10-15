@@ -8,11 +8,17 @@ import {
 import type {
     AssetCategory,
     CreateAssetData,
+    FootprintMask,
     LibraryIssue,
 } from "@standin/contracts";
 import type { ImageSize } from "../../../lib/types";
 import { readFrameSize } from "./readFrameSize";
-import { findActionParamsIssue, findFootprintIssue } from "./ruleIssues";
+import {
+    findActionParamsIssue,
+    findFootprintIssue,
+    findFootprintMaskIssue,
+    resolveFootprintMasks,
+} from "./ruleIssues";
 
 export type AssetPlan = {
     errors: LibraryIssue[];
@@ -20,7 +26,13 @@ export type AssetPlan = {
     values: {
         category: AssetCategory;
         frame: { w: number; h: number };
-        footprint: { w: number; h: number; offsetX: number };
+        footprint: {
+            w: number;
+            h: number;
+            offsetX: number;
+            mask: FootprintMask | null;
+            solidMask: FootprintMask | null;
+        };
     } | null;
 };
 
@@ -59,7 +71,13 @@ export const planAsset = (
     const { category, issue: categoryIssue } = findCategory(data);
     if (categoryIssue) errors.push(categoryIssue);
 
-    const footprint = { offsetX: 0, ...data.footprint };
+    const footprint = {
+        offsetX: 0,
+        ...data.footprint,
+        ...resolveFootprintMasks(data.footprint),
+    };
+    const maskIssue = findFootprintMaskIssue(footprint, data.animation != null);
+    if (maskIssue) errors.push(maskIssue);
     const actionIssue = findActionParamsIssue(
         data.action ?? null,
         data.actionParams ?? null

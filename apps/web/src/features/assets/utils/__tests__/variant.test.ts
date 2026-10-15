@@ -15,6 +15,8 @@ const values = (
     footprintW: 1,
     footprintH: 1,
     footprintOffsetX: 0,
+    footprintMask: null,
+    footprintSolidMask: null,
     seats: [],
     targetX: undefined,
     targetY: undefined,
@@ -100,5 +102,16 @@ describe("validateAddVariant", () => {
             values({ rotation: "DEG_90" })
         );
         expect(Object.keys(errors).sort()).toEqual(["targetX", "targetY"]);
+    });
+});
+
+describe("buildVariantData mask", () => {
+    it("sends the mask of a new rotation", () => {
+        const mask = [[true, false]];
+        const data = buildVariantData(
+            family(["DEG_0"]),
+            values({ rotation: "DEG_90", footprintW: 2, footprintMask: mask })
+        );
+        expect(data.footprint).toEqual({ w: 2, h: 1, offsetX: 0, mask });
     });
 });

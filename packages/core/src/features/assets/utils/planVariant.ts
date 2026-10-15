@@ -6,11 +6,20 @@ import {
     VariantOverrideNotAllowedIssue,
     VariantSizeMismatchIssue,
 } from "@standin/contracts";
-import type { CreateVariantData, LibraryIssue } from "@standin/contracts";
+import type {
+    CreateVariantData,
+    FootprintMask,
+    LibraryIssue,
+} from "@standin/contracts";
 import type { ImageSize } from "../../../lib/types";
 import type { AssetRow } from "../types";
 import { readFrameSize } from "./readFrameSize";
-import { findActionParamsIssue, findFootprintIssue } from "./ruleIssues";
+import {
+    findActionParamsIssue,
+    findFootprintIssue,
+    findFootprintMaskIssue,
+    resolveFootprintMasks,
+} from "./ruleIssues";
 
 const EMPTY = "";
 
@@ -18,7 +27,13 @@ export type VariantValues = {
     rotation: AssetRow["rotation"];
     color: { key: string; hex: string } | null;
     frame: { w: number; h: number };
-    footprint: { w: number; h: number; offsetX: number };
+    footprint: {
+        w: number;
+        h: number;
+        offsetX: number;
+        mask: FootprintMask | null;
+        solidMask: FootprintMask | null;
+    };
     actionParams: AssetRow["actionParams"];
     // True when the family already had a row with this rotation.
     copiesSibling: boolean;
@@ -113,10 +128,20 @@ export const planVariant = (
               w: sibling.footprintW,
               h: sibling.footprintH,
               offsetX: sibling.footprintOffsetX,
+              mask: sibling.footprintMask,
+              solidMask: sibling.footprintSolidMask,
           }
         : data.footprint
-          ? { offsetX: 0, ...data.footprint }
+          ? {
+                offsetX: 0,
+                ...data.footprint,
+                ...resolveFootprintMasks(data.footprint),
+            }
           : null;
+    const maskIssue = footprint
+        ? findFootprintMaskIssue(footprint, base.animation !== null)
+        : null;
+    if (maskIssue && !sibling) errors.push(maskIssue);
     if (frame && !sibling && footprint) {
         const footprintIssue = findFootprintIssue(footprint, frame);
         if (footprintIssue) errors.push(footprintIssue);

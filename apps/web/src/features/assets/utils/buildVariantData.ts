@@ -4,6 +4,7 @@ import type {
 } from "@standin/contracts";
 import { getFamilyBase } from "@standin/contracts";
 import type { AddVariantFormValues } from "../types/addVariantForm";
+import { buildFootprintMasks } from "./buildFootprintMasks";
 import { buildActionParams } from "./buildActionParams";
 import { getVariantKind, VARIANT_KINDS } from "./getVariantKind";
 
@@ -32,15 +33,22 @@ export const buildVariantData = (
     }
 
     if (getVariantKind(family, values.rotation) === VARIANT_KINDS.ROTATION) {
+        const base = getFamilyBase(family.variants);
         data.footprint = {
             w: values.footprintW ?? 1,
             h: values.footprintH ?? 1,
             offsetX: values.footprintOffsetX ?? 0,
+            ...buildFootprintMasks({
+                w: values.footprintW ?? 1,
+                h: values.footprintH ?? 1,
+                offsetX: values.footprintOffsetX ?? 0,
+                mask: values.footprintMask,
+                solidMask: values.footprintSolidMask,
+                solid: base.solid,
+                isAnimated: base.animation !== null,
+            }),
         };
-        const actionParams = buildActionParams(
-            getFamilyBase(family.variants).action,
-            values
-        );
+        const actionParams = buildActionParams(base.action, values);
         if (actionParams) data.actionParams = actionParams;
     }
 

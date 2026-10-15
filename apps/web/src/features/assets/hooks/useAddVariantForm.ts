@@ -6,6 +6,7 @@ import {
     type LibraryFamilyDetail,
 } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
+import { NO_FOOTPRINT_MASK, NO_SOLID_MASK } from "../consts/footprintMask";
 import { NO_ROTATION } from "../consts/rotationMeta";
 import { ASSET_MESSAGES } from "../consts/messages";
 import { STATIC_FRAME_COUNT } from "../consts/frames";
@@ -40,6 +41,8 @@ export const useAddVariantForm = ({ family, onDone }: Params) => {
             footprintW: base.footprint.h,
             footprintH: base.footprint.w,
             footprintOffsetX: 0,
+            footprintMask: NO_FOOTPRINT_MASK,
+            footprintSolidMask: NO_SOLID_MASK,
             seats: [],
             targetX: undefined,
             targetY: undefined,

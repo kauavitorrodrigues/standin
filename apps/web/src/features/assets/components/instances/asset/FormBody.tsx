@@ -1,5 +1,4 @@
 import type { UseFormReturn } from "react-hook-form";
-import { AssetInfo } from "@/features/assets/components/fields/asset/AssetInfo";
 import { FormFields } from "@/features/assets/components/fields/asset/FormFields";
 import { ImageFields } from "@/features/assets/components/fields/asset/ImageFields";
 import { AssetUploadStep } from "@/features/assets/components/views/upload/AssetUploadStep";
@@ -34,19 +33,22 @@ export const FormBody = ({
     }
 
     return (
-        <>
-            <div className="grid gap-8 lg:grid-cols-2">
-                <div className="flex flex-col gap-4">
-                    <FormFields form={form} disabled={isSubmitting} />
-                    <AssetInfo form={form} />
-                </div>
-                <ImageFields form={form} file={file} disabled={isSubmitting} />
+        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[3fr_7fr]">
+            <div className="bg-card/50 flex min-h-0 flex-col gap-4 rounded-xl border p-4 shadow-sm">
+                <FormFields form={form} disabled={isSubmitting} />
             </div>
-            <FormFooter
-                submitLabel="Criar asset"
-                isSubmitting={isSubmitting}
-                onCancel={onCancel}
+            <ImageFields
+                form={form}
+                file={file}
+                disabled={isSubmitting}
+                actions={
+                    <FormFooter
+                        submitLabel="Criar asset"
+                        isSubmitting={isSubmitting}
+                        onCancel={onCancel}
+                    />
+                }
             />
-        </>
+        </div>
     );
 };

@@ -52,6 +52,8 @@ export const createLibraryAsset = async (
                 footprintW: footprint.w,
                 footprintH: footprint.h,
                 footprintOffsetX: footprint.offsetX,
+                footprintMask: footprint.mask,
+                footprintSolidMask: footprint.solidMask,
                 placement: data.placement ?? ASSET_PLACEMENTS.GROUND,
                 surfaceHeightPx: data.surfaceHeightPx ?? 0,
                 solid: data.solid ?? false,

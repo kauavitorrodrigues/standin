@@ -21,6 +21,8 @@ export const buildAssetDefinition = (
         w: row.footprintW,
         h: row.footprintH,
         offsetX: row.footprintOffsetX,
+        mask: row.footprintMask,
+        solidMask: row.footprintSolidMask,
     },
     placement: row.placement,
     surfaceHeightPx: row.surfaceHeightPx,

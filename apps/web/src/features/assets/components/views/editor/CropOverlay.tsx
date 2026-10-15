@@ -1,71 +1,96 @@
-import { CROP_COLOR } from "../../../consts/editorColors";
-import { CROP_TINT_PERCENT } from "../../../consts/editorOverlayStyle";
+import { EDITOR_MODES, type EditorMode } from "../../../consts/editorModes";
 import type { Zoom } from "../../../consts/editorZoom";
+import type {
+    FootprintMaskValue,
+    FootprintTile,
+    SolidCell,
+    SolidMaskValue,
+} from "../../../types/footprintMask";
 import type { Crop, Footprint } from "../../../types/spriteGeometry";
-import { getFootprintBoxStyle } from "../../../utils/getFootprintBoxStyle";
-import { getFootprintRect, hasCrop } from "../../../utils/spriteGeometry";
+import { getLayerOpacity } from "../../../utils/getLayerOpacity";
+import { hasCrop, hasFootprint } from "../../../utils/spriteGeometry";
+import { CollisionLayer } from "./CollisionLayer";
+import { CropLayer } from "./CropLayer";
+import { FootprintLayer } from "./FootprintLayer";
 
 type Props = {
     zoom: Zoom;
     crop: Crop;
     frame: Crop;
     footprint: Footprint;
+    mask: FootprintMaskValue;
     solid: boolean;
+    paintable?: boolean;
+    hoveredTile?: FootprintTile | null;
+    // The layer being edited is drawn in full, the others dimmed or hidden.
+    mode?: EditorMode;
+    // The asset has a collision to draw.
+    collisionAvailable?: boolean;
+    solidMask?: SolidMaskValue;
+    hoveredCell?: SolidCell | null;
 };
 
-// The two rectangles the editor marks: the crop (with the line between the
-// frames of a strip) and the footprint on each frame. Nothing until the crop
-// is marked.
-export const CropOverlay = ({ zoom, crop, frame, footprint, solid }: Props) => {
+// The footprint is not drawn until it is marked.
+const getFootprintOpacity = (marked: boolean, mode: EditorMode) => {
+    if (!marked) return null;
+    return getLayerOpacity(EDITOR_MODES.FOOTPRINT, mode);
+};
+
+// The layers the editor marks over the image, stacked: the crop (with the
+// line between the frames of a strip), the footprint on each frame and the
+// collision. Nothing until the crop is marked.
+export const CropOverlay = ({
+    zoom,
+    crop,
+    frame,
+    footprint,
+    mask,
+    solid,
+    paintable = false,
+    hoveredTile = null,
+    mode = EDITOR_MODES.FOOTPRINT,
+    collisionAvailable = false,
+    solidMask = null,
+    hoveredCell = null,
+}: Props) => {
     if (!hasCrop(crop)) return null;
 
-    const px = (value: number) => value * zoom;
-    const rectStyle = (rect: Crop) => ({
-        left: px(rect.x),
-        top: px(rect.y),
-        width: px(rect.w),
-        height: px(rect.h),
-    });
+    const isFootprintMarked = hasFootprint(footprint);
+
     // How many frames the crop holds, 1 when it is not a strip.
     const frameCount = Math.max(Math.round(crop.w / frame.w), 1);
 
     return (
         <>
-            <div
-                className="pointer-events-none absolute border-2 border-dashed"
-                style={{
-                    ...rectStyle(crop),
-                    borderColor: CROP_COLOR,
-                    backgroundColor: `color-mix(in srgb, ${CROP_COLOR} ${CROP_TINT_PERCENT}%, transparent)`,
-                }}
+            <CropLayer
+                opacity={getLayerOpacity(EDITOR_MODES.CROP, mode)}
+                zoom={zoom}
+                crop={crop}
+                frame={frame}
+                frameCount={frameCount}
             />
-            {Array.from({ length: frameCount - 1 }, (_, index) => (
-                <div
-                    key={index}
-                    className="pointer-events-none absolute border-l border-dashed"
-                    style={{
-                        left: px(crop.x + (index + 1) * frame.w),
-                        top: px(crop.y),
-                        height: px(crop.h),
-                        borderColor: CROP_COLOR,
-                    }}
-                />
-            ))}
-            {Array.from({ length: frameCount }, (_, index) => (
-                <div
-                    key={index}
-                    className="pointer-events-none absolute border-2"
-                    style={{
-                        ...rectStyle(
-                            getFootprintRect(
-                                { ...frame, x: frame.x + index * frame.w },
-                                footprint
-                            )
-                        ),
-                        ...getFootprintBoxStyle(solid, index),
-                    }}
-                />
-            ))}
+            <FootprintLayer
+                opacity={getFootprintOpacity(isFootprintMarked, mode)}
+                zoom={zoom}
+                frame={frame}
+                frameCount={frameCount}
+                footprint={footprint}
+                mask={mask}
+                solid={solid}
+                paintable={paintable}
+                hoveredTile={hoveredTile}
+            />
+            <CollisionLayer
+                opacity={getLayerOpacity(EDITOR_MODES.COLLISION, mode)}
+                active={mode === EDITOR_MODES.COLLISION}
+                available={collisionAvailable && isFootprintMarked}
+                zoom={zoom}
+                frame={frame}
+                footprint={footprint}
+                mask={mask}
+                solidMask={solidMask}
+                hoveredCell={hoveredCell}
+            />
         </>
     );
 };

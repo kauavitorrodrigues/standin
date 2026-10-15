@@ -1,6 +1,6 @@
-import type { UseFormReturn } from "react-hook-form";
+import { useWatch, type UseFormReturn } from "react-hook-form";
+import { SeatsList } from "@/features/assets/components/instances/editor/SeatsList";
 import type { AddVariantFormValues } from "@/features/assets/types/addVariantForm";
-import { SeatsList } from "./SeatsList";
 
 type Props = {
     // Only a chair with a new rotation has seats to list.
@@ -18,11 +18,16 @@ export const SeatsSection = ({
     onSelect,
     disabled,
 }: Props) => {
+    const seats = useWatch({ control: form.control, name: "seats" });
     if (!show) return null;
 
     return (
         <SeatsList
-            form={form}
+            seats={seats}
+            onChange={(next) => {
+                form.setValue("seats", next);
+                form.clearErrors("seats");
+            }}
             selected={selected}
             onSelect={onSelect}
             disabled={disabled}
