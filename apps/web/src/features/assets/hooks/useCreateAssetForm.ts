@@ -15,11 +15,13 @@ import { getSpriteSize } from "../utils/getSpriteSize";
 import { validateCreateAsset } from "../utils/validateCreate";
 import { validateUploadFile } from "../utils/validateUploadFile";
 import { useAutoColor } from "./useAutoColor";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 // Everything the form of a new asset does: fills the color from the image,
 // suggests the name from the file, checks what saves a round trip, cuts the
 // piece out of the image and sends it.
 export const useCreateAssetForm = () => {
+    const { paths } = useLibraryScope();
     const navigate = useNavigate();
     const createAsset = useCreateAsset();
 
@@ -67,7 +69,7 @@ export const useCreateAssetForm = () => {
                 title: ASSET_FORM_MESSAGES.CREATED,
                 type: "success",
             });
-            navigate({ to: "/admin/assets" });
+            navigate({ to: paths.assets });
         } catch (error) {
             applyApiErrorWithFallback(
                 error,
@@ -84,6 +86,6 @@ export const useCreateAssetForm = () => {
         issuesMessage: form.formState.errors.root?.message,
         suggestName,
         submit: form.handleSubmit(onSubmit),
-        cancel: () => navigate({ to: "/admin/assets" }),
+        cancel: () => navigate({ to: paths.assets }),
     };
 };

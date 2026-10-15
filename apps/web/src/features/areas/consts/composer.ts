@@ -24,5 +24,3 @@ export const AREA_FRAME_LIMITS: FrameLimits = {
 
 // The id the composer gives its map, which has none in the database.
 export const AREA_COMPOSER_MAP_ID = "area-composer";
-
-export const AREA_LIST_PATH = "/admin/areas";

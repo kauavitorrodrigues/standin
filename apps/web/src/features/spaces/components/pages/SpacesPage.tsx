@@ -9,12 +9,11 @@ export function SpacesPage() {
         <PageContainer.Root>
             <PageContainer.Header
                 title="Meus espaços"
+                description="Entre em um espaço ou crie um novo para a sua equipe."
+                className="border-b-0"
                 controls={
                     <PageContainer.Controls>
-                        <Button
-                            size="lg"
-                            render={<Link to="/spaces/new" />}
-                        >
+                        <Button size="lg" render={<Link to="/spaces/new" />}>
                             <PlusIcon />
                             Novo espaço
                         </Button>

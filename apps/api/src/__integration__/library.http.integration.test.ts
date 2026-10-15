@@ -247,6 +247,87 @@ describe.skipIf(!enabled)("asset library over HTTP (real stack)", () => {
         });
     });
 
+    describe("library of an organization", () => {
+        const orgRoute = (path: string) =>
+            `/organizations/${organizationId}/library${path}`;
+
+        it("lets only the owner of the organization write in it", async () => {
+            const parts = () => ({
+                image: png(32, 32),
+                data: mug(`org-owner-${RUN}`),
+            });
+
+            expect(
+                (await send(null, "POST", orgRoute("/assets"), parts())).status
+            ).toBe(401);
+            for (const as of ["member", "outsider", "admin"] as const) {
+                expect(
+                    (await send(as, "POST", orgRoute("/assets"), parts()))
+                        .status
+                ).toBe(403);
+                expect(
+                    (await call(as, "GET", orgRoute("/assets"))).status
+                ).toBe(403);
+            }
+
+            const created = await send(
+                "owner",
+                "POST",
+                orgRoute("/assets"),
+                parts()
+            );
+            expect(created.status).toBe(201);
+        });
+
+        it("keeps the two libraries apart", async () => {
+            const orgKey = `org-apart-${RUN}`;
+            const globalKey = `global-apart-${RUN}`;
+            const orgAsset = await send("owner", "POST", orgRoute("/assets"), {
+                image: png(32, 32),
+                data: mug(orgKey),
+            });
+            const globalAsset = await createAsset({
+                image: png(32, 32),
+                data: mug(globalKey),
+            });
+            const orgId = orgAsset.body.asset.id as string;
+            const globalId = globalAsset.body.asset.id as string;
+
+            // The owner never reaches the global row, in any verb.
+            expect(
+                (await call("owner", "GET", orgRoute(`/assets/${globalId}`)))
+                    .status
+            ).toBe(404);
+            expect(
+                (
+                    await call(
+                        "owner",
+                        "DELETE",
+                        orgRoute(`/assets/${globalId}`)
+                    )
+                ).status
+            ).toBe(404);
+            // Nor the admin reaches the row of the organization.
+            expect(
+                (await call("admin", "GET", `/library/assets/${orgId}`)).status
+            ).toBe(404);
+
+            expect(
+                (await call("owner", "GET", orgRoute(`/assets/${orgId}`)))
+                    .status
+            ).toBe(200);
+        });
+
+        it("refuses an organizationId in data even for the owner", async () => {
+            const response = await send("owner", "POST", orgRoute("/assets"), {
+                image: png(32, 32),
+                data: mug(`org-body-${RUN}`, { organizationId }),
+            });
+            expect(response.status).toBe(403);
+            expect(response.body.code).toBe("SCOPE_FORBIDDEN");
+        });
+    });
+
     describe("uploads", () => {
         it("accepts the data part as a plain form field", async () => {
             const response = await createAsset({

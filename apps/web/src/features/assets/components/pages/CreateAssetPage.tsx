@@ -3,8 +3,10 @@ import { ArrowLeftIcon } from "lucide-react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import { CreateForm } from "@/features/assets/components/forms/CreateForm";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 export function CreateAssetPage() {
+    const { paths } = useLibraryScope();
     return (
         <PageContainer.Root>
             <PageContainer.Header
@@ -13,7 +15,7 @@ export function CreateAssetPage() {
                 controls={
                     <Button
                         variant="outline"
-                        render={<Link to="/admin/assets" />}
+                        render={<Link to={paths.assets} />}
                     >
                         <ArrowLeftIcon />
                         Voltar

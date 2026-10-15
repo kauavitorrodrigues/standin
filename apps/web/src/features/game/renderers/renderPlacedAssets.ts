@@ -13,14 +13,15 @@ import {
  * Draws every placed object of the map as a sprite over the texture of its
  * asset: frame 0 when static, the `asset:{assetId}` animation when animated.
  * Solid objects on the ground get a static zone over their footprint in the
- * given group.
+ * given group. A view with no physics passes no group and gets the sprites
+ * only.
  */
 export const renderPlacedAssets = (
     scene: Phaser.Scene,
     placed: PlacedAsset[],
     assets: AssetDefinition[],
     mapHeightPx: number,
-    solidGroup: Phaser.Physics.Arcade.StaticGroup
+    solidGroup?: Phaser.Physics.Arcade.StaticGroup
 ): Phaser.GameObjects.Sprite[] => {
     const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
     const placedById = new Map(placed.map((item) => [item.id, item]));
@@ -50,7 +51,7 @@ export const renderPlacedAssets = (
         }
         sprites.push(sprite);
 
-        if (layout.solidRect) {
+        if (solidGroup && layout.solidRect) {
             const { x, y, width, height } = layout.solidRect;
             const zone = scene.add.zone(
                 x + width / 2,

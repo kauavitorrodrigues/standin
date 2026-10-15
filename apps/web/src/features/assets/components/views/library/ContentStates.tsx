@@ -1,5 +1,7 @@
 import { AlertCircle, Loader2, PackageOpen, SearchX } from "lucide-react";
 import { ListResponseState } from "@/components/ListResponseState";
+import { LibraryEmptyState } from "@/features/library/components/views/LibraryEmptyState";
+import { CreateButton } from "../../instances/browser/CreateButton";
 
 export const AssetsLoadingState = () => (
     <div className="flex w-full flex-1 items-center justify-center p-6">
@@ -19,17 +21,12 @@ export const AssetsErrorState = () => (
 );
 
 export const AssetsEmptyState = () => (
-    <div className="flex w-full flex-1 items-center justify-center p-6">
-        <ListResponseState
-            variant="empty"
-            icon={PackageOpen}
-            iconClassName="size-16"
-            titleClassName="text-xl"
-            descriptionClassName="max-w-xl text-base"
-            title="A biblioteca está vazia"
-            message="Ainda não há nenhuma peça cadastrada. Envie o PNG de um asset para que móveis, máquinas e decorações apareçam aqui, separados por categoria, e fiquem disponíveis para os mapas."
-        />
-    </div>
+    <LibraryEmptyState
+        icon={PackageOpen}
+        title="A biblioteca está vazia"
+        message="Ainda não há nenhuma peça cadastrada. Envie o PNG de um asset para que móveis, máquinas e decorações fiquem disponíveis para os mapas."
+        action={<CreateButton />}
+    />
 );
 
 export const FamiliesLoadingState = () => (

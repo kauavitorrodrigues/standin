@@ -31,7 +31,7 @@ import { toTilesetRowMap } from "./utils/toTilesetRowMap";
  */
 export const buildMapRenderPayload = async (
     access: MapAccess,
-    userId: string
+    userId?: string
 ): Promise<MapRenderPayload> => {
     const [map] = await db
         .select(mapRenderSelect)

@@ -22,6 +22,7 @@ type Props = {
     titleClassName?: string;
     descriptionClassName?: string;
     iconClassName?: string;
+    headerClassName?: string;
 };
 
 function Title({
@@ -41,6 +42,7 @@ export function ListResponseState({
     title,
     titleClassName,
     iconClassName,
+    headerClassName,
     descriptionClassName,
     message = "Nenhum resultado encontrado",
     icon: Icon = Inbox,
@@ -56,7 +58,7 @@ export function ListResponseState({
 
     return (
         <Empty className={cn("h-full flex-1", className)}>
-            <EmptyHeader>
+            <EmptyHeader className={headerClassName}>
                 <EmptyMedia
                     variant={mediaVariant}
                     className={cn(mediaClassName)}

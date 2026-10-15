@@ -1,38 +1,31 @@
 import type { LucideIcon } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
-import type { AdminSection } from "../../consts/adminSections";
-import { ADMIN_SECTIONS } from "../../consts/adminSections";
+import { isSectionActive } from "../../utils/isSectionActive";
 
 type Props = {
-    section: AdminSection;
+    to: string;
     icon: LucideIcon;
     label: string;
-    active: boolean;
 };
 
-export const AdminSidebarLink = ({
-    section,
-    icon: Icon,
-    label,
-    active,
-}: Props) => {
+// One entry of the rail of a section sidebar, active while the URL is on its
+// page or under it.
+export const SectionSidebarLink = ({ to, icon: Icon, label }: Props) => {
     const { setOpenMobile } = useSidebar();
-    const target = ADMIN_SECTIONS.find((item) => item.value === section);
-
-    if (!target) return null;
+    const pathname = useLocation({ select: (location) => location.pathname });
 
     return (
         <SidebarMenuItem>
             <SidebarMenuButton
-                isActive={active}
+                isActive={isSectionActive(pathname, to)}
                 className="rounded-xl text-muted-foreground hover:bg-foreground/10 hover:text-foreground data-active:bg-foreground/10 data-active:text-foreground group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center [&_svg]:size-[22px]"
                 tooltip={label}
-                render={<Link to={target.to} />}
+                render={<Link to={to} />}
                 // On mobile the sidebar is a sheet: leaving it open would
                 // cover the page that was just chosen.
                 onClick={() => setOpenMobile(false)}

@@ -17,11 +17,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { AreaAction } from "../../types/actions";
 import { AreaActionDialogs } from "../dialogs/ActionDialogs";
+import { useLibraryScope } from "@/features/library/hooks/useLibraryScope";
 
 type Props = { area: AreaSummary };
 
 // The menu of a card: edit, rename or delete.
 export const AreaActions = ({ area }: Props) => {
+    const { paths } = useLibraryScope();
     const [action, setAction] = useState<AreaAction>(null);
     const close = (next: boolean) => {
         if (!next) setAction(null);
@@ -40,7 +42,7 @@ export const AreaActions = ({ area }: Props) => {
                     <DropdownMenuItem
                         render={
                             <Link
-                                to="/admin/areas/$areaId/edit"
+                                to={paths.editArea}
                                 params={{ areaId: area.id }}
                             />
                         }
