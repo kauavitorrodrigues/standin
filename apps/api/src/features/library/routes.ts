@@ -20,6 +20,44 @@ router.get(
 );
 
 router.post(
+    "/tilesets",
+    RequiresPermission("create", "asset"),
+    uploadLibraryParts,
+    handleLibraryUploadError,
+    LibraryController.tilesets.create
+);
+router.get(
+    "/tilesets",
+    RequiresPermission("read", "asset"),
+    LibraryController.tilesets.list
+);
+router.get(
+    "/tilesets/:tilesetId",
+    RequiresPermission("read", "asset"),
+    LibraryController.tilesets.details
+);
+router.patch(
+    "/tilesets/:tilesetId",
+    RequiresPermission("update", "asset"),
+    LibraryController.tilesets.update
+);
+router.put(
+    "/tilesets/:tilesetId/tile-meta",
+    RequiresPermission("update", "asset"),
+    LibraryController.tilesets.replaceTileMeta
+);
+router.put(
+    "/tilesets/:tilesetId/grid",
+    RequiresPermission("update", "asset"),
+    LibraryController.tilesets.replaceGrid
+);
+router.delete(
+    "/tilesets/:tilesetId",
+    RequiresPermission("delete", "asset"),
+    LibraryController.tilesets.delete
+);
+
+router.post(
     "/assets",
     RequiresPermission("create", "asset"),
     uploadLibraryParts,

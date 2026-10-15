@@ -3,8 +3,10 @@ import {
     assetsTable,
     mapAssetsTable,
     mapsTable,
+    tilesetsTable,
     and,
     eq,
+    exists,
     inArray,
     isNull,
     sql,
@@ -58,6 +60,36 @@ export const findFamilyIdsInUse = async (
                 isNull(mapAssetsTable.deletedAt),
                 isNull(mapsTable.deletedAt)
             )
+        );
+
+    return new Set(rows.map(({ id }) => id));
+};
+
+/**
+ * The tilesets a live map paints with: its layout names the tileset by the
+ * id of the row.
+ */
+export const findTilesetIdsInUse = async (
+    tilesetIds: string[],
+    executor: DbExecutor = db
+): Promise<Set<string>> => {
+    if (tilesetIds.length === 0) return new Set();
+
+    const usedInLayout = executor
+        .select({ one: sql`1` })
+        .from(mapsTable)
+        .where(
+            and(
+                isNull(mapsTable.deletedAt),
+                sql`${mapsTable.layout} @> jsonb_build_object('tilesets', jsonb_build_array(jsonb_build_object('name', ${tilesetsTable.id})))`
+            )
+        );
+
+    const rows = await executor
+        .select({ id: tilesetsTable.id })
+        .from(tilesetsTable)
+        .where(
+            and(inArray(tilesetsTable.id, tilesetIds), exists(usedInLayout))
         );
 
     return new Set(rows.map(({ id }) => id));

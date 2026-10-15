@@ -3,6 +3,7 @@ import {
     assetPartsTable,
     assetsTable,
     filesTable,
+    tilesetsTable,
     and,
     eq,
     inArray,
@@ -10,12 +11,12 @@ import {
     sql,
 } from "@standin/database";
 import type { SQL } from "@standin/database";
-import { AssetNotFoundError } from "@standin/contracts";
+import { AssetNotFoundError, TilesetNotFoundError } from "@standin/contracts";
 import type { LibraryAsset, LibraryAssetPart } from "@standin/contracts";
 import type { DbExecutor } from "../../../lib/types";
-import { assetRowSelect } from "../consts/select";
-import type { AssetRow } from "../types";
-import { liveAssetInScope } from "./scope";
+import { assetRowSelect, tilesetSelect } from "../consts/select";
+import type { AssetRow, TilesetRow } from "../types";
+import { liveAssetInScope, liveTilesetInScope } from "./scope";
 import { toAssetDefinition } from "./toDefinitions";
 import { findAssetIdsInUse } from "./usage";
 
@@ -57,6 +58,22 @@ export const loadFamilyRows = (
         ),
         executor
     );
+
+export const findScopedTileset = async (
+    id: string,
+    organizationId: string | null,
+    executor: DbExecutor = db
+): Promise<TilesetRow> => {
+    const [row] = await executor
+        .select(tilesetSelect)
+        .from(tilesetsTable)
+        .innerJoin(filesTable, eq(filesTable.id, tilesetsTable.fileId))
+        .where(
+            and(eq(tilesetsTable.id, id), liveTilesetInScope(organizationId))
+        );
+    if (!row) throw new TilesetNotFoundError();
+    return row;
+};
 
 const loadPartsByAsset = async (
     assetIds: string[],

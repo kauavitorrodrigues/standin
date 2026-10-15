@@ -1,4 +1,11 @@
 import { getLibraryOverview } from "./overview";
+import { createLibraryTileset } from "./tilesets/create";
+import { listLibraryTilesets } from "./tilesets/list";
+import { getLibraryTileset } from "./tilesets/details";
+import { updateLibraryTileset } from "./tilesets/update";
+import { replaceLibraryTilesetGrid } from "./tilesets/replaceGrid";
+import { replaceLibraryTileMeta } from "./tilesets/replaceTileMeta";
+import { deleteLibraryTileset } from "./tilesets/delete";
 import { createLibraryAsset } from "./assets/create";
 import { createLibraryVariant } from "./assets/createVariant";
 import { listLibraryFamilies } from "./assets/list";
@@ -12,6 +19,15 @@ import { setLibraryAssetParts } from "./assets/setParts";
 
 export const LibraryController = {
     overview: getLibraryOverview,
+    tilesets: {
+        create: createLibraryTileset,
+        list: listLibraryTilesets,
+        details: getLibraryTileset,
+        update: updateLibraryTileset,
+        replaceTileMeta: replaceLibraryTileMeta,
+        replaceGrid: replaceLibraryTilesetGrid,
+        delete: deleteLibraryTileset,
+    },
     assets: {
         create: createLibraryAsset,
         createVariant: createLibraryVariant,

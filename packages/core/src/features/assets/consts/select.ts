@@ -1,6 +1,22 @@
-import { assetsTable, filesTable } from "@standin/database";
+import { assetsTable, filesTable, tilesetsTable } from "@standin/database";
 
 // Rows are read with the storage key of their file, to build the url.
+export const tilesetSelect = {
+    id: tilesetsTable.id,
+    organizationId: tilesetsTable.organizationId,
+    fileId: tilesetsTable.fileId,
+    key: tilesetsTable.key,
+    name: tilesetsTable.name,
+    widthPx: tilesetsTable.widthPx,
+    heightPx: tilesetsTable.heightPx,
+    columns: tilesetsTable.columns,
+    tileCount: tilesetsTable.tileCount,
+    margin: tilesetsTable.margin,
+    spacing: tilesetsTable.spacing,
+    tileMeta: tilesetsTable.tileMeta,
+    fileName: filesTable.fileName,
+};
+
 export const assetRowSelect = {
     id: assetsTable.id,
     organizationId: assetsTable.organizationId,
