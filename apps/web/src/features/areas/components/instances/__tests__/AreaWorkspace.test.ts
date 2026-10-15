@@ -134,6 +134,7 @@ const render = () => {
                                 values: {
                                     name: "",
                                     createZone: true,
+                                    zoneKind: "area",
                                 },
                             },
                             palette: {

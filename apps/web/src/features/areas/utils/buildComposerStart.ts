@@ -22,7 +22,7 @@ type Params = {
 export const buildComposerStart = ({
     palette,
     area,
-    values = { name: "", createZone: true },
+    values = { name: "", createZone: true, zoneKind: "area" },
 }: Params): ComposerStartResult => {
     if (!area) {
         return {
@@ -41,7 +41,7 @@ export const buildComposerStart = ({
     const opened = stampToModel(area.stamp, palette, AREA_CANVAS);
     if (!opened.ok) return { ok: false };
 
-    const { zoneLabel } = opened;
+    const { zoneLabel, zoneKind } = opened;
     return {
         ok: true,
         start: {
@@ -50,6 +50,7 @@ export const buildComposerStart = ({
             values: {
                 name: area.name,
                 createZone: zoneLabel !== null,
+                zoneKind,
             },
         },
     };

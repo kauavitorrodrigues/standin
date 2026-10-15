@@ -7,7 +7,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AreaNameField } from "../forms/AreaNameField";
+import { AreaNameRow } from "../forms/AreaNameRow";
 import { AreaZoneBox } from "../forms/AreaZoneBox";
 
 type Props = {
@@ -27,7 +27,7 @@ export const AreaPropertiesDialog = ({ open, onOpenChange }: Props) => (
                 </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-6">
-                <AreaNameField />
+                <AreaNameRow />
                 <AreaZoneBox />
             </div>
             <DialogFooter>
