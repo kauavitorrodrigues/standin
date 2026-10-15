@@ -326,7 +326,7 @@ describe("applyEditorOp: zones", () => {
         const group = findZonesGroup(model.layout);
         group?.objects.push({
             id: 9,
-            name: "private",
+            name: "portal",
             type: "",
             x: 0,
             y: 0,
@@ -335,7 +335,7 @@ describe("applyEditorOp: zones", () => {
             rotation: 0,
             visible: true,
             properties: [
-                { name: "kind", type: "string", value: "private" },
+                { name: "kind", type: "string", value: "portal" },
                 { name: "label", type: "string", value: "Sala" },
                 { name: "key", type: "string", value: "k" },
             ],
@@ -346,6 +346,61 @@ describe("applyEditorOp: zones", () => {
         expect(result.ok).toBe(false);
         if (!result.ok) {
             expect(result.errors[0].code).toBe(Code.ZONE_KIND_INVALID);
+        }
+    });
+});
+
+describe("applyEditorOp: rooms", () => {
+    const room = (key: string, x = 4) => ({
+        type: "set_zone" as const,
+        zone: {
+            kind: "private" as const,
+            label: "Sala",
+            key,
+            rect: { x, y: 5, w: 3, h: 3 },
+        },
+    });
+
+    it("creates a room with its key and undoes it", () => {
+        const model = buildModel();
+        const created = apply(model, room("room-a"));
+
+        const objects = findZonesGroup(created.model.layout)?.objects ?? [];
+        const stored = objects.find(({ id }) => id === 2);
+        expect(stored?.properties).toEqual(
+            expect.arrayContaining([
+                { name: "kind", type: "string", value: "private" },
+                { name: "key", type: "string", value: "room-a" },
+            ])
+        );
+        expect(undo(created.model, created.inverse).layout).toEqual(
+            model.layout
+        );
+    });
+
+    it("moves, renames and removes a room keeping its key", () => {
+        const created = apply(buildModel(), room("room-a"));
+        const moved = apply(created.model, {
+            type: "set_zone",
+            zone: { ...room("room-a", 8).zone, id: 2, label: "Copa" },
+        });
+
+        expect(moved.inverse).toEqual([
+            { type: "set_zone", zone: { ...room("room-a").zone, id: 2 } },
+        ]);
+        const removed = apply(moved.model, { type: "remove_zone", zoneId: 2 });
+        expect(undo(removed.model, removed.inverse).layout).toEqual(
+            moved.model.layout
+        );
+    });
+
+    it("refuses a second room with the same key", () => {
+        const first = apply(buildModel(), room("room-a"));
+        const result = applyEditorOp(first.model, room("room-a", 9));
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+            expect(result.errors[0].code).toBe(Code.ZONE_KEY_DUPLICATED);
         }
     });
 });

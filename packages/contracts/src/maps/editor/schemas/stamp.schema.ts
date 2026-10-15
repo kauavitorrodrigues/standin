@@ -83,6 +83,13 @@ export const StampSchema = z
                             .max(AREA_NAME_MAX, {
                                 error: Messages.zone.invalid,
                             }),
+                        // Missing means `area`, so every stamp stored before
+                        // rooms existed stays valid.
+                        kind: z
+                            .enum(["area", "private"], {
+                                error: Messages.zone.kind.invalid,
+                            })
+                            .optional(),
                     },
                     { error: Messages.zone.invalid }
                 )

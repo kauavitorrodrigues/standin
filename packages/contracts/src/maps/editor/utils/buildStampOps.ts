@@ -4,6 +4,9 @@ import type { EditorOp } from "../schemas/editorOp.schema";
 import type { BuildStampOpsResult } from "../types/build-stamp-ops-result";
 import type { EditorModel } from "../types/editor-model";
 import type { Stamp } from "../types/stamp";
+import { STAMP_ZONE_KINDS } from "../consts/stamp-zone-kinds";
+import { getStampZoneKind } from "./getStampZoneKind";
+import { nextStampRoomKey } from "./stamp/nextStampRoomKey";
 import { replayOps } from "./replayOps";
 import { isStampInsideMap } from "./stamp/isStampInsideMap";
 import { buildStampClearOps } from "./stamp/buildStampClearOps";
@@ -12,8 +15,8 @@ import { buildStampPaintOps } from "./stamp/buildStampPaintOps";
 
 /**
  * Operations that place a stamp with its top left corner at (tileX, tileY):
- * the clean up of the rectangle, the tiles, the objects and the area zone, in
- * that order. They are applied on a working copy, so a failing one answers its
+ * the clean up of the rectangle, the tiles, the objects and the zone (a room
+ * with its own key when the stamp is private), in that order. They are applied on a working copy, so a failing one answers its
  * errors and changes nothing. The stamp must have passed StampSchema.
  */
 export const buildStampOps = (
@@ -24,7 +27,10 @@ export const buildStampOps = (
     newTempId: () => string,
     // The layer the ground of the stamp goes on. A map takes it on the floor
     // layer of its areas, the composer on its ground.
-    groundLayer?: string
+    groundLayer?: string,
+    // The key of the room a private stamp creates. Called once per placement.
+    // The default never repeats a key the map already has.
+    newZoneKey: () => string = () => nextStampRoomKey(model)
 ): BuildStampOpsResult => {
     if (!isStampInsideMap(model, stamp, tileX, tileY)) {
         return {
@@ -46,13 +52,14 @@ export const buildStampOps = (
     ];
 
     if (stamp.zone) {
+        const rect = { x: tileX, y: tileY, w: stamp.width, h: stamp.height };
+        const label = stamp.zone.label;
         ops.push({
             type: "set_zone",
-            zone: {
-                kind: "area",
-                rect: { x: tileX, y: tileY, w: stamp.width, h: stamp.height },
-                label: stamp.zone.label,
-            },
+            zone:
+                getStampZoneKind(stamp) === STAMP_ZONE_KINDS.PRIVATE
+                    ? { kind: "private", rect, label, key: newZoneKey() }
+                    : { kind: "area", rect, label },
         });
     }
 

@@ -37,16 +37,34 @@ export const ZoneInputSchema = z
     .object(
         {
             id: int(Messages.zone.id.invalid).optional(),
-            kind: z.enum(["spawn", "area"], {
+            kind: z.enum(["spawn", "area", "private"], {
                 error: Messages.zone.kind.invalid,
             }),
             rect: ZoneRectSchema,
             label: z.string({ error: Messages.zone.label.invalid }).optional(),
+            // Only a room (a private zone) has a key, and its doors point at it.
+            key: z.string({ error: Messages.zone.key.invalid }).optional(),
         },
         { error: Messages.zone.invalid }
     )
     .superRefine((zone, ctx) => {
-        if (zone.kind !== "area") return;
+        const key = zone.key?.trim() ?? "";
+        if (zone.kind === "private" && key.length === 0) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["key"],
+                message: Messages.zone.key.required,
+            });
+        }
+        if (zone.kind !== "private" && zone.key !== undefined) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["key"],
+                message: Messages.zone.key.forbidden,
+            });
+        }
+
+        if (zone.kind === "spawn") return;
 
         const label = zone.label?.trim() ?? "";
         if (label.length === 0) {

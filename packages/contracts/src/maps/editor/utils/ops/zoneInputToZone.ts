@@ -15,5 +15,6 @@ export const zoneInputToZone = (input: ZoneInput): Zone => {
         width: input.rect.w * TILE_SIZE,
         height: input.rect.h * TILE_SIZE,
         label: input.label,
+        key: input.key,
     };
 };

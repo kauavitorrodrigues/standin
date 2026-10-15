@@ -19,14 +19,19 @@ export const EditorOpErrorMessages = {
     zone: {
         invalid: "The zone is invalid.",
         id: { invalid: "The zone id is invalid." },
-        kind: { invalid: "The zone kind must be spawn or area." },
+        kind: { invalid: "The zone kind must be spawn, area or private." },
         rect: { invalid: "The zone rectangle must be whole tiles." },
         size: {
-            min: "An area zone must be at least 2 tiles on each side.",
+            min: "An area or room zone must be at least 2 tiles on each side.",
         },
         label: {
             invalid: "The zone label is invalid.",
-            required: "An area zone requires a label.",
+            required: "An area or room zone requires a label.",
+        },
+        key: {
+            invalid: "The zone key is invalid.",
+            required: "A room zone requires a key.",
+            forbidden: "Only a room zone carries a key.",
         },
     },
     tempId: { invalid: "The temporary object id is invalid." },
@@ -95,6 +100,7 @@ export const StampErrorMessages = {
     },
     zone: {
         invalid: `The area zone label must have 1 to ${AREA_NAME_MAX} characters.`,
+        kind: { invalid: "The area zone kind must be area or private." },
     },
 };
 
