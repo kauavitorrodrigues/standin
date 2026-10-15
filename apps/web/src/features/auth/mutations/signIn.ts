@@ -9,7 +9,7 @@ export const useSignIn = () => {
         mutationFn: async (data: SignInSchemaType) => {
             const { data: response } = await api.post<{ user: User }>(
                 "/auth/signin",
-                data,
+                data
             );
             return response.user;
         },

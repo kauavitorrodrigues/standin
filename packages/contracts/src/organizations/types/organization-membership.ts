@@ -4,5 +4,9 @@ import type {
     OrganizationMembershipSchema,
 } from "../schemas/organization-membership.schema";
 
-export type OrganizationMemberRole = z.infer<typeof OrganizationMemberRoleSchema>;
-export type OrganizationMembership = z.infer<typeof OrganizationMembershipSchema>;
+export type OrganizationMemberRole = z.infer<
+    typeof OrganizationMemberRoleSchema
+>;
+export type OrganizationMembership = z.infer<
+    typeof OrganizationMembershipSchema
+>;

@@ -12,7 +12,7 @@ export const nodeConfig = defineConfig([
             globals: globals.node,
         },
         rules: {
-            indent: ["error", 4],
+            indent: ["error", 4, { SwitchCase: 1 }],
             "no-tabs": "error",
         },
     },

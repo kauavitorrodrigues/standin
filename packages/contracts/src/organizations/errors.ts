@@ -11,7 +11,7 @@ export class OrganizationAccessDeniedError extends BaseError {
         super(
             "Você não tem acesso a esta organização.",
             "ORGANIZATION_ACCESS_DENIED",
-            403,
+            403
         );
     }
 }

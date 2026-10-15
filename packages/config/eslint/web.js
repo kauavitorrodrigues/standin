@@ -19,7 +19,7 @@ export const webConfig = defineConfig([
             globals: globals.browser,
         },
         rules: {
-            indent: ["error", 4],
+            indent: ["error", 4, { SwitchCase: 1 }],
             "no-tabs": "error",
             "@typescript-eslint/no-unused-vars": [
                 "error",

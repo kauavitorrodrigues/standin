@@ -37,7 +37,7 @@ export const downloadAttachment = async (
             if (!res.headersSent) {
                 return sendError({
                     res,
-                    resource: "attachment",
+                    resource: "message",
                     action: "read",
                     reportError: error,
                 });
@@ -49,7 +49,7 @@ export const downloadAttachment = async (
     } catch (error) {
         return sendError({
             res,
-            resource: "attachment",
+            resource: "message",
             action: "read",
             reportError: error,
         });

@@ -8,7 +8,7 @@ import { paramsSchema } from "@/utils/paramsSchema";
 export const RequiresOrgMember = async (
     req: ExtendedRequest,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
 ) => {
     if (!req.user) return;
 
@@ -17,25 +17,12 @@ export const RequiresOrgMember = async (
 
     const membership = await OrganizationService.findMembership(
         req.user.id,
-        params.organizationId,
+        params.organizationId
     );
 
+    // The admin has no implicit access to organizations, only members do.
     if (!membership) return sendForbiddenError(res);
 
     req.organizationMembership = membership;
-    next();
-};
-
-export const RequiresOrgOwner = async (
-    req: ExtendedRequest,
-    res: Response,
-    next: NextFunction,
-) => {
-    if (!req.organizationMembership) return;
-
-    if (!OrganizationService.isOwner(req.organizationMembership)) {
-        return sendForbiddenError(res);
-    }
-
     next();
 };

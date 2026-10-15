@@ -3,6 +3,7 @@ import { SpaceCard } from "@/features/spaces/components/views/card/SpaceCard";
 import {
     SpacesEmptyState,
     SpacesErrorState,
+    SpacesLoadingState,
 } from "@/features/spaces/components/views/list/ContentStates";
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
 };
 
 export const Content = ({ spaces, isLoading, isError }: Props) => {
-    if (isLoading) return null;
+    if (isLoading) return <SpacesLoadingState />;
     if (isError) return <SpacesErrorState />;
     if (spaces.length === 0) return <SpacesEmptyState />;
 

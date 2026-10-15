@@ -36,7 +36,7 @@ export const Header = ({
     return (
         <div
             className={cn(
-                "flex justify-between flex-col items-start lg:items-end lg:flex-row gap-6 px-6 pt-6",
+                "flex shrink-0 justify-between flex-col items-start lg:items-end lg:flex-row gap-6 px-6 py-4 border-b",
                 className
             )}
         >

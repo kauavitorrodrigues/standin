@@ -1,6 +1,9 @@
 import { z } from "zod/v4";
 import { MessageErrorMessages } from "./consts/error-messages";
-import { MAX_MESSAGE_ATTACHMENTS, MAX_MESSAGE_CONTENT_LENGTH } from "./consts/fields";
+import {
+    MAX_MESSAGE_ATTACHMENTS,
+    MAX_MESSAGE_CONTENT_LENGTH,
+} from "./consts/fields";
 
 // content is optional because a message can be attachment-only; an
 // empty/whitespace-only string is normalized to undefined so callers only

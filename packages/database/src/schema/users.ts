@@ -5,7 +5,14 @@ import {
     updatedAtColumn,
     uuidPrimaryKeyColumn,
 } from "./common";
-import { text, varchar, pgTable, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+    text,
+    varchar,
+    pgEnum,
+    pgTable,
+    uniqueIndex,
+} from "drizzle-orm/pg-core";
+import { USER_ROLES } from "@standin/contracts";
 import { organizationsTable } from "./organizations";
 import { organizationMembersTable } from "./organization-members";
 import { organizationInvitesTable } from "./organization-invites";
@@ -15,6 +22,8 @@ import { conversationsTable } from "./conversations";
 import { conversationParticipantsTable } from "./conversation-participants";
 import { messagesTable } from "./messages";
 import { messageReactionsTable } from "./message-reactions";
+
+export const userRoleEnum = pgEnum("user_role", USER_ROLES);
 
 export const usersTable = pgTable(
     "users",
@@ -27,6 +36,7 @@ export const usersTable = pgTable(
         email: varchar("email", { length: 255 }).notNull(),
         password: text("password").notNull(),
         avatar: text("avatar"),
+        role: userRoleEnum("role").notNull().default(USER_ROLES.USER),
 
         // Date columns
         createdAt: createdAtColumn(),
