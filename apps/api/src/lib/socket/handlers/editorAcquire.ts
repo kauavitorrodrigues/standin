@@ -10,6 +10,8 @@ import { MapLockService, MapService, UserService } from "@standin/core";
 import { EditorLockSchema } from "../schemas/editorLock.schema";
 import { EditorSessions } from "../utils/editorSessions";
 import { emitMapEvent } from "../utils/emitMapEvent";
+import { canLockInMode } from "../utils/canLockInMode";
+import { notifyLostSession } from "../utils/notifyLostSession";
 import { replyAck } from "../utils/replyAck";
 import { SocketManager } from "../socketManager";
 
@@ -20,19 +22,20 @@ export function registerEditorAcquire(socket: Socket) {
         try {
             const parsed = EditorLockSchema.safeParse(payload);
             if (!parsed.success) return replyAck(ack, FORBIDDEN);
-            const { mapId, sessionId } = parsed.data;
+            const { mapId, sessionId, mode } = parsed.data;
 
             // The role is read from the database, never from the socket.
             const user = await UserService.findById(socket.data.userId);
             if (!user) return replyAck(ack, FORBIDDEN);
 
             const access = await MapService.getAccess(user, mapId);
-            if (!access.canEdit) return replyAck(ack, FORBIDDEN);
+            if (!canLockInMode(access, mode)) return replyAck(ack, FORBIDDEN);
 
             const result = MapLockService.acquire(
                 mapId,
                 { id: user.id, name: user.name },
-                sessionId
+                sessionId,
+                mode
             );
 
             if (!result.ok) {
@@ -41,20 +44,12 @@ export function registerEditorAcquire(socket: Socket) {
                     code: result.code,
                     by: result.by,
                     since: result.since,
+                    mode: result.mode,
                 });
             }
 
-            if (result.replacedSessionId) {
-                const oldSocketId = EditorSessions.get(result.replacedSessionId);
-                EditorSessions.delete(result.replacedSessionId);
-                if (oldSocketId && oldSocketId !== socket.id) {
-                    SocketManager.emitToSocket(
-                        oldSocketId,
-                        EditorEvents.EDITOR_LOCK_LOST,
-                        { mapId }
-                    );
-                }
-            }
+            notifyLostSession(socket.id, mapId, result.replacedSessionId, "TAKEN_OVER");
+            notifyLostSession(socket.id, mapId, result.preemptedSessionId, "MAP_EDITING");
 
             EditorSessions.set(sessionId, socket.id);
 
@@ -62,6 +57,7 @@ export function registerEditorAcquire(socket: Socket) {
                 mapId,
                 by: { id: user.id, name: user.name },
                 since: new Date(result.lock.acquiredAt).toISOString(),
+                mode,
             });
 
             replyAck(ack, {

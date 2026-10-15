@@ -11,18 +11,22 @@ import { emitMapEvent } from "./utils/emitMapEvent";
 type ExpiredLock = ReturnType<typeof MapLockService.sweepExpired>[number];
 
 async function handleExpiredLock(lock: ExpiredLock): Promise<void> {
-    const { mapId, sessionId } = lock;
+    const { mapId, sessionId, mode } = lock;
 
     const socketId = EditorSessions.get(sessionId);
     EditorSessions.delete(sessionId);
     if (socketId) {
         SocketManager.emitToSocket(socketId, EditorEvents.EDITOR_LOCK_LOST, {
             mapId,
+            reason: "EXPIRED",
         });
     }
 
     const owner = await MapService.findOwner(mapId);
-    emitMapEvent({ owner, mapId }, MapEvents.MAP_UNLOCKED, { mapId });
+    emitMapEvent({ owner, mapId }, MapEvents.MAP_UNLOCKED, {
+        mapId,
+        mode,
+    });
 }
 
 /**

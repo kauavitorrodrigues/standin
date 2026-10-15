@@ -11,17 +11,18 @@ router.use(RequiresSpaceAccess);
 
 router.get("/", DeskController.list);
 
-// Desks change the map, so a locked map refuses all three. The space of the
-// route gives the map.
+// Desks change the map, so the Studio lock refuses all three. A decorator
+// does not: ownership is independent of decorating, and a conflict with the
+// draft is settled when it is published. The space of the route gives the map.
 router.post(
     "/:mapAssetId/claim",
-    RequiresMapNotLocked(MAP_ID_SOURCES.SPACE),
+    RequiresMapNotLocked(MAP_ID_SOURCES.SPACE, { allowObjectsMode: true }),
     DeskController.claim
 );
 
 router.delete(
     "/:mapAssetId/claim",
-    RequiresMapNotLocked(MAP_ID_SOURCES.SPACE),
+    RequiresMapNotLocked(MAP_ID_SOURCES.SPACE, { allowObjectsMode: true }),
     DeskController.release
 );
 
@@ -29,7 +30,7 @@ router.delete(
 router.post(
     "/:mapAssetId/assign",
     RequiresMapOwner,
-    RequiresMapNotLocked(MAP_ID_SOURCES.SPACE),
+    RequiresMapNotLocked(MAP_ID_SOURCES.SPACE, { allowObjectsMode: true }),
     DeskController.assign
 );
 
