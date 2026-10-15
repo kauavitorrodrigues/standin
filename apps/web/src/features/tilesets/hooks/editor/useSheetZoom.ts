@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { useAsRef } from "@/hooks/useAsRef";
 import { TILE_SHEET_TOP_GAP_PX, type TileZoom } from "../../consts/sheetZoom";
-import { getWheelDirection } from "@/utils/getWheelDirection";
+import { getWheelZoomFactor } from "@/utils/getWheelZoomFactor";
 import { getFitZoom } from "../../utils/editor/getFitZoom";
-import { getNextTileZoom } from "../../utils/editor/getNextTileZoom";
+import { clampTileZoom } from "../../utils/editor/clampTileZoom";
 import { getSheetElement } from "../../utils/editor/getSheetElement";
 
 type Params = {
@@ -36,9 +36,9 @@ const centerSheet = (scroller: HTMLDivElement) => {
     scroller.scrollTop += rect.top - (area.top + TILE_SHEET_TOP_GAP_PX);
 };
 
-// The wheel over the sheet zooms it, toward the pointer, instead of scrolling
-// it. With Ctrl it moves the sheet up and down, and with Shift from side to
-// side, and a drag moves it too, with the pan.
+// The wheel over the sheet moves it up and down. With Ctrl it zooms smoothly
+// toward the pointer, and with Shift it moves the sheet from side to side. A
+// drag moves it too, with the pan.
 export const useTileSheetZoom = ({
     scrollRef,
     zoom,
@@ -49,7 +49,6 @@ export const useTileSheetZoom = ({
     const sheetWidthRef = useAsRef(sheetWidthPx);
     const onZoomChangeRef = useAsRef(onZoomChange);
     const anchor = useRef<Anchor | null>(null);
-    const turned = useRef(0);
 
     // The sheet opens at a zoom that fits the width of the area. The area has no
     // width until the panels are laid out, so it waits for the first one.
@@ -77,22 +76,20 @@ export const useTileSheetZoom = ({
         // Not passive, so the page does not scroll under the zoom.
         const handleWheel = (event: WheelEvent) => {
             event.preventDefault();
-            // Ctrl moves the sheet up and down, and Shift from side to side. Some
-            // browsers turn the wheel with Shift into a horizontal one already.
-            if (event.ctrlKey || event.metaKey) {
+            // Some browsers turn the wheel with Shift into a horizontal one already.
+            if (!event.ctrlKey && !event.metaKey) {
+                if (event.shiftKey) {
+                    scroller.scrollLeft += event.deltaX || event.deltaY;
+                    return;
+                }
                 scroller.scrollTop += event.deltaY;
+                scroller.scrollLeft += event.deltaX;
                 return;
             }
-            if (event.shiftKey) {
-                scroller.scrollLeft += event.deltaX || event.deltaY;
-                return;
-            }
-            turned.current += event.deltaY;
-            const direction = getWheelDirection(turned.current);
-            if (direction === 0) return;
 
-            turned.current = 0;
-            const next = getNextTileZoom(zoomRef.current, direction);
+            const next = clampTileZoom(
+                zoomRef.current * getWheelZoomFactor(event)
+            );
             const sheet = getSheetElement(scroller);
             if (next === zoomRef.current || !sheet) return;
 

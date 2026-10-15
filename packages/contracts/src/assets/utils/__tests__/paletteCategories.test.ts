@@ -26,13 +26,19 @@ const library = [
 ];
 
 describe("groupFamiliesByCategory", () => {
-    it("omits empty categories and follows the meta order", () => {
+    it("keeps empty categories and follows the meta order", () => {
         const grouped = groupFamiliesByCategory(library);
         expect([...grouped.keys()]).toEqual([
             "SITTING",
+            "TABLES",
             "SHELVES",
+            "MACHINES",
             "FOOD_DRINK",
+            "ROOM_DECOR",
+            "WALL_DECOR",
+            "OUTDOOR",
         ]);
+        expect(grouped.get("TABLES")).toEqual([]);
     });
 
     it("shows the base of each family, sorted by name", () => {

@@ -1,4 +1,4 @@
-import type { Footprint } from "../types/footprint";
+import { type Footprint } from "@standin/contracts";
 import type { Item } from "../types/item";
 import { toFootprint } from "./toFootprint";
 

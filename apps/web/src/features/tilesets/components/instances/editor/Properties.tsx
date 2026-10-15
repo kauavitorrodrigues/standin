@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
-import { PanelToggleButton } from "@/components/editor/PanelToggleButton";
-import { SidePanel } from "@/components/editor/SidePanel";
-import { SidePanelHeader } from "@/components/editor/SidePanelHeader";
+import { PanelToggleButton } from "@/features/editor/components/views/PanelToggleButton";
+import { SidePanel } from "@/features/editor/components/layout/SidePanel";
+import { SidePanelHeader } from "@/features/editor/components/layout/SidePanelHeader";
 import { TILE_EDITOR_KEYS } from "../../../consts/editorKeys";
-import { TILE_PANEL_LABEL } from "../../../consts/editorPanel";
 import { useTileEditorContext } from "../../../hooks/editor/useEditorContext";
 
 type Props = {
@@ -29,7 +28,7 @@ export const TileEditorProperties = ({
         <SidePanel open={propertiesOpen}>
             <SidePanelHeader title={title} actions={actions} onExit={onExit}>
                 <PanelToggleButton
-                    label={TILE_PANEL_LABEL}
+                    label="Painel do tileset"
                     shortcut={TILE_EDITOR_KEYS.TOGGLE_PROPERTIES[0].toUpperCase()}
                     open={propertiesOpen}
                     onToggle={toggleProperties}

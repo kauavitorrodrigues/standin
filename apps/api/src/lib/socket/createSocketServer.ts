@@ -11,6 +11,9 @@ import { requiresSocketAuth } from "@/lib/socket/middlewares/requiresAuth";
 import { registerDisconnect } from "@/lib/socket/handlers/disconnect";
 import { registerJoinSpace } from "@/lib/socket/handlers/joinSpace";
 import { registerJoinMap } from "@/lib/socket/handlers/joinMap";
+import { registerEditorAcquire } from "@/lib/socket/handlers/editorAcquire";
+import { registerEditorHeartbeat } from "@/lib/socket/handlers/editorHeartbeat";
+import { registerEditorRelease } from "@/lib/socket/handlers/editorRelease";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
@@ -35,6 +38,9 @@ export function createSocketServer(httpServer: ReturnType<typeof createServer>) 
 
         registerJoinSpace(io, socket);
         registerJoinMap(socket);
+        registerEditorAcquire(socket);
+        registerEditorHeartbeat(socket);
+        registerEditorRelease(socket);
         registerWebrtcSignal(io, socket);
         registerDisconnect(socket);
     });

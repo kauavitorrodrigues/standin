@@ -1,5 +1,5 @@
+import { type Footprint } from "@standin/contracts";
 import type { AssetDef } from "../types/asset-def";
-import type { Footprint } from "../types/footprint";
 import type { Position } from "../types/position";
 
 export const toFootprint = (

@@ -8,3 +8,4 @@ export * from "./enums/tiled-layer-type";
 export * from "./layout";
 export * from "./render";
 export * from "./templates";
+export * from "./editor";

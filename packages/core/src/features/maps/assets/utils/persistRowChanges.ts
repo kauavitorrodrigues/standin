@@ -16,6 +16,8 @@ export const persistRowChanges = async (
             .set({
                 tileX: change.tileX,
                 tileY: change.tileY,
+                offsetX: change.offsetX,
+                offsetY: change.offsetY,
                 parentId: change.parentId,
                 ...(change.assetId ? { assetId: change.assetId } : {}),
             })

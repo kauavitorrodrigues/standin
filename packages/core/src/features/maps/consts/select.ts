@@ -48,6 +48,8 @@ export const placedAssetSelect = {
     assetId: mapAssetsTable.assetId,
     tileX: mapAssetsTable.tileX,
     tileY: mapAssetsTable.tileY,
+    offsetX: mapAssetsTable.offsetX,
+    offsetY: mapAssetsTable.offsetY,
     parentId: mapAssetsTable.parentId,
     propertyOverrides: mapAssetsTable.propertyOverrides,
 };

@@ -7,7 +7,9 @@ import {
     SettingsIcon,
     UsersIcon,
 } from "lucide-react";
+import type { SpaceDetails } from "@standin/contracts";
 import { CountBadge } from "@/components/ui/count-badge";
+import { EditMapMenuItem } from "@/features/maps/organizations/components/instances/EditMapMenuItem";
 import { ChatQueries } from "@/features/chat/queries";
 import { SettingsDialog } from "@/features/settings/components/dialogs/SettingsDialog";
 import { RailButton } from "@/features/spaces/components/pages/space-page/sidebar/RailButton";
@@ -15,6 +17,7 @@ import { SpaceMenu } from "@/features/spaces/components/pages/space-page/sidebar
 import { SPACE_VIEWS, type SpaceView } from "@/features/spaces/consts/view";
 
 type Props = {
+    space: SpaceDetails;
     view: SpaceView;
     onSelectView: (view: SpaceView) => void;
     isPeopleOpen: boolean;
@@ -32,6 +35,7 @@ export const RailFrame = ({ children }: FrameProps) => (
 // Always on the left and never expands. Office and chat switch what covers
 // the screen; search, notifications and settings have no action yet.
 export const Rail = ({
+    space,
     view,
     onSelectView,
     isPeopleOpen,
@@ -42,7 +46,9 @@ export const Rail = ({
 
     return (
         <RailFrame>
-            <SpaceMenu />
+            <SpaceMenu>
+                <EditMapMenuItem spaceId={space.id} mapId={space.map.id} />
+            </SpaceMenu>
             <RailButton icon={SearchIcon} label="Buscar" disabled />
             <RailButton
                 icon={OrbitIcon}

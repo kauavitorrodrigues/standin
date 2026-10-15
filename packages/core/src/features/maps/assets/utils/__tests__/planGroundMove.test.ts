@@ -34,6 +34,8 @@ const item = (overrides: Partial<Item>): Item => ({
     colorKey: null,
     tileX: 5,
     tileY: 5,
+    offsetX: 0,
+    offsetY: 0,
     parentId: null,
     type: ASSET_TYPES.DESK,
     placement: ASSET_PLACEMENTS.GROUND,
@@ -49,6 +51,8 @@ describe("planGroundMove", () => {
         type: ASSET_TYPES.CHAIR,
         footprintW: 1,
         tileY: 6,
+        offsetX: 0,
+        offsetY: 0,
         parentId: "root",
     });
     const base = { current: root, def: root, map, items: [root, chair] };
@@ -63,7 +67,14 @@ describe("planGroundMove", () => {
 
         expect(plan.parentId).toBeNull();
         expect(plan.childChanges).toEqual([
-            { id: "chair", tileX: 9, tileY: 6, parentId: "root" },
+            {
+                id: "chair",
+                tileX: 9,
+                tileY: 6,
+                offsetX: 0,
+                offsetY: 0,
+                parentId: "root",
+            },
         ]);
     });
 

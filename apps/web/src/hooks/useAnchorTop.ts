@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { TOOLBAR_ANCHOR_ATTRIBUTE } from "@/components/editor/consts/toolbar";
+import { TOOLBAR_ANCHOR_ATTRIBUTE } from "@/features/editor/consts/toolbar";
 
 // Where the toolbar button named `anchorId` is, as the distance from the top
 // of the area the element is placed in. The ref goes on the element that is

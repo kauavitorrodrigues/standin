@@ -1,13 +1,16 @@
 import { useForm, useWatch } from "react-hook-form";
-import { SearchIcon } from "lucide-react";
 import type { AssetDefinition } from "@standin/contracts";
-import { Input } from "@/components/ui/input";
+import { SearchField } from "@/features/editor/components/views/SearchField";
 import { useMapPalette } from "@/features/assets/queries/useMapPalette";
 import { PaletteBody } from "./PaletteBody";
 
 type Props = {
     mapId: string;
     onPick: (asset: AssetDefinition) => void;
+    // The family to show as picked.
+    selectedId?: string | null;
+    // Hides the library's own Tiles tab, for hosts that have their own.
+    hideTilesTab?: boolean;
 };
 
 type SearchValues = { search: string };
@@ -16,7 +19,12 @@ type SearchValues = { search: string };
 // category that has assets (the server already sends them in order, by
 // name), a separate Tiles group, and a search that crosses every category
 // and hides the tabs while there is text.
-export function MapPalette({ mapId, onPick }: Props) {
+export function MapPalette({
+    mapId,
+    onPick,
+    selectedId,
+    hideTilesTab = false,
+}: Props) {
     const { tilesets, categories } = useMapPalette(mapId);
     const { register, control } = useForm<SearchValues>({
         defaultValues: { search: "" },
@@ -24,13 +32,11 @@ export function MapPalette({ mapId, onPick }: Props) {
     const search = useWatch({ control, name: "search" });
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="relative">
-                <SearchIcon className="text-muted-foreground absolute top-2 left-2 size-4" />
-                <Input
+        <div className="flex min-h-0 flex-1 flex-col gap-3 pt-3">
+            <div className="px-3">
+                <SearchField
                     {...register("search")}
                     placeholder="Buscar peça"
-                    className="pl-8"
                 />
             </div>
             <PaletteBody
@@ -38,6 +44,8 @@ export function MapPalette({ mapId, onPick }: Props) {
                 categories={categories}
                 tilesets={tilesets}
                 onPick={onPick}
+                selectedId={selectedId}
+                hideTilesTab={hideTilesTab}
             />
         </div>
     );

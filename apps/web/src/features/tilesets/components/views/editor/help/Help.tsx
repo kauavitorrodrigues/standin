@@ -1,4 +1,4 @@
-import { HelpDialog } from "@/components/editor/HelpDialog";
+import { HelpDialog } from "@/features/editor/components/views/HelpDialog";
 import { TileHelpCategories } from "./Categories";
 import { TileHelpShortcuts } from "./Shortcuts";
 import { TileHelpTools } from "./Tools";

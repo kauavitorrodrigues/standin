@@ -1,4 +1,4 @@
-import { ToolOptionsAnchor } from "@/components/editor/ToolOptionsAnchor";
+import { ToolOptionsAnchor } from "@/features/editor/components/layout/ToolOptionsAnchor";
 import { useTileEditorContext } from "../../../hooks/editor/useEditorContext";
 import { TileEditorBrush } from "./Brush";
 import { TileEditorOptions } from "./Options";
