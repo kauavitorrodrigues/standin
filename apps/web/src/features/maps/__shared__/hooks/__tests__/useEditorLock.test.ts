@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LOCK_HEARTBEAT_MS } from "@standin/contracts";
+import type { EditorLockLostReason, EditScopeKind } from "@standin/contracts";
 import { LOCK_STATUS } from "@/features/editor/consts/lock-status";
 import { useEditorLock } from "@/features/maps/__shared__/hooks/useEditorLock";
 import type { EditorLockControl } from "@/features/maps/__shared__/types/EditorLockControl";
@@ -41,16 +42,26 @@ let latest: LockStatus;
 let latestControl: EditorLockControl;
 const onAcquired = vi.fn();
 
+let latestReason: EditorLockLostReason | null;
+let probeMode: EditScopeKind | undefined;
+
 const Probe = () => {
-    const { lock, control } = useEditorLock(MAP_ID, SESSION_ID, onAcquired);
+    const { lock, control, lostReason } = useEditorLock(
+        MAP_ID,
+        SESSION_ID,
+        onAcquired,
+        probeMode
+    );
     useEffect(() => {
         latest = lock;
         latestControl = control;
-    }, [lock, control]);
+        latestReason = lostReason;
+    }, [lock, control, lostReason]);
     return null;
 };
 
-const mount = () => {
+const mount = (mode?: EditScopeKind) => {
+    probeMode = mode;
     act(() => {
         root.render(createElement(Probe));
     });
@@ -91,6 +102,7 @@ describe("useEditorLock", () => {
         expect(emitsOf("editor:acquire")[0][1]).toEqual({
             mapId: MAP_ID,
             sessionId: SESSION_ID,
+            mode: "map",
         });
 
         answerAcquire(GRANTED);
@@ -241,12 +253,64 @@ describe("useEditorLock", () => {
         const pending = latestControl.reacquire();
         const call = fakeSocket.timedEmit.mock.calls[0];
         expect(call[0]).toBe("editor:acquire");
-        expect(call[1]).toEqual({ mapId: MAP_ID, sessionId: SESSION_ID });
+        expect(call[1]).toEqual({
+            mapId: MAP_ID,
+            sessionId: SESSION_ID,
+            mode: "map",
+        });
         call[2](new Error("timeout"));
         await expect(pending).resolves.toBeNull();
 
         const granted = latestControl.reacquire();
         fakeSocket.timedEmit.mock.calls[1][2](null, GRANTED);
         await expect(granted).resolves.toEqual(GRANTED);
+    });
+
+    it("asks for the objects mode and keeps it on heartbeat and release", () => {
+        mount("objects");
+        expect(emitsOf("editor:acquire")[0][1]).toMatchObject({
+            mode: "objects",
+        });
+
+        answerAcquire(GRANTED);
+        act(() => {
+            vi.advanceTimersByTime(LOCK_HEARTBEAT_MS);
+        });
+        expect(emitsOf("editor:heartbeat")[0][1]).toMatchObject({
+            mode: "objects",
+        });
+
+        act(() => root.unmount());
+        expect(emitsOf("editor:release")[0][1]).toMatchObject({
+            mode: "objects",
+        });
+        root = createRoot(document.createElement("div"));
+    });
+
+    it("reacquires in the mode it was opened with", () => {
+        mount("objects");
+        answerAcquire(GRANTED);
+
+        void latestControl.reacquire();
+        expect(fakeSocket.timedEmit.mock.calls[0][1]).toMatchObject({
+            mode: "objects",
+        });
+    });
+
+    it("tells why the lock was lost and forgets it on restore", () => {
+        mount("objects");
+        answerAcquire(GRANTED);
+        act(() => {
+            fakeSocket.listeners
+                .get("editor:lock_lost")
+                ?.forEach((handler) =>
+                    handler({ mapId: MAP_ID, reason: "MAP_EDITING" })
+                );
+        });
+        expect(latest.status).toBe(LOCK_STATUS.LOST);
+        expect(latestReason).toBe("MAP_EDITING");
+
+        act(() => latestControl.restore());
+        expect(latestReason).toBeNull();
     });
 });

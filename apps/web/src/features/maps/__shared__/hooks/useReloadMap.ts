@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { buildEditorModel } from "@standin/contracts";
+import { buildEditorModel, EDIT_SCOPES } from "@standin/contracts";
+import type { EditScopeKind } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { mapPaletteQueryOptions } from "@/features/assets/queries/useMapPalette";
@@ -14,7 +15,7 @@ import { clearDraft } from "@/features/maps/__shared__/lib/draftDb";
 // render and the palette are fetched again, the base of the draft becomes the
 // new model and the saved copy is removed. The draft stays as it was when the
 // map cannot be fetched.
-export const useReloadMap = () => {
+export const useReloadMap = (mode: EditScopeKind = EDIT_SCOPES.MAP) => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const draftStore = useDraftStore();
@@ -45,8 +46,8 @@ export const useReloadMap = () => {
         }
 
         draftStore.rebase(buildEditorModel(renderData, paletteData));
-        await clearDraft(user.id, mapId);
+        await clearDraft(user.id, mapId, mode);
         editorStore.resetPublish();
         editorStore.closeDialog();
-    }, [draftStore, editorStore, queryClient, user.id]);
+    }, [draftStore, editorStore, mode, queryClient, user.id]);
 };

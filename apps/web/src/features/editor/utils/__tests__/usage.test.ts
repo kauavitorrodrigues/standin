@@ -26,5 +26,7 @@ describe("getUsagePercent", () => {
         expect(getUsagePercent(1, 3)).toBe(33);
         expect(getUsagePercent(150, 100)).toBe(100);
         expect(getUsagePercent(5, 0)).toBe(0);
+        expect(getUsagePercent(0, 3000)).toBe(0);
+        expect(getUsagePercent(2, 3000)).toBe(1);
     });
 });

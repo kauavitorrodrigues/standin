@@ -129,6 +129,11 @@ export class SelectController implements ToolController {
             context.setHint(describePlacementReason(plan.reason));
             return;
         }
+        const vetoed = this.env.veto?.([plan.op], context.model) ?? null;
+        if (vetoed !== null) {
+            context.setHint(vetoed);
+            return;
+        }
 
         const result = context.dispatch([plan.op]);
         if (!result.ok) context.setHint(SELECTION_MESSAGES.MOVE_FAILED);
@@ -219,6 +224,26 @@ export class SelectController implements ToolController {
         return planMove({ model: context.model, id: drag.id, ...target });
     }
 
+    // Why the host refuses the move the plan describes, or null.
+    private getVeto(
+        context: ToolContext,
+        plan: NonNullable<ReturnType<SelectController["plan"]>>
+    ): string | null {
+        if (plan.reason !== null) return null;
+
+        return this.env.veto?.([plan.op], context.model) ?? null;
+    }
+
+    // What the hint says while an object is dragged: why the spot is refused
+    // by the model or by the host, or that dropping it works.
+    private describeDrop(
+        reason: Parameters<typeof describePlacementReason>[0] | null,
+        vetoed: string | null
+    ): string {
+        if (reason !== null) return describePlacementReason(reason);
+        return vetoed ?? SELECTION_MESSAGES.DROP_READY;
+    }
+
     private preview(context: ToolContext, drag: Drag): void {
         if (!this.hasMoved(context, drag)) {
             this.ghost.hide();
@@ -238,16 +263,13 @@ export class SelectController implements ToolController {
             return;
         }
 
+        const vetoed = this.getVeto(context, plan);
         this.ghost.show({
             asset,
             x: layout.x,
             bottomY: layout.bottomY,
-            valid: plan.reason === null,
+            valid: plan.reason === null && vetoed === null,
         });
-        context.setHint(
-            plan.reason === null
-                ? SELECTION_MESSAGES.DROP_READY
-                : describePlacementReason(plan.reason)
-        );
+        context.setHint(this.describeDrop(plan.reason, vetoed));
     }
 }

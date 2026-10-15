@@ -60,6 +60,7 @@ const spaceAccess = {
     owner: { kind: "space", spaceId: "space-1", organizationId: "org-1" },
     canRead: true,
     canEdit: true,
+    canDecorate: true,
 };
 
 const templateAccess = {
@@ -145,6 +146,7 @@ describe("editor lock handlers", () => {
             code: "MAP_LOCKED",
             by: { id: "u1", name: "Name u1" },
             since: expect.any(String),
+            mode: "map",
         });
     });
 
@@ -181,7 +183,7 @@ describe("editor lock handlers", () => {
         expect(emitToSocketMock).toHaveBeenCalledWith(
             "sock-a",
             "editor:lock_lost",
-            { mapId: "map-1" }
+            { mapId: "map-1", reason: "TAKEN_OVER" }
         );
         expect(EditorSessions.get("s1")).toBeUndefined();
         expect(EditorSessions.get("s2")).toBe("sock-b");
@@ -247,7 +249,7 @@ describe("editor lock handlers", () => {
         expect(emitToRoomMock).toHaveBeenCalledWith(
             "space:space-1",
             "map_unlocked",
-            { mapId: "map-1" }
+            { mapId: "map-1", mode: "map" }
         );
         expect(MapLockService.get("map-1")).toBeFalsy();
     });
@@ -265,5 +267,174 @@ describe("editor lock handlers", () => {
 
         expect(EditorSessions.get("s1")).toBeUndefined();
         expect(MapLockService.get("map-1")).toBeTruthy();
+    });
+
+    describe("decorator mode", () => {
+        const memberAccess = {
+            ...spaceAccess,
+            canEdit: false,
+            canDecorate: true,
+        };
+
+        it("lets a member open the decorator and announces the mode", async () => {
+            getAccessMock.mockResolvedValue(memberAccess);
+            const socket = createFakeSocket("sock-1", "u1");
+            registerEditorAcquire(socket as any);
+            const ack = vi.fn();
+
+            await handler(socket, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                ack
+            );
+
+            expect(ack).toHaveBeenCalledWith(
+                expect.objectContaining({ ok: true })
+            );
+            expect(MapLockService.get("map-1")?.mode).toBe("objects");
+            expect(emitToRoomMock).toHaveBeenCalledWith(
+                "space:space-1",
+                "map_locked",
+                expect.objectContaining({ mapId: "map-1", mode: "objects" })
+            );
+        });
+
+        it("refuses the Studio to a member who cannot edit", async () => {
+            getAccessMock.mockResolvedValue(memberAccess);
+            const socket = createFakeSocket("sock-1", "u1");
+            registerEditorAcquire(socket as any);
+            const ack = vi.fn();
+
+            await handler(socket, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "map" },
+                ack
+            );
+
+            expect(ack).toHaveBeenCalledWith({ ok: false, code: "FORBIDDEN" });
+        });
+
+        it("refuses the decorator to someone who cannot decorate", async () => {
+            getAccessMock.mockResolvedValue({
+                ...memberAccess,
+                canDecorate: false,
+            });
+            const socket = createFakeSocket("sock-1", "u1");
+            registerEditorAcquire(socket as any);
+            const ack = vi.fn();
+
+            await handler(socket, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                ack
+            );
+
+            expect(ack).toHaveBeenCalledWith({ ok: false, code: "FORBIDDEN" });
+        });
+
+        it("refuses a second member with MAP_LOCKED and the mode", async () => {
+            getAccessMock.mockResolvedValue(memberAccess);
+            const a = createFakeSocket("sock-a", "u1");
+            const b = createFakeSocket("sock-b", "u2");
+            registerEditorAcquire(a as any);
+            registerEditorAcquire(b as any);
+            await handler(a, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                vi.fn()
+            );
+            const ack = vi.fn();
+
+            await handler(b, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s2", mode: "objects" },
+                ack
+            );
+
+            expect(ack).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    ok: false,
+                    code: "MAP_LOCKED",
+                    mode: "objects",
+                    by: { id: "u1", name: "Name u1" },
+                })
+            );
+        });
+
+        it("tells the decorator it lost the lock when the owner opens the Studio", async () => {
+            const member = createFakeSocket("sock-a", "u1");
+            const owner = createFakeSocket("sock-b", "u2");
+            registerEditorAcquire(member as any);
+            registerEditorAcquire(owner as any);
+            getAccessMock.mockResolvedValue(memberAccess);
+            await handler(member, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                vi.fn()
+            );
+            getAccessMock.mockResolvedValue(spaceAccess);
+            const ack = vi.fn();
+
+            await handler(owner, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s2", mode: "map" },
+                ack
+            );
+
+            expect(ack).toHaveBeenCalledWith(
+                expect.objectContaining({ ok: true })
+            );
+            expect(emitToSocketMock).toHaveBeenCalledWith(
+                "sock-a",
+                "editor:lock_lost",
+                { mapId: "map-1", reason: "MAP_EDITING" }
+            );
+            expect(MapLockService.get("map-1")?.mode).toBe("map");
+        });
+
+        it("answers the heartbeat of a decorator by canDecorate, read again", async () => {
+            getAccessMock.mockResolvedValue(memberAccess);
+            const socket = createFakeSocket("sock-1", "u1");
+            registerEditorAcquire(socket as any);
+            registerEditorHeartbeat(socket as any);
+            await handler(socket, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                vi.fn()
+            );
+            const alive = vi.fn();
+            await handler(socket, "editor:heartbeat")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                alive
+            );
+            expect(alive).toHaveBeenCalledWith({ ok: true });
+
+            getAccessMock.mockResolvedValue({
+                ...memberAccess,
+                canDecorate: false,
+            });
+            const gone = vi.fn();
+            await handler(socket, "editor:heartbeat")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                gone
+            );
+
+            expect(gone).toHaveBeenCalledWith({ ok: false });
+        });
+
+        it("announces map_unlocked with the mode on release", async () => {
+            getAccessMock.mockResolvedValue(memberAccess);
+            const socket = createFakeSocket("sock-1", "u1");
+            registerEditorAcquire(socket as any);
+            registerEditorRelease(socket as any);
+            await handler(socket, "editor:acquire")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                vi.fn()
+            );
+            emitToRoomMock.mockClear();
+
+            await handler(socket, "editor:release")?.(
+                { mapId: "map-1", sessionId: "s1", mode: "objects" },
+                vi.fn()
+            );
+
+            expect(emitToRoomMock).toHaveBeenCalledWith(
+                "space:space-1",
+                "map_unlocked",
+                { mapId: "map-1", mode: "objects" }
+            );
+        });
     });
 });

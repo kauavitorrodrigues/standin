@@ -16,6 +16,7 @@ import {
     toTilesets,
 } from "../assets/utils/toDefinitions";
 import { MapLockService } from "./lock";
+import { getObjectsRevision } from "./publish/getObjectsRevision";
 import { mapRenderSelect, placedAssetSelect } from "./consts/select";
 import type { MapAccess } from "./types/map-access";
 import { completeLayout } from "./utils/completeLayout";
@@ -83,6 +84,7 @@ export const buildMapRenderPayload = async (
         desks,
         access: {
             canEdit: access.canEdit,
+            canDecorate: access.canDecorate,
             ownDeskMapAssetId:
                 desks.find((desk) => desk.userId === userId)?.mapAssetId ??
                 null,
@@ -93,5 +95,6 @@ export const buildMapRenderPayload = async (
             objectsMax: MAX_OBJECTS_PER_MAP,
         },
         lock: MapLockService.getState(access.mapId),
+        objectsRevision: await getObjectsRevision(db, access.mapId),
     };
 };

@@ -31,7 +31,9 @@ export const applyEditorSetZone: EditorOpHandler<
     // past that id, as the removal moved it back.
     const next = run.layout.nextobjectid ?? 1;
     const layout =
-        zoneId >= next ? { ...run.layout, nextobjectid: zoneId + 1 } : run.layout;
+        zoneId >= next
+            ? { ...run.layout, nextobjectid: zoneId + 1 }
+            : run.layout;
 
     const inverse: EditorOp[] = previous
         ? [{ type: "set_zone", zone: previous }]

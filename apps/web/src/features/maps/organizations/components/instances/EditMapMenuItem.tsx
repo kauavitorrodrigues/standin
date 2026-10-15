@@ -40,7 +40,7 @@ export function EditMapMenuItem({ spaceId, mapId }: Props) {
                     }
                 >
                     <PencilIcon />
-                    Editar
+                    Editar estrutura
                 </DropdownMenuItem>
             );
     }

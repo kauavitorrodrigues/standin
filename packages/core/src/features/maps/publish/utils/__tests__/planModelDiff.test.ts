@@ -34,7 +34,9 @@ describe("planModelDiff", () => {
     it("plans nothing when the models are equal", () => {
         const items = [placed("a")];
 
-        expect(planModelDiff(model(items), model(structuredClone(items)))).toEqual({
+        expect(
+            planModelDiff(model(items), model(structuredClone(items)))
+        ).toEqual({
             layoutChanged: false,
             inserts: [],
             updates: [],

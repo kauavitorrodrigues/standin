@@ -21,6 +21,7 @@ const LOCK = {
     userId: "user-1",
     userName: "Ana",
     sessionId: "session-a",
+    mode: "map",
     acquiredAt: Date.UTC(2026, 0, 1),
     lastHeartbeatAt: Date.UTC(2026, 0, 1),
 };
@@ -185,5 +186,43 @@ describe("RequiresMapNotLocked", () => {
 
         expect(next).not.toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it("lets a desk route through while a decorator is open", async () => {
+        getLockMock.mockReturnValue({ ...LOCK, mode: "objects" });
+        const guard = RequiresMapNotLocked(MAP_ID_SOURCES.MAP, {
+            allowObjectsMode: true,
+        });
+
+        const { res, next } = await run(guard, buildReq({ mapId: "map-1" }));
+
+        expect(next).toHaveBeenCalledOnce();
+        expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it("still refuses a route without the option while a decorator is open", async () => {
+        getLockMock.mockReturnValue({ ...LOCK, mode: "objects" });
+
+        const { res, next } = await run(
+            RequiresMapNotLocked(MAP_ID_SOURCES.MAP),
+            buildReq({ mapId: "map-1" })
+        );
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(423);
+    });
+
+    it("refuses a desk route while the Studio is open", async () => {
+        getLockMock.mockReturnValue(LOCK);
+
+        const { res, next } = await run(
+            RequiresMapNotLocked(MAP_ID_SOURCES.MAP, {
+                allowObjectsMode: true,
+            }),
+            buildReq({ mapId: "map-1" })
+        );
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(423);
     });
 });

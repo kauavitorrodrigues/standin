@@ -17,8 +17,7 @@ export const applyEditorOp = (
     op: EditorOp
 ): ApplyEditorOpResult => {
     const handler = EDITOR_OP_HANDLERS[op.type] as
-        | EditorOpHandler<EditorOp>
-        | undefined;
+        EditorOpHandler<EditorOp> | undefined;
 
     if (!handler) {
         return {

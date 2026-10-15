@@ -18,7 +18,7 @@ import { EditorCameraController } from "@/features/editor/lib/EditorCameraContro
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import type { EditorStore } from "@/features/editor/lib/EditorStore";
 import { EditorToolRouter } from "@/features/editor/lib/EditorToolRouter";
-import { EditorObjectRenderer } from "@/features/editor/lib/EditorObjectRenderer";
+import { EditorObjectRenderer } from "@/features/game/renderers/EditorObjectRenderer";
 import { EditorTileRenderer } from "@/features/editor/lib/EditorTileRenderer";
 import { GridOverlay } from "@/features/editor/lib/GridOverlay";
 import { SelectionAnchorTracker } from "@/features/editor/lib/SelectionAnchorTracker";

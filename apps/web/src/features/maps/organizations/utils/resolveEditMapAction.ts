@@ -1,3 +1,4 @@
+import { EDIT_SCOPES } from "@standin/contracts";
 import { EDIT_MAP_ACTION } from "../consts/edit-map-action";
 import type {
     EditMapAction,
@@ -5,8 +6,9 @@ import type {
 } from "../types/editMapAction";
 
 // Who sees the Edit item and whether it works. Without permission it is
-// hidden. A lock held by someone else disables it, and a lock held by the
-// user (another tab, for instance) still opens normally.
+// hidden. A Studio lock held by someone else disables it, and a lock held by
+// the user (another tab, for instance) still opens normally. A decorator lock
+// never disables it, because the Studio takes the lock from the decorator.
 export const resolveEditMapAction = ({
     canEdit,
     lock,
@@ -14,6 +16,7 @@ export const resolveEditMapAction = ({
 }: ResolveEditMapActionInput): EditMapAction => {
     if (!canEdit) return EDIT_MAP_ACTION.HIDDEN;
     if (!lock.locked) return EDIT_MAP_ACTION.ENABLED;
+    if (lock.mode === EDIT_SCOPES.OBJECTS) return EDIT_MAP_ACTION.ENABLED;
 
     switch (lock.by?.id === userId) {
         case true:

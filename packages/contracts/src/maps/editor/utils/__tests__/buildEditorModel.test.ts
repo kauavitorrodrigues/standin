@@ -46,9 +46,10 @@ const buildRender = (): MapRenderPayload => ({
         },
     ],
     desks: [{ mapAssetId: "p1", userId: "u1" }],
-    access: { canEdit: true, ownDeskMapAssetId: null },
+    access: { canEdit: true, canDecorate: true, ownDeskMapAssetId: null },
     limits: { objectsUsed: 2, objectsMax: MAX_OBJECTS_PER_MAP },
     lock: { locked: false },
+    objectsRevision: null,
 });
 
 describe("buildEditorModel", () => {

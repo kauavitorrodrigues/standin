@@ -98,7 +98,7 @@ describe("useDraftPersistence", () => {
         expect(db.saveDraft).not.toHaveBeenCalled();
 
         flushSave();
-        expect(db.saveDraft).toHaveBeenCalledWith("user-1", "map-1", {
+        expect(db.saveDraft).toHaveBeenCalledWith("user-1", "map-1", "map", {
             baseVersion: 3,
             ops: [background("#111111")],
         });
@@ -110,7 +110,7 @@ describe("useDraftPersistence", () => {
         flushSave();
 
         store.undo();
-        expect(db.clearDraft).toHaveBeenCalledWith("user-1", "map-1");
+        expect(db.clearDraft).toHaveBeenCalledWith("user-1", "map-1", "map");
     });
 
     it("does not clear or write the resumed operations, then saves the next edit", () => {
@@ -123,7 +123,7 @@ describe("useDraftPersistence", () => {
 
         store.dispatchGesture([background("#222222")]);
         flushSave();
-        expect(db.saveDraft).toHaveBeenCalledWith("user-1", "map-1", {
+        expect(db.saveDraft).toHaveBeenCalledWith("user-1", "map-1", "map", {
             baseVersion: 3,
             ops: [background("#111111"), background("#222222")],
         });

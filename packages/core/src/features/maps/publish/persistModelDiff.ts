@@ -47,10 +47,7 @@ export const persistModelDiff = async (
                 updatedAt: now,
             })
             .where(
-                and(
-                    eq(mapsTable.id, access.mapId),
-                    isNull(mapsTable.deletedAt)
-                )
+                and(eq(mapsTable.id, access.mapId), isNull(mapsTable.deletedAt))
             )
             .returning({ layoutVersion: mapsTable.layoutVersion });
 

@@ -54,6 +54,7 @@ function addLock(mapId: string, sessionId: string, heartbeatAt = Date.now()) {
         userId: "user-1",
         userName: "Ana",
         sessionId,
+        mode: "map",
         acquiredAt: heartbeatAt,
         lastHeartbeatAt: heartbeatAt,
     });
@@ -101,13 +102,13 @@ describe("startLockSweeper", () => {
         expect(emitToSocketMock).toHaveBeenCalledWith(
             "socket-1",
             "editor:lock_lost",
-            { mapId: "map-1" }
+            { mapId: "map-1", reason: "EXPIRED" }
         );
         expect(emitToRoomMock).toHaveBeenCalledTimes(1);
         expect(emitToRoomMock).toHaveBeenCalledWith(
             "space:space-1",
             "map_unlocked",
-            { mapId: "map-1" }
+            { mapId: "map-1", mode: "map" }
         );
         expect(EditorSessions.get("session-1")).toBeUndefined();
 
@@ -148,7 +149,7 @@ describe("startLockSweeper", () => {
         expect(emitToRoomMock).toHaveBeenCalledWith(
             "space:space-2",
             "map_unlocked",
-            { mapId: "map-2" }
+            { mapId: "map-2", mode: "map" }
         );
     });
 

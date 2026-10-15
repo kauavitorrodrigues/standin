@@ -8,6 +8,7 @@ type Props = {
     onPick: (asset: AssetDefinition) => void;
     // The family to show as picked.
     selectedId?: string | null;
+    showNames?: boolean;
 };
 
 // Matches of the search across every category.
@@ -16,6 +17,7 @@ export const PaletteSearchResults = ({
     families,
     onPick,
     selectedId,
+    showNames,
 }: Props) => {
     const results = searchFamilies(families, search);
     if (results.length === 0) return <PaletteSearchEmptyState />;
@@ -25,6 +27,7 @@ export const PaletteSearchResults = ({
             families={results}
             onPick={onPick}
             selectedId={selectedId}
+            showNames={showNames}
         />
     );
 };

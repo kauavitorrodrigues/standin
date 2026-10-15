@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { AssetDefinitionSchema } from "../../assets/schemas/asset-definition.schema";
 import { TilesetSchema } from "../../assets/schemas/tileset.schema";
+import { EditScopeKindSchema } from "../editor/schemas/editScope.schema";
 import { MAX_OBJECT_OFFSET } from "../consts/constants";
 import { MapRenderErrorMessages as Messages } from "../schemas/consts/error-messages";
 import { MapErrorMessages } from "../schemas/consts/error-messages";
@@ -43,6 +44,8 @@ export const MapLockStateSchema = z.object(
             )
             .optional(),
         since: z.string({ error: Messages.lockSince.invalid }).optional(),
+        // Comes with `locked: true`: map for the Studio, objects for the decorator.
+        mode: EditScopeKindSchema.optional(),
     },
     { error: Messages.lock.invalid }
 );
@@ -77,6 +80,7 @@ export const MapRenderPayloadSchema = z.object({
     access: z.object(
         {
             canEdit: z.boolean({ error: Messages.canEdit.invalid }),
+            canDecorate: z.boolean({ error: Messages.canDecorate.invalid }),
             ownDeskMapAssetId: z
                 .string({ error: Messages.ownDesk.invalid })
                 .nullable(),
@@ -91,6 +95,11 @@ export const MapRenderPayloadSchema = z.object({
         { error: Messages.limits.invalid }
     ),
     lock: MapLockStateSchema,
+    // Latest `updated_at` among the objects of the map (ISO date), or null when
+    // the map never had one. The decorator sends it back as the base revision.
+    objectsRevision: z
+        .string({ error: Messages.objectsRevision.invalid })
+        .nullable(),
 });
 
 export type MapRenderPayload = z.infer<typeof MapRenderPayloadSchema>;

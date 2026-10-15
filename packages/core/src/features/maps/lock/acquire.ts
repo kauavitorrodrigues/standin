@@ -1,25 +1,31 @@
+import { EDIT_SCOPES } from "@standin/contracts";
+import type { EditScopeKind } from "@standin/contracts";
 import type { AcquireResult } from "./types/acquire-result";
 import type { LockStore } from "./types/lock-store";
 import type { MapLock } from "./types/MapLock";
 import type { LockUser } from "./types/lock-user";
-import { isLockExpired } from "./utils/isExpired";
+import { getAcquireVerdict } from "./utils/getAcquireVerdict";
+import { findLiveLock } from "./utils/findLiveLock";
 
 export function createAcquireLock(store: LockStore, now: () => number) {
     return function acquireLock(
         mapId: string,
         user: LockUser,
-        sessionId: string
+        sessionId: string,
+        mode: EditScopeKind = EDIT_SCOPES.MAP
     ): AcquireResult {
         const current = store.get(mapId);
         const nowMs = now();
-        const live = current && !isLockExpired(current, nowMs);
+        const live = findLiveLock(current, nowMs);
+        const verdict = getAcquireVerdict({ live, user, sessionId, mode });
 
-        if (live && current.userId !== user.id) {
+        if (live && verdict === "DENY") {
             return {
                 ok: false,
                 code: "MAP_LOCKED",
-                by: { id: current.userId, name: current.userName },
-                since: new Date(current.acquiredAt).toISOString(),
+                by: { id: live.userId, name: live.userName },
+                since: new Date(live.acquiredAt).toISOString(),
+                mode: live.mode,
             };
         }
 
@@ -28,15 +34,20 @@ export function createAcquireLock(store: LockStore, now: () => number) {
             userId: user.id,
             userName: user.name,
             sessionId,
+            mode,
             acquiredAt: nowMs,
             lastHeartbeatAt: nowMs,
         };
         store.set(mapId, lock);
 
-        const replaced = live && current.sessionId !== sessionId;
-        if (replaced) {
-            return { ok: true, lock, replacedSessionId: current.sessionId };
+        if (live && verdict === "PREEMPT") {
+            return { ok: true, lock, preemptedSessionId: live.sessionId };
         }
+        
+        if (live && verdict === "TAKE_OVER") {
+            return { ok: true, lock, replacedSessionId: live.sessionId };
+        }
+        
         return { ok: true, lock };
     };
 }

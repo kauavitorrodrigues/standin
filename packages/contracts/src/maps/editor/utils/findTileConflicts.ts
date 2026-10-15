@@ -15,10 +15,7 @@ import { isWallTile } from "./placement/isWallTile";
 const cellKey = (x: number, y: number): string => `${x},${y}`;
 
 /** Cells occupied by the placed objects with a placement. */
-const coveredCells = (
-    model: EditorModel,
-    placement: string
-): Set<string> => {
+const coveredCells = (model: EditorModel, placement: string): Set<string> => {
     const covered = new Set<string>();
     for (const { placed, asset } of listPlacedWithAsset(model)) {
         if (asset.placement !== placement) continue;
@@ -38,7 +35,9 @@ const paintsWallTile = (
     model: EditorModel,
     op: Extract<TileConflictOp, { type: "paint" }>
 ): boolean => {
-    const tileset = model.library.tilesets.find(({ id }) => id === op.tilesetId);
+    const tileset = model.library.tilesets.find(
+        ({ id }) => id === op.tilesetId
+    );
     return (
         tileset?.tileMeta?.[String(op.tileIndex)]?.category ===
         TILE_CATEGORIES.WALL

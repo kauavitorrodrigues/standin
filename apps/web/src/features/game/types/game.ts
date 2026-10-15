@@ -1,4 +1,6 @@
 import type Phaser from "phaser";
+import type { AssetDefinition, PlacedAsset } from "@standin/contracts";
+import type { DecoratorModeOptions } from "@/features/game/types/decorator";
 import type { HoverState } from "@/features/game/types/hover";
 import type { GameMapData } from "@/features/game/types/tilemap";
 
@@ -20,6 +22,19 @@ export type GameEngineHandle = {
     zoomIn: () => void;
     zoomOut: () => void;
     focusOnPlayer: () => void;
+    // Takes the view to a point of the map (px), moved to the left by an
+    // offset (px) so it lands in the room a panel on the right leaves.
+    focusPoint: (x: number, y: number, offsetXPixels?: number) => void;
+    // Brings the objects on screen to this list, drawing only the difference.
+    setPlaced: (
+        placed: readonly PlacedAsset[],
+        assets: readonly AssetDefinition[],
+        options?: { animate?: boolean }
+    ) => void;
+    // Turns the scene into the decorator: clicks select and place objects,
+    // and the draft is what is drawn. Returns the way to turn it off, which
+    // brings the scene back to how it was.
+    startDecorator: (options: DecoratorModeOptions) => () => void;
     subscribeToCameraState: (
         listener: (state: CameraState) => void
     ) => () => void;

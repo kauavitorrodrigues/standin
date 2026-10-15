@@ -11,6 +11,7 @@ type Props = {
     icon: LucideIcon;
     label: string;
     selected: boolean;
+    disabled?: boolean;
     onSelect: () => void;
 };
 
@@ -19,6 +20,7 @@ export const CarouselIconItem = ({
     icon: Icon,
     label,
     selected,
+    disabled = false,
     onSelect,
 }: Props) => (
     <CarouselItem className="basis-auto pl-1">
@@ -30,6 +32,7 @@ export const CarouselIconItem = ({
                         size="icon"
                         aria-label={label}
                         aria-pressed={selected}
+                        disabled={disabled}
                         onClick={onSelect}
                         className="aria-pressed:bg-muted aria-pressed:text-foreground text-muted-foreground"
                     />

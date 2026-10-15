@@ -1,4 +1,5 @@
 import type { AssetDefinition } from "@standin/contracts";
+import type { PaletteLook } from "@/features/assets/types/paletteLook";
 import { MapPalette } from "@/features/assets/components/instances/palette/MapPalette";
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
@@ -6,13 +7,21 @@ import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import type { EditorPalette } from "@/features/editor/types/editor-palette";
 
 type ObjectsTabProps = {
-    palette: EditorPalette;
+    // The families the tab lists. The tiles and the areas are not used here.
+    palette: Pick<EditorPalette, "tilesets" | "categories">;
+    // How the palette looks. The editor panel by default.
+    look?: PaletteLook;
+    searchPlaceholder?: string;
 };
 
 // The library of objects. Picking one puts the editor in placing mode with
 // that asset, and the pick stays highlighted until Esc, a click on it again
 // or a change of tool cancels it.
-export const ObjectsTab = ({ palette }: ObjectsTabProps) => {
+export const ObjectsTab = ({
+    palette,
+    look,
+    searchPlaceholder,
+}: ObjectsTabProps) => {
     const store = useEditorStore();
     const placing = useEditorSelector((state) => state.placing);
 
@@ -33,6 +42,8 @@ export const ObjectsTab = ({ palette }: ObjectsTabProps) => {
             categories={palette.categories}
             onPick={handlePick}
             selectedId={placing}
+            look={look}
+            searchPlaceholder={searchPlaceholder}
             hideTilesTab
         />
     );

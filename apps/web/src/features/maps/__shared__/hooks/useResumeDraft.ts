@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { EDIT_SCOPES } from "@standin/contracts";
+import type { EditScopeKind } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { EDITOR_MESSAGES } from "@/features/editor/consts/messages";
@@ -16,7 +18,7 @@ const NONE: ResumeDecision = { kind: RESUME_DECISION.NONE };
 // saved draft stays in IndexedDB. `settled` turns true once the question is
 // answered (the draft was read and there is nothing to offer, or the user
 // chose), which is when the persistence may start to write.
-export const useResumeDraft = () => {
+export const useResumeDraft = (mode: EditScopeKind = EDIT_SCOPES.MAP) => {
     const { user } = useAuth();
     const draftStore = useDraftStore();
     const [decision, setDecision] = useState<ResumeDecision>(NONE);
@@ -26,7 +28,7 @@ export const useResumeDraft = () => {
         let cancelled = false;
         const { mapId, version } = draftStore.getState().base;
 
-        void getDraft(user.id, mapId).then((result) => {
+        void getDraft(user.id, mapId, mode).then((result) => {
             if (cancelled) return;
             if (result.ok) {
                 setDecision(getResumeDecision(result.value, version));
@@ -37,12 +39,12 @@ export const useResumeDraft = () => {
         return () => {
             cancelled = true;
         };
-    }, [draftStore, user.id]);
+    }, [draftStore, user.id, mode]);
 
     const discard = useCallback(async () => {
         setDecision(NONE);
-        await clearDraft(user.id, draftStore.getState().base.mapId);
-    }, [draftStore, user.id]);
+        await clearDraft(user.id, draftStore.getState().base.mapId, mode);
+    }, [draftStore, user.id, mode]);
 
     const resume = useCallback(async () => {
         if (decision.kind !== RESUME_DECISION.OFFER) return;

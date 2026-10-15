@@ -77,6 +77,11 @@ export const LAYOUT_ISSUE_MESSAGES = {
     assetNotInLibrary: "The asset does not exist in the map library.",
     deskClaimed:
         "The desk is claimed by a user. Release it to remove the object.",
+    deskClaimedByOther:
+        "This desk belongs to someone else, and so does everything on it.",
+    deskReleaseRequired:
+        "Removing your own desk requires releasing it, and the items on it go too.",
+    outOfScope: "This operation is not allowed in the current edit scope.",
     stampInvalid: "The area stamp is invalid.",
     stampTooSmall: `The area must be at least ${STAMP_MIN_SIZE} x ${STAMP_MIN_SIZE} tiles.`,
     stampTooLarge: `The area cannot exceed ${STAMP_MAX_WIDTH} x ${STAMP_MAX_HEIGHT} tiles.`,
