@@ -152,6 +152,7 @@ export class SelectController implements ToolController {
 
     private reset(): void {
         this.drag = null;
+        this.env.store.setDraggedId(null);
         this.zoneDrag?.cancel();
         this.hover?.hide();
         this.ghost.hide();
@@ -246,6 +247,7 @@ export class SelectController implements ToolController {
 
     private preview(context: ToolContext, drag: Drag): void {
         if (!this.hasMoved(context, drag)) {
+            this.env.store.setDraggedId(null);
             this.ghost.hide();
             context.setHint(null);
             return;
@@ -264,6 +266,7 @@ export class SelectController implements ToolController {
         }
 
         const vetoed = this.getVeto(context, plan);
+        this.env.store.setDraggedId(drag.id);
         this.ghost.show({
             asset,
             x: layout.x,
