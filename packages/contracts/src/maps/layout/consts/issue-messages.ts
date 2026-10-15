@@ -70,6 +70,12 @@ export const LAYOUT_ISSUE_MESSAGES = {
     notOnSurface:
         "A surface object must be placed on top of an object that accepts items.",
     notOnWall: "A wall object must be placed on a cell with a wall tile.",
+    wallShapeUnsupported:
+        "This wall style has no piece for a junction, a branch or an inner corner. Draw a rectangle or a straight line.",
+    roomTooSmallForWalls:
+        "The room needs at least three tiles on each side to have walls around it.",
+    wallStyleIncomplete:
+        "The wall style lacks a piece this shape needs. Complete the style in the tileset editor.",
     footprintOverlap:
         "The footprint overlaps another object of the same occupation type.",
     replaceIncompatible:

@@ -33,6 +33,7 @@ const findMarked = (
                 tileCount: tileset.tileCount,
                 tileIndex: Number(tileIndex),
                 top: tile.top,
+                tileMeta: tileset.tileMeta,
             }))
     );
 

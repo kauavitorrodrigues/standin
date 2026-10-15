@@ -21,6 +21,8 @@ export type BlankTile = {
     tileIndex: number;
     // Local index of the top tile drawn above a wall tile.
     top?: number;
+    // The tile meta of the tileset, which a wall style needs to pick pieces.
+    tileMeta?: TileMeta | null;
 };
 
 export type BlankDefaults = {
