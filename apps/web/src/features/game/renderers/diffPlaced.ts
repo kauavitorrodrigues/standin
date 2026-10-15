@@ -1,9 +1,13 @@
 import type { PlacedAsset } from "@standin/contracts";
 import type { PlacedDiff } from "@/features/game/types/placed-diff";
 
+// The pixel offset counts as a move: a free drag inside the same tile only
+// changes it, and the sprite and the solid body must follow.
 const hasMoved = (previous: PlacedAsset, next: PlacedAsset): boolean =>
     previous.tileX !== next.tileX ||
     previous.tileY !== next.tileY ||
+    previous.offsetX !== next.offsetX ||
+    previous.offsetY !== next.offsetY ||
     previous.parentId !== next.parentId;
 
 /**
