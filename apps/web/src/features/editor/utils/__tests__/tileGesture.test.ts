@@ -43,6 +43,8 @@ const withGroundObject = (): EditorModel =>
                 assetId: "chair",
                 tileX: 2,
                 tileY: 2,
+                offsetX: 0,
+                offsetY: 0,
                 parentId: null,
                 propertyOverrides: null,
             },

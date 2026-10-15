@@ -23,17 +23,14 @@ const makePiece = (seatCount: number): SeatArea => ({
 class Client {
     readonly occupancy = new SeatOccupancy();
     readonly controller: SeatController;
+    readonly id: string;
     x: number;
     y: number;
     isSitting = false;
     moveAxis = { x: 0, y: 0 };
 
-    constructor(
-        readonly id: string,
-        x: number,
-        y: number,
-        areas: SeatArea[]
-    ) {
+    constructor(id: string, x: number, y: number, areas: SeatArea[]) {
+        this.id = id;
         this.x = x;
         this.y = y;
         this.occupancy.setLocalSocketIdProvider(() => id);
@@ -77,11 +74,13 @@ class Room {
         position: PlayerPosition;
     }[] = [];
     private tick = 0;
+    private readonly areas: SeatArea[];
+    private readonly latency: number;
 
-    constructor(
-        private readonly areas: SeatArea[],
-        private readonly latency: number
-    ) {}
+    constructor(areas: SeatArea[], latency: number) {
+        this.areas = areas;
+        this.latency = latency;
+    }
 
     join(id: string, x: number, y: number): Client {
         const client = new Client(id, x, y, this.areas);
