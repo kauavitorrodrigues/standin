@@ -80,6 +80,18 @@ vi.mock("../handlers/webrtcSignal", () => ({
     registerWebrtcSignal: registerWebrtcSignalMock,
 }));
 
+vi.mock("../handlers/roomCrossed", () => ({ registerRoomCrossed: vi.fn() }));
+vi.mock("../handlers/roomOpen", () => ({ registerRoomOpen: vi.fn() }));
+vi.mock("../handlers/roomPresent", () => ({ registerRoomPresent: vi.fn() }));
+vi.mock("../handlers/roomLock", () => ({ registerRoomLock: vi.fn() }));
+vi.mock("../handlers/roomUnlock", () => ({ registerRoomUnlock: vi.fn() }));
+vi.mock("../handlers/roomJoinRequest", () => ({
+    registerRoomJoinRequest: vi.fn(),
+}));
+vi.mock("../handlers/roomJoinAnswer", () => ({
+    registerRoomJoinAnswer: vi.fn(),
+}));
+
 vi.mock("../handlers/disconnect", () => ({
     registerDisconnect: registerDisconnectMock,
 }));

@@ -1,7 +1,9 @@
 import type { Socket } from "socket.io";
-import { SpaceEvents } from "@standin/contracts";
+import { RoomEvents, SpaceEvents } from "@standin/contracts";
 import { EditorSessions } from "../utils/editorSessions";
+import { RoomStates } from "../utils/roomStates";
 import { buildSpaceRoom } from "../utils/buildSpaceRoom";
+import { applyJoinEffects } from "../utils/applyJoinEffects";
 
 export function registerDisconnect(socket: Socket) {
     // "disconnect" (not "disconnecting") works here because the room is
@@ -15,9 +17,18 @@ export function registerDisconnect(socket: Socket) {
         const { spaceId, userId } = socket.data;
         if (!spaceId) return;
 
-        socket.to(buildSpaceRoom(spaceId)).emit(SpaceEvents.SPACE_PEER_LEFT, {
+        const room = buildSpaceRoom(spaceId);
+        socket.to(room).emit(SpaceEvents.SPACE_PEER_LEFT, {
             socketId: socket.id,
             userId,
         });
+
+        // A locked room left empty opens, so it is never locked forever.
+        const { changes, effects } = RoomStates.removeSocket(spaceId, socket.id);
+        changes.forEach((change) => {
+            socket.to(room).emit(RoomEvents.ROOM_STATE, change);
+        });
+        // The meeting may have ended and requests of this socket are gone.
+        applyJoinEffects(() => socket.nsp.sockets, spaceId, effects);
     });
 }
