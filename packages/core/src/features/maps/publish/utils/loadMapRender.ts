@@ -17,6 +17,7 @@ import {
 } from "../../../assets/utils/toDefinitions";
 import { mapRenderSelect, placedAssetSelect } from "../../consts/select";
 import { MapLockService } from "../../lock";
+import { getObjectsRevision } from "../getObjectsRevision";
 import type { MapAccess } from "../../types/map-access";
 import { completeLayout } from "../../utils/completeLayout";
 import { listMapDesks } from "../../utils/listMapDesks";
@@ -82,11 +83,16 @@ export const loadMapRender = async (
         assets: await toAssetDefinitions(assetRows),
         placed,
         desks: await listMapDesks(access, executor),
-        access: { canEdit: access.canEdit, ownDeskMapAssetId: null },
+        access: {
+            canEdit: access.canEdit,
+            canDecorate: access.canDecorate,
+            ownDeskMapAssetId: null,
+        },
         limits: {
             objectsUsed: placed.length,
             objectsMax: MAX_OBJECTS_PER_MAP,
         },
         lock: MapLockService.getState(access.mapId),
+        objectsRevision: await getObjectsRevision(executor, access.mapId),
     };
 };

@@ -31,6 +31,7 @@ describe("MapLockService", () => {
             code: "MAP_LOCKED",
             by: { id: "u1", name: "Ana" },
             since: new Date(1_700_000_000_000).toISOString(),
+            mode: "map",
         });
     });
 
@@ -100,5 +101,148 @@ describe("MapLockService", () => {
         expect(removed.map((lock) => lock.mapId)).toEqual(["m1"]);
         expect(service.get("m2")).toBeDefined();
         expect(service.sweepExpired()).toEqual([]);
+    });
+});
+
+describe("MapLockService modes", () => {
+    it("defaults to the map mode", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1");
+        expect(service.get("m1")?.mode).toBe("map");
+    });
+
+    it("grants a decorator when there is no lock", () => {
+        const { service } = setup();
+        const result = service.acquire("m1", ana, "s1", "objects");
+        expect(result.ok).toBe(true);
+        expect(service.get("m1")?.mode).toBe("objects");
+    });
+
+    it("denies a second decorator of another person, first one holds", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1", "objects");
+        const result = service.acquire("m1", bia, "s2", "objects");
+        expect(result).toEqual({
+            ok: false,
+            code: "MAP_LOCKED",
+            by: { id: "u1", name: "Ana" },
+            since: new Date(1_700_000_000_000).toISOString(),
+            mode: "objects",
+        });
+        expect(service.get("m1")?.sessionId).toBe("s1");
+    });
+
+    it("lets the same person take the decorator on another session", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1", "objects");
+        const result = service.acquire("m1", ana, "s2", "objects");
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+            expect(result.replacedSessionId).toBe("s1");
+            expect(result.preemptedSessionId).toBeUndefined();
+        }
+        expect(service.get("m1")?.sessionId).toBe("s2");
+    });
+
+    it("denies a decorator while the Studio is open, even for the same person", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1", "map");
+
+        const other = service.acquire("m1", bia, "s2", "objects");
+        const same = service.acquire("m1", ana, "s3", "objects");
+
+        expect(other).toMatchObject({
+            ok: false,
+            code: "MAP_LOCKED",
+            mode: "map",
+        });
+        expect(same).toMatchObject({
+            ok: false,
+            code: "MAP_LOCKED",
+            mode: "map",
+        });
+        expect(service.get("m1")?.sessionId).toBe("s1");
+    });
+
+    it("lets the Studio preempt the decorator of anyone and names the session", () => {
+        const { service } = setup();
+        service.acquire("m1", bia, "s1", "objects");
+
+        const result = service.acquire("m1", ana, "s2", "map");
+
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+            expect(result.preemptedSessionId).toBe("s1");
+            expect(result.replacedSessionId).toBeUndefined();
+            expect(result.lock.mode).toBe("map");
+        }
+        expect(service.get("m1")).toMatchObject({
+            sessionId: "s2",
+            mode: "map",
+        });
+    });
+
+    it("preempts the decorator of the same person too", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1", "objects");
+
+        const result = service.acquire("m1", ana, "s2", "map");
+
+        expect(result.ok && result.preemptedSessionId).toBe("s1");
+    });
+
+    it("denies a second Studio of another person", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1", "map");
+        const result = service.acquire("m1", bia, "s2", "map");
+        expect(result).toMatchObject({ ok: false, mode: "map" });
+    });
+
+    it("lets the same person take the Studio on another session", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1", "map");
+        const result = service.acquire("m1", ana, "s2", "map");
+        expect(result.ok && result.replacedSessionId).toBe("s1");
+    });
+
+    it("renews the same session without reporting anyone", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, "s1", "objects");
+        const result = service.acquire("m1", ana, "s1", "objects");
+        expect(result.ok && result.replacedSessionId).toBeFalsy();
+        expect(result.ok && result.preemptedSessionId).toBeFalsy();
+    });
+
+    it("grants another mode once the lock expired", () => {
+        const { service, advance } = setup();
+        service.acquire("m1", ana, "s1", "map");
+        advance(LOCK_TTL_MS + 1);
+        const result = service.acquire("m1", bia, "s2", "objects");
+        expect(result.ok).toBe(true);
+        expect(service.get("m1")?.mode).toBe("objects");
+    });
+
+    it("keeps a decorator alive with heartbeats and expires it without", () => {
+        const { service, advance } = setup();
+        service.acquire("m1", ana, "s1", "objects");
+        advance(LOCK_HEARTBEAT_MS);
+        expect(service.heartbeat("m1", "s1")).toEqual({ ok: true });
+        advance(LOCK_TTL_MS + 1);
+        expect(service.get("m1")).toBeUndefined();
+    });
+
+    it("does not carry the last publish over a preemption", () => {
+        const { service } = setup();
+        service.acquire("m1", bia, "s1", "objects");
+        service.recordPublish("m1", "s1", {
+            publishId: "p1",
+            result: {
+                version: 1,
+                idMap: {},
+                limits: { objectsUsed: 0, objectsMax: 1 },
+            },
+        });
+        service.acquire("m1", ana, "s2", "map");
+        expect(service.get("m1")?.lastPublish).toBeUndefined();
     });
 });

@@ -23,6 +23,7 @@ export const getMapAccess = async (
             owner,
             canRead: isAdmin,
             canEdit: isAdmin,
+            canDecorate: false,
             membership: null,
         };
     }
@@ -37,6 +38,7 @@ export const getMapAccess = async (
         owner,
         canRead: membership !== null,
         canEdit: membership?.role === ORGANIZATION_MEMBER_ROLES.OWNER,
+        canDecorate: membership !== null,
         membership,
     };
 };
