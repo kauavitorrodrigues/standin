@@ -292,8 +292,18 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
         });
 
         it("rolls everything back when a step fails", async () => {
-            const { db, mapsTable, spacesTable, tilesetsTable, eq, count } =
-                database;
+            const {
+                db,
+                mapsTable,
+                spacesTable,
+                tilesetsTable,
+                usersTable,
+                eq,
+                and,
+                inArray,
+                isNull,
+                count,
+            } = database;
             const countRows = async () => ({
                 maps: (await db.select({ n: count() }).from(mapsTable))[0].n,
                 spaces: (await db.select({ n: count() }).from(spacesTable))[0]
@@ -301,23 +311,58 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
             });
 
             const before = await countRows();
-            // Deleting the default floor makes the generator fail mid-way.
-            await db
-                .update(tilesetsTable)
-                .set({ deletedAt: new Date() })
-                .where(eq(tilesetsTable.id, floorTilesetId));
+            // With no default floor the placeholder library is seeded on the
+            // spot, so the failure needs the seed out of reach too: no tileset
+            // with a default floor and no admin to own a seeded one.
+            const globalFloors = await db
+                .select({ id: tilesetsTable.id })
+                .from(tilesetsTable)
+                .where(
+                    and(
+                        isNull(tilesetsTable.organizationId),
+                        isNull(tilesetsTable.deletedAt)
+                    )
+                );
+            const admins = await db
+                .select({ id: usersTable.id })
+                .from(usersTable)
+                .where(eq(usersTable.role, "ADMIN"));
+            const setDeleted = (deletedAt: Date | null) =>
+                db
+                    .update(tilesetsTable)
+                    .set({ deletedAt })
+                    .where(
+                        inArray(
+                            tilesetsTable.id,
+                            globalFloors.map(({ id }) => id)
+                        )
+                    );
+            const setAdminRole = (role: "ADMIN" | "USER") =>
+                db
+                    .update(usersTable)
+                    .set({ role })
+                    .where(
+                        inArray(
+                            usersTable.id,
+                            admins.map(({ id }) => id)
+                        )
+                    );
 
-            await expect(
-                core.SpaceService.create(organizationId, users.owner.id, {
-                    name: "Falha",
-                    sizeTier: "XS",
-                })
-            ).rejects.toMatchObject({ code: "BLANK_DEFAULT_FLOOR_MISSING" });
-
-            await db
-                .update(tilesetsTable)
-                .set({ deletedAt: null })
-                .where(eq(tilesetsTable.id, floorTilesetId));
+            await setDeleted(new Date());
+            await setAdminRole("USER");
+            try {
+                await expect(
+                    core.SpaceService.create(organizationId, users.owner.id, {
+                        name: "Falha",
+                        sizeTier: "XS",
+                    })
+                ).rejects.toMatchObject({
+                    code: "BLANK_DEFAULT_FLOOR_MISSING",
+                });
+            } finally {
+                await setDeleted(null);
+                await setAdminRole("ADMIN");
+            }
 
             expect(await countRows()).toEqual(before);
         });
@@ -951,7 +996,9 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
 
             expect(all.length).toBeGreaterThanOrEqual(3);
             expect(onlyS.map(({ id }) => id)).toContain(template.id);
-            expect(published.map(({ id }) => id)).toEqual([template.id]);
+            // Other files publish templates to the same database too.
+            expect(published.map(({ id }) => id)).toContain(template.id);
+            expect(published.length).toBeLessThan(all.length);
             expect(
                 await core.OrganizationService.isOwnerOfAny(users.owner.id)
             ).toBe(true);
