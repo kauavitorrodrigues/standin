@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { expandTileMask } from "@standin/contracts";
 import { ASSET_PLACEMENTS } from "@standin/contracts";
 import { PLACED_ASSET_DEPTH } from "@/features/game/consts/placed-assets";
 import {
@@ -10,6 +11,7 @@ const MAP_HEIGHT = 640;
 
 const desk = {
     id: "desk",
+    type: "DESK" as const,
     placement: ASSET_PLACEMENTS.GROUND,
     solid: true,
     surfaceHeightPx: 20,
@@ -18,6 +20,7 @@ const desk = {
 };
 const mug = {
     id: "mug",
+    type: "DECORATION" as const,
     placement: ASSET_PLACEMENTS.SURFACE,
     solid: false,
     surfaceHeightPx: 0,
@@ -26,6 +29,7 @@ const mug = {
 };
 const tree = {
     id: "tree",
+    type: "TREE" as const,
     placement: ASSET_PLACEMENTS.GROUND,
     solid: true,
     surfaceHeightPx: 0,
@@ -36,6 +40,7 @@ const tree = {
 // the 3x3 footprint is free.
 const corner = {
     id: "corner",
+    type: "DESK" as const,
     placement: ASSET_PLACEMENTS.GROUND,
     solid: true,
     surfaceHeightPx: 20,
@@ -44,11 +49,11 @@ const corner = {
         w: 3,
         h: 3,
         offsetX: 0,
-        mask: [
+        mask: expandTileMask([
             [true, true, true],
             [true, false, false],
             [true, false, false],
-        ],
+        ]),
     },
 };
 const assetsById = new Map([desk, mug, tree, corner].map((a) => [a.id, a]));
@@ -300,7 +305,7 @@ describe("resolvePlacedLayout", () => {
 describe("resolvePlacedLayout for a rug", () => {
     const rug = {
         id: "rug",
-        type: "RUG",
+        type: "RUG" as const,
         placement: ASSET_PLACEMENTS.GROUND,
         solid: false,
         surfaceHeightPx: 0,
