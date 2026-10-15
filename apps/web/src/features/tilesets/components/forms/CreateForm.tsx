@@ -1,11 +1,10 @@
 import { FormIssues } from "@/features/assets/components/views/form/FormIssues";
 import { useCreateTilesetForm } from "../../hooks/useCreateForm";
 import { TilesetFormBody } from "../views/create/FormBody";
-import { TilesetFormFooter } from "../views/create/FormFooter";
 
-// A new tileset. The first step is only the sheet. Then the page splits in
-// two: the fields and what the selected tiles are on the left, the sheet on
-// the right, where the tiles get their categories by selecting or painting.
+// A new tileset. The first step is only the sheet. Then the editor takes the
+// area: the fields in the side panel, the sheet under it, where the tiles get
+// their categories by selecting or painting.
 export const CreateTilesetForm = () => {
     const state = useCreateTilesetForm();
 
@@ -23,13 +22,8 @@ export const CreateTilesetForm = () => {
                 grid={state.grid}
                 tileMeta={state.tileMeta}
                 isSubmitting={state.isSubmitting}
-                onFileChosen={state.suggestName}
-            />
-            <TilesetFormFooter
-                show={state.file !== undefined}
-                canCreate={state.grid !== null}
-                isSubmitting={state.isSubmitting}
                 onCancel={state.cancel}
+                onFileChosen={state.suggestName}
             />
         </form>
     );

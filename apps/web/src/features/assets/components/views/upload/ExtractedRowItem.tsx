@@ -7,13 +7,15 @@ type Props = {
 };
 
 // One row of the info panel: an icon with the color of what it is about, the
-// name, the value and, at the end, an action when there is one.
+// name, the value and, at the end, an action when there is one. Compact, it
+// is all on one line: the name takes what it needs, and the value, at the
+// right, is cut short instead of wrapping.
 export const ExtractedRowItem = ({ row, compact }: Props) => {
     if (row.show === false) return null;
     const { label, value, icon: Icon, color, action } = row;
 
     return (
-        <div className="flex items-center gap-3">
+        <div className={cn("flex items-center", compact ? "gap-2" : "gap-3")}>
             <span
                 className="flex size-7 shrink-0 items-center justify-center rounded-md"
                 style={{
@@ -25,13 +27,21 @@ export const ExtractedRowItem = ({ row, compact }: Props) => {
             </span>
             <dt
                 className={cn(
-                    "text-muted-foreground shrink-0 text-sm",
-                    compact ? "w-24" : "w-32"
+                    "text-muted-foreground shrink-0",
+                    compact ? "text-xs" : "text-sm",
+                    !compact && "w-32"
                 )}
             >
                 {label}
             </dt>
-            <dd className="min-w-0 flex-1 text-sm font-medium break-words">
+            <dd
+                className={cn(
+                    "min-w-0 flex-1 font-medium",
+                    compact
+                        ? "truncate text-right text-xs"
+                        : "text-sm break-words"
+                )}
+            >
                 {value}
             </dd>
             {action}

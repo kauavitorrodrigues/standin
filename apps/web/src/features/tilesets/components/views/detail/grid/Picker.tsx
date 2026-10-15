@@ -39,7 +39,7 @@ type Props = {
     children: ReactNode;
 };
 
-// The grid of the sheet as a button, as wide as the room it has, that opens
+// The grid of the sheet as a button, as wide as its text, that opens
 // the ways the image divides into cells, so the margin and the spacing do not
 // have to be guessed: picking one fills them. "Personalizado" opens the
 // margin and the spacing to be typed, in the same popover, with the notice
@@ -83,7 +83,7 @@ export const TilesetGridPicker = ({
                         size="sm"
                         variant="outline"
                         disabled={disabled}
-                        className="h-8 w-full justify-between gap-2 font-medium"
+                        className="h-7 max-w-full justify-between gap-2 text-xs font-medium"
                     />
                 }
             >

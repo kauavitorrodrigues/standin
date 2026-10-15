@@ -11,51 +11,68 @@ import { SPAWN_MIN_DISTANCE_TILES } from "./thresholds";
 // Every message a layout issue can carry. Callers pick one by name and never
 // write a message inline, so the wording lives in one place.
 export const LAYOUT_ISSUE_MESSAGES = {
-    notOrthogonal: "O mapa deve ser ortogonal.",
-    infinite: "O mapa não pode ser infinito.",
-    tileSizeMismatch: `O tile do mapa deve ter ${TILE_SIZE} x ${TILE_SIZE} pixels.`,
-    tooLargeGlobal: `O mapa não pode passar de ${MAX_MAP_TILES} x ${MAX_MAP_TILES} tiles.`,
-    tooSmall: `O mapa precisa ter ao menos ${MIN_MAP_TILES.width} x ${MIN_MAP_TILES.height} tiles.`,
+    notOrthogonal: "The map must be orthogonal.",
+    infinite: "The map cannot be infinite.",
+    tileSizeMismatch: `The map tile must be ${TILE_SIZE} x ${TILE_SIZE} pixels.`,
+    tooLargeGlobal: `The map cannot exceed ${MAX_MAP_TILES} x ${MAX_MAP_TILES} tiles.`,
+    tooSmall: `The map must be at least ${MIN_MAP_TILES.width} x ${MIN_MAP_TILES.height} tiles.`,
     tierDimensionExceeded: (tier: string, width: number, height: number) =>
-        `O mapa passa do tamanho máximo do tier ${tier} (${width} x ${height}).`,
-    layoutInvalid: "O layout do mapa é inválido.",
-    staleLayout:
-        "O mapa foi alterado por outra pessoa. Recarregue para continuar.",
-    tierDisabled: "Esse tamanho de mapa ainda não está disponível.",
-    missingGroundLayer: 'O mapa precisa ter a camada "ground".',
+        `The map exceeds the maximum size of tier ${tier} (${width} x ${height}).`,
+    layoutInvalid: "The map layout is invalid.",
+    staleLayout: "The map was changed by someone else. Reload to continue.",
+    tierDisabled: "This map size is not available yet.",
+    missingGroundLayer: 'The map must have a "ground" layer.',
     layerDimensionMismatch: (layer: string) =>
-        `A camada "${layer}" tem dimensão diferente da do mapa.`,
+        `The "${layer}" layer has different dimensions than the map.`,
     layerDataLength: (layer: string) =>
-        `Os dados da camada "${layer}" não batem com a largura vezes a altura do mapa.`,
+        `The data of the "${layer}" layer does not match the map width times height.`,
     gidOutOfRange: (layer: string) =>
-        `A camada "${layer}" usa um tile que não existe nos tilesets do mapa.`,
-    tilesetNotInLibrary:
-        "O tileset do mapa não existe na biblioteca de recursos.",
-    tooManyTilesets: `O mapa usa mais de ${MAX_TILESETS_PER_MAP} tilesets.`,
-    tooManyObjects: `O mapa não pode ter mais de ${MAX_OBJECTS_PER_MAP} objetos.`,
-    zoneKindInvalid: "O tipo da zona é inválido.",
-    zoneLabelRequired: "A zona precisa de um nome.",
-    zoneKeyRequired: "A área privada precisa de uma chave.",
-    zoneKeyDuplicated: "Já existe uma zona com essa chave no mapa.",
-    zonePolygonInvalid: "O polígono da zona precisa de ao menos 3 pontos.",
-    zoneRotated: "A zona não pode ser rotacionada.",
-    tooManyZones: `O mapa não pode ter mais de ${MAX_ZONES_PER_MAP} zonas.`,
-    spawnMissing: "O mapa precisa de ao menos um ponto de entrada.",
-    spawnTooClose: `Há pontos de entrada a menos de ${SPAWN_MIN_DISTANCE_TILES} tiles um do outro.`,
-    cellOutOfBounds: "A célula está fora do mapa.",
-    tileNotInLibrary: "O tile não existe na biblioteca de recursos.",
-    categoryLayerMismatch:
-        "A categoria do tile não combina com a camada escolhida.",
-    layoutTooLarge: "O layout do mapa passou do tamanho máximo permitido.",
+        `The "${layer}" layer uses a tile that does not exist in the map tilesets.`,
+    tilesetNotInLibrary: "The map tileset does not exist in the asset library.",
+    tooManyTilesets: `The map uses more than ${MAX_TILESETS_PER_MAP} tilesets.`,
+    tooManyObjects: `The map cannot have more than ${MAX_OBJECTS_PER_MAP} objects.`,
+    zoneKindInvalid: "The zone kind is invalid.",
+    zoneLabelRequired: "The zone needs a name.",
+    zoneKeyRequired: "The private area needs a key.",
+    zoneKeyDuplicated: "A zone with this key already exists on the map.",
+    zonePolygonInvalid: "The zone polygon needs at least 3 points.",
+    zoneRotated: "The zone cannot be rotated.",
+    tooManyZones: `The map cannot have more than ${MAX_ZONES_PER_MAP} zones.`,
+    spawnMissing: "The map needs at least one spawn point.",
+    spawnTooClose: `There are spawn points less than ${SPAWN_MIN_DISTANCE_TILES} tiles apart.`,
+    cellOutOfBounds: "The cell is outside the map.",
+    tileNotInLibrary: "The tile does not exist in the asset library.",
+    categoryLayerMismatch: "The tile category does not match the chosen layer.",
+    layoutTooLarge: "The map layout exceeds the maximum allowed size.",
     blankDefaultFloorMissing:
-        "A biblioteca não tem um tile de chão padrão para o mapa em branco.",
+        "The library has no default floor tile for the blank map.",
     blankDefaultDuplicated:
-        "Só pode haver um tile de chão e um de parede padrão.",
+        "There can only be one default floor tile and one default wall tile.",
     thumbnailAspectMismatch:
-        "A proporção da miniatura difere da proporção do mapa em mais de 2%.",
-    invalidPng: (key: string) => `A imagem "${key}" não é um PNG válido.`,
+        "The thumbnail aspect ratio differs from the map aspect ratio by more than 2%.",
+    cellOccupiedByObject:
+        "A wall tile cannot be painted on a cell covered by a ground object.",
+    cellBlockedByWall:
+        "A ground object cannot be placed over a cell with a solid wall tile.",
+    wallHasMountedObject:
+        "A wall tile cannot be erased or replaced while a wall object is mounted on it.",
+    notOnSurface:
+        "A surface object must be placed on top of an object that accepts items.",
+    notOnWall: "A wall object must be placed on a cell with a wall tile.",
+    footprintOverlap:
+        "The footprint overlaps another object of the same occupation type.",
+    replaceIncompatible:
+        "The replacement asset is not compatible with the current object.",
+    opTooLarge: "The operation touches more cells than the allowed limit.",
+    opNotSupported: "This operation type is not supported yet.",
+    objectNotFound: "The object does not exist on the map.",
+    objectIdTaken: "Another object on the map already uses this id.",
+    assetNotInLibrary: "The asset does not exist in the map library.",
+    deskClaimed:
+        "The desk is claimed by a user. Release it to remove the object.",
+    invalidPng: (key: string) => `The image "${key}" is not a valid PNG.`,
     gridMismatch: (key: string) =>
-        `A grade do tileset "${key}" não bate com o tamanho da imagem (tiles de ${TILE_SIZE} px).`,
+        `The grid of tileset "${key}" does not match the image size (${TILE_SIZE} px tiles).`,
     tileOutsideTileset: (index: string, key: string) =>
-        `O tile ${index} da imagem "${key}" está fora do tileset.`,
+        `Tile ${index} of image "${key}" is outside the tileset.`,
 } as const;

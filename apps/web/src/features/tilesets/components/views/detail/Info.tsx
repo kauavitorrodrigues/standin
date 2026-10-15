@@ -35,7 +35,6 @@ export const TilesetInfo = ({
 }: Props) => {
     const groups: ExtractedGroup[] = [
         {
-            title: "Tileset",
             rows: [
                 {
                     label: "Grade",
@@ -58,7 +57,7 @@ export const TilesetInfo = ({
                     show: tileset.inUse,
                 },
                 {
-                    label: "Com categoria",
+                    label: "Categorizado",
                     value: `${taggedCount} de ${grid.tileCount}`,
                     icon: TagsIcon,
                     color: NAME_COLOR,
@@ -81,5 +80,5 @@ export const TilesetInfo = ({
         },
     ];
 
-    return <ExtractedInfo groups={groups} />;
+    return <ExtractedInfo groups={groups} compact />;
 };

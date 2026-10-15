@@ -17,7 +17,7 @@ export const FloatingPanel = ({ className, open = true, children }: Props) => (
         data-open={open}
         inert={!open}
         className={cn(
-            "bg-background/90 pointer-events-auto absolute z-10 rounded-lg border shadow-sm backdrop-blur transition-[opacity,translate] duration-150 ease-out data-[open=false]:pointer-events-none data-[open=false]:translate-x-2 data-[open=false]:opacity-0",
+            "bg-background/90 pointer-events-auto absolute z-99 rounded-lg border shadow-sm backdrop-blur transition-[opacity,translate] duration-150 ease-out data-[open=false]:pointer-events-none data-[open=false]:translate-x-2 data-[open=false]:opacity-0",
             className
         )}
     >

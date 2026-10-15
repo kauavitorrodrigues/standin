@@ -15,6 +15,7 @@ export type ExtractedRow = {
 };
 
 export type ExtractedGroup = {
-    title: string;
+    // Left out when the list is a single group and needs no heading.
+    title?: string;
     rows: ExtractedRow[];
 };

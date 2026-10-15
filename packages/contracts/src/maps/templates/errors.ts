@@ -2,14 +2,14 @@ import { BaseError } from "../../errors/base";
 
 export class MapTemplateNotFoundError extends BaseError {
     constructor() {
-        super("Template não encontrado.", "TEMPLATE_NOT_FOUND", 404);
+        super("Template not found.", "TEMPLATE_NOT_FOUND", 404);
     }
 }
 
 export class MapTemplateNotDraftError extends BaseError {
     constructor() {
         super(
-            "Só é possível publicar um template em rascunho.",
+            "Only a draft template can be published.",
             "TEMPLATE_NOT_DRAFT",
             409
         );
@@ -29,7 +29,7 @@ export class MapTemplateMissingThumbnailError extends BaseError {
 export class MapTemplateUsesPrivateAssetsError extends BaseError {
     constructor() {
         super(
-            "O template usa recursos privados de uma organização e não pode ser publicado.",
+            "The template uses private organization assets and cannot be published.",
             "TEMPLATE_USES_NON_GLOBAL_ASSET",
             422
         );
@@ -39,7 +39,7 @@ export class MapTemplateUsesPrivateAssetsError extends BaseError {
 export class MapTemplateNotPublishedError extends BaseError {
     constructor() {
         super(
-            "Este template não está publicado.",
+            "This template is not published.",
             "TEMPLATE_NOT_PUBLISHED",
             409
         );
@@ -49,7 +49,7 @@ export class MapTemplateNotPublishedError extends BaseError {
 export class MapTemplateUnavailableError extends BaseError {
     constructor() {
         super(
-            "Este template não está disponível.",
+            "This template is not available.",
             "TEMPLATE_UNAVAILABLE",
             422
         );
@@ -59,7 +59,7 @@ export class MapTemplateUnavailableError extends BaseError {
 export class MapTemplateNotDeletableError extends BaseError {
     constructor() {
         super(
-            "Só é possível excluir um template em rascunho ou aposentado.",
+            "Only a draft or retired template can be deleted.",
             "TEMPLATE_NOT_DELETABLE",
             409
         );

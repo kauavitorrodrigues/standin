@@ -2,17 +2,17 @@ import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "./fields";
 
 export const AuthErrorMessages = {
     email: {
-        required: "O e-mail é obrigatório.",
+        required: "The email is required.",
     },
     password: {
-        required: "A senha é obrigatória.",
+        required: "The password is required.",
         invalid:
-            "A senha deve conter ao menos 3 tipos: letras minúsculas, maiúsculas, números e símbolos.",
-        min: `A senha deve ter no mínimo ${MIN_PASSWORD_LENGTH} caracteres.`,
-        max: `A senha não pode ter mais de ${MAX_PASSWORD_LENGTH} caracteres.`,
-        sequential: "A senha não pode conter sequências óbvias.",
+            "The password must contain at least 3 types: lowercase letters, uppercase letters, numbers and symbols.",
+        min: `The password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
+        max: `The password cannot be longer than ${MAX_PASSWORD_LENGTH} characters.`,
+        sequential: "The password cannot contain obvious sequences.",
     },
     credentials: {
-        invalid: "E-mail ou senha inválidos.",
+        invalid: "Invalid email or password.",
     },
 };

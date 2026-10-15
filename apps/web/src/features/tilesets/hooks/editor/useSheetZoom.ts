@@ -1,10 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { useAsRef } from "@/hooks/useAsRef";
-import {
-    TILE_SHEET_TOP_GAP_PX,
-    TILE_ZOOM_WHEEL_STEP,
-    type TileZoom,
-} from "../../consts/sheetZoom";
+import { TILE_SHEET_TOP_GAP_PX, type TileZoom } from "../../consts/sheetZoom";
+import { getWheelDirection } from "@/utils/getWheelDirection";
 import { getFitZoom } from "../../utils/editor/getFitZoom";
 import { getNextTileZoom } from "../../utils/editor/getNextTileZoom";
 import { getSheetElement } from "../../utils/editor/getSheetElement";
@@ -91,9 +88,9 @@ export const useTileSheetZoom = ({
                 return;
             }
             turned.current += event.deltaY;
-            if (Math.abs(turned.current) < TILE_ZOOM_WHEEL_STEP) return;
+            const direction = getWheelDirection(turned.current);
+            if (direction === 0) return;
 
-            const direction = turned.current < 0 ? 1 : -1;
             turned.current = 0;
             const next = getNextTileZoom(zoomRef.current, direction);
             const sheet = getSheetElement(scroller);
