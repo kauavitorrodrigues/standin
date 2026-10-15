@@ -186,10 +186,10 @@ export const resolveActionTarget = (
     properties: InteractableMapObjectProperties
 ): ActionTarget => {
     switch (properties.action) {
-    case MAP_OBJECT_ACTIONS.SIT:
-        return { x: properties.seatX, y: properties.seatY };
-    case MAP_OBJECT_ACTIONS.TELEPORT:
-        return { x: properties.targetX, y: properties.targetY };
+        case MAP_OBJECT_ACTIONS.SIT:
+            return { x: properties.seatX, y: properties.seatY };
+        case MAP_OBJECT_ACTIONS.TELEPORT:
+            return { x: properties.targetX, y: properties.targetY };
     }
 };
 
@@ -197,10 +197,10 @@ export const resolveInteractionPromptLabel = (
     action: MapObjectAction
 ): string => {
     switch (action) {
-    case MAP_OBJECT_ACTIONS.SIT:
-        return INTERACTION_PROMPT_LABELS.SIT;
-    case MAP_OBJECT_ACTIONS.TELEPORT:
-        return INTERACTION_PROMPT_LABELS.TELEPORT;
+        case MAP_OBJECT_ACTIONS.SIT:
+            return INTERACTION_PROMPT_LABELS.SIT;
+        case MAP_OBJECT_ACTIONS.TELEPORT:
+            return INTERACTION_PROMPT_LABELS.TELEPORT;
     }
 };
 

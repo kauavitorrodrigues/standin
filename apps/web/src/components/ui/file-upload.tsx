@@ -93,76 +93,76 @@ function createStore(
 
     function reducer(state: StoreState, action: StoreAction): StoreState {
         switch (action.variant) {
-        case "ADD_FILES": {
-            for (const file of action.files) {
-                files.set(file, { file, progress: 0, status: "idle" });
-            }
-            if (onValueChange)
-                onValueChange(
-                    Array.from(files.values()).map((f) => f.file)
-                );
-            return { ...state, files };
-        }
-        case "SET_FILES": {
-            const newFileSet = new Set(action.files);
-            for (const existing of files.keys()) {
-                if (!newFileSet.has(existing)) files.delete(existing);
-            }
-            for (const file of action.files) {
-                if (!files.get(file))
+            case "ADD_FILES": {
+                for (const file of action.files) {
                     files.set(file, { file, progress: 0, status: "idle" });
+                }
+                if (onValueChange)
+                    onValueChange(
+                        Array.from(files.values()).map((f) => f.file)
+                    );
+                return { ...state, files };
             }
-            return { ...state, files };
-        }
-        case "SET_PROGRESS": {
-            const fs = files.get(action.file);
-            if (fs)
-                files.set(action.file, {
-                    ...fs,
-                    progress: action.progress,
-                    status: "uploading",
-                });
-            return { ...state, files };
-        }
-        case "SET_SUCCESS": {
-            const fs = files.get(action.file);
-            if (fs)
-                files.set(action.file, {
-                    ...fs,
-                    progress: 100,
-                    status: "success",
-                });
-            return { ...state, files };
-        }
-        case "SET_ERROR": {
-            const fs = files.get(action.file);
-            if (fs)
-                files.set(action.file, {
-                    ...fs,
-                    error: action.error,
-                    status: "error",
-                });
-            return { ...state, files };
-        }
-        case "REMOVE_FILE": {
-            files.delete(action.file);
-            if (onValueChange)
-                onValueChange(
-                    Array.from(files.values()).map((f) => f.file)
-                );
-            return { ...state, files };
-        }
-        case "SET_DRAG_OVER":
-            return { ...state, dragOver: action.dragOver };
-        case "SET_INVALID":
-            return { ...state, invalid: action.invalid };
-        case "CLEAR": {
-            files.clear();
-            if (onValueChange) onValueChange([]);
-            return { ...state, files, invalid: false };
-        }
-        default:
-            return state;
+            case "SET_FILES": {
+                const newFileSet = new Set(action.files);
+                for (const existing of files.keys()) {
+                    if (!newFileSet.has(existing)) files.delete(existing);
+                }
+                for (const file of action.files) {
+                    if (!files.get(file))
+                        files.set(file, { file, progress: 0, status: "idle" });
+                }
+                return { ...state, files };
+            }
+            case "SET_PROGRESS": {
+                const fs = files.get(action.file);
+                if (fs)
+                    files.set(action.file, {
+                        ...fs,
+                        progress: action.progress,
+                        status: "uploading",
+                    });
+                return { ...state, files };
+            }
+            case "SET_SUCCESS": {
+                const fs = files.get(action.file);
+                if (fs)
+                    files.set(action.file, {
+                        ...fs,
+                        progress: 100,
+                        status: "success",
+                    });
+                return { ...state, files };
+            }
+            case "SET_ERROR": {
+                const fs = files.get(action.file);
+                if (fs)
+                    files.set(action.file, {
+                        ...fs,
+                        error: action.error,
+                        status: "error",
+                    });
+                return { ...state, files };
+            }
+            case "REMOVE_FILE": {
+                files.delete(action.file);
+                if (onValueChange)
+                    onValueChange(
+                        Array.from(files.values()).map((f) => f.file)
+                    );
+                return { ...state, files };
+            }
+            case "SET_DRAG_OVER":
+                return { ...state, dragOver: action.dragOver };
+            case "SET_INVALID":
+                return { ...state, invalid: action.invalid };
+            case "CLEAR": {
+                files.clear();
+                if (onValueChange) onValueChange([]);
+                return { ...state, files, invalid: false };
+            }
+            default:
+                return state;
         }
     }
 
