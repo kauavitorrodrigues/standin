@@ -22,6 +22,22 @@ export const TileMetaErrorMessages = {
     blankDefault: {
         invalid: 'The tile field "blankDefault" is invalid.',
     },
+    edges: {
+        invalid:
+            "The wall edges must be one edge or two edges that meet, such as N or N and E.",
+    },
+    style: { invalid: "The wall style name is invalid." },
+    overlap: { invalid: "The wall overlap is invalid." },
+    wallSolidMask: {
+        invalid:
+            "The wall collision mask must have four rows and four flags, with at least one solid cell.",
+    },
+    wallOnly: {
+        invalid: "Only a WALL tile can have wall fields.",
+    },
+    styleRequired: {
+        invalid: "A wall tile with edges needs a style name.",
+    },
 };
 
 export const ActionParamsErrorMessages = {
