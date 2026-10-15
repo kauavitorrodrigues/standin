@@ -116,9 +116,9 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
         case PEER_MESSAGE_TYPES.POSITION:
             return isPlayerPosition(candidate.payload)
                 ? {
-                      type: PEER_MESSAGE_TYPES.POSITION,
-                      payload: candidate.payload,
-                  }
+                    type: PEER_MESSAGE_TYPES.POSITION,
+                    payload: candidate.payload,
+                }
                 : null;
         case PEER_MESSAGE_TYPES.CHAT:
             return isPeerChatPayload(candidate.payload)
@@ -127,16 +127,16 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
         case PEER_MESSAGE_TYPES.TYPING:
             return isPeerTypingPayload(candidate.payload)
                 ? {
-                      type: PEER_MESSAGE_TYPES.TYPING,
-                      payload: candidate.payload,
-                  }
+                    type: PEER_MESSAGE_TYPES.TYPING,
+                    payload: candidate.payload,
+                }
                 : null;
         case PEER_MESSAGE_TYPES.REACTION:
             return isPeerReactionPayload(candidate.payload)
                 ? {
-                      type: PEER_MESSAGE_TYPES.REACTION,
-                      payload: candidate.payload,
-                  }
+                    type: PEER_MESSAGE_TYPES.REACTION,
+                    payload: candidate.payload,
+                }
                 : null;
         case PEER_MESSAGE_TYPES.EDIT:
             return isPeerEditPayload(candidate.payload)
@@ -145,23 +145,23 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
         case PEER_MESSAGE_TYPES.DELETE:
             return isPeerDeletePayload(candidate.payload)
                 ? {
-                      type: PEER_MESSAGE_TYPES.DELETE,
-                      payload: candidate.payload,
-                  }
+                    type: PEER_MESSAGE_TYPES.DELETE,
+                    payload: candidate.payload,
+                }
                 : null;
         case PEER_MESSAGE_TYPES.CONFIRM:
             return isPeerConfirmPayload(candidate.payload)
                 ? {
-                      type: PEER_MESSAGE_TYPES.CONFIRM,
-                      payload: candidate.payload,
-                  }
+                    type: PEER_MESSAGE_TYPES.CONFIRM,
+                    payload: candidate.payload,
+                }
                 : null;
         case PEER_MESSAGE_TYPES.MEDIA_STATE:
             return isPeerMediaStatePayload(candidate.payload)
                 ? {
-                      type: PEER_MESSAGE_TYPES.MEDIA_STATE,
-                      payload: candidate.payload,
-                  }
+                    type: PEER_MESSAGE_TYPES.MEDIA_STATE,
+                    payload: candidate.payload,
+                }
                 : null;
         default:
             return null;

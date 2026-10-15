@@ -6,7 +6,7 @@ type TiledProperty = { name: string; value: unknown };
 const getProperty = (properties: unknown, name: string): unknown =>
     Array.isArray(properties)
         ? (properties as TiledProperty[]).find((entry) => entry.name === name)
-              ?.value
+            ?.value
         : undefined;
 
 // The zones of the map, read from the `zones` object layer Phaser parsed.

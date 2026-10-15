@@ -16,12 +16,12 @@ export const resolveWheelZoomDirection = (
     deltaY: number
 ): WheelZoomDirection => {
     switch (Math.sign(deltaY)) {
-    case WHEEL_ZOOM_DIRECTIONS.IN:
-        return WHEEL_ZOOM_DIRECTIONS.IN;
-    case WHEEL_ZOOM_DIRECTIONS.OUT:
-        return WHEEL_ZOOM_DIRECTIONS.OUT;
-    default:
-        return WHEEL_ZOOM_DIRECTIONS.NEUTRAL;
+        case WHEEL_ZOOM_DIRECTIONS.IN:
+            return WHEEL_ZOOM_DIRECTIONS.IN;
+        case WHEEL_ZOOM_DIRECTIONS.OUT:
+            return WHEEL_ZOOM_DIRECTIONS.OUT;
+        default:
+            return WHEEL_ZOOM_DIRECTIONS.NEUTRAL;
     }
 };
 
@@ -30,14 +30,14 @@ export const applyWheelZoom = (
     direction: WheelZoomDirection
 ): void => {
     switch (direction) {
-    case WHEEL_ZOOM_DIRECTIONS.IN:
-        controller.zoomIn();
-        return;
-    case WHEEL_ZOOM_DIRECTIONS.OUT:
-        controller.zoomOut();
-        return;
-    case WHEEL_ZOOM_DIRECTIONS.NEUTRAL:
-        return;
+        case WHEEL_ZOOM_DIRECTIONS.IN:
+            controller.zoomIn();
+            return;
+        case WHEEL_ZOOM_DIRECTIONS.OUT:
+            controller.zoomOut();
+            return;
+        case WHEEL_ZOOM_DIRECTIONS.NEUTRAL:
+            return;
     }
 };
 

@@ -536,11 +536,11 @@ export class MapScene extends Phaser.Scene {
         const free = (point: { x: number; y: number }, radius: number) =>
             isPositionBlocked(point, radius, solidRects)
                 ? findNearestFreeCell({
-                      point,
-                      solidRects,
-                      radius,
-                      bounds,
-                  })
+                    point,
+                    solidRects,
+                    radius,
+                    bounds,
+                })
                 : null;
 
         const own = free(player, PLAYER_APPEARANCE.RADIUS);

@@ -47,20 +47,20 @@ export const getDragTarget = ({
 }: Params): DragTarget => {
     const byPointer: DragTarget = free
         ? {
-              ...shiftPixelAnchor(
-                  placed,
-                  Math.round(free.x - free.startX),
-                  Math.round(free.y - free.startY)
-              ),
-              parentId: undefined,
-          }
+            ...shiftPixelAnchor(
+                placed,
+                Math.round(free.x - free.startX),
+                Math.round(free.y - free.startY)
+            ),
+            parentId: undefined,
+        }
         : {
-              tileX: placed.tileX + (to[0] - from[0]),
-              tileY: placed.tileY + (to[1] - from[1]),
-              offsetX: 0,
-              offsetY: 0,
-              parentId: undefined,
-          };
+            tileX: placed.tileX + (to[0] - from[0]),
+            tileY: placed.tileY + (to[1] - from[1]),
+            offsetX: 0,
+            offsetY: 0,
+            parentId: undefined,
+        };
 
     const asset = model.library.assets.find(({ id }) => id === placed.assetId);
     if (!asset || asset.placement !== ASSET_PLACEMENTS.SURFACE) {
