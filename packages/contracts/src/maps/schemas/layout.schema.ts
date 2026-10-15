@@ -10,6 +10,11 @@ export const LAYOUT_LAYER_NAMES = {
     FOREGROUND: "foreground",
 } as const;
 
+// The floor of the areas placed on the map. It sits right above the ground and
+// below the walls, so what an area covers is kept underneath and comes back
+// when the area is moved or deleted. It is not one of the layers a brush paints.
+export const LAYOUT_AREA_FLOOR_LAYER_NAME = "area-floor";
+
 export const LAYOUT_ZONES_LAYER_NAME = "zones";
 
 export const LAYOUT_ZONE_KINDS = {

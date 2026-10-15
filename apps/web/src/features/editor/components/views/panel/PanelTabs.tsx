@@ -1,18 +1,19 @@
 import { TabsContent } from "@/components/ui/tabs";
-import { AreasTab } from "@/features/editor/components/instances/AreasTab";
 import { ObjectsTab } from "@/features/editor/components/instances/ObjectsTab";
 import { TilesTab } from "@/features/editor/components/instances/TilesTab";
 import { PANEL_TABS } from "@/features/editor/consts/panelTabs";
 import type { EditorPalette } from "@/features/editor/types/editor-palette";
+import { AreasTabPanel } from "./AreasTabPanel";
 
 type PanelTabsProps = {
     palette: EditorPalette;
+    withAreas: boolean;
 };
 
-// The three lists of the panel, with the palette it is given. The switch between
+// The lists of the panel, with the palette it is given. The switch between
 // them is in the title bar. The panel does not scroll: each list keeps its
 // search and tabs at the top and scrolls only what is under them.
-export const PanelTabs = ({ palette }: PanelTabsProps) => (
+export const PanelTabs = ({ palette, withAreas }: PanelTabsProps) => (
     <>
         <TabsContent
             value={PANEL_TABS.OBJECTS}
@@ -23,8 +24,6 @@ export const PanelTabs = ({ palette }: PanelTabsProps) => (
         <TabsContent value={PANEL_TABS.TILES} className="flex min-h-0 flex-col">
             <TilesTab palette={palette} />
         </TabsContent>
-        <TabsContent value={PANEL_TABS.AREAS} className="flex min-h-0 flex-col">
-            <AreasTab palette={palette} />
-        </TabsContent>
+        <AreasTabPanel show={withAreas} palette={palette} />
     </>
 );

@@ -14,6 +14,7 @@ export class EditorCameraController {
     private readonly mapWidth: number;
     private readonly mapHeight: number;
     private readonly onZoomChange: (zoom: ZoomLevel) => void;
+    private readonly marginTiles: number | undefined;
     private zoom: ZoomLevel;
     private viewWidth: number;
     private viewHeight: number;
@@ -23,8 +24,10 @@ export class EditorCameraController {
         mapWidth: number,
         mapHeight: number,
         initialZoom: ZoomLevel,
-        onZoomChange: (zoom: ZoomLevel) => void
+        onZoomChange: (zoom: ZoomLevel) => void,
+        marginTiles?: number
     ) {
+        this.marginTiles = marginTiles;
         this.camera = camera;
         this.mapWidth = mapWidth;
         this.mapHeight = mapHeight;
@@ -75,17 +78,31 @@ export class EditorCameraController {
             worldY - halfHeight - (screenY - halfHeight) / next;
     }
 
-    /** Uses the largest zoom where the map fits and centers the map. */
-    fit(): void {
+    /**
+     * Uses the largest zoom where the target fits and centers it. The target is
+     * the whole map, or a rectangle of it (world px) such as the frame of an area.
+     */
+    fit(
+        target?: { x: number; y: number; width: number; height: number },
+        padding: { x: number; y: number } = { x: 0, y: 0 }
+    ): void {
+        const area = target ?? {
+            x: 0,
+            y: 0,
+            width: this.mapWidth,
+            height: this.mapHeight,
+        };
         this.applyZoom(
             getFitZoom({
-                mapWidth: this.mapWidth,
-                mapHeight: this.mapHeight,
+                mapWidth: area.width,
+                mapHeight: area.height,
                 viewWidth: this.camera.width,
                 viewHeight: this.camera.height,
+                paddingX: padding.x,
+                paddingY: padding.y,
             })
         );
-        this.camera.centerOn(this.mapWidth / 2, this.mapHeight / 2);
+        this.camera.centerOn(area.x + area.width / 2, area.y + area.height / 2);
     }
 
     /** Centers the view on a cell, keeping the zoom. The bounds still apply. */
@@ -108,6 +125,7 @@ export class EditorCameraController {
             viewWidth: this.camera.width,
             viewHeight: this.camera.height,
             zoom: this.zoom,
+            marginTiles: this.marginTiles,
         });
 
         this.camera.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);

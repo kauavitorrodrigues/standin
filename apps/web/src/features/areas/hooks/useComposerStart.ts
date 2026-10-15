@@ -1,11 +1,16 @@
 import { useMemo } from "react";
 import { AreasQueries } from "../queries";
+import type { AreaComposerFormValues } from "../types/areaComposerForm";
 import { buildComposerStart } from "../utils/buildComposerStart";
+import { fetchNoAreaStamp } from "../utils/fetchNoAreaStamp";
 
 // What the composer opens with, once the library (and the area, when editing)
 // arrived. `start` stays null while something loads, and `isError` says it
 // failed or that the stamp can no longer be opened with the library.
-export const useComposerStart = (areaId?: string) => {
+export const useComposerStart = (
+    areaId?: string,
+    values?: AreaComposerFormValues
+) => {
     const palette = AreasQueries.usePalette();
     const details = AreasQueries.useDetails(areaId ?? "");
     const isEditing = areaId !== undefined;
@@ -16,14 +21,16 @@ export const useComposerStart = (areaId?: string) => {
 
     const result = useMemo(() => {
         if (!isReady) return null;
-        return buildComposerStart({ palette: paletteData, area });
-    }, [isReady, paletteData, area]);
+        return buildComposerStart({ palette: paletteData, area, values });
+    }, [isReady, paletteData, area, values]);
 
     return {
         start: result?.ok ? result.start : null,
         palette: {
             tilesets: palette.tilesets,
             categories: palette.categories,
+            areas: [],
+            fetchAreaStamp: fetchNoAreaStamp,
             isLoading: palette.isLoading,
             isError: palette.isError,
         },

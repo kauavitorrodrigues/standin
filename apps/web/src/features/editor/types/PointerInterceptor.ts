@@ -7,6 +7,8 @@ export type PointerInterceptor = {
     press: (input: ToolPointerInput) => boolean;
     move: (input: ToolPointerInput) => void;
     release: (input: ToolPointerInput) => void;
+    // Whether a press here would be taken, so the tool leaves the pointer alone.
+    isOver: (input: Pick<ToolPointerInput, "worldX" | "worldY">) => boolean;
     // A move with no press running, to show what a press would grab.
     hover: (input: ToolPointerInput) => void;
     cancel: () => void;

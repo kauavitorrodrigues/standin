@@ -72,7 +72,6 @@ const setup = (areaId?: string, values?: Partial<AreaComposerFormValues>) => {
             defaultValues: {
                 name: "Sala de reunião",
                 createZone: true,
-                zoneLabel: "",
                 ...values,
             },
         });
@@ -136,7 +135,7 @@ describe("useComposerSave", () => {
 
     it("captures only what is inside the frame and photographs its rectangle", async () => {
         const { draftStore, frameStore, captureSnapshot } = setup();
-        draftStore.dispatchGesture([placeTable(2, 2), placeTable(20, 20)]);
+        draftStore.dispatchGesture([placeTable(2, 2), placeTable(10, 9)]);
         frameStore.setRect({ x: 1, y: 1, w: 6, h: 5 });
 
         let saved = false;
@@ -177,8 +176,8 @@ describe("useComposerSave", () => {
         expect(saveArea.mock.calls[0][0].areaId).toBe("area-1");
     });
 
-    it("names the zone after the area unless a label was typed", async () => {
-        const { draftStore } = setup(undefined, { zoneLabel: "" });
+    it("names the zone after the area", async () => {
+        const { draftStore } = setup();
         draftStore.dispatchGesture([placeTable(2, 2)]);
         await act(async () => {
             await current.save();
@@ -188,16 +187,7 @@ describe("useComposerSave", () => {
         });
     });
 
-    it("uses the typed label and drops the zone when the box is off", async () => {
-        const typed = setup(undefined, { zoneLabel: "Reunião" });
-        typed.draftStore.dispatchGesture([placeTable(2, 2)]);
-        await act(async () => {
-            await current.save();
-        });
-        expect(saveArea.mock.calls[0][0].data.stamp.zone).toEqual({
-            label: "Reunião",
-        });
-
+    it("drops the zone when the box is off", async () => {
         saveArea.mockClear();
         const off = setup(undefined, { createZone: false });
         off.draftStore.dispatchGesture([placeTable(2, 2)]);

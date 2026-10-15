@@ -1,5 +1,8 @@
 import { findTileLayer } from "../../../layout/ops/findTileLayer";
-import { STAMP_LAYER_ORDER } from "../../consts/stamp-layer-order";
+import {
+    STAMP_LAYER_ORDER,
+    getMapLayerOfStampLayer,
+} from "../../consts/stamp-layer-order";
 import type { EditorOp } from "../../schemas/editorOp.schema";
 import type { Cell } from "../../types/cell";
 import type { EditorModel } from "../../types/editor-model";
@@ -14,12 +17,14 @@ export const buildStampClearOps = (
     model: EditorModel,
     stamp: Stamp,
     tileX: number,
-    tileY: number
+    tileY: number,
+    groundLayer?: string
 ): EditorOp[] => {
     const ops: EditorOp[] = [];
 
     for (const layerName of STAMP_LAYER_ORDER) {
-        const layer = findTileLayer(model.layout, layerName);
+        const mapLayer = getMapLayerOfStampLayer(layerName, groundLayer);
+        const layer = findTileLayer(model.layout, mapLayer);
         if (!layer) continue;
 
         const stampData = stamp.layers[layerName];
@@ -36,7 +41,7 @@ export const buildStampClearOps = (
         }
 
         if (cells.length > 0) {
-            ops.push({ type: "erase", layer: layerName, cells });
+            ops.push({ type: "erase", layer: mapLayer, cells });
         }
     }
 

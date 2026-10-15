@@ -144,8 +144,8 @@ describe("hitTestFrame", () => {
     const top = 2 * TILE_SIZE;
     const right = 12 * TILE_SIZE;
     const bottom = 8 * TILE_SIZE;
-    const hit = (worldX: number, worldY: number, zoom = 1) =>
-        hitTestFrame({ rect: frame, worldX, worldY, zoom });
+    const hit = (worldX: number, worldY: number, zoom = 1, body = false) =>
+        hitTestFrame({ rect: frame, worldX, worldY, zoom, body });
 
     it("grabs a corner", () => {
         expect(hit(right, bottom)).toBe("se");
@@ -159,13 +159,13 @@ describe("hitTestFrame", () => {
         expect(hit(left, top + 40)).toBe("w");
     });
 
-    it("grabs the grip inside the top left corner", () => {
-        expect(hit(left + 12, top + 12)).toBe("move");
+    it("grabs the inside to move only when the body is on", () => {
+        expect(hit(left + 100, top + 100, 1, true)).toBe("move");
+        expect(hit(left + 100, top + 100, 1, false)).toBeNull();
     });
 
-    it("grabs nothing in the middle of the frame or far outside", () => {
-        expect(hit(left + 100, top + 100)).toBeNull();
-        expect(hit(0, 0)).toBeNull();
+    it("grabs nothing far outside, even with the body on", () => {
+        expect(hit(0, 0, 1, true)).toBeNull();
     });
 
     it("keeps the reach on the screen when the camera zooms", () => {

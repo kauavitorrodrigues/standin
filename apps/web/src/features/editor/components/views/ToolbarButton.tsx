@@ -37,6 +37,8 @@ type Props = {
     side?: "top" | "bottom" | "left" | "right";
     // The gap in px between the button and the tooltip. Leave out for the default.
     sideOffset?: number;
+    // The size of the button. Leave out for the usual one of a toolbar.
+    size?: "icon" | "icon-xs";
 };
 
 const ToolbarDescription = ({ description }: { description?: string }) => {
@@ -79,6 +81,7 @@ export const ToolbarButton = ({
     anchorId,
     side = "left",
     sideOffset,
+    size = "icon",
 }: Props) => {
     const on = active ?? false;
     const variant = getVariant({ activeLook, on, color });
@@ -89,7 +92,7 @@ export const ToolbarButton = ({
                 render={
                     <Button
                         type="button"
-                        size="icon"
+                        size={size}
                         variant={variant}
                         aria-label={label}
                         aria-pressed={active}

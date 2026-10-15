@@ -90,6 +90,7 @@ export const LAYOUT_ISSUE_MESSAGES = {
     stampAreaNotEmpty:
         "There are objects in the way. Remove them before placing the area.",
     stampCoversSpawn: "The area cannot cover the spawn point.",
+    stampOverlapsArea: "The area cannot overlap another area.",
     stampTilesetUnavailable:
         "The area uses a tileset that is not available for this map.",
     stampAssetUnavailable:

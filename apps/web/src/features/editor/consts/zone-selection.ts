@@ -11,7 +11,7 @@
 export const ZONE_SELECTION = {
     DEPTH: 10,
     ID_PREFIX: "zone:",
-    SELECTED_COLOR: 0xfacc15,
+    SELECTED_COLOR: 0xffffff,
     SELECTED_FILL_ALPHA: 0.18,
     SELECTED_LINE_WIDTH: 3,
     HANDLE_SIZE: 10,

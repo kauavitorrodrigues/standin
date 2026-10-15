@@ -1,4 +1,7 @@
-import { STAMP_LAYER_ORDER } from "../../consts/stamp-layer-order";
+import {
+    STAMP_LAYER_ORDER,
+    getMapLayerOfStampLayer,
+} from "../../consts/stamp-layer-order";
 import type { EditorOp } from "../../schemas/editorOp.schema";
 import type { Cell } from "../../types/cell";
 import type { Stamp } from "../../types/stamp";
@@ -10,7 +13,8 @@ import type { Stamp } from "../../types/stamp";
 export const buildStampPaintOps = (
     stamp: Stamp,
     tileX: number,
-    tileY: number
+    tileY: number,
+    groundLayer?: string
 ): EditorOp[] => {
     const ops: EditorOp[] = [];
 
@@ -35,7 +39,11 @@ export const buildStampPaintOps = (
         });
 
         if (tiles.length > 0) {
-            ops.push({ type: "paint_tiles", layer: layerName, tiles });
+            ops.push({
+                type: "paint_tiles",
+                layer: getMapLayerOfStampLayer(layerName, groundLayer),
+                tiles,
+            });
         }
     }
 

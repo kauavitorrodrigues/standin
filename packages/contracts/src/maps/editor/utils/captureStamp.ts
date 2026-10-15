@@ -61,7 +61,8 @@ export const captureStamp = (
     const layers = captureStampLayers(
         model,
         toLayoutLibrary(model.library, model.usedTilesets),
-        rect
+        rect,
+        opts.groundLayer
     );
     const captured = captureStampObjects(model, rect);
 

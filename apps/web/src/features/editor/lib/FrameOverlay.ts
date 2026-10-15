@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { TILE_SIZE } from "@standin/contracts";
-import { EDITOR_FRAME } from "@/features/editor/consts/frame";
+import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
+import { EDITOR_FRAME, FRAME_AVATAR } from "@/features/editor/consts/frame";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import type { FrameStore } from "@/features/editor/lib/FrameStore";
 import type { ObjectSurface } from "@/features/editor/types/ObjectSurface";
@@ -11,10 +12,8 @@ import { findCrossingObjectIds } from "@/features/editor/utils/findCrossingObjec
 import { getObjectBounds } from "@/features/editor/utils/getObjectBounds";
 import { getZoneHandlePoints } from "@/features/editor/utils/getZoneHandlePoints";
 
-const HALF = 2;
-
 // The frame of an area over the canvas: the dim over everything outside it,
-// its border with the 8 handles and the move grip, and a red mark over every
+// its border with the 8 round handles, and a red mark over every
 // object the border cuts. It redraws when the frame or the draft changes, or a
 // texture arrives (the mark follows the sprite size), never on a pointer move.
 export class FrameOverlay {
@@ -27,7 +26,10 @@ export class FrameOverlay {
     private readonly dim: Phaser.GameObjects.Graphics;
     private readonly marks: Phaser.GameObjects.Graphics;
     private readonly border: Phaser.GameObjects.Graphics;
+    private readonly avatar: Phaser.GameObjects.Graphics;
+    private readonly avatarLabel: Phaser.GameObjects.Text;
     private readonly unsubscribers: (() => void)[] = [];
+    private zoom: number;
 
     constructor(
         scene: Phaser.Scene,
@@ -41,16 +43,32 @@ export class FrameOverlay {
         this.draftStore = draftStore;
         this.columns = columns;
         this.rows = rows;
+        this.zoom = scene.cameras.main.zoom;
         this.surface = createSceneObjectSurface(scene);
         this.dim = scene.add.graphics().setDepth(EDITOR_FRAME.DIM_DEPTH);
         this.marks = scene.add.graphics().setDepth(EDITOR_FRAME.MARK_DEPTH);
         this.border = scene.add.graphics().setDepth(EDITOR_FRAME.BORDER_DEPTH);
+
+        this.avatar = scene.add.graphics().setDepth(EDITOR_FRAME.BORDER_DEPTH);
+        this.avatarLabel = scene.add
+            .text(0, 0, FRAME_AVATAR.LABEL, {
+                color: FRAME_AVATAR.LABEL_COLOR,
+                fontSize: FRAME_AVATAR.LABEL_SIZE,
+                fontFamily: FRAME_AVATAR.LABEL_FONT,
+            })
+            .setResolution(FRAME_AVATAR.LABEL_RESOLUTION)
+            .setOrigin(0.5, 0)
+            .setDepth(EDITOR_FRAME.BORDER_DEPTH);
+        // The game renders pixel art with nearest filtering, which would break the
+        // edges of text, so the label asks for smooth scaling.
+        this.avatarLabel.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
 
         this.unsubscribers.push(
             store.subscribe(this.redraw),
             draftStore.subscribe(this.redraw)
         );
         scene.textures.on(Phaser.Textures.Events.ADD, this.redraw);
+        scene.events.on(Phaser.Scenes.Events.PRE_UPDATE, this.followZoom);
         this.redraw();
     }
 
@@ -58,16 +76,31 @@ export class FrameOverlay {
         this.unsubscribers.forEach((unsubscribe) => unsubscribe());
         this.unsubscribers.length = 0;
         this.scene.textures?.off(Phaser.Textures.Events.ADD, this.redraw);
+        this.scene.events?.off(
+            Phaser.Scenes.Events.PRE_UPDATE,
+            this.followZoom
+        );
         this.dim.destroy();
         this.marks.destroy();
         this.border.destroy();
+        this.avatar.destroy();
+        this.avatarLabel.destroy();
     }
+
+    // The border and the handles keep their size on screen, so a zoom redraws them.
+    private followZoom = (): void => {
+        const zoom = this.scene.cameras.main.zoom;
+        if (zoom === this.zoom) return;
+        this.zoom = zoom;
+        this.drawBorder(this.store.getRect());
+    };
 
     private redraw = (): void => {
         const rect = this.store.getRect();
         this.drawDim(rect);
         this.drawMarks(rect);
         this.drawBorder(rect);
+        this.drawAvatar(rect);
     };
 
     private drawDim(rect: TileRect): void {
@@ -84,6 +117,11 @@ export class FrameOverlay {
         this.dim.fillRect(0, bottom, width, height - bottom);
         this.dim.fillRect(0, top, left, bottom - top);
         this.dim.fillRect(right, top, width - right, bottom - top);
+        this.dim.fillStyle(
+            EDITOR_FRAME.INSIDE_COLOR,
+            EDITOR_FRAME.INSIDE_ALPHA
+        );
+        this.dim.fillRect(left, top, right - left, bottom - top);
     }
 
     private drawMarks(rect: TileRect): void {
@@ -129,9 +167,9 @@ export class FrameOverlay {
     private drawBorder(rect: TileRect): void {
         this.border.clear();
         this.border.lineStyle(
-            EDITOR_FRAME.BORDER_WIDTH,
+            EDITOR_FRAME.BORDER_WIDTH / this.zoom,
             EDITOR_FRAME.BORDER_COLOR,
-            1
+            EDITOR_FRAME.BORDER_ALPHA
         );
         this.border.strokeRect(
             rect.x * TILE_SIZE,
@@ -140,51 +178,28 @@ export class FrameOverlay {
             rect.h * TILE_SIZE
         );
 
-        const size = EDITOR_FRAME.HANDLE_SIZE;
         this.border.fillStyle(EDITOR_FRAME.HANDLE_FILL, 1);
         this.border.lineStyle(
-            EDITOR_FRAME.HANDLE_STROKE_WIDTH,
+            EDITOR_FRAME.HANDLE_STROKE_WIDTH / this.zoom,
             EDITOR_FRAME.HANDLE_STROKE,
             1
         );
+        const radius = EDITOR_FRAME.HANDLE_RADIUS / this.zoom;
         for (const point of Object.values(getZoneHandlePoints(rect))) {
-            this.border.fillRect(
-                point.x - size / HALF,
-                point.y - size / HALF,
-                size,
-                size
-            );
-            this.border.strokeRect(
-                point.x - size / HALF,
-                point.y - size / HALF,
-                size,
-                size
-            );
+            this.border.fillCircle(point.x, point.y, radius);
+            this.border.strokeCircle(point.x, point.y, radius);
         }
-
-        this.drawGrip(rect);
     }
 
-    // Four short strokes in the corner of the frame, the grip that moves it.
-    private drawGrip(rect: TileRect): void {
-        const left = rect.x * TILE_SIZE + EDITOR_FRAME.GRIP_INSET;
-        const top = rect.y * TILE_SIZE + EDITOR_FRAME.GRIP_INSET;
-        const size = EDITOR_FRAME.GRIP_SIZE;
+    // The player, as the game draws it, on the left of the bottom of the frame.
+    private drawAvatar(rect: TileRect): void {
+        const radius = PLAYER_APPEARANCE.RADIUS;
+        const x = rect.x * TILE_SIZE - FRAME_AVATAR.GAP - radius;
+        const y = (rect.y + rect.h) * TILE_SIZE - radius;
 
-        this.border.fillStyle(EDITOR_FRAME.BORDER_COLOR, 1);
-        this.border.fillRect(left, top, size, size);
-        this.border.lineStyle(2, EDITOR_FRAME.HANDLE_STROKE, 1);
-        this.border.lineBetween(
-            left + 3,
-            top + size / HALF,
-            left + size - 3,
-            top + size / HALF
-        );
-        this.border.lineBetween(
-            left + size / HALF,
-            top + 3,
-            left + size / HALF,
-            top + size - 3
-        );
+        this.avatar.clear();
+        this.avatar.fillStyle(PLAYER_APPEARANCE.COLOR, FRAME_AVATAR.ALPHA);
+        this.avatar.fillCircle(x, y, radius);
+        this.avatarLabel.setPosition(x, y + radius + FRAME_AVATAR.LABEL_GAP);
     }
 }

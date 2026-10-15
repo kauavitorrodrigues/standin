@@ -30,3 +30,8 @@ export * from "./validateStamp";
 export * from "./captureStamp";
 export * from "./stampToModel";
 export * from "./canPlaceStamp";
+export * from "./buildZoneResizeOps";
+export * from "./buildZoneMoveOps";
+export * from "./buildZoneRemoveOps";
+export * from "./getAreaRefusal";
+export * from "./findAreaObjects";

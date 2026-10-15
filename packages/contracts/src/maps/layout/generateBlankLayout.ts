@@ -2,6 +2,7 @@ import { TILE_SIZE } from "../consts/constants";
 import { TILED_LAYER_TYPES } from "../enums/tiled-layer-type";
 import { SIZE_TIERS, type SizeTier } from "../consts/size-tiers";
 import {
+    LAYOUT_AREA_FLOOR_LAYER_NAME,
     LAYOUT_LAYER_NAMES,
     LAYOUT_ZONES_LAYER_NAME,
     LAYOUT_ZONE_KINDS,
@@ -106,7 +107,7 @@ export const generateBlankLayout = (
         tileheight: TILE_SIZE,
         width,
         height,
-        nextlayerid: 6,
+        nextlayerid: 7,
         nextobjectid: 2,
         tilesets,
         layers: [
@@ -116,6 +117,13 @@ export const generateBlankLayout = (
                 width,
                 height,
                 ground
+            ),
+            createTileLayer(
+                6,
+                LAYOUT_AREA_FLOOR_LAYER_NAME,
+                width,
+                height,
+                new Array<number>(cellCount).fill(0)
             ),
             createTileLayer(2, LAYOUT_LAYER_NAMES.WALLS, width, height, walls),
             createTileLayer(

@@ -134,12 +134,13 @@ const render = () => {
                                 values: {
                                     name: "",
                                     createZone: true,
-                                    zoneLabel: "",
                                 },
                             },
                             palette: {
                                 tilesets: [],
                                 categories: [],
+                                areas: [],
+                                fetchAreaStamp: vi.fn(),
                                 isLoading: false,
                                 isError: false,
                             },
@@ -200,16 +201,25 @@ describe("AreaWorkspace", () => {
         vi.unstubAllGlobals();
     });
 
-    it("opens with the name field, the zone box and the save bar", () => {
+    it("opens with the save bar and no properties panel", () => {
         render();
 
-        expect(
-            container.querySelector('input[aria-label="Nome da área"]')
-        ).not.toBeNull();
-        expect(text()).toContain("Criar zona de área ao colocar");
         expect(text()).toContain("Salvar");
         expect(text()).toContain("Descartar");
         expect(text()).toContain("Sem alterações");
+        expect(text()).not.toContain("Criar uma zona ao colocar");
+    });
+
+    it("opens the properties of the area from the title", () => {
+        render();
+
+        const title = container.querySelector<HTMLButtonElement>("h2 button");
+        act(() => title?.click());
+
+        expect(document.body.querySelector("input#name")).not.toBeNull();
+        expect(document.body.textContent).toContain(
+            "Criar uma zona ao colocar"
+        );
     });
 
     it("has no tab of areas and no zone tool", () => {
