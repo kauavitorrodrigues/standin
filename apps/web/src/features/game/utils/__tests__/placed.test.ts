@@ -297,6 +297,40 @@ describe("resolvePlacedLayout", () => {
     });
 });
 
+describe("resolvePlacedLayout for a rug", () => {
+    const rug = {
+        id: "rug",
+        type: "RUG",
+        placement: ASSET_PLACEMENTS.GROUND,
+        solid: false,
+        surfaceHeightPx: 0,
+        sprite: { w: 96, h: 64 },
+        footprint: { w: 3, h: 2, offsetX: 0 },
+    };
+    const placedRug = {
+        id: "r1",
+        assetId: "rug",
+        tileX: 4,
+        tileY: 19,
+        offsetX: 0,
+        offsetY: 0,
+        parentId: null,
+    };
+
+    it("draws under the lowest object and avatar, even at the map bottom", () => {
+        const layout = resolvePlacedLayout(
+            placedRug,
+            new Map([[rug.id, rug]]),
+            new Map(),
+            MAP_HEIGHT
+        )!;
+
+        expect(layout.depth).toBeGreaterThan(0);
+        expect(layout.depth).toBeLessThan(PLACED_ASSET_DEPTH.MIN);
+        expect(layout.solidRects).toEqual([]);
+    });
+});
+
 describe("shouldPlayAnimation", () => {
     const animation = { frameCount: 6, frameDurationMs: 100, repeat: -1 };
 
