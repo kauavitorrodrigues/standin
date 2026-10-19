@@ -64,7 +64,7 @@ export const sendError = ({
             warnings: reportError.warnings,
         });
     }
-    
+
     // An area upload answers with the same shape as the library.
     if (reportError instanceof AreaValidationError) {
         return res.status(reportError.status).json({
@@ -85,7 +85,7 @@ export const sendError = ({
             warnings: reportError.warnings,
         });
     }
-    
+
     if (reportError instanceof LibraryError) {
         return res.status(reportError.status).json({
             error: reportError.message,
@@ -93,7 +93,7 @@ export const sendError = ({
             ...reportError.details,
         });
     }
-    
+
     if (reportError instanceof StaleLayoutVersionError) {
         return res.status(reportError.status).json({
             error: reportError.message,
@@ -101,7 +101,7 @@ export const sendError = ({
             version: reportError.currentVersion,
         });
     }
-    
+
     // A locked map answers 423 with who holds the lock and since when.
     if (reportError instanceof MapLockedError) {
         return res.status(reportError.status).json({
@@ -111,7 +111,7 @@ export const sendError = ({
             since: reportError.since,
         });
     }
-    
+
     // A draft that cannot be applied answers with the operation that failed.
     if (reportError instanceof PublishValidationError) {
         return res.status(reportError.status).json({
@@ -138,7 +138,7 @@ export const sendError = ({
     if (reportError instanceof BaseError) {
         return res
             .status(reportError.status)
-            .json({ error: reportError.message });
+            .json({ error: reportError.message, code: reportError.code });
     }
 
     if (message) return res.status(code).json({ error: message });
