@@ -1,12 +1,14 @@
 export const MAP_CAMERA_CONFIG = {
     DEFAULT_ZOOM: 2,
     MIN_ZOOM: 0.5,
-    MAX_ZOOM: 3,
-    ZOOM_STEP: 0.5,
-    ZOOM_TWEEN_DURATION_MS: 150,
+    MAX_ZOOM: 4,
+    ZOOM_STEP: 1,
+    ZOOM_TWEEN_DURATION_MS: 100,
     FOLLOW_ROUND_PIXELS: true,
-    FOLLOW_LERP: 0.15,
-    NO_VERTICAL_FOLLOW_OFFSET: 0,
+    // 1 locks the view to the avatar. A lower value makes the camera trail the
+    // avatar, and with pixel rounding on both the sprite and the scroll land on
+    // different pixels from frame to frame, which shows up as jitter.
+    FOLLOW_LERP: 1,
     NO_HORIZONTAL_FOLLOW_OFFSET: 0,
     NO_ZOOM_DELTA: 0,
 } as const;

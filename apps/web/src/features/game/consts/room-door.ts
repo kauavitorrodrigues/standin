@@ -1,3 +1,5 @@
+import { AVATAR } from "@standin/contracts";
+
 // The first frame of a door animation is the door closed, the last one open.
 export const ROOM_DOOR_FRAMES = {
     CLOSED: 0,
@@ -22,4 +24,5 @@ export const ROOM_DOOR_PADLOCK = {
 export const ROOM_DOOR_COLLIDER_PREFIX = "room-door:";
 
 // How far from the cell of a locked door the avatar counts as near it, in px.
-export const ROOM_DOOR_NEAR_REACH_PX = 32;
+// It is the reach of an interaction, taken from the feet of the avatar.
+export const ROOM_DOOR_NEAR_REACH_PX = AVATAR.interactRadius;

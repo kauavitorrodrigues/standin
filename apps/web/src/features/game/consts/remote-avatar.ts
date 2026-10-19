@@ -1,12 +1,7 @@
 export const REMOTE_AVATAR_APPEARANCE = {
-    RADIUS: 8,
-    COLOR: 0x38bdf8,
-    DEFAULT_ALPHA: 1,
-    SITTING_ALPHA: 0.6,
-    DIRECTION_INDICATOR_RADIUS: 2,
-    DIRECTION_INDICATOR_COLOR: 0x0c4a6e,
-    SPEAKING_RING_WIDTH: 3,
-    SPEAKING_RING_COLOR: 0x22c55e,
+    // A remote avatar closer than this to the position it is gliding to counts
+    // as standing still, in px. Under it the smoothing is only settling.
+    MOVING_THRESHOLD_PX: 1,
     // Exponential smoothing rate (1/s) towards the latest network position.
     // Smooths out the visible steps between throttled position updates
     // instead of snapping the avatar to each one. Applied per frame as

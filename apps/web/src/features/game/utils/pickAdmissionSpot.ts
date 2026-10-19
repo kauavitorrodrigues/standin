@@ -2,6 +2,7 @@ import { TILE_SIZE } from "@standin/contracts";
 import { CENTER_POSITION_DIVISOR } from "@/features/game/consts/map-geometry";
 import type { GameRoom, GameRoomDoor } from "@/features/game/types/room";
 import type { SeatArea, SeatSpot } from "@/features/game/utils/buildSeatAreas";
+import type { AvatarBody } from "@/features/game/utils/getAvatarBodyRect";
 import { isPositionBlocked } from "@/features/game/utils/findNearestFreeCell";
 import { findNearestSeat } from "@/features/game/utils/findNearestSeat";
 import { isInsideRoom } from "@/features/game/utils/getRoomAt";
@@ -20,8 +21,8 @@ export type AdmissionInput = {
     seatAreas: readonly SeatArea[];
     isTaken: (seat: SeatSpot) => boolean;
     solidRects: readonly PlacedRect[];
-    // Radius of the avatar, so it does not rest touching a solid.
-    radius: number;
+    // The body of the avatar, so it does not rest touching a solid.
+    body: AvatarBody;
     // The cells with a wall tile, which are not floor even when not solid.
     wallCells: WallCells;
     // The doors of the map, to stay a tile away from them.
@@ -77,12 +78,12 @@ const byDistanceTo =
 const findRoomCell = ({
     room,
     solidRects,
-    radius,
+    body,
     wallCells,
     doors,
 }: AdmissionInput): Point | null => {
     const free = getRoomCells(room).filter(
-        (cell) => !isPositionBlocked(cell.center, radius, solidRects)
+        (cell) => !isPositionBlocked(cell.center, body, solidRects)
     );
     const onFloor = free.filter(
         (cell) => !wallCells.has(getCellKey(cell.column, cell.row))

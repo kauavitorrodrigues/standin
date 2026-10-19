@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ASSET_PLACEMENTS } from "@standin/contracts";
 import { isWithinReach } from "@/features/game/utils/isWithinReach";
+import { getDepthAt } from "@/features/game/utils/buildPlacedSlices";
 import { buildSeatAreas } from "@/features/game/utils/buildSeatAreas";
 import { findNearestSeat } from "@/features/game/utils/findNearestSeat";
 import { resolveSeatInput } from "@/features/game/utils/resolveSeatInput";
@@ -41,7 +42,14 @@ describe("buildSeatAreas", () => {
             MAP_HEIGHT
         );
         // The sprite starts at x 96 and its base is at y 192.
-        expect(area?.seats).toEqual([{ x: 112, y: 172, direction: "up" }]);
+        expect(area?.seats).toEqual([
+            {
+                x: 112,
+                y: 172,
+                direction: "up",
+                depth: getDepthAt(192, MAP_HEIGHT),
+            },
+        ]);
     });
 
     it("keeps the footprint the avatar pushes against", () => {
@@ -71,8 +79,8 @@ describe("buildSeatAreas", () => {
 
 describe("findNearestSeat", () => {
     const seats = [
-        { x: 0, y: 0, direction: "down" as const },
-        { x: 100, y: 0, direction: "down" as const },
+        { x: 0, y: 0, direction: "down" as const, depth: 0 },
+        { x: 100, y: 0, direction: "down" as const, depth: 0 },
     ];
 
     it("picks the seat closest to the avatar", () => {

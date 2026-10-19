@@ -1,30 +1,27 @@
 import Phaser from "phaser";
 import { PLAYER_DIRECTIONS, type PlayerDirection } from "@standin/contracts";
-import { REMOTE_AVATAR_APPEARANCE } from "@/features/game/consts/remote-avatar";
-import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 import {
-    resolveSittingAlpha,
+    AVATAR_FIRST_FRAME,
+    AVATAR_SPRITE_ORIGIN,
+} from "@/features/game/consts/avatar-sprite";
+import { AVATAR_GHOST_TEXTURE_KEY } from "@/features/avatar/consts/textures";
+import { AvatarBlink } from "@/features/game/lib/AvatarBlink";
+import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
+import { playAvatarAnimation } from "@/features/game/utils/playAvatarAnimation";
+import {
+    isRemoteAvatarMoving,
     resolveSmoothingFactor,
 } from "@/features/game/utils/remote-avatar";
-
-// Offset of the small direction indicator relative to the avatar's center,
-// one radius out towards the faced direction. Avoids rotating a shape (no
-// sprite/animation system exists yet to animate a facing direction with).
-const DIRECTION_OFFSETS: Record<PlayerDirection, { x: number; y: number }> = {
-    [PLAYER_DIRECTIONS.UP]: { x: 0, y: -REMOTE_AVATAR_APPEARANCE.RADIUS },
-    [PLAYER_DIRECTIONS.DOWN]: { x: 0, y: REMOTE_AVATAR_APPEARANCE.RADIUS },
-    [PLAYER_DIRECTIONS.LEFT]: { x: -REMOTE_AVATAR_APPEARANCE.RADIUS, y: 0 },
-    [PLAYER_DIRECTIONS.RIGHT]: { x: REMOTE_AVATAR_APPEARANCE.RADIUS, y: 0 },
-};
+import { resolveAvatarAnimation } from "@/features/game/utils/resolveAvatarAnimation";
 
 // Visual counterpart to a peer's PlayerPosition, driven entirely by network
-// updates: no physics body, no keyboard input. Mirrors Player's minimal
-// circle rendering (no layered body/hair/clothing sprites exist in the
-// project yet; avatarConfig is always null until that feature exists).
+// updates: no physics body, no keyboard input. It is a sprite of the same
+// sheet and the same grid as the local avatar, and its position is the anchor
+// (the feet).
 export class RemoteAvatar {
-    readonly gameObject: Phaser.GameObjects.Container;
-    private readonly body: Phaser.GameObjects.Arc;
-    private readonly directionIndicator: Phaser.GameObjects.Arc;
+    readonly gameObject: Phaser.GameObjects.Sprite;
+    private textureKey: string;
+    private readonly blink = new AvatarBlink();
     private targetX: number;
     private targetY: number;
     // The avatar is constructed at the local spawn point (its peer's real
@@ -32,36 +29,26 @@ export class RemoteAvatar {
     // gliding there from an arbitrary, unrelated spot on the map.
     private hasReceivedPosition = false;
     private isSitting = false;
+    // The depth of the piece the peer sits on, null when unknown or standing.
+    private seatDepth: number | null = null;
+    private direction: PlayerDirection = PLAYER_DIRECTIONS.DOWN;
     private readonly mapHeightPx: number;
 
     constructor(
         scene: Phaser.Scene,
         x: number,
         y: number,
-        mapHeightPx: number
+        mapHeightPx: number,
+        textureKey: string = AVATAR_GHOST_TEXTURE_KEY
     ) {
         this.mapHeightPx = mapHeightPx;
-        this.body = scene.add.circle(
-            0,
-            0,
-            REMOTE_AVATAR_APPEARANCE.RADIUS,
-            REMOTE_AVATAR_APPEARANCE.COLOR
-        );
-
-        this.directionIndicator = scene.add.circle(
-            DIRECTION_OFFSETS[PLAYER_DIRECTIONS.DOWN].x,
-            DIRECTION_OFFSETS[PLAYER_DIRECTIONS.DOWN].y,
-            REMOTE_AVATAR_APPEARANCE.DIRECTION_INDICATOR_RADIUS,
-            REMOTE_AVATAR_APPEARANCE.DIRECTION_INDICATOR_COLOR
-        );
-
-        this.gameObject = scene.add.container(x, y, [
-            this.body,
-            this.directionIndicator,
-        ]);
-        this.updateDepth();
+        this.textureKey = textureKey;
+        this.gameObject = scene.add
+            .sprite(x, y, textureKey, AVATAR_FIRST_FRAME)
+            .setOrigin(AVATAR_SPRITE_ORIGIN.x, AVATAR_SPRITE_ORIGIN.y);
         this.targetX = x;
         this.targetY = y;
+        this.refresh();
     }
 
     // Position updates arrive throttled (every SEND_INTERVAL_MS) and jump
@@ -87,44 +74,69 @@ export class RemoteAvatar {
             Phaser.Math.Linear(this.gameObject.x, this.targetX, t),
             Phaser.Math.Linear(this.gameObject.y, this.targetY, t)
         );
-        this.updateDepth();
+        this.refresh();
     }
 
-    // Same rule as the local avatar: behind the objects whose base is below
-    // its feet, over the ones above them.
-    private updateDepth(): void {
-        this.gameObject.setDepth(
-            getAvatarDepth({
-                centerY: this.gameObject.y,
-                radius: REMOTE_AVATAR_APPEARANCE.RADIUS,
-                mapHeightPx: this.mapHeightPx,
-                isSitting: this.isSitting,
-            })
-        );
-    }
-
+    // The way the peer faces, from its last PlayerPosition.
     updateAnimation(direction: PlayerDirection): void {
-        const offset = DIRECTION_OFFSETS[direction];
-        this.directionIndicator.setPosition(offset.x, offset.y);
+        this.direction = direction;
+        this.refresh();
+    }
+
+    // The piece the peer sits on, found from the seat at its position.
+    setSeatDepth(seatDepth: number | null): void {
+        this.seatDepth = seatDepth;
+        this.refresh();
     }
 
     setSitting(isSitting: boolean): void {
         this.isSitting = isSitting;
-        this.gameObject.setAlpha(resolveSittingAlpha(isSitting));
+        this.refresh();
     }
 
-    setSpeaking(isSpeaking: boolean): void {
-        if (isSpeaking) {
-            this.body.setStrokeStyle(
-                REMOTE_AVATAR_APPEARANCE.SPEAKING_RING_WIDTH,
-                REMOTE_AVATAR_APPEARANCE.SPEAKING_RING_COLOR
-            );
-        } else {
-            this.body.setStrokeStyle();
-        }
+    // Draws another sheet, the ghost or the one of the avatar of the peer.
+    setTexture(textureKey: string): void {
+        if (textureKey === this.textureKey) return;
+
+        this.textureKey = textureKey;
+        this.gameObject.setTexture(textureKey, AVATAR_FIRST_FRAME);
+        this.refresh();
     }
 
     destroy(): void {
         this.gameObject.destroy();
+    }
+
+    // Same depth rule as the local avatar: behind the objects whose base is
+    // below its feet, over the ones above them.
+    private refresh(): void {
+        this.gameObject.setDepth(
+            getAvatarDepth({
+                feetY: this.gameObject.y,
+                mapHeightPx: this.mapHeightPx,
+                isSitting: this.isSitting,
+                seatDirection: this.direction,
+                seatDepth: this.seatDepth,
+            })
+        );
+
+        const isMoving = isRemoteAvatarMoving(this.gameObject, {
+            x: this.targetX,
+            y: this.targetY,
+        });
+        const isBlinking = this.blink.update(
+            this.gameObject.scene.time.now,
+            !this.isSitting && !isMoving
+        );
+        playAvatarAnimation(
+            this.gameObject,
+            this.textureKey,
+            resolveAvatarAnimation({
+                isSitting: this.isSitting,
+                isMoving,
+                isBlinking,
+            }),
+            this.direction
+        );
     }
 }
