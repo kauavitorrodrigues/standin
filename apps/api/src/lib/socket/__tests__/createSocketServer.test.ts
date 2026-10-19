@@ -12,6 +12,7 @@ const {
     registerEditorReleaseMock,
     registerWebrtcSignalMock,
     registerDisconnectMock,
+    onSheetChangedMock,
 } = vi.hoisted(() => {
     const useMock = vi.fn();
     const onMock = vi.fn();
@@ -37,11 +38,20 @@ const {
         registerEditorReleaseMock: vi.fn(),
         registerWebrtcSignalMock: vi.fn(),
         registerDisconnectMock: vi.fn(),
+        onSheetChangedMock: vi.fn(),
     };
 });
 
 vi.mock("socket.io", () => ({
     Server: ServerMock,
+}));
+
+vi.mock("@standin/core", () => ({
+    AvatarService: { onSheetChanged: onSheetChangedMock },
+}));
+
+vi.mock("../services/broadcastAvatarChange", () => ({
+    broadcastAvatarChange: vi.fn(),
 }));
 
 vi.mock("@/consts/server", () => ({
@@ -159,6 +169,15 @@ describe("createSocketServer", () => {
             fakeSocket
         );
         expect(registerDisconnectMock).toHaveBeenCalledWith(fakeSocket);
+    });
+
+    it("registers the avatar sheet listener once per server", async () => {
+        createSocketServer({} as any);
+
+        const { broadcastAvatarChange } =
+            await import("../services/broadcastAvatarChange");
+        expect(onSheetChangedMock).toHaveBeenCalledTimes(1);
+        expect(onSheetChangedMock).toHaveBeenCalledWith(broadcastAvatarChange);
     });
 
     it("joins the socket to its own user room on connection", () => {

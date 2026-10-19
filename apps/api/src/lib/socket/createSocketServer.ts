@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import { AvatarService } from "@standin/core";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -22,9 +23,12 @@ import { registerRoomUnlock } from "@/lib/socket/handlers/roomUnlock";
 import { registerRoomJoinRequest } from "@/lib/socket/handlers/roomJoinRequest";
 import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
+import { broadcastAvatarChange } from "@/lib/socket/services/broadcastAvatarChange";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
-export function createSocketServer(httpServer: ReturnType<typeof createServer>) {
+export function createSocketServer(
+    httpServer: ReturnType<typeof createServer>
+) {
     const io = new Server<
         ClientToServerEvents,
         ServerToClientEvents,
@@ -35,6 +39,10 @@ export function createSocketServer(httpServer: ReturnType<typeof createServer>) 
     io.use(requiresSocketAuth);
 
     SocketManager.set(io);
+
+    // Registered once per server. Runs when the sheet of a person is replaced
+    // or cleared, before the core deletes the old file.
+    AvatarService.onSheetChanged(broadcastAvatarChange);
 
     io.on("connection", (socket) => {
         // Every authenticated connection joins its own user room, regardless

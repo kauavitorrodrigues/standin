@@ -3,11 +3,11 @@ import { RoomEvents, SpaceEvents, SpaceJoinSchema } from "@standin/contracts";
 import { buildSpaceRoom } from "../utils/buildSpaceRoom";
 import { RoomStates } from "../utils/roomStates";
 import { canJoinSpace } from "../services/canJoinSpace";
+import { resolveAvatarSheetFileId } from "../services/resolveAvatarSheetFileId";
 import { isSpaceOwner } from "../services/isSpaceOwner";
 import { applyJoinEffects, sendEntitlements } from "../utils/applyJoinEffects";
 
-// No avatar customization feature exists yet, so every peer resolves to a
-// null avatarConfig until one does. See AvatarConfig in @standin/contracts.
+// The snapshot stays synchronous on purpose, see the comment where it is taken.
 const resolvePeersInRoom = (io: Server, room: string) => {
     const roomSockets = io.sockets.adapter.rooms.get(room);
     if (!roomSockets) return [];
@@ -17,10 +17,19 @@ const resolvePeersInRoom = (io: Server, room: string) => {
         .filter((peerSocket): peerSocket is Socket => Boolean(peerSocket))
         .map((peerSocket) => ({
             socketId: peerSocket.id,
-            userId: peerSocket.data.userId,
-            avatarConfig: null,
+            userId: peerSocket.data.userId as string,
         }));
 };
+
+// The sheet is read after the join, so the database never sits between the
+// snapshot and the join.
+const attachAvatarSheets = (peers: { socketId: string; userId: string }[]) =>
+    Promise.all(
+        peers.map(async (peer) => ({
+            ...peer,
+            avatarSheetFileId: await resolveAvatarSheetFileId(peer.userId),
+        }))
+    );
 
 // A user is identified per-socket (one browser tab = one connection), not
 // per-account, so nothing stops the same account from joining the same
@@ -80,7 +89,11 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                 changes.forEach((change) => {
                     socket.to(previousRoom).emit(RoomEvents.ROOM_STATE, change);
                 });
-                applyJoinEffects(() => io.sockets.sockets, previousSpaceId, effects);
+                applyJoinEffects(
+                    () => io.sockets.sockets,
+                    previousSpaceId,
+                    effects
+                );
             }
 
             const room = buildSpaceRoom(spaceId);
@@ -91,16 +104,23 @@ export function registerJoinSpace(io: Server, socket: Socket) {
             const peers = resolvePeersInRoom(io, room);
 
             disconnectDuplicateSessions(io, peers, userId);
-            const remainingPeers = peers.filter((peer) => peer.userId !== userId);
+            const remainingPeers = peers.filter(
+                (peer) => peer.userId !== userId
+            );
 
             socket.data.spaceId = spaceId;
             await socket.join(room);
 
-            socket.emit(SpaceEvents.SPACE_JOINED, { peers: remainingPeers });
+            const [peersWithAvatar, avatarSheetFileId] = await Promise.all([
+                attachAvatarSheets(remainingPeers),
+                resolveAvatarSheetFileId(userId),
+            ]);
+
+            socket.emit(SpaceEvents.SPACE_JOINED, { peers: peersWithAvatar });
             socket.to(room).emit(SpaceEvents.SPACE_PEER_JOINED, {
                 socketId: socket.id,
                 userId,
-                avatarConfig: null,
+                avatarSheetFileId,
             });
             socket.emit(RoomEvents.ROOM_STATES, {
                 rooms: RoomStates.listNotOpen(spaceId),
