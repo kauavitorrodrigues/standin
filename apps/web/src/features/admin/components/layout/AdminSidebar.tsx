@@ -1,4 +1,12 @@
-import { BoxIcon, Grid2x2Icon, LayoutGridIcon, MapIcon } from "lucide-react";
+import {
+    BoxIcon,
+    Grid2x2Icon,
+    LayoutGridIcon,
+    MapIcon,
+    ShirtIcon,
+    TagsIcon,
+    UserIcon,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { LogoGlyph } from "@/components/logos";
 import {
@@ -58,6 +66,21 @@ export const AdminSidebar = () => {
                 label="Áreas"
             />
             <SectionSidebarLink to="/admin/maps" icon={MapIcon} label="Mapas" />
+            <SectionSidebarLink
+                to="/admin/avatar-parts"
+                icon={ShirtIcon}
+                label="Peças de avatar"
+            />
+            <SectionSidebarLink
+                to="/admin/avatar-categories"
+                icon={TagsIcon}
+                label="Categorias de avatar"
+            />
+            <SectionSidebarLink
+                to="/admin/avatar-bases"
+                icon={UserIcon}
+                label="Avatares base"
+            />
         </SectionSidebar>
     );
 };

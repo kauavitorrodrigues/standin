@@ -23,6 +23,7 @@ type Props = {
     descriptionClassName?: string;
     iconClassName?: string;
     headerClassName?: string;
+    contentClassName?: string;
 };
 
 function Title({
@@ -43,6 +44,7 @@ export function ListResponseState({
     titleClassName,
     iconClassName,
     headerClassName,
+    contentClassName,
     descriptionClassName,
     message = "Nenhum resultado encontrado",
     icon: Icon = Inbox,
@@ -82,7 +84,7 @@ export function ListResponseState({
                     {message}
                 </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>{children}</EmptyContent>
+            <EmptyContent className={contentClassName}>{children}</EmptyContent>
         </Empty>
     );
 }
