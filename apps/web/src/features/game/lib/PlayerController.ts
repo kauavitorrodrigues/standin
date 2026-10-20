@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import { PLAYER_PHYSICS, ZERO_VELOCITY } from "@/features/game/consts/player";
+import { ZERO_VELOCITY } from "@/features/game/consts/player";
 import {
     resolveMovementKeys,
     isAnyKeyDown,
@@ -8,13 +8,20 @@ import {
     resolveCardinalAxis,
     type CardinalAxis,
     resolveDirection,
-    normalizeToSpeed,
     type MovementKeys,
 } from "@/features/game/utils/player";
 import { resolveSeatInput } from "@/features/game/utils/resolveSeatInput";
 import { MovementHoldGate } from "@/features/game/lib/MovementHoldGate";
+import type { Cell } from "@/features/game/types/cell";
+import type { PathWalker } from "@/features/game/lib/PathWalker";
+import type {
+    DirectionSource,
+    TileMover,
+} from "@/features/game/lib/TileMover";
 import type { Player } from "@/features/game/lib/Player";
 
+// Turns the keys and the walk of a double click into steps of the mover, one
+// tile at a time. The avatar never moves through the physics.
 export class PlayerController {
     private readonly player: Player;
     private readonly keys: MovementKeys;
@@ -22,21 +29,34 @@ export class PlayerController {
     private lockedAxis: CardinalAxis | null = null;
     private readonly scene: Phaser.Scene;
     private readonly holdGate = new MovementHoldGate();
+    private readonly walker: PathWalker;
+    private readonly mover: TileMover;
+    // Told where a walk was going when a tile on its way closed.
+    private readonly onWalkBlocked: (destination: Cell) => void;
 
-    constructor(scene: Phaser.Scene, player: Player) {
+    constructor(
+        scene: Phaser.Scene,
+        player: Player,
+        walker: PathWalker,
+        mover: TileMover,
+        onWalkBlocked: (destination: Cell) => void
+    ) {
         this.scene = scene;
         this.player = player;
+        this.walker = walker;
+        this.mover = mover;
+        this.onWalkBlocked = onWalkBlocked;
         this.keys = resolveMovementKeys(scene);
     }
 
-    update(): void {
+    update(deltaMs: number): void {
         // Backstop for `bindKeyboardFocusGuard`: if a focusin/focusout event
         // was ever missed, this still stops movement while typing.
         if (isGameInputSuspended()) {
+            this.walker.cancel();
+            this.stand();
             this.lockedAxis = null;
             this.holdGate.reset();
-            this.player.setMoveAxis(0, 0);
-            this.player.setVelocity(ZERO_VELOCITY.x, ZERO_VELOCITY.y);
             return;
         }
 
@@ -55,6 +75,9 @@ export class PlayerController {
         } = resolveCardinalAxis(heldX, heldY, this.lockedAxis);
         this.lockedAxis = lockedAxis;
         const isPressing = axisX !== 0 || axisY !== 0;
+
+        // A key takes the avatar back from a walk started by a double click.
+        if (isPressing) this.walker.cancel();
         const isMoving = this.holdGate.update(
             this.scene.time.now,
             isPressing ? `${axisX},${axisY}` : null
@@ -71,19 +94,48 @@ export class PlayerController {
         if (seatInput.standUp) this.player.standUp();
         const direction = resolveDirection(axisX, axisY);
 
-        // A tap turns the avatar, and only a held key makes it walk.
-        const walkX = isMoving ? axisX : 0;
-        const walkY = isMoving ? axisY : 0;
-        this.player.setMoveAxis(walkX, walkY);
-
         if (this.player.isSitting) {
-            this.player.setVelocity(ZERO_VELOCITY.x, ZERO_VELOCITY.y);
+            this.stand();
             return;
         }
 
         if (direction) this.player.setDirection(direction);
 
-        const velocity = normalizeToSpeed(walkX, walkY, PLAYER_PHYSICS.SPEED);
-        this.player.setVelocity(velocity.x, velocity.y);
+        // A tap turns the avatar, and only a held key makes it walk.
+        const walkX = isMoving ? axisX : 0;
+        const walkY = isMoving ? axisY : 0;
+        const isKeyWalk = walkX !== 0 || walkY !== 0;
+        this.move(deltaMs, isKeyWalk ? () => ({ x: walkX, y: walkY }) : null);
+    }
+
+    // One frame of the mover: the keys when one is held to walk, otherwise the
+    // walk of a double click, otherwise nothing.
+    private move(deltaMs: number, keyDirection: DirectionSource | null): void {
+        const isWalk = keyDirection === null && this.walker.isWalking();
+        const source = keyDirection ?? (isWalk ? this.walker.next : null);
+        const { axis, blocked } = this.mover.update(
+            this.player,
+            deltaMs,
+            source
+        );
+
+        this.player.setMoveAxis(axis.x, axis.y);
+        const facing = resolveDirection(axis.x, axis.y);
+        if (facing) this.player.setDirection(facing);
+        this.player.setVelocity(ZERO_VELOCITY.x, ZERO_VELOCITY.y);
+
+        if (blocked && isWalk) this.handBackWalk();
+    }
+
+    private handBackWalk(): void {
+        const destination = this.walker.getDestination();
+        this.walker.cancel();
+        if (destination) this.onWalkBlocked(destination);
+    }
+
+    private stand(): void {
+        this.mover.cancel();
+        this.player.setMoveAxis(0, 0);
+        this.player.setVelocity(ZERO_VELOCITY.x, ZERO_VELOCITY.y);
     }
 }

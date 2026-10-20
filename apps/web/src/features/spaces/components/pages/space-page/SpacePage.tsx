@@ -9,6 +9,8 @@ import { SpaceUnavailable } from "@/features/spaces/components/pages/space-page/
 import { GameCanvas } from "@/features/game/components/GameCanvas";
 import { GameControls } from "@/features/game/components/GameControls";
 import { RoomHeader } from "@/features/game/components/RoomHeader";
+import { WalkChip } from "@/features/game/components/WalkChip";
+import { useWalkState } from "@/features/game/hooks/useWalkState";
 import { LockedDoorDialog } from "@/features/game/components/dialogs/LockedDoorDialog";
 import { RoomJoinRequests } from "@/features/game/components/RoomJoinRequests";
 import { useLockedDoorPrompt } from "@/features/game/multiplayer/hooks/useLockedDoorPrompt";
@@ -102,6 +104,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         });
 
     const currentRoom = useCurrentRoom(handle?.game ?? null);
+    const walk = useWalkState(handle?.game ?? null);
     const lockedDoor = useLockedDoorPrompt(handle?.game ?? null, currentRoom);
 
     const stageTiles = useStageTiles({ video, selfUserId: user.id });
@@ -181,6 +184,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         avatars={avatars}
                         onAnswer={currentRoom.onAnswer}
                     />
+                    <WalkChip isWalking={walk.isWalking} onCancel={walk.cancel} />
                     <LockedDoorDialog {...lockedDoor} />
                     <DeskHoverCard
                         handle={handle}
