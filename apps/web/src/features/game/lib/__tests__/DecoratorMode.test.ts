@@ -8,7 +8,7 @@ import {
     placedAt,
     wideItem,
 } from "@/features/editor/utils/__tests__/placementTestKit";
-import { MAP_DRAG_CURSORS } from "@/features/game/consts/camera";
+import { MAP_CURSORS } from "@/features/game/consts/camera";
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
 import { createDraftStore } from "@/features/editor/lib/DraftStore";
 import { createEditorStore } from "@/features/editor/lib/EditorStore";
@@ -54,7 +54,7 @@ const buildBase = (): EditorModel => buildModel([placed("a")]);
 const IDENTITY = { userId: "me", getUserName: () => null };
 
 const makeScene = () => {
-    const style = { cursor: "grab" };
+    const style = { cursor: "pointer" };
     const scene = {
         getMapSize: () => ({ columns: 4, rows: 4 }),
         setDecoratorGuards: vi.fn(),
@@ -155,7 +155,7 @@ describe("DecoratorMode", () => {
         expect(scene.setPlaced.mock.calls[0]?.[0]).toEqual([placed("a")]);
         scene.setPlaced.mockClear();
         expect(store.getState().selection).toEqual([]);
-        expect(style.cursor).toBe(MAP_DRAG_CURSORS.IDLE);
+        expect(style.cursor).toBe(MAP_CURSORS.IDLE);
 
         draftStore.dispatchGesture([]);
         draftStore.discard();

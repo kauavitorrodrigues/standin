@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { EditorModel } from "@standin/contracts";
-import { MAP_DRAG_CURSORS } from "@/features/game/consts/camera";
+import { MAP_CURSORS } from "@/features/game/consts/camera";
 import { DECORATOR_DESK_MESSAGES } from "@/features/game/consts/decorator-messages";
 import { createSceneObjectSurface } from "@/features/editor/utils/createSceneObjectSurface";
 import { hitTestObjects } from "@/features/editor/utils/hitTestObjects";
@@ -75,7 +75,7 @@ export class DeskLockHover {
         if (this.owner === null) return;
 
         this.owner = null;
-        this.params.scene.game.canvas.style.cursor = MAP_DRAG_CURSORS.IDLE;
+        this.params.scene.game.canvas.style.cursor = MAP_CURSORS.IDLE;
         this.params.onHint(null);
     };
 }

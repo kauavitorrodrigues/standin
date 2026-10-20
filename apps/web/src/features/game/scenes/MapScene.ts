@@ -33,11 +33,31 @@ import {
 } from "@/features/game/consts/camera";
 import { Player } from "@/features/game/lib/Player";
 import { PlayerController } from "@/features/game/lib/PlayerController";
+import { PathWalker } from "@/features/game/lib/PathWalker";
+import { TileMover } from "@/features/game/lib/TileMover";
+import { WALK_EVENTS } from "@/features/game/consts/walk-events";
+import { ZONE_EVENTS } from "@/features/game/consts/zone";
+import { buildZoneAreas } from "@/features/game/utils/buildZoneAreas";
+import { findAreaGoals } from "@/features/game/utils/findAreaGoals";
+import type { HoverTarget } from "@/features/game/types/hover";
+import { TileCursor } from "@/features/game/lib/TileCursor";
+import { findPath, getStandingPoint } from "@/features/game/utils/findPath";
+import { getCellAt } from "@/features/game/utils/cell";
+import type { Cell } from "@/features/game/types/cell";
+import { buildSolidIndex } from "@/features/game/utils/buildSolidIndex";
+import {
+    AREA_GOALS_TRIED,
+    NEAREST_TILE,
+    PATH_SEARCH,
+} from "@/features/game/consts/click-move";
+import { findNearestFreeTile } from "@/features/game/utils/findNearestFreeTile";
+import { getDirectionVector } from "@/features/game/utils/getDirectionVector";
 import { InteractionController } from "@/features/game/lib/InteractionController";
 import { RemoteAvatar } from "@/features/game/lib/RemoteAvatar";
 import { bindMapWheelZoom } from "@/features/game/utils/zoom";
 import { bindMapDragPan } from "@/features/game/utils/camera";
 import {
+    isGameInputSuspended,
     bindKeyboardFocusGuard,
     bindPlayerCollision,
     bindPlayerInteractions,
@@ -92,10 +112,17 @@ import { hasPlacedChanges } from "@/features/game/utils/hasPlacedChanges";
 import { PlacedObjectsSync } from "@/features/game/lib/PlacedObjectsSync";
 import { SolidColliders } from "@/features/game/lib/SolidColliders";
 import { AvatarOutline } from "@/features/game/lib/AvatarOutline";
-import { getSelectedStateEvent } from "@/features/game/utils/hover";
+import {
+    findHoveredTarget,
+    getSelectedStateEvent,
+} from "@/features/game/utils/hover";
 import { HoverTargetController } from "@/features/game/lib/HoverTargetController";
 import { DESK_EVENTS } from "@/features/game/consts/desk";
-import { PLAYER_EVENTS, PLAYER_HOVER_ID } from "@/features/game/consts/player";
+import {
+    PLAYER_EVENTS,
+    PLAYER_HOVER_ID,
+    PLAYER_PHYSICS,
+} from "@/features/game/consts/player";
 import { resolveDefaultSpawnPoint } from "@/features/game/utils/map";
 import type { MapSceneInitData } from "@/features/game/types/tilemap";
 import { SEND_INTERVAL_MS } from "@/features/game/multiplayer/consts/sync";
@@ -113,7 +140,23 @@ export class MapScene extends Phaser.Scene {
     private playerController: PlayerController | null = null;
     private interactionController: InteractionController | null = null;
     private seatController: SeatController | null = null;
+    private readonly pathWalker = new PathWalker();
+    private tileMover: TileMover | null = null;
+    // How many more times a blocked walk is planned again.
+    private replansLeft = 0;
+    private solidIndex: {
+        at: number;
+        isBlocked: (feet: { x: number; y: number }) => boolean;
+    } | null = null;
+    private tileCursor: TileCursor | null = null;
+    // What the page was last told about the walk, so only a change is emitted.
+    private isWalkReported = false;
     private deskHoverController: HoverTargetController | null = null;
+    private zoneHoverController: HoverTargetController | null = null;
+    // The desks and the named zones: places the double click walks to, and
+    // where the mark of a tile is not drawn.
+    private deskAreas: HoverTarget[] = [];
+    private zoneAreas: HoverTarget[] = [];
     private playerHoverController: HoverTargetController | null = null;
     private playerOutline: AvatarOutline | null = null;
     // The mouse is on the local avatar, or its card is open.
@@ -241,12 +284,44 @@ export class MapScene extends Phaser.Scene {
             this.player,
             this.seatOccupancy
         );
-        this.playerController = new PlayerController(this, this.player);
+        this.tileMover = new TileMover(
+            PLAYER_PHYSICS.SPEED,
+            { columns: this.mapColumns, rows: this.mapRows },
+            (point) =>
+                !this.getSolidIndex(PATH_SEARCH.WALK_INDEX_MAX_AGE_MS)(point)
+        );
+        this.playerController = new PlayerController(
+            this,
+            this.player,
+            this.pathWalker,
+            this.tileMover,
+            (destination) => this.replanWalk(destination)
+        );
+        this.tileCursor = new TileCursor({
+            scene: this,
+            isMarkable: (cell, world) =>
+                this.isCellWalkable(cell) && this.findAreaAt(world) === null,
+            onDoubleClick: (cell, world) => this.walkToCell(cell, world),
+        });
         bindKeyboardFocusGuard(this);
+
+        const cancelWalk = () => this.pathWalker.cancel();
+        this.game.events.on(WALK_EVENTS.CANCEL, cancelWalk);
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+            this.game.events.off(WALK_EVENTS.CANCEL, cancelWalk)
+        );
 
         this.interactionController = new InteractionController(
             this,
             this.player
+        );
+
+        // Created before the desks, so a desk inside a zone draws over it. A
+        // zone is outlined and named, and leaves the cursor as the arrow.
+        this.zoneHoverController = new HoverTargetController(
+            this,
+            ZONE_EVENTS.HOVER_CHANGED,
+            { drawsOutline: true, setsCursor: false }
         );
 
         this.deskHoverController = new HoverTargetController(
@@ -260,7 +335,7 @@ export class MapScene extends Phaser.Scene {
         this.playerHoverController = new HoverTargetController(
             this,
             PLAYER_EVENTS.HOVER_CHANGED,
-            { drawsOutline: false }
+            { drawsOutline: false, setsCursor: true }
         );
 
         this.playerOutline = new AvatarOutline(this, this.player.gameObject);
@@ -286,6 +361,8 @@ export class MapScene extends Phaser.Scene {
             tilemap.getLayer(LAYOUT_LAYER_NAMES.WALLS)?.data ?? []
         );
         const zones = readTilemapZones(tilemap);
+        this.zoneAreas = buildZoneAreas(zones);
+        this.zoneHoverController?.setTargets(this.zoneAreas);
         const wallRectsAt = buildWallRectsAt(tilemap);
         this.rooms = buildRooms(zones);
         this.roomDoorColliders = new RoomDoorColliders({
@@ -319,9 +396,12 @@ export class MapScene extends Phaser.Scene {
                 tilemap.heightInPixels
             );
             this.seatController?.setAreas(this.seatAreas);
-            this.deskHoverController?.setTargets(
-                buildDeskAreas(placed, assetsById, tilemap.heightInPixels)
+            this.deskAreas = buildDeskAreas(
+                placed,
+                assetsById,
+                tilemap.heightInPixels
             );
+            this.deskHoverController?.setTargets(this.deskAreas);
 
             const doors = buildRoomDoors(
                 placed,
@@ -391,14 +471,16 @@ export class MapScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number): void {
-        this.playerController?.update();
+        this.playerController?.update(delta);
         this.seatController?.update();
         this.roomDoorController?.update();
         this.followCurrentRoom();
         this.player?.update();
         this.interactionController?.update();
+        this.zoneHoverController?.update();
         this.deskHoverController?.update();
         this.updatePlayerHover();
+        this.updateTileCursor();
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
@@ -565,7 +647,10 @@ export class MapScene extends Phaser.Scene {
     setDecoratorGuards(guards: { canPan: () => boolean } | null): void {
         this.canPanCamera = guards?.canPan ?? (() => true);
         this.deskHoverController?.setEnabled(guards === null);
+        this.zoneHoverController?.setEnabled(guards === null);
         this.playerHoverController?.setEnabled(guards === null);
+        this.tileCursor?.setEnabled(guards === null);
+        this.pathWalker.cancel();
     }
 
     // Brings the objects on screen to a new list, drawing only what changed.
@@ -588,6 +673,158 @@ export class MapScene extends Phaser.Scene {
         if (!hasPlacedChanges(diff)) return;
 
         this.freeTrappedAvatars();
+    }
+
+    // An avatar can stand on the tile: inside the map and clear of the solids.
+    private isCellWalkable(
+        cell: Cell,
+        maxAgeMs: number = PATH_SEARCH.HOVER_INDEX_MAX_AGE_MS
+    ): boolean {
+        const { column, row } = cell;
+        if (column < 0 || column >= this.mapColumns) return false;
+        if (row < 0 || row >= this.mapRows) return false;
+
+        const isBlocked = this.getSolidIndex(maxAgeMs);
+        return getStandingPoint(cell, (point) => !isBlocked(point)) !== null;
+    }
+
+    // The solids change with the doors and the objects, so the index is kept
+    // for a short while only. A walk asks for a fresh one.
+    private getSolidIndex(
+        maxAgeMs: number
+    ): (feet: { x: number; y: number }) => boolean {
+        const { time } = this;
+        if (!this.solidIndex || time.now - this.solidIndex.at > maxAgeMs) {
+            this.solidIndex = {
+                at: time.now,
+                isBlocked: buildSolidIndex(this.getSolidRects(), AVATAR.body),
+            };
+        }
+        return this.solidIndex.isBlocked;
+    }
+
+    // Walks the avatar to the tile, or to the desk or zone that was clicked,
+    // by the shortest way around the solids. A
+    // closed tile takes it to the open one closest to it. With no way there the
+    // page is told, and the avatar stays where it is.
+    private walkToCell(goal: Cell, world: { x: number; y: number }): void {
+        const { player } = this;
+        if (!player || isGameInputSuspended()) return;
+        if (!this.isInsideMap(goal)) return;
+
+        this.replansLeft = PATH_SEARCH.MAX_REPLANS;
+        const area = this.findAreaAt(world);
+        const isStarted =
+            (area !== null && this.startWalkToArea(area, world)) ||
+            this.startWalk(goal);
+        if (!isStarted) {
+            this.game.events.emit(WALK_EVENTS.FAILED);
+            return;
+        }
+
+        player.standUp();
+        this.cameraController?.recenterOn(player.gameObject);
+    }
+
+    // A tile on the way closed under a walk, like a door that just locked. It
+    // is planned again from where the avatar stands, a few times at most.
+    private replanWalk(destination: Cell): void {
+        const isPlanned =
+            this.replansLeft > 0 && this.startWalkAgain(destination);
+        if (!isPlanned) this.game.events.emit(WALK_EVENTS.FAILED);
+    }
+
+    private startWalkAgain(destination: Cell): boolean {
+        this.replansLeft--;
+        return this.startWalk(destination);
+    }
+
+    private isInsideMap({ column, row }: Cell): boolean {
+        return (
+            column >= 0 &&
+            column < this.mapColumns &&
+            row >= 0 &&
+            row < this.mapRows
+        );
+    }
+
+    // The desk or the named zone under the point, a desk first.
+    private findAreaAt(world: { x: number; y: number }): HoverTarget | null {
+        return (
+            findHoveredTarget(this.deskAreas, world) ??
+            findHoveredTarget(this.zoneAreas, world)
+        );
+    }
+
+    // Walks to the tile of the area closest to the click, one with a free seat
+    // before any other. The next best tiles are tried when it cannot be
+    // reached. False when no tile of the area can.
+    private startWalkToArea(
+        area: HoverTarget,
+        click: { x: number; y: number }
+    ): boolean {
+        const goals = findAreaGoals({
+            area: area.bounds,
+            click,
+            freeSeats: this.seatAreas
+                .flatMap((seatArea) => seatArea.seats)
+                .filter((seat) => !this.seatOccupancy.isTaken(seat)),
+            isOpen: (cell) => this.isCellWalkable(cell, 0),
+        });
+        return goals
+            .slice(0, AREA_GOALS_TRIED)
+            .some((goal) => this.startWalk(goal));
+    }
+
+    // Plans the walk to the tile, or to the open tile closest to it when it is
+    // closed. False when there is no tile to go to or no way to it.
+    private startWalk(goal: Cell): boolean {
+        const { player } = this;
+        if (!player) return false;
+
+        // A walk changed in the middle of a step goes on from the tile that
+        // step ends on, so the avatar never stops to turn around.
+        const origin = this.tileMover?.getStepTarget() ?? player;
+
+        const isBlocked = this.getSolidIndex(0);
+        const isOpen = (cell: Cell) => this.isCellWalkable(cell, 0);
+        const target = isOpen(goal)
+            ? goal
+            : findNearestFreeTile({
+                goal,
+                direction: getDirectionVector(player.direction),
+                radius: NEAREST_TILE.GOAL_RADIUS,
+                isOpen,
+            });
+        if (!target) return false;
+
+        const route = findPath({
+            start: getCellAt(origin),
+            goal: target,
+            columns: this.mapColumns,
+            rows: this.mapRows,
+            isFree: (point) => !isBlocked(point),
+        });
+        if (!route) return false;
+
+        this.pathWalker.start(route);
+        return true;
+    }
+
+    // The mark follows the mouse, and stays on the tile of a walk until it ends.
+    private updateTileCursor(): void {
+        this.tileCursor?.setDestination(this.pathWalker.getDestination());
+        this.reportWalk();
+        this.tileCursor?.update();
+    }
+
+    // Tells the page when a walk starts or ends, for the chip that cancels it.
+    private reportWalk(): void {
+        const isWalking = this.pathWalker.isWalking();
+        if (isWalking === this.isWalkReported) return;
+
+        this.isWalkReported = isWalking;
+        this.game.events.emit(WALK_EVENTS.CHANGED, isWalking);
     }
 
     private getSolidRects(): PlacedRect[] {
