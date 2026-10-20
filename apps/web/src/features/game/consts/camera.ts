@@ -22,9 +22,10 @@ export const WHEEL_ZOOM_DIRECTIONS = {
 export type WheelZoomDirection =
     (typeof WHEEL_ZOOM_DIRECTIONS)[keyof typeof WHEEL_ZOOM_DIRECTIONS];
 
-export const MAP_DRAG_CURSORS = {
-    IDLE: "grab",
-    DRAGGING: "grabbing",
+// The cursor is the normal arrow everywhere on the map, also while the camera
+// is dragged. Only a target (a desk, an avatar) turns it into a pointer.
+export const MAP_CURSORS = {
+    IDLE: "default",
 } as const;
 
 // How far the pointer has to move with the button down before it is a drag.

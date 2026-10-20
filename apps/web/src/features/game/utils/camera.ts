@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import {
     CAMERA_EVENTS,
-    MAP_DRAG_CURSORS,
+    MAP_CURSORS,
     MAP_DRAG_THRESHOLD_PX,
 } from "@/features/game/consts/camera";
 import { getMapScene } from "@/features/game/utils/map";
@@ -32,7 +32,7 @@ export const bindMapDragPan = (
     canPan: () => boolean = () => true
 ): void => {
     const canvas = scene.game.canvas;
-    canvas.style.cursor = MAP_DRAG_CURSORS.IDLE;
+    canvas.style.cursor = MAP_CURSORS.IDLE;
     let isDragging = false;
 
     scene.input.on(Phaser.Input.Events.POINTER_DOWN, () => {
@@ -41,7 +41,7 @@ export const bindMapDragPan = (
 
     scene.input.on(Phaser.Input.Events.POINTER_UP, () => {
         isDragging = false;
-        canvas.style.cursor = MAP_DRAG_CURSORS.IDLE;
+        canvas.style.cursor = MAP_CURSORS.IDLE;
     });
 
     scene.input.on(
@@ -55,7 +55,6 @@ export const bindMapDragPan = (
                 if (pointer.getDistance() < MAP_DRAG_THRESHOLD_PX) return;
 
                 isDragging = true;
-                canvas.style.cursor = MAP_DRAG_CURSORS.DRAGGING;
             }
 
             controller.stopFollow();

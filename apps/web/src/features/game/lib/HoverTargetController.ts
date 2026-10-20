@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import {
-    MAP_DRAG_CURSORS,
+    MAP_CURSORS,
     MAP_DRAG_THRESHOLD_PX,
 } from "@/features/game/consts/camera";
 import { HOVER_OUTLINE } from "@/features/editor/consts/hover-outline";
@@ -171,7 +171,7 @@ export class HoverTargetController {
 
         this.scene.game.canvas.style.cursor = hover
             ? HOVER_OUTLINE.CURSOR
-            : MAP_DRAG_CURSORS.IDLE;
+            : MAP_CURSORS.IDLE;
     }
 
     // Where the selected target is on the canvas, or null with none. Only a
