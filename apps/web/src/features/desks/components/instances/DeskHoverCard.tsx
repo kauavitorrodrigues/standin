@@ -4,6 +4,7 @@ import { useHoverClick } from "@/features/game/hooks/useHoverClick";
 import { useHoverTarget } from "@/features/game/hooks/useHoverTarget";
 import { useSelectedTarget } from "@/features/game/hooks/useSelectedTarget";
 import { DESK_EVENTS } from "@/features/game/consts/desk";
+import { PLAYER_EVENTS, PLAYER_HOVER_ID } from "@/features/game/consts/player";
 import type { GameEngineHandle } from "@/features/game/types/game";
 import { useDeskActions } from "../../hooks/useDeskActions";
 import { useSpaceDesks } from "../../queries/useSpaceDesks";
@@ -65,6 +66,17 @@ export const DeskHoverCard = ({
         if (isOwnDesk) return onOpenProfile();
 
         onCloseProfile();
+    });
+    useEffect(() => {
+        handle?.selectHover(
+            PLAYER_EVENTS.HOVER_CHANGED,
+            isProfileOpen ? PLAYER_HOVER_ID : null
+        );
+    }, [handle, isProfileOpen]);
+
+    // A click on the avatar of the person opens their card too.
+    useHoverClick(handle, PLAYER_EVENTS.HOVER_CHANGED, (playerId) => {
+        if (playerId !== null) onOpenProfile();
     });
     useHotkey(["escape"], onCloseProfile, { enabled: isProfileOpen });
 

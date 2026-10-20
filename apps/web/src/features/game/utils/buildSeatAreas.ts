@@ -17,6 +17,8 @@ export type SeatSpot = {
     x: number;
     y: number;
     direction: PlayerDirection;
+    // The depth of the piece the seat is on, so the avatar can draw over it.
+    depth: number;
 };
 
 // A piece with seats: its footprint and the spots an avatar can be sat at.
@@ -86,6 +88,7 @@ export const buildSeatAreas = (
                 x: layout.x + seat.dx,
                 y: layout.bottomY - seat.dy,
                 direction: SEAT_FACING_DIRECTIONS[seat.facing],
+                depth: layout.depth,
             })),
         });
     }

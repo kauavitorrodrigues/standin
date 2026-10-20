@@ -8,7 +8,7 @@ import type { SeatArea, SeatSpot } from "@/features/game/utils/buildSeatAreas";
 
 const makeArea = (x: number, y: number): SeatArea => ({
     footprint: { x: x - 16, y: y - 16, width: 32, height: 32 },
-    seats: [{ x, y, direction: PLAYER_DIRECTIONS.DOWN }],
+    seats: [{ x, y, direction: PLAYER_DIRECTIONS.DOWN, depth: 0 }],
 });
 
 const makePlayer = (x: number, y: number) => {
@@ -104,8 +104,8 @@ describe("SeatController with other avatars", () => {
         const area: SeatArea = {
             footprint: { x: 84, y: 84, width: 64, height: 32 },
             seats: [
-                { x: 100, y: 100, direction: PLAYER_DIRECTIONS.DOWN },
-                { x: 132, y: 100, direction: PLAYER_DIRECTIONS.DOWN },
+                { x: 100, y: 100, direction: PLAYER_DIRECTIONS.DOWN, depth: 0 },
+                { x: 132, y: 100, direction: PLAYER_DIRECTIONS.DOWN, depth: 0 },
             ],
         };
         seats.setAreas([area]);
@@ -160,8 +160,8 @@ describe("SeatController with other avatars", () => {
         const area: SeatArea = {
             footprint: { x: 84, y: 84, width: 64, height: 32 },
             seats: [
-                { x: 100, y: 100, direction: PLAYER_DIRECTIONS.DOWN },
-                { x: 132, y: 100, direction: PLAYER_DIRECTIONS.DOWN },
+                { x: 100, y: 100, direction: PLAYER_DIRECTIONS.DOWN, depth: 0 },
+                { x: 132, y: 100, direction: PLAYER_DIRECTIONS.DOWN, depth: 0 },
             ],
         };
         seats.setAreas([area]);

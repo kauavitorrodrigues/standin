@@ -7,3 +7,4 @@ export * from "./features/assets";
 export * from "./features/areas";
 export * from "./features/messages";
 export * from "./features/conversations";
+export * from "./features/avatar";

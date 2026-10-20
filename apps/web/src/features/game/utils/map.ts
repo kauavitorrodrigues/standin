@@ -3,6 +3,7 @@ import {
     MapObjectPropertiesSchema,
     normalizeMapObjectProperties,
     MAP_OBJECT_ACTIONS,
+    TILE_SIZE,
     type MapObjectAction,
     type MapObjectPropertiesSchemaType,
 } from "@standin/contracts";
@@ -76,11 +77,16 @@ export const resolveObjectCenter = (
     };
 };
 
+const snapToCellCenter = (value: number): number =>
+    (Math.floor(value / TILE_SIZE) + 1 / CENTER_POSITION_DIVISOR) * TILE_SIZE;
+
+// The middle of the map, snapped to the center of the cell it falls in. The
+// avatar stands with its feet (its anchor) on that point.
 export const resolveDefaultSpawnPoint = (
-    tilemap: Phaser.Tilemaps.Tilemap
+    tilemap: Pick<Phaser.Tilemaps.Tilemap, "widthInPixels" | "heightInPixels">
 ): { x: number; y: number } => ({
-    x: tilemap.widthInPixels / CENTER_POSITION_DIVISOR,
-    y: tilemap.heightInPixels / CENTER_POSITION_DIVISOR,
+    x: snapToCellCenter(tilemap.widthInPixels / CENTER_POSITION_DIVISOR),
+    y: snapToCellCenter(tilemap.heightInPixels / CENTER_POSITION_DIVISOR),
 });
 
 export const resolveMapObjectProperties = (

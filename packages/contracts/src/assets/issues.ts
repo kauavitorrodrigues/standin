@@ -49,6 +49,16 @@ export class ImageFileRequiredIssue extends LibraryIssueItem {
     }
 }
 
+export class PreviewFileRequiredIssue extends LibraryIssueItem {
+    constructor() {
+        super(
+            CODES.PREVIEW_FILE_REQUIRED,
+            "preview",
+            "The preview part with the PNG file is required."
+        );
+    }
+}
+
 export class PngInvalidIssue extends LibraryIssueItem {
     constructor() {
         super(

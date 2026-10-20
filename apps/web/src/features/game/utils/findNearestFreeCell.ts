@@ -1,31 +1,40 @@
 import { TILE_SIZE } from "@standin/contracts";
+import {
+    getAvatarBodyRect,
+    type AvatarBody,
+} from "@/features/game/utils/getAvatarBodyRect";
 import type { PlacedRect } from "@/features/game/utils/placed";
 
 type Point = { x: number; y: number };
 
 export type FreeCellSearch = {
-    // Where the avatar is, in px.
+    // Where the feet of the avatar are, in px.
     point: Point;
     // The rectangles that block the way, in px.
     solidRects: readonly PlacedRect[];
-    // Radius of the avatar, so it does not rest touching a solid.
-    radius: number;
+    // The body of the avatar, so it does not rest touching a solid.
+    body: AvatarBody;
     // Size of the map, in px. Cells outside it are never free.
     bounds: { width: number; height: number };
 };
 
-const hitsRect = (center: Point, radius: number, rect: PlacedRect): boolean => {
-    const nearestX = Math.max(rect.x, Math.min(center.x, rect.x + rect.width));
-    const nearestY = Math.max(rect.y, Math.min(center.y, rect.y + rect.height));
-    return Math.hypot(center.x - nearestX, center.y - nearestY) < radius;
-};
+// Whether the two rectangles share some area. Touching edges do not count,
+// the same as for the bodies of the physics.
+const overlaps = (a: PlacedRect, b: PlacedRect): boolean =>
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y;
 
-// Whether an avatar of this radius centered here overlaps a solid.
+// Whether the body of an avatar standing with its feet here overlaps a solid.
 export const isPositionBlocked = (
-    center: Point,
-    radius: number,
+    feet: Point,
+    body: AvatarBody,
     solidRects: readonly PlacedRect[]
-): boolean => solidRects.some((rect) => hitsRect(center, radius, rect));
+): boolean => {
+    const rect = getAvatarBodyRect(feet, body);
+    return solidRects.some((solid) => overlaps(rect, solid));
+};
 
 const getRingCells = (
     column: number,
@@ -48,7 +57,8 @@ const getRingCells = (
 
 /**
  * The center of the free cell closest to the point, or null when the map has
- * none. A cell is free when an avatar centered on it overlaps no solid and the
+ * none. A cell is free when an avatar with its feet on the center of the cell
+ * overlaps no solid and the
  * cell is inside the map. Cells are searched in rings around the point's cell,
  * and the ring after the first hit is searched too, since a corner of the
  * first ring can be farther than the middle of the next.
@@ -56,7 +66,7 @@ const getRingCells = (
 export const findNearestFreeCell = ({
     point,
     solidRects,
-    radius,
+    body,
     bounds,
 }: FreeCellSearch): Point | null => {
     const columns = Math.floor(bounds.width / TILE_SIZE);
@@ -90,7 +100,7 @@ export const findNearestFreeCell = ({
                 x: (cell.column + 0.5) * TILE_SIZE,
                 y: (cell.row + 0.5) * TILE_SIZE,
             };
-            if (isPositionBlocked(center, radius, solidRects)) continue;
+            if (isPositionBlocked(center, body, solidRects)) continue;
 
             const distance = Math.hypot(center.x - point.x, center.y - point.y);
             if (distance >= bestDistance) continue;

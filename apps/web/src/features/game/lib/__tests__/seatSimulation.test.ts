@@ -12,6 +12,7 @@ const spot = (x: number, y: number): SeatSpot => ({
     x,
     y,
     direction: PLAYER_DIRECTIONS.DOWN,
+    depth: 0,
 });
 
 // A piece 32px tall with one seat every 32px.

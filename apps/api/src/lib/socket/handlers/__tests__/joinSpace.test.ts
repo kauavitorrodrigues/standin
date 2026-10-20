@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { canJoinSpaceMock } = vi.hoisted(() => ({
+const { canJoinSpaceMock, resolveAvatarSheetFileIdMock } = vi.hoisted(() => ({
     canJoinSpaceMock: vi.fn(),
+    resolveAvatarSheetFileIdMock: vi.fn(),
+}));
+
+vi.mock("../../services/resolveAvatarSheetFileId", () => ({
+    resolveAvatarSheetFileId: resolveAvatarSheetFileIdMock,
 }));
 
 vi.mock("../../services/canJoinSpace", () => ({
@@ -27,10 +32,15 @@ function createFakeSocket(id: string, userId: string) {
     };
 }
 
-function createFakeIo(peers: ReturnType<typeof createFakeSocket>[], room: string) {
+function createFakeIo(
+    peers: ReturnType<typeof createFakeSocket>[],
+    room: string
+) {
     return {
         sockets: {
-            adapter: { rooms: new Map([[room, new Set(peers.map((p) => p.id))]]) },
+            adapter: {
+                rooms: new Map([[room, new Set(peers.map((p) => p.id))]]),
+            },
             sockets: new Map(peers.map((p) => [p.id, p])),
         },
     };
@@ -50,6 +60,7 @@ describe("registerJoinSpace", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         canJoinSpaceMock.mockResolvedValue(true);
+        resolveAvatarSheetFileIdMock.mockResolvedValue(null);
     });
 
     it("returns only the peers already present, snapshotted before joining", async () => {
@@ -60,11 +71,62 @@ describe("registerJoinSpace", () => {
         registerJoinSpace(io as any, socketB as any);
         await getJoinHandler(socketB)?.(validPayload);
 
-        expect(canJoinSpaceMock).toHaveBeenCalledWith("user-b", "org-1", "space-1");
+        expect(canJoinSpaceMock).toHaveBeenCalledWith(
+            "user-b",
+            "org-1",
+            "space-1"
+        );
         expect(socketB.join).toHaveBeenCalledWith("space:space-1");
         expect(socketB.data.spaceId).toBe("space-1");
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
-            peers: [{ socketId: "socket-a", userId: "user-a", avatarConfig: null }],
+            peers: [
+                {
+                    socketId: "socket-a",
+                    userId: "user-a",
+                    avatarSheetFileId: null,
+                },
+            ],
+        });
+    });
+
+    it("sends the avatar sheet of each peer already present", async () => {
+        resolveAvatarSheetFileIdMock.mockImplementation(
+            async (userId: string) => (userId === "user-a" ? "file-a" : null)
+        );
+        const peerA = createFakeSocket("socket-a", "user-a");
+        const socketB = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([peerA], "space:space-1");
+
+        registerJoinSpace(io as any, socketB as any);
+        await getJoinHandler(socketB)?.(validPayload);
+
+        expect(resolveAvatarSheetFileIdMock).toHaveBeenCalledWith("user-a");
+        expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
+            peers: [
+                {
+                    socketId: "socket-a",
+                    userId: "user-a",
+                    avatarSheetFileId: "file-a",
+                },
+            ],
+        });
+    });
+
+    it("announces the avatar sheet of the socket that just joined", async () => {
+        resolveAvatarSheetFileIdMock.mockResolvedValue("file-b");
+        const socketB = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([], "space:space-1");
+        const toEmitMock = vi.fn();
+        socketB.to.mockReturnValue({ emit: toEmitMock });
+
+        registerJoinSpace(io as any, socketB as any);
+        await getJoinHandler(socketB)?.(validPayload);
+
+        expect(resolveAvatarSheetFileIdMock).toHaveBeenCalledWith("user-b");
+        expect(toEmitMock).toHaveBeenCalledWith("space:peer-joined", {
+            socketId: "socket-b",
+            userId: "user-b",
+            avatarSheetFileId: "file-b",
         });
     });
 
@@ -81,7 +143,7 @@ describe("registerJoinSpace", () => {
         expect(toEmitMock).toHaveBeenCalledWith("space:peer-joined", {
             socketId: "socket-b",
             userId: "user-b",
-            avatarConfig: null,
+            avatarSheetFileId: null,
         });
     });
 
@@ -90,7 +152,10 @@ describe("registerJoinSpace", () => {
         const io = createFakeIo([socket], "space:space-1");
 
         registerJoinSpace(io as any, socket as any);
-        await getJoinHandler(socket)?.({ ...validPayload, userId: "someone-else" });
+        await getJoinHandler(socket)?.({
+            ...validPayload,
+            userId: "someone-else",
+        });
 
         expect(socket.join).not.toHaveBeenCalled();
         expect(socket.emit).not.toHaveBeenCalled();
@@ -159,9 +224,13 @@ describe("registerJoinSpace", () => {
         registerJoinSpace(io as any, newSocket as any);
         await getJoinHandler(newSocket)?.(validPayload);
 
-        expect(staleSocket.emit).toHaveBeenCalledWith("space:duplicate-session");
+        expect(staleSocket.emit).toHaveBeenCalledWith(
+            "space:duplicate-session"
+        );
         expect(staleSocket.disconnect).toHaveBeenCalledWith(true);
-        expect(newSocket.emit).toHaveBeenCalledWith("space:joined", { peers: [] });
+        expect(newSocket.emit).toHaveBeenCalledWith("space:joined", {
+            peers: [],
+        });
     });
 
     it("does not touch peers belonging to a different account", async () => {

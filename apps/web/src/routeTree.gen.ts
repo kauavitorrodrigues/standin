@@ -15,6 +15,7 @@ import { Route as AppAdminRouteImport } from './routes/_app/_admin'
 import { Route as AppDefaultRouteImport } from './routes/_app/_default'
 import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
 import { Route as AppDefaultLibraryRouteImport } from './routes/_app/_default/library'
+import { Route as AppDevAvatarLabRouteImport } from './routes/_app/dev/avatar-lab'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
 import { Route as AppSpacesNewRouteImport } from './routes/_app/spaces/new'
 import { Route as AppSpacesSpaceIdEditRouteImport } from './routes/_app/spaces/$spaceId_.edit'
@@ -22,6 +23,10 @@ import { Route as AppAdminAdminAreasIndexRouteImport } from './routes/_app/_admi
 import { Route as AppAdminAdminAreasNewRouteImport } from './routes/_app/_admin/admin/areas/new'
 import { Route as AppAdminAdminAssetsIndexRouteImport } from './routes/_app/_admin/admin/assets/index'
 import { Route as AppAdminAdminAssetsNewRouteImport } from './routes/_app/_admin/admin/assets/new'
+import { Route as AppAdminAdminAvatarBasesIndexRouteImport } from './routes/_app/_admin/admin/avatar-bases/index'
+import { Route as AppAdminAdminAvatarCategoriesIndexRouteImport } from './routes/_app/_admin/admin/avatar-categories/index'
+import { Route as AppAdminAdminAvatarPartsIndexRouteImport } from './routes/_app/_admin/admin/avatar-parts/index'
+import { Route as AppAdminAdminAvatarNewRouteImport } from './routes/_app/_admin/admin/avatar/new'
 import { Route as AppAdminAdminMapsIndexRouteImport } from './routes/_app/_admin/admin/maps/index'
 import { Route as AppAdminAdminTilesetsIndexRouteImport } from './routes/_app/_admin/admin/tilesets/index'
 import { Route as AppAdminAdminTilesetsTilesetIdRouteImport } from './routes/_app/_admin/admin/tilesets/$tilesetId'
@@ -64,6 +69,11 @@ const AppDefaultLibraryRoute = AppDefaultLibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => AppDefaultRoute,
 } as any)
+const AppDevAvatarLabRoute = AppDevAvatarLabRouteImport.update({
+  id: '/dev/avatar-lab',
+  path: '/dev/avatar-lab',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
   id: '/spaces/$spaceId',
   path: '/spaces/$spaceId',
@@ -98,6 +108,29 @@ const AppAdminAdminAssetsIndexRoute =
 const AppAdminAdminAssetsNewRoute = AppAdminAdminAssetsNewRouteImport.update({
   id: '/admin/assets/new',
   path: '/admin/assets/new',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAdminAvatarBasesIndexRoute =
+  AppAdminAdminAvatarBasesIndexRouteImport.update({
+    id: '/admin/avatar-bases/',
+    path: '/admin/avatar-bases/',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
+const AppAdminAdminAvatarCategoriesIndexRoute =
+  AppAdminAdminAvatarCategoriesIndexRouteImport.update({
+    id: '/admin/avatar-categories/',
+    path: '/admin/avatar-categories/',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
+const AppAdminAdminAvatarPartsIndexRoute =
+  AppAdminAdminAvatarPartsIndexRouteImport.update({
+    id: '/admin/avatar-parts/',
+    path: '/admin/avatar-parts/',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
+const AppAdminAdminAvatarNewRoute = AppAdminAdminAvatarNewRouteImport.update({
+  id: '/admin/avatar/new',
+  path: '/admin/avatar/new',
   getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminAdminMapsIndexRoute = AppAdminAdminMapsIndexRouteImport.update({
@@ -188,11 +221,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/home': typeof AppDefaultHomeRoute
   '/library': typeof AppDefaultLibraryRouteWithChildren
+  '/dev/avatar-lab': typeof AppDevAvatarLabRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
   '/admin/areas/new': typeof AppAdminAdminAreasNewRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/admin/avatar/new': typeof AppAdminAdminAvatarNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/library/areas/new': typeof AppDefaultLibraryAreasNewRoute
@@ -201,6 +236,9 @@ export interface FileRoutesByFullPath {
   '/library/tilesets/new': typeof AppDefaultLibraryTilesetsNewRoute
   '/admin/areas/': typeof AppAdminAdminAreasIndexRoute
   '/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
+  '/admin/avatar-bases/': typeof AppAdminAdminAvatarBasesIndexRoute
+  '/admin/avatar-categories/': typeof AppAdminAdminAvatarCategoriesIndexRoute
+  '/admin/avatar-parts/': typeof AppAdminAdminAvatarPartsIndexRoute
   '/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
   '/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
@@ -214,11 +252,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/home': typeof AppDefaultHomeRoute
   '/library': typeof AppDefaultLibraryRouteWithChildren
+  '/dev/avatar-lab': typeof AppDevAvatarLabRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
   '/admin/areas/new': typeof AppAdminAdminAreasNewRoute
   '/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/admin/avatar/new': typeof AppAdminAdminAvatarNewRoute
   '/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/library/areas/new': typeof AppDefaultLibraryAreasNewRoute
@@ -227,6 +267,9 @@ export interface FileRoutesByTo {
   '/library/tilesets/new': typeof AppDefaultLibraryTilesetsNewRoute
   '/admin/areas': typeof AppAdminAdminAreasIndexRoute
   '/admin/assets': typeof AppAdminAdminAssetsIndexRoute
+  '/admin/avatar-bases': typeof AppAdminAdminAvatarBasesIndexRoute
+  '/admin/avatar-categories': typeof AppAdminAdminAvatarCategoriesIndexRoute
+  '/admin/avatar-parts': typeof AppAdminAdminAvatarPartsIndexRoute
   '/admin/maps': typeof AppAdminAdminMapsIndexRoute
   '/admin/tilesets': typeof AppAdminAdminTilesetsIndexRoute
   '/library/areas': typeof AppDefaultLibraryAreasIndexRoute
@@ -244,11 +287,13 @@ export interface FileRoutesById {
   '/_app/_default': typeof AppDefaultRouteWithChildren
   '/_app/_default/home': typeof AppDefaultHomeRoute
   '/_app/_default/library': typeof AppDefaultLibraryRouteWithChildren
+  '/_app/dev/avatar-lab': typeof AppDevAvatarLabRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spaces/new': typeof AppSpacesNewRoute
   '/_app/spaces/$spaceId_/edit': typeof AppSpacesSpaceIdEditRoute
   '/_app/_admin/admin/areas/new': typeof AppAdminAdminAreasNewRoute
   '/_app/_admin/admin/assets/new': typeof AppAdminAdminAssetsNewRoute
+  '/_app/_admin/admin/avatar/new': typeof AppAdminAdminAvatarNewRoute
   '/_app/_admin/admin/tilesets/$tilesetId': typeof AppAdminAdminTilesetsTilesetIdRoute
   '/_app/_admin/admin/tilesets/new': typeof AppAdminAdminTilesetsNewRoute
   '/_app/_default/library/areas/new': typeof AppDefaultLibraryAreasNewRoute
@@ -257,6 +302,9 @@ export interface FileRoutesById {
   '/_app/_default/library/tilesets/new': typeof AppDefaultLibraryTilesetsNewRoute
   '/_app/_admin/admin/areas/': typeof AppAdminAdminAreasIndexRoute
   '/_app/_admin/admin/assets/': typeof AppAdminAdminAssetsIndexRoute
+  '/_app/_admin/admin/avatar-bases/': typeof AppAdminAdminAvatarBasesIndexRoute
+  '/_app/_admin/admin/avatar-categories/': typeof AppAdminAdminAvatarCategoriesIndexRoute
+  '/_app/_admin/admin/avatar-parts/': typeof AppAdminAdminAvatarPartsIndexRoute
   '/_app/_admin/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/_app/_admin/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
   '/_app/_default/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
@@ -272,11 +320,13 @@ export interface FileRouteTypes {
     | '/'
     | '/home'
     | '/library'
+    | '/dev/avatar-lab'
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
     | '/admin/areas/new'
     | '/admin/assets/new'
+    | '/admin/avatar/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
     | '/library/areas/new'
@@ -285,6 +335,9 @@ export interface FileRouteTypes {
     | '/library/tilesets/new'
     | '/admin/areas/'
     | '/admin/assets/'
+    | '/admin/avatar-bases/'
+    | '/admin/avatar-categories/'
+    | '/admin/avatar-parts/'
     | '/admin/maps/'
     | '/admin/tilesets/'
     | '/library/areas/'
@@ -298,11 +351,13 @@ export interface FileRouteTypes {
     | '/'
     | '/home'
     | '/library'
+    | '/dev/avatar-lab'
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
     | '/admin/areas/new'
     | '/admin/assets/new'
+    | '/admin/avatar/new'
     | '/admin/tilesets/$tilesetId'
     | '/admin/tilesets/new'
     | '/library/areas/new'
@@ -311,6 +366,9 @@ export interface FileRouteTypes {
     | '/library/tilesets/new'
     | '/admin/areas'
     | '/admin/assets'
+    | '/admin/avatar-bases'
+    | '/admin/avatar-categories'
+    | '/admin/avatar-parts'
     | '/admin/maps'
     | '/admin/tilesets'
     | '/library/areas'
@@ -327,11 +385,13 @@ export interface FileRouteTypes {
     | '/_app/_default'
     | '/_app/_default/home'
     | '/_app/_default/library'
+    | '/_app/dev/avatar-lab'
     | '/_app/spaces/$spaceId'
     | '/_app/spaces/new'
     | '/_app/spaces/$spaceId_/edit'
     | '/_app/_admin/admin/areas/new'
     | '/_app/_admin/admin/assets/new'
+    | '/_app/_admin/admin/avatar/new'
     | '/_app/_admin/admin/tilesets/$tilesetId'
     | '/_app/_admin/admin/tilesets/new'
     | '/_app/_default/library/areas/new'
@@ -340,6 +400,9 @@ export interface FileRouteTypes {
     | '/_app/_default/library/tilesets/new'
     | '/_app/_admin/admin/areas/'
     | '/_app/_admin/admin/assets/'
+    | '/_app/_admin/admin/avatar-bases/'
+    | '/_app/_admin/admin/avatar-categories/'
+    | '/_app/_admin/admin/avatar-parts/'
     | '/_app/_admin/admin/maps/'
     | '/_app/_admin/admin/tilesets/'
     | '/_app/_default/library/areas/'
@@ -399,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDefaultLibraryRouteImport
       parentRoute: typeof AppDefaultRoute
     }
+    '/_app/dev/avatar-lab': {
+      id: '/_app/dev/avatar-lab'
+      path: '/dev/avatar-lab'
+      fullPath: '/dev/avatar-lab'
+      preLoaderRoute: typeof AppDevAvatarLabRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/spaces/$spaceId': {
       id: '/_app/spaces/$spaceId'
       path: '/spaces/$spaceId'
@@ -446,6 +516,34 @@ declare module '@tanstack/react-router' {
       path: '/admin/assets/new'
       fullPath: '/admin/assets/new'
       preLoaderRoute: typeof AppAdminAdminAssetsNewRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/avatar-bases/': {
+      id: '/_app/_admin/admin/avatar-bases/'
+      path: '/admin/avatar-bases'
+      fullPath: '/admin/avatar-bases/'
+      preLoaderRoute: typeof AppAdminAdminAvatarBasesIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/avatar-categories/': {
+      id: '/_app/_admin/admin/avatar-categories/'
+      path: '/admin/avatar-categories'
+      fullPath: '/admin/avatar-categories/'
+      preLoaderRoute: typeof AppAdminAdminAvatarCategoriesIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/avatar-parts/': {
+      id: '/_app/_admin/admin/avatar-parts/'
+      path: '/admin/avatar-parts'
+      fullPath: '/admin/avatar-parts/'
+      preLoaderRoute: typeof AppAdminAdminAvatarPartsIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/admin/avatar/new': {
+      id: '/_app/_admin/admin/avatar/new'
+      path: '/admin/avatar/new'
+      fullPath: '/admin/avatar/new'
+      preLoaderRoute: typeof AppAdminAdminAvatarNewRouteImport
       parentRoute: typeof AppAdminRoute
     }
     '/_app/_admin/admin/maps/': {
@@ -552,10 +650,14 @@ declare module '@tanstack/react-router' {
 interface AppAdminRouteChildren {
   AppAdminAdminAreasNewRoute: typeof AppAdminAdminAreasNewRoute
   AppAdminAdminAssetsNewRoute: typeof AppAdminAdminAssetsNewRoute
+  AppAdminAdminAvatarNewRoute: typeof AppAdminAdminAvatarNewRoute
   AppAdminAdminTilesetsTilesetIdRoute: typeof AppAdminAdminTilesetsTilesetIdRoute
   AppAdminAdminTilesetsNewRoute: typeof AppAdminAdminTilesetsNewRoute
   AppAdminAdminAreasIndexRoute: typeof AppAdminAdminAreasIndexRoute
   AppAdminAdminAssetsIndexRoute: typeof AppAdminAdminAssetsIndexRoute
+  AppAdminAdminAvatarBasesIndexRoute: typeof AppAdminAdminAvatarBasesIndexRoute
+  AppAdminAdminAvatarCategoriesIndexRoute: typeof AppAdminAdminAvatarCategoriesIndexRoute
+  AppAdminAdminAvatarPartsIndexRoute: typeof AppAdminAdminAvatarPartsIndexRoute
   AppAdminAdminMapsIndexRoute: typeof AppAdminAdminMapsIndexRoute
   AppAdminAdminTilesetsIndexRoute: typeof AppAdminAdminTilesetsIndexRoute
   AppAdminAdminAreasAreaIdEditRoute: typeof AppAdminAdminAreasAreaIdEditRoute
@@ -565,10 +667,15 @@ interface AppAdminRouteChildren {
 const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminAdminAreasNewRoute: AppAdminAdminAreasNewRoute,
   AppAdminAdminAssetsNewRoute: AppAdminAdminAssetsNewRoute,
+  AppAdminAdminAvatarNewRoute: AppAdminAdminAvatarNewRoute,
   AppAdminAdminTilesetsTilesetIdRoute: AppAdminAdminTilesetsTilesetIdRoute,
   AppAdminAdminTilesetsNewRoute: AppAdminAdminTilesetsNewRoute,
   AppAdminAdminAreasIndexRoute: AppAdminAdminAreasIndexRoute,
   AppAdminAdminAssetsIndexRoute: AppAdminAdminAssetsIndexRoute,
+  AppAdminAdminAvatarBasesIndexRoute: AppAdminAdminAvatarBasesIndexRoute,
+  AppAdminAdminAvatarCategoriesIndexRoute:
+    AppAdminAdminAvatarCategoriesIndexRoute,
+  AppAdminAdminAvatarPartsIndexRoute: AppAdminAdminAvatarPartsIndexRoute,
   AppAdminAdminMapsIndexRoute: AppAdminAdminMapsIndexRoute,
   AppAdminAdminTilesetsIndexRoute: AppAdminAdminTilesetsIndexRoute,
   AppAdminAdminAreasAreaIdEditRoute: AppAdminAdminAreasAreaIdEditRoute,
@@ -622,6 +729,7 @@ const AppDefaultRouteWithChildren = AppDefaultRoute._addFileChildren(
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRouteWithChildren
   AppDefaultRoute: typeof AppDefaultRouteWithChildren
+  AppDevAvatarLabRoute: typeof AppDevAvatarLabRoute
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpacesNewRoute: typeof AppSpacesNewRoute
   AppSpacesSpaceIdEditRoute: typeof AppSpacesSpaceIdEditRoute
@@ -630,6 +738,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRouteWithChildren,
   AppDefaultRoute: AppDefaultRouteWithChildren,
+  AppDevAvatarLabRoute: AppDevAvatarLabRoute,
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpacesNewRoute: AppSpacesNewRoute,
   AppSpacesSpaceIdEditRoute: AppSpacesSpaceIdEditRoute,

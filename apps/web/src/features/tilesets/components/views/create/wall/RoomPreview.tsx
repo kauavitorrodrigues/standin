@@ -1,3 +1,5 @@
+import { AVATAR } from "@standin/contracts";
+import { GhostSprite } from "@/features/avatar/components/views/GhostSprite";
 import { WALL_SHEET_ORDER } from "../../../../consts/wallStyle";
 import type { WallFileEntry } from "../../../../types/wallStyleForm";
 import {
@@ -14,8 +16,6 @@ type Props = {
     disabled: boolean;
     onPick: (piece: WallPiece, file: File | null) => void;
 };
-
-const AVATAR_PX = 32;
 
 const getFileOf = (
     entries: readonly WallFileEntry[],
@@ -45,15 +45,11 @@ export const WallRoomPreview = ({ entries, disabled, onPick }: Props) => {
                         style={floor}
                         aria-hidden
                     />
-                    <span
-                        className="absolute rounded-full bg-amber-400"
-                        aria-hidden
-                        style={{
-                            width: AVATAR_PX,
-                            height: AVATAR_PX,
-                            left: floor.left + floor.width / 2 - AVATAR_PX / 2,
-                            top: floor.top + floor.height / 2 - AVATAR_PX / 2,
-                        }}
+                    <GhostSprite
+                        x={floor.left + floor.width / 2}
+                        feetY={
+                            floor.top + floor.height / 2 + AVATAR.visible.h / 2
+                        }
                     />
                     {WALL_SHEET_ORDER.map((piece) => (
                         <WallPreviewPiece

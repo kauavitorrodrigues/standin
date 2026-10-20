@@ -26,6 +26,9 @@ import {
 export class HoverTargetController {
     private readonly scene: Phaser.Scene;
     private readonly event: string;
+    // The local avatar is hovered for its cursor and click only, a box around
+    // it would be noise.
+    private readonly drawsOutline: boolean;
     private readonly outline: Phaser.GameObjects.Graphics;
     private targets: HoverTarget[] = [];
     // Off while the decorator is open, so a desk is a plain object to select.
@@ -38,9 +41,14 @@ export class HoverTargetController {
     private last: HoverState | null = null;
     private lastSelected: HoverState | null = null;
 
-    constructor(scene: Phaser.Scene, event: string) {
+    constructor(
+        scene: Phaser.Scene,
+        event: string,
+        options: { drawsOutline: boolean } = { drawsOutline: true }
+    ) {
         this.scene = scene;
         this.event = event;
+        this.drawsOutline = options.drawsOutline;
         this.outline = scene.add
             .graphics()
             .setDepth(HOVER_OUTLINE.DEPTH)
@@ -144,6 +152,8 @@ export class HoverTargetController {
     // The selected target and the hovered one, which can be the same.
     private drawOutlines(hovered: HoverTarget | null): void {
         const selected = this.findSelectedTarget();
+        if (!this.drawsOutline) return;
+
         const outlined = [selected, hovered].filter(
             (target): target is HoverTarget => target !== null
         );

@@ -4,6 +4,8 @@ import {
     buildAssetAnimationKey,
     buildAssetTextureKey,
 } from "@/features/game/utils/map";
+import { PLACED_ASSET_DEPTH } from "@/features/game/consts/placed-assets";
+import { buildSeatCover } from "@/features/game/utils/buildSeatCover";
 import {
     resolvePlacedLayout,
     shouldPlayAnimation,
@@ -13,7 +15,8 @@ import {
  * Draws every placed object of the map as a sprite over the texture of its
  * asset: frame 0 when static, the `asset:{assetId}` animation when animated.
  * An object whose footprint has a mask is drawn as one cropped sprite per
- * footprint row, each at its own depth. Solid objects on the ground get a
+ * footprint row, each at its own depth. A piece with seats also gets its front
+ * drawn over the avatars sat on it. Solid objects on the ground get a
  * static zone over each rectangle of their footprint in the given group. A
  * view with no physics passes no group and gets the sprites only.
  */
@@ -64,6 +67,21 @@ export const renderPlacedAssets = (
                     slice.crop.height
                 );
             }
+            if (animated) sprite.play(animationKey);
+            sprites.push(sprite);
+        }
+
+        const cover = buildSeatCover(asset);
+        if (cover) {
+            const sprite = scene.add.sprite(
+                layout.x,
+                layout.bottomY,
+                textureKey
+            );
+            sprite.setOrigin(0, 1);
+            sprite.setDepth(layout.depth + PLACED_ASSET_DEPTH.SEAT_COVER_STEP);
+            sprite.setName(item.id);
+            sprite.setCrop(0, cover.y, asset.sprite.w, cover.height);
             if (animated) sprite.play(animationKey);
             sprites.push(sprite);
         }

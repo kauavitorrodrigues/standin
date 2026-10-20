@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    AVATAR,
     TILE_CATEGORIES,
     WALL_PIECES,
     WALL_PIECE_EDGES,
@@ -72,6 +73,15 @@ describe("buildWallPreview", () => {
         const southBottom = 6 * 32;
         expect(behind.feetY).toBeLessThan(southBottom);
         expect(front.feetY).toBeGreaterThan(southBottom);
+    });
+
+    it("keeps the body of the avatar in front clear of the south wall", () => {
+        const meta = build();
+        const [style] = getWallStyles(meta);
+        const { avatars } = buildWallPreview(meta, style);
+        const front = avatars[1];
+        const southBottom = 6 * 32;
+        expect(front.feetY - AVATAR.body.h).toBeGreaterThanOrEqual(southBottom);
     });
 });
 
