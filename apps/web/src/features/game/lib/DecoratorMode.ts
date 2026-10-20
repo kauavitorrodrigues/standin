@@ -7,7 +7,7 @@ import { createObjectLookup } from "@/features/editor/utils/createObjectLookup";
 import { createSceneObjectSurface } from "@/features/editor/utils/createSceneObjectSurface";
 import { getObjectBounds } from "@/features/editor/utils/getObjectBounds";
 import { isEditable } from "@/features/editor/utils/isEditable";
-import { MAP_DRAG_CURSORS } from "@/features/game/consts/camera";
+import { MAP_CURSORS } from "@/features/game/consts/camera";
 import { DECORATOR_FOCUS_OFFSET_X_PX } from "@/features/game/consts/decorator";
 import type { EditorModel } from "@standin/contracts";
 import { DeskLockHover } from "@/features/game/lib/DeskLockHover";
@@ -105,7 +105,7 @@ export class DecoratorMode {
         this.router.destroy();
         this.options.store.clearSelectionAndPlacing();
         this.scene.setDecoratorGuards(null);
-        this.scene.game.canvas.style.cursor = MAP_DRAG_CURSORS.IDLE;
+        this.scene.game.canvas.style.cursor = MAP_CURSORS.IDLE;
     }
 
     // Selects the object and brings it into view. An id that is not on the

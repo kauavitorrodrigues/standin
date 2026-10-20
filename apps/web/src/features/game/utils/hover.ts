@@ -30,6 +30,7 @@ export const toHoverState = (
 
     return {
         id: target.id,
+        ...(target.label === undefined ? {} : { label: target.label }),
         screen: {
             x: Math.round((x - camera.worldView.x) * camera.zoom),
             y: Math.round((y - camera.worldView.y) * camera.zoom),

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import {
-    MAP_DRAG_CURSORS,
+    MAP_CURSORS,
     MAP_DRAG_THRESHOLD_PX,
 } from "@/features/game/consts/camera";
 import { OWN_AVATAR_TARGET_ID } from "@/features/game/consts/avatar-hover";
@@ -120,6 +120,6 @@ export class AvatarHoverController {
         }
         if (this.params.isCursorClaimed()) return;
 
-        canvas.style.cursor = MAP_DRAG_CURSORS.IDLE;
+        canvas.style.cursor = MAP_CURSORS.IDLE;
     }
 }

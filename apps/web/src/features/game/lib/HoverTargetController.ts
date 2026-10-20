@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import {
-    MAP_DRAG_CURSORS,
+    MAP_CURSORS,
     MAP_DRAG_THRESHOLD_PX,
 } from "@/features/game/consts/camera";
 import { HOVER_OUTLINE } from "@/features/editor/consts/hover-outline";
@@ -29,6 +29,8 @@ export class HoverTargetController {
     // The local avatar is hovered for its cursor and click only, a box around
     // it would be noise.
     private readonly drawsOutline: boolean;
+    // A zone is outlined and named but leaves the cursor as the arrow.
+    private readonly setsCursor: boolean;
     private readonly outline: Phaser.GameObjects.Graphics;
     private targets: HoverTarget[] = [];
     // Off while the decorator is open, so a desk is a plain object to select.
@@ -44,11 +46,15 @@ export class HoverTargetController {
     constructor(
         scene: Phaser.Scene,
         event: string,
-        options: { drawsOutline: boolean } = { drawsOutline: true }
+        options: { drawsOutline: boolean; setsCursor: boolean } = {
+            drawsOutline: true,
+            setsCursor: true,
+        }
     ) {
         this.scene = scene;
         this.event = event;
         this.drawsOutline = options.drawsOutline;
+        this.setsCursor = options.setsCursor;
         this.outline = scene.add
             .graphics()
             .setDepth(HOVER_OUTLINE.DEPTH)
@@ -167,11 +173,12 @@ export class HoverTargetController {
 
     // Only on a change of target, so a drag in progress keeps its own cursor.
     private syncCursor(hover: HoverState | null): void {
+        if (!this.setsCursor) return;
         if (hover?.id === this.last?.id) return;
 
         this.scene.game.canvas.style.cursor = hover
             ? HOVER_OUTLINE.CURSOR
-            : MAP_DRAG_CURSORS.IDLE;
+            : MAP_CURSORS.IDLE;
     }
 
     // Where the selected target is on the canvas, or null with none. Only a
