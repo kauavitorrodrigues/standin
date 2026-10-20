@@ -1,7 +1,6 @@
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import {
     ArrowLeftIcon,
-    PaletteIcon,
     PersonStandingIcon,
     ShirtIcon,
     UserIcon,
@@ -29,7 +28,7 @@ export const AvatarKindStep = () => {
         <PageContainer.Root>
             <PageContainer.Header
                 title="Novo cadastro"
-                description="Peças, cores, avatares base e manequins do editor de avatar."
+                description="Peças, avatares base e manequins do editor de avatar."
                 controls={
                     <Button
                         variant="outline"
@@ -45,20 +44,14 @@ export const AvatarKindStep = () => {
                     icon={ShirtIcon}
                     title="O que você quer cadastrar?"
                     message="Escolha uma opção. Cada tipo tem os próprios arquivos e o próprio formulário."
-                    actionClassName="max-w-3xl"
+                    actionClassName="max-w-5xl"
                     action={
-                        <div className="grid w-full gap-3 sm:grid-cols-2">
+                        <div className="grid w-full gap-3 sm:grid-cols-3">
                             <KindOptionCard
                                 icon={ShirtIcon}
                                 title="Peça"
                                 description="Roupa, cabelo ou acessório, com a primeira cor."
                                 onClick={() => choose(AVATAR_NEW_KINDS.PART)}
-                            />
-                            <KindOptionCard
-                                icon={PaletteIcon}
-                                title="Cor de uma peça"
-                                description="Outra cor de uma peça que já existe."
-                                onClick={() => choose(AVATAR_NEW_KINDS.COLOR)}
                             />
                             <KindOptionCard
                                 icon={UserIcon}
