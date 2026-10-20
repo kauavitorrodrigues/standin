@@ -22,7 +22,7 @@ export const AvatarDiscardDialog = ({
     onConfirm,
 }: AvatarDiscardDialogProps) => (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border border-border">
             <AlertDialogHeader>
                 <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
                 <AlertDialogDescription>
