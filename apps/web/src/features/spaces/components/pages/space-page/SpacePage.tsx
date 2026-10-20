@@ -10,6 +10,7 @@ import { GameCanvas } from "@/features/game/components/GameCanvas";
 import { GameControls } from "@/features/game/components/GameControls";
 import { RoomHeader } from "@/features/game/components/RoomHeader";
 import { WalkChip } from "@/features/game/components/WalkChip";
+import { ZoneLabel } from "@/features/game/components/ZoneLabel";
 import { useWalkState } from "@/features/game/hooks/useWalkState";
 import { LockedDoorDialog } from "@/features/game/components/dialogs/LockedDoorDialog";
 import { RoomJoinRequests } from "@/features/game/components/RoomJoinRequests";
@@ -186,6 +187,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     />
                     <WalkChip isWalking={walk.isWalking} onCancel={walk.cancel} />
                     <LockedDoorDialog {...lockedDoor} />
+                    <ZoneLabel handle={handle} />
                     <DeskHoverCard
                         handle={handle}
                         spaceId={space.id}

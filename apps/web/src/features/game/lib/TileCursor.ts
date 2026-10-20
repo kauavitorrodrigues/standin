@@ -9,11 +9,13 @@ type Point = { x: number; y: number };
 
 type Params = {
     scene: Phaser.Scene;
-    // Whether an avatar can stand on the tile. Other tiles get no mark.
-    isWalkable: (cell: Cell) => boolean;
-    // Called with the tile of a double click, whether it is open or not: a
-    // closed one takes the avatar to the open tile closest to it.
-    onDoubleClick: (cell: Cell) => void;
+    // Whether the tile under the mouse gets the mark: an avatar can stand on it
+    // and it is not inside a desk or a named zone, which are outlined instead.
+    // The point is where the mouse is, in world px.
+    isMarkable: (cell: Cell, world: Point) => boolean;
+    // Called with the tile and the point of a double click, whether the tile is
+    // open or not: a closed one takes the avatar to the open tile closest to it.
+    onDoubleClick: (cell: Cell, world: Point) => void;
 };
 
 // Marks the tile under the mouse with four corners over a faint fill, and
@@ -120,7 +122,7 @@ export class TileCursor {
         }
 
         this.lastRelease = null;
-        this.params.onDoubleClick(getCellAt(world));
+        this.params.onDoubleClick(getCellAt(world), world);
     };
 
     // Where the mouse is on the map, in px, null when it is off the canvas.
@@ -142,7 +144,7 @@ export class TileCursor {
         if (!world) return null;
 
         const cell = getCellAt(world);
-        return this.params.isWalkable(cell) ? cell : null;
+        return this.params.isMarkable(cell, world) ? cell : null;
     }
 
     // The faint fill, on the tile under the mouse and on the tile of a walk.
