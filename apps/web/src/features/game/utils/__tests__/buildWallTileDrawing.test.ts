@@ -5,13 +5,11 @@ import { buildWallTileDrawing } from "@/features/game/utils/buildWallTileDrawing
 import { PLAIN_WALL_TILE } from "@/features/game/utils/wallTile";
 
 const MAP_HEIGHT = 640;
-const RADIUS = 8;
 
 // An avatar whose feet are at `feetY`.
 const avatarDepth = (feetY: number): number =>
     getAvatarDepth({
-        centerY: feetY - RADIUS,
-        radius: RADIUS,
+        feetY,
         mapHeightPx: MAP_HEIGHT,
         isSitting: false,
     });

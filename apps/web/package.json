@@ -10,6 +10,7 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "check-types": "tsc -b --noEmit",
+        "generate:avatar-sheets": "tsx scripts/generate-avatar-sheets.cts",
         "test": "vitest run",
         "env:load": "dotenv -e ../../.env --"
     },
@@ -53,6 +54,7 @@
         "@tailwindcss/vite": "4.3.3",
         "@tanstack/router-plugin": "1.168.35",
         "@types/node": "^24.13.3",
+        "@types/pngjs": "6.0.5",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.4",
         "@vitejs/plugin-basic-ssl": "2.3.0",
@@ -61,7 +63,9 @@
         "eslint": "^10.9.0",
         "fake-indexeddb": "6.2.5",
         "jsdom": "30.0.1",
+        "pngjs": "7.0.0",
         "tailwindcss": "4.3.3",
+        "tsx": "4.23.12",
         "typescript": "~6.0.2",
         "vite": "^8.2.2",
         "vitest": "4.1.10"

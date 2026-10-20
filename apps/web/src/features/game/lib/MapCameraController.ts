@@ -1,7 +1,14 @@
 import type Phaser from "phaser";
+import { AVATAR } from "@standin/contracts";
 import { MAP_CAMERA_CONFIG } from "@/features/game/consts/camera";
+import { cameraZoomPreference } from "@/features/game/lib/cameraZoomPreference";
 import { resolveClampedZoom } from "@/features/game/utils/zoom";
 import type { CameraState } from "@/features/game/types/game";
+
+// The followed point is the feet of the avatar. The view centers on the middle
+// of the visible body instead, so the body sits in the middle and not the feet.
+// The offset is in world px, so it does not change with the zoom.
+const FOLLOW_OFFSET_Y = AVATAR.visible.h / 2;
 
 export class MapCameraController {
     private readonly camera: Phaser.Cameras.Scene2D.Camera;
@@ -11,6 +18,9 @@ export class MapCameraController {
     private followOffsetXPixels: number =
         MAP_CAMERA_CONFIG.NO_HORIZONTAL_FOLLOW_OFFSET;
     private isFollowing = false;
+    // Where the running zoom tween is heading. Each wheel tick builds on it and
+    // not on the half-tweened camera zoom, so fast scrolling adds up.
+    private targetZoom: number | null = null;
 
     constructor(
         camera: Phaser.Cameras.Scene2D.Camera,
@@ -48,7 +58,7 @@ export class MapCameraController {
             MAP_CAMERA_CONFIG.FOLLOW_LERP,
             MAP_CAMERA_CONFIG.FOLLOW_LERP,
             this.resolveFollowOffsetX(),
-            MAP_CAMERA_CONFIG.NO_VERTICAL_FOLLOW_OFFSET
+            FOLLOW_OFFSET_Y
         );
         this.onStateChange(this.resolveState(this.camera.zoom));
     }
@@ -78,10 +88,14 @@ export class MapCameraController {
         this.camera.scrollY -= deltaY / this.camera.zoom;
     }
 
-    /** Applies the boot-time zoom: the larger of the configured default and the cover zoom. */
+    /** Applies the boot-time zoom: the one the player left last time, else the larger of the configured default and the cover zoom. */
     applyInitialZoom(): void {
         this.setZoomWithinBounds(
-            Math.max(MAP_CAMERA_CONFIG.DEFAULT_ZOOM, this.resolveCoverZoom())
+            cameraZoomPreference.get() ??
+                Math.max(
+                    MAP_CAMERA_CONFIG.DEFAULT_ZOOM,
+                    this.resolveCoverZoom()
+                )
         );
     }
 
@@ -130,6 +144,7 @@ export class MapCameraController {
             this.resolveMaxZoom()
         );
 
+        this.targetZoom = null;
         this.camera.setZoom(targetZoom);
         this.camera.followOffset.x = this.resolveFollowOffsetX();
         this.onStateChange(this.resolveState(targetZoom));
@@ -141,7 +156,7 @@ export class MapCameraController {
 
     private applyZoomDelta(delta: number): void {
         const targetZoom = resolveClampedZoom(
-            this.camera.zoom,
+            this.targetZoom ?? this.camera.zoom,
             delta,
             this.resolveMinZoom(),
             this.resolveMaxZoom()
@@ -152,6 +167,8 @@ export class MapCameraController {
             MAP_CAMERA_CONFIG.ZOOM_TWEEN_DURATION_MS
         );
         this.camera.followOffset.x = -this.followOffsetXPixels / targetZoom;
+        this.targetZoom = targetZoom;
+        cameraZoomPreference.set(targetZoom);
         this.onStateChange(this.resolveState(targetZoom));
     }
 }

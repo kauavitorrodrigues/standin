@@ -11,6 +11,7 @@ import {
     type Space,
     type User,
 } from "@standin/contracts";
+import { useQueryClient } from "@tanstack/react-query";
 import type Phaser from "phaser";
 import { socket } from "../socket";
 import { useSocketEvent } from "./useSocketEvent";
@@ -26,6 +27,7 @@ import {
     parsePeerMessage,
     removePeerId,
 } from "../utils/peer";
+import { MY_AVATAR_QUERY_KEY } from "@/features/avatar/consts/editor/queryKeys";
 import { useMicEnabled } from "@/features/media-devices/hooks/useMicEnabled";
 import { useLocalAudioStream } from "@/features/media-devices/hooks/useLocalAudioStream";
 import { useLocalCameraStream } from "@/features/media-devices/hooks/useLocalCameraStream";
@@ -33,6 +35,7 @@ import { useLocalScreenShare } from "@/features/media-devices/hooks/useLocalScre
 import { useOutputVolumePreference } from "@/features/media-devices/hooks/useOutputVolumePreference";
 import { useIceServers } from "./useIceServers";
 import { useRemoteVideos } from "./useRemoteVideos";
+import { useSpeakingUsers } from "./useSpeakingUsers";
 import { MEDIA_SLOTS, type PeerSignal } from "../types/transport";
 import { getMaxVideoPeers } from "@/features/settings/performance/lib/performanceValues";
 import { performanceSettingsPreference } from "@/features/settings/performance/lib/performanceSettingsPreferences";
@@ -75,6 +78,7 @@ export function useSpaceConnection({
     onDelete,
     onConfirm,
 }: UseSpaceConnectionOptions) {
+    const queryClient = useQueryClient();
     const [connectedPeerIds, setConnectedPeerIds] = useState<string[]>([]);
 
     const {
@@ -105,19 +109,25 @@ export function useSpaceConnection({
         iceServersRef.current = iceServers ?? [];
     }, [iceServers]);
 
-    // Raw ("is the mic/peer's stream actually detecting speech") state,
-    // kept apart from whether anyone is currently in range: the ring only
-    // ever reflects the AND of both, but each can change independently
-    // (SpeakingDetector fires on its own cadence, proximity on MapScene's
-    // throttled update()).
+    // Raw ("is the mic actually detecting speech") state of the local user,
+    // kept apart from whether anyone is currently in range: the user only
+    // counts as speaking when both are true, but each can change
+    // independently (SpeakingDetector fires on its own cadence, proximity on
+    // MapScene's throttled update()).
     const localSpeakingRawRef = useRef(false);
     const anyPeerAudibleRef = useRef(false);
 
-    const syncLocalSpeakingRing = useCallback(() => {
-        (game ? getMapScene(game) : null)?.player?.setSpeaking(
+    // Who is speaking, for the interface around the game. The avatars in the
+    // game do not show it.
+    const { speakingUserIds, setUserSpeaking, clearSpeakingUsers } =
+        useSpeakingUsers();
+
+    const syncLocalSpeaking = useCallback(() => {
+        setUserSpeaking(
+            userId,
             localSpeakingRawRef.current && anyPeerAudibleRef.current
         );
-    }, [game]);
+    }, [setUserSpeaking, userId]);
 
     // The server is the source of truth for which userId owns each
     // socketId (from space:joined/space:peer-joined). Every peer payload
@@ -136,6 +146,14 @@ export function useSpaceConnection({
     const getPeerUserId = useCallback(
         (socketId: string) => peerUserIdsRef.current[socketId],
         []
+    );
+    // A peer that leaves, or whose link closes, stops speaking.
+    const stopSpeakingOf = useCallback(
+        (socketId: string) => {
+            const peerUserId = peerUserIdsRef.current[socketId];
+            if (peerUserId) setUserSpeaking(peerUserId, false);
+        },
+        [setUserSpeaking]
     );
     const {
         remoteVideos,
@@ -219,6 +237,7 @@ export function useSpaceConnection({
                 // is a no-op for an id it doesn't have.
                 (game ? getMapScene(game) : null)?.removeRemoteAvatar(socketId);
                 remoteAudioManager.remove(socketId);
+                stopSpeakingOf(socketId);
                 remoteSpeakingDetectorsRef.current.get(socketId)?.stop();
                 remoteSpeakingDetectorsRef.current.delete(socketId);
                 removeRemoteVideoPeer(socketId);
@@ -237,10 +256,8 @@ export function useSpaceConnection({
                 remoteSpeakingDetectorsRef.current.get(socketId)?.stop();
                 const detector = new SpeakingDetector({
                     onSpeakingChange: (isSpeaking) => {
-                        (game ? getMapScene(game) : null)?.setRemoteSpeaking(
-                            socketId,
-                            isSpeaking
-                        );
+                        const peerUserId = peerUserIdsRef.current[socketId];
+                        if (peerUserId) setUserSpeaking(peerUserId, isSpeaking);
                     },
                 });
                 detector.start(stream);
@@ -357,24 +374,23 @@ export function useSpaceConnection({
         remoteAudioManager.setMasterVolume(outputVolume);
     }, [remoteAudioManager, outputVolume]);
 
-    // Local counterpart to the per-peer SpeakingDetector above: this client
-    // seeing its own avatar "speak", driven by the same local stream
-    // useLocalAudioStream captures. Gated by anyPeerAudibleRef (see
-    // syncLocalSpeakingRing) so it doesn't light up while talking to no one
-    // within range.
+    // Local counterpart to the per-peer SpeakingDetector above, driven by the
+    // same local stream useLocalAudioStream captures. Gated by
+    // anyPeerAudibleRef (see syncLocalSpeaking) so it doesn't count as
+    // speaking while talking to no one within range.
     useEffect(() => {
         if (!localStream) return;
 
         const detector = new SpeakingDetector({
             onSpeakingChange: (isSpeaking) => {
                 localSpeakingRawRef.current = isSpeaking;
-                syncLocalSpeakingRing();
+                syncLocalSpeaking();
             },
         });
         detector.start(localStream);
 
         return () => detector.stop();
-    }, [localStream, syncLocalSpeakingRing]);
+    }, [localStream, syncLocalSpeaking]);
 
     useSocketEvent("space:joined", ({ peers }) => {
         // A dropped-then-reconnected socket re-emits space:join (see the
@@ -386,6 +402,7 @@ export function useSpaceConnection({
         setConnectedPeerIds([]);
         clearRemoteVideos();
         manager.setLocalIdentity({ socketId: socket.id ?? "", userId });
+        clearSpeakingUsers();
 
         peerUserIdsRef.current = Object.fromEntries(
             peers.map((peer) => [peer.socketId, peer.userId])
@@ -396,7 +413,11 @@ export function useSpaceConnection({
         scene?.clearRemoteAvatars();
         peers.forEach((peer) => {
             manager.createConnection(peer.socketId, true);
-            scene?.spawnRemoteAvatar(peer.socketId);
+            scene?.spawnRemoteAvatar(
+                peer.socketId,
+                peer.userId,
+                peer.avatarSheetFileId
+            );
         });
     });
 
@@ -404,7 +425,27 @@ export function useSpaceConnection({
         peerUserIdsRef.current[peer.socketId] = peer.userId;
         syncOnlineUserIds();
         manager.createConnection(peer.socketId, false);
-        (game ? getMapScene(game) : null)?.spawnRemoteAvatar(peer.socketId);
+        (game ? getMapScene(game) : null)?.spawnRemoteAvatar(
+            peer.socketId,
+            peer.userId,
+            peer.avatarSheetFileId
+        );
+    });
+
+    // Someone saved or cleared their avatar. The sprite is swapped in the
+    // running scene, with no refresh. The local player is also redrawn from the
+    // cached avatar (see useLocalAvatarSheet), so the cache is refreshed here
+    // for a change made from another tab.
+    useSocketEvent("space:avatar-changed", (change) => {
+        if (change.userId === userId) {
+            queryClient.invalidateQueries({ queryKey: [MY_AVATAR_QUERY_KEY] });
+            return;
+        }
+
+        (game ? getMapScene(game) : null)?.setRemoteAvatarSheet(
+            change.userId,
+            change.avatarSheetFileId
+        );
     });
 
     useSocketEvent("webrtc:signal", ({ fromSocketId, signal }) => {
@@ -415,6 +456,7 @@ export function useSpaceConnection({
     });
 
     useSocketEvent("space:peer-left", ({ socketId }) => {
+        stopSpeakingOf(socketId);
         delete peerUserIdsRef.current[socketId];
         syncOnlineUserIds();
         manager.destroy(socketId);
@@ -451,12 +493,12 @@ export function useSpaceConnection({
             );
             // No one within range: gate the outgoing mic track (on top of
             // the user's own mute toggle) and re-check the local speaking
-            // ring, which shouldn't stay lit just because someone was
+            // state, which shouldn't stay on just because someone was
             // nearby a moment ago.
             scene?.setProximityListener((anyPeerAudible) => {
                 anyPeerAudibleRef.current = anyPeerAudible;
                 setProximityGate(anyPeerAudible);
-                syncLocalSpeakingRing();
+                syncLocalSpeaking();
             });
             // Decides, per peer, whether it may receive our audio and video
             // (see getPeerMediaPolicies). The previous set of video
@@ -500,7 +542,7 @@ export function useSpaceConnection({
         remoteAudioManager,
         getPeerUserId,
         setProximityGate,
-        syncLocalSpeakingRing,
+        syncLocalSpeaking,
     ]);
 
     useEffect(() => {
@@ -594,6 +636,7 @@ export function useSpaceConnection({
     return {
         connectedPeerIds,
         onlineUserIds,
+        speakingUserIds,
         localAudioError,
         video: {
             remoteVideos,

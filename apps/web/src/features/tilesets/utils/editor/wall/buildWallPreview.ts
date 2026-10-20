@@ -1,4 +1,5 @@
 import {
+    AVATAR,
     TILE_SIZE,
     WALL_PIECES,
     type TileMeta,
@@ -35,6 +36,9 @@ export const WALL_PREVIEW_ROWS = 7;
 const NORTH_ROW = 1;
 const SOUTH_ROW = 5;
 const LAST_COL = WALL_PREVIEW_COLS - 1;
+// The gap in px between the feet of an avatar of the test room and the south
+// wall, on the side where it stands.
+const WALL_GAP_PX = 2;
 
 // Where each piece sits in the test room, the outline of a small room.
 const getRing = (): { piece: WallPiece; col: number; row: number }[] => {
@@ -74,14 +78,20 @@ export const buildWallPreview = (
         }
         return placed;
     });
+    const southTop = SOUTH_ROW * TILE_SIZE;
     const southBottom = (SOUTH_ROW + 1) * TILE_SIZE;
     const middle = Math.floor(WALL_PREVIEW_COLS / 2) * TILE_SIZE;
 
     return {
         tiles,
         avatars: [
-            { label: "atrás", x: middle, feetY: southBottom - TILE_SIZE - 2 },
-            { label: "na frente", x: middle, feetY: southBottom + 20 },
+            { label: "atrás", x: middle, feetY: southTop - WALL_GAP_PX },
+            {
+                label: "na frente",
+                x: middle,
+                // The whole body is under the wall, so it is not cut by it.
+                feetY: southBottom + AVATAR.body.h + WALL_GAP_PX,
+            },
         ],
         cols: WALL_PREVIEW_COLS,
         rows: WALL_PREVIEW_ROWS,

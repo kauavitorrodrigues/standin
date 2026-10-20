@@ -57,6 +57,13 @@
       "when": 1792002339944,
       "tag": "0007_add_asset_footprint_masks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792106624259,
+      "tag": "0008_add_avatar_parts_bases_and_sheets",
+      "breakpoints": true
     }
   ]
 }

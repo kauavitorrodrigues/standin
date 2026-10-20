@@ -3,6 +3,7 @@ import type { Response } from "express";
 import {
     LAYOUT_ISSUE_CODES,
     LayoutValidationError,
+    AvatarBaseInvalidError,
     LockNotHeldError,
     MapLockedError,
     PublishTooManyOpsError,
@@ -127,6 +128,19 @@ describe("sendError", () => {
         expect(json).toHaveBeenCalledWith({
             error: "The draft has too many operations to publish at once.",
             code: "OP_TOO_LARGE",
+        });
+    });
+
+    it("answers any other contract error with its message and code", () => {
+        const { res, status, json } = createResponse();
+
+        vi.spyOn(console, "error").mockImplementation(() => undefined);
+        sendError({ res, reportError: new AvatarBaseInvalidError() });
+
+        expect(status).toHaveBeenCalledWith(422);
+        expect(json).toHaveBeenCalledWith({
+            error: "The avatar base is invalid.",
+            code: "AVATAR_BASE_INVALID",
         });
     });
 });

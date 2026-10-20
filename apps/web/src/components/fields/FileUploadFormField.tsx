@@ -3,6 +3,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FieldHint } from "./FieldHint";
+import { LargeFileUploadItem } from "./LargeFileUploadItem";
 import {
     FileUpload,
     FileUploadDropzone,
@@ -27,7 +28,10 @@ type Props = {
     renderPreview?: (file: File) => React.ReactNode;
     hideDropzoneWhenFilled?: boolean;
     compact?: boolean;
+    // Swaps the dropzone for the chosen image alone, big and centered.
+    largePreview?: boolean;
     dropzoneClassName?: string;
+    className?: string;
 };
 
 export const FileUploadFormField = ({
@@ -46,12 +50,15 @@ export const FileUploadFormField = ({
     renderPreview,
     hideDropzoneWhenFilled,
     compact,
+    largePreview,
     dropzoneClassName,
+    className,
 }: Props) => {
-    const showDropzone = !hideDropzoneWhenFilled || value.length === 0;
+    const hideWhenFilled = hideDropzoneWhenFilled || largePreview;
+    const showDropzone = !hideWhenFilled || value.length === 0;
 
     return (
-        <Field data-invalid={!!error}>
+        <Field data-invalid={!!error} className={className}>
             <div className="flex items-center gap-1.5">
                 <FieldLabel htmlFor={id} className="w-auto">
                     {label} {required && <span aria-hidden>*</span>}
@@ -91,24 +98,34 @@ export const FileUploadFormField = ({
                     </FileUploadDropzone>
                 )}
                 <div role="list" className="flex flex-col gap-2">
-                    {value.map((file) => (
-                        <FileUploadItem
-                            key={`${file.name}-${file.lastModified}`}
-                            value={file}
-                        >
-                            <FileUploadItemPreview render={renderPreview} />
-                            <div className="min-w-0 flex-1 truncate text-sm">
-                                {file.name}
-                            </div>
-                            <FileUploadItemDelete
-                                render={
-                                    <Button variant="ghost" size="icon-sm">
-                                        <XIcon />
-                                    </Button>
-                                }
-                            />
-                        </FileUploadItem>
-                    ))}
+                    {value.map((file) => {
+                        if (largePreview) {
+                            return (
+                                <LargeFileUploadItem
+                                    key={`${file.name}-${file.lastModified}`}
+                                    file={file}
+                                />
+                            );
+                        }
+                        return (
+                            <FileUploadItem
+                                key={`${file.name}-${file.lastModified}`}
+                                value={file}
+                            >
+                                <FileUploadItemPreview render={renderPreview} />
+                                <div className="min-w-0 flex-1 truncate text-sm">
+                                    {file.name}
+                                </div>
+                                <FileUploadItemDelete
+                                    render={
+                                        <Button variant="ghost" size="icon-sm">
+                                            <XIcon />
+                                        </Button>
+                                    }
+                                />
+                            </FileUploadItem>
+                        );
+                    })}
                 </div>
             </FileUpload>
             <FieldError errors={error ? [{ message: error }] : []} />

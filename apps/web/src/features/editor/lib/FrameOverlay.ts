@@ -1,6 +1,13 @@
 import Phaser from "phaser";
-import { TILE_SIZE } from "@standin/contracts";
-import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
+import { AVATAR, TILE_SIZE } from "@standin/contracts";
+import { AVATAR_PUBLIC_SHEETS } from "@/features/avatar/consts/paths";
+import { AVATAR_GHOST_TEXTURE_KEY } from "@/features/avatar/consts/textures";
+import { AVATAR_DIAGNOSTIC_MESSAGES } from "@/features/avatar/consts/diagnostics";
+import { ensureAvatarTexture } from "@/features/avatar/lib/ensureAvatarTexture";
+import {
+    AVATAR_FIRST_FRAME,
+    AVATAR_SPRITE_ORIGIN,
+} from "@/features/game/consts/avatar-sprite";
 import { EDITOR_FRAME, FRAME_AVATAR } from "@/features/editor/consts/frame";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import type { FrameStore } from "@/features/editor/lib/FrameStore";
@@ -26,7 +33,8 @@ export class FrameOverlay {
     private readonly dim: Phaser.GameObjects.Graphics;
     private readonly marks: Phaser.GameObjects.Graphics;
     private readonly border: Phaser.GameObjects.Graphics;
-    private readonly avatar: Phaser.GameObjects.Graphics;
+    // The ghost beside the frame, made once its texture is loaded.
+    private avatar: Phaser.GameObjects.Image | null = null;
     private readonly avatarLabel: Phaser.GameObjects.Text;
     private readonly unsubscribers: (() => void)[] = [];
     private zoom: number;
@@ -49,7 +57,6 @@ export class FrameOverlay {
         this.marks = scene.add.graphics().setDepth(EDITOR_FRAME.MARK_DEPTH);
         this.border = scene.add.graphics().setDepth(EDITOR_FRAME.BORDER_DEPTH);
 
-        this.avatar = scene.add.graphics().setDepth(EDITOR_FRAME.BORDER_DEPTH);
         this.avatarLabel = scene.add
             .text(0, 0, FRAME_AVATAR.LABEL, {
                 color: FRAME_AVATAR.LABEL_COLOR,
@@ -62,6 +69,21 @@ export class FrameOverlay {
         // The game renders pixel art with nearest filtering, which would break the
         // edges of text, so the label asks for smooth scaling.
         this.avatarLabel.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+
+        // The textures event below draws the ghost once it arrives.
+        ensureAvatarTexture(
+            scene,
+            { key: AVATAR_GHOST_TEXTURE_KEY, url: AVATAR_PUBLIC_SHEETS.GHOST },
+            {
+                onReady: () => {},
+                onError: () =>
+                    console.error(
+                        AVATAR_DIAGNOSTIC_MESSAGES.ghostLoadFailed(
+                            AVATAR_PUBLIC_SHEETS.GHOST
+                        )
+                    ),
+            }
+        );
 
         this.unsubscribers.push(
             store.subscribe(this.redraw),
@@ -83,7 +105,7 @@ export class FrameOverlay {
         this.dim.destroy();
         this.marks.destroy();
         this.border.destroy();
-        this.avatar.destroy();
+        this.avatar?.destroy();
         this.avatarLabel.destroy();
     }
 
@@ -191,15 +213,27 @@ export class FrameOverlay {
         }
     }
 
-    // The player, as the game draws it, on the left of the bottom of the frame.
+    // The ghost the game draws for a player, standing with its feet on the
+    // bottom line of the frame, on the left of it. The first frame of its sheet
+    // is the idle one, facing down.
     private drawAvatar(rect: TileRect): void {
-        const radius = PLAYER_APPEARANCE.RADIUS;
-        const x = rect.x * TILE_SIZE - FRAME_AVATAR.GAP - radius;
-        const y = (rect.y + rect.h) * TILE_SIZE - radius;
+        const x = rect.x * TILE_SIZE - FRAME_AVATAR.GAP - AVATAR.visible.w / 2;
+        const feetY = (rect.y + rect.h) * TILE_SIZE;
 
-        this.avatar.clear();
-        this.avatar.fillStyle(PLAYER_APPEARANCE.COLOR, FRAME_AVATAR.ALPHA);
-        this.avatar.fillCircle(x, y, radius);
-        this.avatarLabel.setPosition(x, y + radius + FRAME_AVATAR.LABEL_GAP);
+        this.avatarLabel.setPosition(x, feetY + FRAME_AVATAR.LABEL_GAP);
+        this.ensureAvatarImage()?.setPosition(x, feetY);
+    }
+
+    // Null until the texture of the ghost is in the scene.
+    private ensureAvatarImage(): Phaser.GameObjects.Image | null {
+        if (this.avatar) return this.avatar;
+        if (!this.scene.textures.exists(AVATAR_GHOST_TEXTURE_KEY)) return null;
+
+        this.avatar = this.scene.add
+            .image(0, 0, AVATAR_GHOST_TEXTURE_KEY, AVATAR_FIRST_FRAME)
+            .setOrigin(AVATAR_SPRITE_ORIGIN.x, AVATAR_SPRITE_ORIGIN.y)
+            .setAlpha(FRAME_AVATAR.ALPHA)
+            .setDepth(EDITOR_FRAME.BORDER_DEPTH);
+        return this.avatar;
     }
 }

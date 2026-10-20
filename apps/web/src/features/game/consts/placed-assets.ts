@@ -21,6 +21,11 @@ export const PLACED_ASSET_DEPTH = {
     // An avatar that sits draws over everything, since it is in the seat and
     // the piece it sits on must not cover it.
     SEATED_AVATAR: 20,
+    // An avatar sat on a piece draws just over the piece, and the front of the
+    // piece (see `buildSeatCover`) draws just over the avatar, so the piece
+    // hides its legs. Both stay under any object whose base is a pixel lower.
+    SEATED_ON_PIECE_STEP: 0.003,
+    SEAT_COVER_STEP: 0.004,
     // The foreground layer, the ceilings and the tiles above everything, draws
     // over every object and avatar, the seated one included. It stays under
     // the room dim (50) and the interaction hints (100).

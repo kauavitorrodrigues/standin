@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import {
+    AVATAR,
     LAYOUT_LAYER_NAMES,
     ROOM_DOOR_STATES,
     type AssetDefinition,
@@ -41,6 +42,7 @@ import {
     bindPlayerCollision,
     bindPlayerInteractions,
 } from "@/features/game/utils/player";
+import { findSeatDepth } from "@/features/game/utils/findSeatDepth";
 import { SeatController } from "@/features/game/lib/SeatController";
 import { SeatOccupancy } from "@/features/game/lib/SeatOccupancy";
 import {
@@ -75,8 +77,13 @@ import type {
     RoomDoorStates,
     RoomEntitlements,
 } from "@/features/game/types/room";
-import { PLAYER_APPEARANCE } from "@/features/game/consts/player";
-import { REMOTE_AVATAR_APPEARANCE } from "@/features/game/consts/remote-avatar";
+import { AVATAR_GHOST_TEXTURE_KEY } from "@/features/avatar/consts/textures";
+import { loadGhostTexture } from "@/features/avatar/lib/loadGhostTexture";
+import { AvatarTextureRegistry } from "@/features/avatar/lib/AvatarTextureRegistry";
+import { buildAvatarSheetUrl } from "@/features/avatar/lib/buildAvatarSheetUrl";
+import { AvatarSheetBinder } from "@/features/game/lib/AvatarSheetBinder";
+import { LOCAL_AVATAR_BINDING_ID } from "@/features/game/consts/avatar-sprite";
+import { registerAvatarAnimations } from "@/features/avatar/lib/registerAvatarAnimations";
 import {
     findNearestFreeCell,
     isPositionBlocked,
@@ -84,8 +91,11 @@ import {
 import { hasPlacedChanges } from "@/features/game/utils/hasPlacedChanges";
 import { PlacedObjectsSync } from "@/features/game/lib/PlacedObjectsSync";
 import { SolidColliders } from "@/features/game/lib/SolidColliders";
+import { AvatarOutline } from "@/features/game/lib/AvatarOutline";
+import { getSelectedStateEvent } from "@/features/game/utils/hover";
 import { HoverTargetController } from "@/features/game/lib/HoverTargetController";
 import { DESK_EVENTS } from "@/features/game/consts/desk";
+import { PLAYER_EVENTS, PLAYER_HOVER_ID } from "@/features/game/consts/player";
 import { resolveDefaultSpawnPoint } from "@/features/game/utils/map";
 import type { MapSceneInitData } from "@/features/game/types/tilemap";
 import { SEND_INTERVAL_MS } from "@/features/game/multiplayer/consts/sync";
@@ -104,7 +114,17 @@ export class MapScene extends Phaser.Scene {
     private interactionController: InteractionController | null = null;
     private seatController: SeatController | null = null;
     private deskHoverController: HoverTargetController | null = null;
+    private playerHoverController: HoverTargetController | null = null;
+    private playerOutline: AvatarOutline | null = null;
+    // The mouse is on the local avatar, or its card is open.
+    private isPlayerHovered = false;
+    private isPlayerSelected = false;
     private remoteAvatars = new Map<string, RemoteAvatar>();
+    // Loads, shares and destroys the sheets of the avatars of this scene.
+    private avatarSheets: AvatarSheetBinder | null = null;
+    // The sheet of the local player, kept for when it arrives before the
+    // player exists. Null is the ghost.
+    private localAvatarSheetFileId: string | null = null;
     private seatOccupancy = new SeatOccupancy();
     private spawnPoint = { x: 0, y: 0 };
     private broadcastLocalPosition: ((state: PlayerPosition) => void) | null =
@@ -112,12 +132,8 @@ export class MapScene extends Phaser.Scene {
     private updateRemoteVolume:
         ((socketId: string, volume: number) => void) | null = null;
     private lastVolumeUpdateAt = 0;
-    // Whether each remote peer is currently within MAX_AUDIBLE_RADIUS, kept
-    // separate from the raw "is this peer's mic detecting speech" flag. A
-    // peer's ring only lights up when they're actually audible, otherwise
-    // you'd see someone "talking" while too far away to hear them.
-    private remoteAudible = new Map<string, boolean>();
-    private remoteSpeakingRaw = new Map<string, boolean>();
+    // The user id of each remote peer, to find its avatar sheet.
+    private remoteUserIds = new Map<string, string>();
     private anyPeerAudible = false;
     private proximityListener: ((anyPeerAudible: boolean) => void) | null =
         null;
@@ -164,6 +180,7 @@ export class MapScene extends Phaser.Scene {
 
     preload(): void {
         loadMapAssets(this.load, this.mapData);
+        loadGhostTexture(this);
         this.load.image(ROOM_DOOR_PADLOCK.TEXTURE_KEY, padlockUrl);
     }
 
@@ -173,6 +190,7 @@ export class MapScene extends Phaser.Scene {
         const assets = this.mapData.assets ?? [];
         ensureAssetTextures(this.textures, assets);
         registerAssetAnimations(this, assets);
+        registerAvatarAnimations(this, AVATAR_GHOST_TEXTURE_KEY);
 
         const tileLayers = renderTileLayers(tilemap, tilesets, {
             skip: [LAYOUT_LAYER_NAMES.WALLS],
@@ -214,6 +232,10 @@ export class MapScene extends Phaser.Scene {
             spawnPoint.y,
             tilemap.heightInPixels
         );
+        this.avatarSheets = new AvatarSheetBinder(
+            new AvatarTextureRegistry(this, buildAvatarSheetUrl)
+        );
+        this.setLocalAvatarSheet(this.localAvatarSheetFileId);
 
         this.seatController = new SeatController(
             this.player,
@@ -231,6 +253,34 @@ export class MapScene extends Phaser.Scene {
             this,
             DESK_EVENTS.HOVER_CHANGED
         );
+
+        // Created after the desk one on purpose: a click on the avatar is a
+        // click on the empty map for the desks, which closes the profile card,
+        // and the avatar one runs after it to open it again.
+        this.playerHoverController = new HoverTargetController(
+            this,
+            PLAYER_EVENTS.HOVER_CHANGED,
+            { drawsOutline: false }
+        );
+
+        this.playerOutline = new AvatarOutline(this, this.player.gameObject);
+        const onPlayerHover = (hover: unknown) => {
+            this.isPlayerHovered = hover !== null;
+        };
+        const onPlayerSelected = (selected: unknown) => {
+            this.isPlayerSelected = selected !== null;
+        };
+        const selectedEvent = getSelectedStateEvent(
+            PLAYER_EVENTS.HOVER_CHANGED
+        );
+        this.game.events.on(PLAYER_EVENTS.HOVER_CHANGED, onPlayerHover);
+        this.game.events.on(selectedEvent, onPlayerSelected);
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.game.events.off(PLAYER_EVENTS.HOVER_CHANGED, onPlayerHover);
+            this.game.events.off(selectedEvent, onPlayerSelected);
+            this.playerOutline?.destroy();
+            this.playerOutline = null;
+        });
 
         this.wallCells = buildWallCells(
             tilemap.getLayer(LAYOUT_LAYER_NAMES.WALLS)?.data ?? []
@@ -326,9 +376,10 @@ export class MapScene extends Phaser.Scene {
             });
             this.remoteAvatars.forEach((avatar) => avatar.destroy());
             this.remoteAvatars.clear();
+            this.avatarSheets?.releaseAll();
+            this.avatarSheets = null;
             this.seatOccupancy.clear();
-            this.remoteAudible.clear();
-            this.remoteSpeakingRaw.clear();
+            this.remoteUserIds.clear();
             this.unsubscribeRoomSync?.();
             this.roomDoorView?.destroy();
             this.roomDimOverlay?.destroy();
@@ -344,9 +395,10 @@ export class MapScene extends Phaser.Scene {
         this.seatController?.update();
         this.roomDoorController?.update();
         this.followCurrentRoom();
-        this.player?.updateDepth();
+        this.player?.update();
         this.interactionController?.update();
         this.deskHoverController?.update();
+        this.updatePlayerHover();
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
@@ -411,7 +463,7 @@ export class MapScene extends Phaser.Scene {
             seatAreas: this.seatAreas,
             isTaken: this.seatOccupancy.isTaken,
             solidRects: this.getSolidRects(),
-            radius: PLAYER_APPEARANCE.RADIUS,
+            body: AVATAR.body,
             wallCells: this.wallCells,
             doors: this.roomDoors,
         });
@@ -486,11 +538,34 @@ export class MapScene extends Phaser.Scene {
         this.roomDoorView?.apply(states);
     }
 
+    // The hit area of the avatar follows it, from the feet up.
+    private updatePlayerHover(): void {
+        const { player, playerHoverController } = this;
+        if (!player || !playerHoverController) return;
+
+        playerHoverController.setTargets([
+            {
+                id: PLAYER_HOVER_ID,
+                bounds: {
+                    x: player.x - AVATAR.hit.w / 2,
+                    y: player.y - AVATAR.hit.h,
+                    width: AVATAR.hit.w,
+                    height: AVATAR.hit.h,
+                },
+            },
+        ]);
+        playerHoverController.update();
+        this.playerOutline?.update(
+            this.isPlayerHovered || this.isPlayerSelected
+        );
+    }
+
     // The decorator takes the clicks on desks for its own selection, and may
     // hold the camera still for a press. `null` gives both back.
     setDecoratorGuards(guards: { canPan: () => boolean } | null): void {
         this.canPanCamera = guards?.canPan ?? (() => true);
         this.deskHoverController?.setEnabled(guards === null);
+        this.playerHoverController?.setEnabled(guards === null);
     }
 
     // Brings the objects on screen to a new list, drawing only what changed.
@@ -533,59 +608,91 @@ export class MapScene extends Phaser.Scene {
 
         const solidRects = this.getSolidRects();
         const bounds = this.physics.world.bounds;
-        const free = (point: { x: number; y: number }, radius: number) =>
-            isPositionBlocked(point, radius, solidRects)
+        const free = (point: { x: number; y: number }) =>
+            isPositionBlocked(point, AVATAR.body, solidRects)
                 ? findNearestFreeCell({
                     point,
                     solidRects,
-                    radius,
+                    body: AVATAR.body,
                     bounds,
                 })
                 : null;
 
-        const own = free(player, PLAYER_APPEARANCE.RADIUS);
+        const own = free(player);
         if (own) {
             player.standUp();
             player.teleportTo(own.x, own.y);
         }
 
         this.remoteAvatars.forEach((avatar) => {
-            const target = free(
-                avatar.gameObject,
-                REMOTE_AVATAR_APPEARANCE.RADIUS
-            );
+            const target = free(avatar.gameObject);
             if (target) avatar.move(target.x, target.y);
         });
     }
 
-    spawnRemoteAvatar(socketId: string): void {
+    spawnRemoteAvatar(
+        socketId: string,
+        userId: string,
+        avatarSheetFileId: string | null = null
+    ): void {
         if (this.remoteAvatars.has(socketId)) return;
 
-        this.remoteAvatars.set(
-            socketId,
-            new RemoteAvatar(
-                this,
-                this.spawnPoint.x,
-                this.spawnPoint.y,
-                this.mapHeightPx
-            )
+        const avatar = new RemoteAvatar(
+            this,
+            this.spawnPoint.x,
+            this.spawnPoint.y,
+            this.mapHeightPx
+        );
+        this.remoteAvatars.set(socketId, avatar);
+        this.remoteUserIds.set(socketId, userId);
+        this.avatarSheets?.bind(socketId, avatar, avatarSheetFileId);
+    }
+
+    // Draws the local player with the sheet of the avatar the person has now.
+    // Null is the ghost. Safe to call before the player exists, and again with
+    // the same sheet.
+    setLocalAvatarSheet(avatarSheetFileId: string | null): void {
+        this.localAvatarSheetFileId = avatarSheetFileId;
+        if (!this.player) return;
+
+        this.avatarSheets?.bind(
+            LOCAL_AVATAR_BINDING_ID,
+            this.player,
+            avatarSheetFileId
         );
     }
 
+    // Swaps the sprite of every avatar of a remote person, with no new scene.
+    // Used by space:avatar-changed.
+    setRemoteAvatarSheet(
+        userId: string,
+        avatarSheetFileId: string | null
+    ): void {
+        this.remoteUserIds.forEach((remoteUserId, socketId) => {
+            if (remoteUserId !== userId) return;
+
+            const avatar = this.remoteAvatars.get(socketId);
+            if (!avatar) return;
+            this.avatarSheets?.bind(socketId, avatar, avatarSheetFileId);
+        });
+    }
+
     removeRemoteAvatar(socketId: string): void {
+        this.avatarSheets?.release(socketId);
         this.remoteAvatars.get(socketId)?.destroy();
         this.remoteAvatars.delete(socketId);
         this.seatOccupancy.remove(socketId);
-        this.remoteAudible.delete(socketId);
-        this.remoteSpeakingRaw.delete(socketId);
+        this.remoteUserIds.delete(socketId);
     }
 
     clearRemoteAvatars(): void {
+        this.remoteAvatars.forEach((_avatar, socketId) =>
+            this.avatarSheets?.release(socketId)
+        );
         this.remoteAvatars.forEach((avatar) => avatar.destroy());
         this.remoteAvatars.clear();
         this.seatOccupancy.clear();
-        this.remoteAudible.clear();
-        this.remoteSpeakingRaw.clear();
+        this.remoteUserIds.clear();
     }
 
     setPositionBroadcaster(
@@ -607,24 +714,14 @@ export class MapScene extends Phaser.Scene {
         avatar.move(position.x, position.y);
         avatar.updateAnimation(position.direction);
         avatar.setSitting(position.isSitting);
+        avatar.setSeatDepth(
+            position.isSitting ? findSeatDepth(this.seatAreas, position) : null
+        );
         this.seatOccupancy.track(socketId, position);
     }
 
     setLocalSocketIdProvider(provider: (() => string) | null): void {
         this.seatOccupancy.setLocalSocketIdProvider(provider);
-    }
-
-    setRemoteSpeaking(socketId: string, isSpeaking: boolean): void {
-        // Guards against a SpeakingDetector callback landing after its peer's
-        // avatar was already removed (e.g. detector.stop() firing a final
-        // onSpeakingChange(false) during peer-left cleanup): without this,
-        // it would re-insert a socketId into remoteSpeakingRaw that
-        // removeRemoteAvatar/clearRemoteAvatars already cleaned up, leaking
-        // one entry per departed peer for the life of the session.
-        if (!this.remoteAvatars.has(socketId)) return;
-
-        this.remoteSpeakingRaw.set(socketId, isSpeaking);
-        this.applyRemoteSpeakingRing(socketId);
     }
 
     setProximityListener(
@@ -640,15 +737,6 @@ export class MapScene extends Phaser.Scene {
         listener: ((distances: ReadonlyMap<string, number>) => void) | null
     ): void {
         this.peerDistanceListener = listener;
-    }
-
-    private applyRemoteSpeakingRing(socketId: string): void {
-        const avatar = this.remoteAvatars.get(socketId);
-        if (!avatar) return;
-
-        const isSpeaking = this.remoteSpeakingRaw.get(socketId) ?? false;
-        const isAudible = this.remoteAudible.get(socketId) ?? false;
-        avatar.setSpeaking(isSpeaking && isAudible);
     }
 
     private emitLocalPosition(): void {
@@ -681,6 +769,7 @@ export class MapScene extends Phaser.Scene {
                     x: avatar.gameObject.x,
                     y: avatar.gameObject.y,
                 })?.key ?? null;
+            // The distance between the feet of the two avatars.
             const distance = getCommunicationDistance(
                 Phaser.Math.Distance.Between(
                     player.x,
@@ -696,12 +785,9 @@ export class MapScene extends Phaser.Scene {
                 distance,
                 MAX_AUDIBLE_RADIUS
             );
-            const isAudible = volume > 0;
-            if (isAudible) anyAudible = true;
+            if (volume > 0) anyAudible = true;
 
-            this.remoteAudible.set(socketId, isAudible);
             updateRemoteVolume(socketId, volume);
-            this.applyRemoteSpeakingRing(socketId);
         });
 
         this.peerDistanceListener?.(distances);

@@ -12,7 +12,12 @@ export const resolveSmoothingFactor = (delta: number): number =>
         (-REMOTE_AVATAR_APPEARANCE.POSITION_LERP_RATE * delta) / MS_PER_SECOND
     );
 
-export const resolveSittingAlpha = (isSitting: boolean): number =>
-    isSitting
-        ? REMOTE_AVATAR_APPEARANCE.SITTING_ALPHA
-        : REMOTE_AVATAR_APPEARANCE.DEFAULT_ALPHA;
+// Whether a remote avatar is walking: it is still some distance from the
+// position its peer last sent. Standing still, the smoothing settles under
+// the threshold within a few frames.
+export const isRemoteAvatarMoving = (
+    from: { x: number; y: number },
+    to: { x: number; y: number }
+): boolean =>
+    Math.hypot(to.x - from.x, to.y - from.y) >
+    REMOTE_AVATAR_APPEARANCE.MOVING_THRESHOLD_PX;

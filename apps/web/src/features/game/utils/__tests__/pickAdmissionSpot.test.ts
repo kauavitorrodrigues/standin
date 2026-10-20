@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
+import { AVATAR } from "@standin/contracts";
 import { pickAdmissionSpot } from "@/features/game/utils/pickAdmissionSpot";
 import type { SeatArea } from "@/features/game/utils/buildSeatAreas";
 
 const room = { key: "r", label: "R", x: 64, y: 64, width: 64, height: 64 };
 const footprint = { x: 64, y: 64, width: 32, height: 32 };
-const seat = (x: number, y: number) => ({ x, y, direction: "down" as const });
+const seat = (x: number, y: number) => ({
+    x,
+    y,
+    direction: "down" as const,
+    depth: 0,
+});
 const areas: SeatArea[] = [
     { footprint, seats: [seat(80, 80), seat(112, 112), seat(400, 400)] },
 ];
@@ -14,7 +20,7 @@ const base = {
     seatAreas: areas,
     isTaken: () => false,
     solidRects: [],
-    radius: 8,
+    body: AVATAR.body,
     wallCells: new Set<string>(),
     doors: [],
 };

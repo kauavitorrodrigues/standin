@@ -16,6 +16,7 @@
         "@standin/database": "workspace:*",
         "@standin/infra": "workspace:*",
         "bcryptjs": "3.0.3",
+        "pngjs": "7.0.0",
         "slugify": "1.6.9",
         "uuid": "14.0.2"
     },
@@ -23,6 +24,7 @@
         "@standin/tsconfig": "workspace:*",
         "@standin/vitest-config": "workspace:*",
         "@types/node": "26.4.0",
+        "@types/pngjs": "6.0.5",
         "typescript": "6.0.2",
         "vitest": "4.1.10"
     }

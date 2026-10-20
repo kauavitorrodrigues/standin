@@ -10,8 +10,9 @@ import { isWithinReach } from "@/features/game/utils/isWithinReach";
 // footprint before it can sit again, or it would sit back at once. A seat
 // holds one avatar: the taken ones are skipped, and when none is free the
 // avatar stays on its feet.
-// The position is checked every frame, not from the overlaps of the physics,
-// which only run on the frames that step it.
+// The position is the anchor of the avatar (its feet), and the seat is the
+// point where the anchor goes. It is checked every frame, not from the
+// overlaps of the physics, which only run on the frames that step it.
 export type SeatedPlayer = Pick<
     Player,
     "x" | "y" | "isSitting" | "moveAxis" | "sitAt" | "standUp" | "teleportTo"
@@ -38,7 +39,7 @@ export class SeatController {
     // The seat the avatar was sat at, to tell when its piece went away.
     private seat: SeatSpot | null = null;
     private area: SeatArea | null = null;
-    // Where the avatar was when it sat, to put it back if it loses the seat.
+    // Where the feet were when it sat, to put it back if it loses the seat.
     private restPoint: { x: number; y: number } | null = null;
 
     constructor(player: SeatedPlayer, rules: SeatRules = NO_RULES) {

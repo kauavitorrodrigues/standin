@@ -10,3 +10,4 @@ export * from "./assets";
 export * from "./game";
 export * from "./chat";
 export * from "./areas";
+export * from "./avatar";

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { TILE_SIZE } from "@standin/contracts";
+import { AVATAR, TILE_SIZE } from "@standin/contracts";
 import {
     findNearestFreeCell,
     isPositionBlocked,
 } from "@/features/game/utils/findNearestFreeCell";
 
 const bounds = { width: TILE_SIZE * 10, height: TILE_SIZE * 10 };
-const radius = 8;
+const body = AVATAR.body;
 const tile = (column: number, row: number) => ({
     x: column * TILE_SIZE,
     y: row * TILE_SIZE,
@@ -20,17 +20,26 @@ const center = (column: number, row: number) => ({
 
 describe("isPositionBlocked", () => {
     it("is blocked inside a solid and free away from it", () => {
-        expect(isPositionBlocked(center(3, 3), radius, [tile(3, 3)])).toBe(
-            true
-        );
-        expect(isPositionBlocked(center(6, 6), radius, [tile(3, 3)])).toBe(
-            false
-        );
+        expect(isPositionBlocked(center(3, 3), body, [tile(3, 3)])).toBe(true);
+        expect(isPositionBlocked(center(6, 6), body, [tile(3, 3)])).toBe(false);
     });
 
-    it("counts the radius: touching the edge blocks", () => {
-        const edge = { x: tile(3, 3).x - radius + 1, y: center(3, 3).y };
-        expect(isPositionBlocked(edge, radius, [tile(3, 3)])).toBe(true);
+    it("counts the width of the body: 1 px inside the edge blocks, touching does not", () => {
+        const solid = tile(3, 3);
+        const inside = { x: solid.x - body.w / 2 + 1, y: center(3, 3).y };
+        const touching = { x: solid.x - body.w / 2, y: center(3, 3).y };
+
+        expect(isPositionBlocked(inside, body, [solid])).toBe(true);
+        expect(isPositionBlocked(touching, body, [solid])).toBe(false);
+    });
+
+    it("counts the height of the body above the feet only", () => {
+        const solid = tile(3, 3);
+        const below = { x: center(3, 3).x, y: solid.y + solid.height + 4 };
+        const above = { x: center(3, 3).x, y: solid.y - 1 };
+
+        expect(isPositionBlocked(below, body, [solid])).toBe(true);
+        expect(isPositionBlocked(above, body, [solid])).toBe(false);
     });
 });
 
@@ -41,7 +50,7 @@ describe("findNearestFreeCell", () => {
         const free = findNearestFreeCell({
             point,
             solidRects: [tile(3, 3)],
-            radius,
+            body,
             bounds,
         });
 
@@ -54,7 +63,7 @@ describe("findNearestFreeCell", () => {
         const free = findNearestFreeCell({
             point: center(3, 3),
             solidRects,
-            radius,
+            body,
             bounds,
         });
 
@@ -65,7 +74,7 @@ describe("findNearestFreeCell", () => {
         const free = findNearestFreeCell({
             point: center(0, 0),
             solidRects: [tile(0, 0)],
-            radius,
+            body,
             bounds,
         });
 
@@ -78,7 +87,7 @@ describe("findNearestFreeCell", () => {
         const free = findNearestFreeCell({
             point: center(1, 1),
             solidRects: [{ x: 0, y: 0, ...bounds }],
-            radius,
+            body,
             bounds,
         });
 

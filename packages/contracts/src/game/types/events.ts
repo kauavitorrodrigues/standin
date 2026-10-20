@@ -38,6 +38,7 @@ export const SpaceEvents = {
     SPACE_PEER_JOINED: "space:peer-joined",
     SPACE_PEER_LEFT: "space:peer-left",
     SPACE_DUPLICATE_SESSION: "space:duplicate-session",
+    SPACE_AVATAR_CHANGED: "space:avatar-changed",
     WEBRTC_SIGNAL: "webrtc:signal",
 } as const;
 
@@ -61,6 +62,11 @@ export type SpaceJoinedPayload = {
 };
 
 export type PeerJoinedPayload = RemotePlayer;
+
+export type AvatarChangedPayload = {
+    userId: string;
+    avatarSheetFileId: string | null;
+};
 
 export type PeerLeftPayload = {
     socketId: string;
@@ -90,15 +96,15 @@ export type ClientToServerEvents = {
     "map:join": (payload: MapJoinPayload) => void;
     "editor:acquire": (
         payload: EditorLockPayload,
-        ack: (response: EditorAcquireAck) => void,
+        ack: (response: EditorAcquireAck) => void
     ) => void;
     "editor:heartbeat": (
         payload: EditorLockPayload,
-        ack: (response: EditorAck) => void,
+        ack: (response: EditorAck) => void
     ) => void;
     "editor:release": (
         payload: EditorLockPayload,
-        ack: (response: EditorAck) => void,
+        ack: (response: EditorAck) => void
     ) => void;
 };
 
@@ -111,6 +117,9 @@ export type ServerToClientEvents = {
     // a second tab). socket.io-client doesn't auto-reconnect after a
     // server-initiated disconnect, so no rejoin loop follows.
     "space:duplicate-session": () => void;
+    // The sheet of a person in the room was replaced or cleared. Null means
+    // the avatar was cleared and the person goes back to the ghost.
+    "space:avatar-changed": (payload: AvatarChangedPayload) => void;
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
     "room:state": (payload: RoomStatePayload) => void;
     "room:states": (payload: RoomStatesPayload) => void;

@@ -149,6 +149,28 @@ export const resolveAxis = (
     positiveActive: boolean
 ): number => Number(positiveActive) - Number(negativeActive);
 
+export type CardinalAxis = "x" | "y";
+
+// The avatar only walks in the four directions. Of the keys held, the first
+// one pressed wins: its axis stays locked until it is released, and the keys
+// of the other axis are ignored meanwhile. When several are pressed at once
+// from idle, the vertical axis wins.
+export const resolveCardinalAxis = (
+    axisX: number,
+    axisY: number,
+    lockedAxis: CardinalAxis | null
+): { x: number; y: number; lockedAxis: CardinalAxis | null } => {
+    if (lockedAxis === "x" && axisX !== 0) {
+        return { x: axisX, y: 0, lockedAxis };
+    }
+    if (lockedAxis === "y" && axisY !== 0) {
+        return { x: 0, y: axisY, lockedAxis };
+    }
+    if (axisY !== 0) return { x: 0, y: axisY, lockedAxis: "y" };
+    if (axisX !== 0) return { x: axisX, y: 0, lockedAxis: "x" };
+    return { x: 0, y: 0, lockedAxis: null };
+};
+
 export const normalizeToSpeed = (
     x: number,
     y: number,

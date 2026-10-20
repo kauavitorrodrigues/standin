@@ -1,8 +1,8 @@
 // Distance (in world/pixel units, same space as Player/RemoteAvatar
-// coordinates) beyond which a remote peer's audio is fully silent. Tuned
-// tight on purpose: avatars are 8px-radius circles, so 120px is only
-// about 7-8 avatar-widths, close to actually standing next to someone
-// rather than merely sharing a room.
+// coordinates, which are the feet of each avatar) beyond which a remote
+// peer's audio is fully silent. Tuned tight on purpose: avatars are narrower
+// than a tile, so 120px is only a few avatar-widths, close to actually
+// standing next to someone rather than merely sharing a room.
 export const MAX_AUDIBLE_RADIUS = 120;
 
 // RMS of getByteTimeDomainData, rescaled to a 0-255 range to stay in the
