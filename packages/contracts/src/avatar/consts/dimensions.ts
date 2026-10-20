@@ -4,8 +4,7 @@ import { PLAYER_DIRECTIONS } from "../../game/enums/player";
 // The sheet has the layout of the Gather avatar sheets, so sheets made for
 // one work in the other: a single row of 72 frames of 32 x 64 px, the body in
 // the lower half and the upper half free for hair and hats. The art is ours.
-// The rest is provisional until it is measured in the lab, see
-// `.claude/plans/avatars/plan.md` section 2.
+// The rest is provisional until it is measured in the lab.
 // Raise it on every change of the grid or of the size, because every part and
 // every assembled sheet depends on it.
 export const AVATAR_GRID_VERSION = 0;

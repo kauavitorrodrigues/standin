@@ -6,8 +6,7 @@ import { ALLOW_MARKER, findAvatarSizeLiterals } from "./findAvatarSizeLiterals";
 // The size of the avatar lives in `packages/contracts/src/avatar/consts/
 // dimensions.ts`, and nowhere else. This test reads the source of the web app
 // and fails when a size shows up as a literal, so a change of the frame or of
-// the body is a change in one file. See `.claude/plans/avatars/plan.md`,
-// section 2.
+// the body is a change in one file.
 const WEB_ROOT = resolve(import.meta.dirname, "../../../../..");
 
 // Folders scanned. The tileset and the editor features draw the avatar in

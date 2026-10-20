@@ -4,8 +4,7 @@ Every person has one avatar, the same in every space. It is a stack of parts
 (skin, hair, clothes, accessories) picked in a window copied from the Gather
 editor. Whoever has no avatar is drawn as a ghost.
 
-The full design is in `.claude/plans/avatars/plan.md`. This page is the short
-version for people who use or maintain the feature.
+This page is for people who use or maintain the feature.
 
 ## Who can do what
 
