@@ -42,6 +42,7 @@ export const NewPartForm = () => {
                         control={form.control}
                         idPrefix="new-part"
                         requireColor={false}
+                        hideDropzoneWhenFilled
                         disabled={isSubmitting}
                     />
                     <FormFooter

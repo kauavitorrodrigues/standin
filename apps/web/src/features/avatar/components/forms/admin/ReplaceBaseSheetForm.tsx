@@ -21,6 +21,7 @@ export const ReplaceBaseSheetForm = ({ base, onDone }: Props) => {
                 hint="Precisa ter o tamanho exato da grade do avatar, com fundo transparente."
                 required
                 disabled={isSubmitting}
+                hideDropzoneWhenFilled
             />
             <FormDialogControls
                 submitLabel="Salvar imagem"

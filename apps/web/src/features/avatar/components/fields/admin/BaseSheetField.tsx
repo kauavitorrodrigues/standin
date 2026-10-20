@@ -24,6 +24,7 @@ export const BaseSheetField = ({ control, kind, disabled }: Props) => {
                     hint="O corpo vazio, na grade do avatar e com fundo transparente. As peças são desenhadas em volta dele."
                     required
                     disabled={disabled}
+                    hideDropzoneWhenFilled
                 />
             );
         case AVATAR_BASE_KINDS.MANNEQUIN:
@@ -36,6 +37,7 @@ export const BaseSheetField = ({ control, kind, disabled }: Props) => {
                     hint="O boneco sem roupa que recebe as peças na prévia, na grade do avatar e com fundo transparente."
                     required
                     disabled={disabled}
+                    hideDropzoneWhenFilled
                 />
             );
     }

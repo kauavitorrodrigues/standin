@@ -86,6 +86,7 @@ export const NewBaseForm = ({ kind }: Props) => {
                         id="new-base-preview"
                         label="Imagem da lista (opcional)"
                         disabled={isSubmitting}
+                        hideDropzoneWhenFilled
                     />
                     <BaseDefaultField
                         control={form.control}
