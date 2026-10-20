@@ -1,14 +1,15 @@
 import { useEffect, useRef } from "react";
 import type { PixelRect } from "../types/editor";
+import { AVATAR_EDITOR_MESSAGES } from "../consts/editor/messages";
 import { getOpaqueBounds } from "../utils/getOpaqueBounds";
 
-const loadImage = (url: string) =>
-    new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = reject;
-        image.src = url;
-    });
+// Fetched and decoded as a bitmap, like the sheets, so an API on another
+// origin does not taint the canvas that is read back for the trim.
+const loadImage = async (url: string): Promise<ImageBitmap> => {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(AVATAR_EDITOR_MESSAGES.SHEET_LOAD_FAILED);
+    return createImageBitmap(await response.blob());
+};
 
 // Draws a sprite cropped to a rect of its sheet (the whole image when there
 // is none) and then trimmed to the box of its own non-transparent pixels. A
@@ -24,13 +25,16 @@ export const useTrimmedSprite = (front: string, rect: PixelRect | null) => {
 
         const draw = async () => {
             const images = await Promise.all([loadImage(front)]);
-            if (cancelled) return;
+            if (cancelled) {
+                images[0].close();
+                return;
+            }
 
             const crop = rect ?? {
                 x: 0,
                 y: 0,
-                w: images[0].naturalWidth,
-                h: images[0].naturalHeight,
+                w: images[0].width,
+                h: images[0].height,
             };
 
             const source = document.createElement("canvas");
@@ -50,6 +54,7 @@ export const useTrimmedSprite = (front: string, rect: PixelRect | null) => {
                     crop.w,
                     crop.h
                 );
+                image.close();
             }
 
             const bounds = getOpaqueBounds(
