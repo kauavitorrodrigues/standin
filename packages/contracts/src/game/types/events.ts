@@ -39,6 +39,7 @@ export const SpaceEvents = {
     SPACE_PEER_LEFT: "space:peer-left",
     SPACE_DUPLICATE_SESSION: "space:duplicate-session",
     SPACE_AVATAR_CHANGED: "space:avatar-changed",
+    SPACE_NAME_CHANGED: "space:name-changed",
     WEBRTC_SIGNAL: "webrtc:signal",
 } as const;
 
@@ -66,6 +67,11 @@ export type PeerJoinedPayload = RemotePlayer;
 export type AvatarChangedPayload = {
     userId: string;
     avatarSheetFileId: string | null;
+};
+
+export type NameChangedPayload = {
+    userId: string;
+    name: string;
 };
 
 export type PeerLeftPayload = {
@@ -120,6 +126,9 @@ export type ServerToClientEvents = {
     // The sheet of a person in the room was replaced or cleared. Null means
     // the avatar was cleared and the person goes back to the ghost.
     "space:avatar-changed": (payload: AvatarChangedPayload) => void;
+    // A person in the room renamed themselves, so the tag over their avatar
+    // changes with no refresh.
+    "space:name-changed": (payload: NameChangedPayload) => void;
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
     "room:state": (payload: RoomStatePayload) => void;
     "room:states": (payload: RoomStatesPayload) => void;

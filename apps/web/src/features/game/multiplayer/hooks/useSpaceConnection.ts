@@ -27,6 +27,8 @@ import {
     parsePeerMessage,
     removePeerId,
 } from "../utils/peer";
+import { applyNameChange } from "@/features/game/multiplayer/utils/applyNameChange";
+import { getMeQueryOptions } from "@/features/auth/queries/getMe";
 import { MY_AVATAR_QUERY_KEY } from "@/features/avatar/consts/editor/queryKeys";
 import { useMicEnabled } from "@/features/media-devices/hooks/useMicEnabled";
 import { useLocalAudioStream } from "@/features/media-devices/hooks/useLocalAudioStream";
@@ -416,7 +418,8 @@ export function useSpaceConnection({
             scene?.spawnRemoteAvatar(
                 peer.socketId,
                 peer.userId,
-                peer.avatarSheetFileId
+                peer.avatarSheetFileId,
+                { name: peer.name, avatarUrl: peer.avatarUrl }
             );
         });
     });
@@ -428,7 +431,8 @@ export function useSpaceConnection({
         (game ? getMapScene(game) : null)?.spawnRemoteAvatar(
             peer.socketId,
             peer.userId,
-            peer.avatarSheetFileId
+            peer.avatarSheetFileId,
+            { name: peer.name, avatarUrl: peer.avatarUrl }
         );
     });
 
@@ -448,6 +452,20 @@ export function useSpaceConnection({
         );
     });
 
+    // Someone saved a new name (see applyNameChange).
+    useSocketEvent("space:name-changed", (change) => {
+        applyNameChange({
+            change,
+            selfUserId: userId,
+            scene: game ? getMapScene(game) : null,
+            updateOwnName: (name) =>
+                queryClient.setQueryData(
+                    getMeQueryOptions().queryKey,
+                    (previous) => previous && { ...previous, name }
+                ),
+        });
+    });
+
     useSocketEvent("webrtc:signal", ({ fromSocketId, signal }) => {
         // The server relays this opaquely by design (it never inspects
         // WebRTC payloads); PeerConnectionManager.handleSignal validates it
@@ -455,7 +473,8 @@ export function useSpaceConnection({
         manager.handleSignal(fromSocketId, signal as PeerSignal);
     });
 
-    useSocketEvent("space:peer-left", ({ socketId }) => {
+    useSocketEvent("space:peer-left", ({ socketId, userId: peerUserId }) => {
+        (game ? getMapScene(game) : null)?.forgetPendingUserName(peerUserId);
         stopSpeakingOf(socketId);
         delete peerUserIdsRef.current[socketId];
         syncOnlineUserIds();

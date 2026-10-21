@@ -13,6 +13,7 @@ const {
     registerWebrtcSignalMock,
     registerDisconnectMock,
     onSheetChangedMock,
+    onNameChangedMock,
 } = vi.hoisted(() => {
     const useMock = vi.fn();
     const onMock = vi.fn();
@@ -39,6 +40,7 @@ const {
         registerWebrtcSignalMock: vi.fn(),
         registerDisconnectMock: vi.fn(),
         onSheetChangedMock: vi.fn(),
+        onNameChangedMock: vi.fn(),
     };
 });
 
@@ -48,8 +50,12 @@ vi.mock("socket.io", () => ({
 
 vi.mock("@standin/core", () => ({
     AvatarService: { onSheetChanged: onSheetChangedMock },
+    UserService: { onNameChanged: onNameChangedMock },
 }));
 
+vi.mock("../services/broadcastNameChange", () => ({
+    broadcastNameChange: vi.fn(),
+}));
 vi.mock("../services/broadcastAvatarChange", () => ({
     broadcastAvatarChange: vi.fn(),
 }));
@@ -178,6 +184,15 @@ describe("createSocketServer", () => {
             await import("../services/broadcastAvatarChange");
         expect(onSheetChangedMock).toHaveBeenCalledTimes(1);
         expect(onSheetChangedMock).toHaveBeenCalledWith(broadcastAvatarChange);
+    });
+
+    it("registers the name listener once per server", async () => {
+        createSocketServer({} as any);
+
+        const { broadcastNameChange } =
+            await import("../services/broadcastNameChange");
+        expect(onNameChangedMock).toHaveBeenCalledTimes(1);
+        expect(onNameChangedMock).toHaveBeenCalledWith(broadcastNameChange);
     });
 
     it("joins the socket to its own user room on connection", () => {

@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { canJoinSpaceMock, resolveAvatarSheetFileIdMock } = vi.hoisted(() => ({
-    canJoinSpaceMock: vi.fn(),
-    resolveAvatarSheetFileIdMock: vi.fn(),
+const { canJoinSpaceMock, resolveAvatarSheetFileIdMock, resolveUserProfilesMock } =
+    vi.hoisted(() => ({
+        canJoinSpaceMock: vi.fn(),
+        resolveAvatarSheetFileIdMock: vi.fn(),
+        resolveUserProfilesMock: vi.fn(),
+    }));
+
+vi.mock("../../services/resolveUserProfiles", () => ({
+    resolveUserProfiles: resolveUserProfilesMock,
 }));
 
 vi.mock("../../services/resolveAvatarSheetFileId", () => ({
@@ -61,6 +67,12 @@ describe("registerJoinSpace", () => {
         vi.clearAllMocks();
         canJoinSpaceMock.mockResolvedValue(true);
         resolveAvatarSheetFileIdMock.mockResolvedValue(null);
+        resolveUserProfilesMock.mockResolvedValue(
+            new Map([
+                ["user-a", { name: "Ana", avatarUrl: "/files/ana" }],
+                ["user-b", { name: "Bruno", avatarUrl: null }],
+            ])
+        );
     });
 
     it("returns only the peers already present, snapshotted before joining", async () => {
@@ -84,6 +96,8 @@ describe("registerJoinSpace", () => {
                     socketId: "socket-a",
                     userId: "user-a",
                     avatarSheetFileId: null,
+                    name: "Ana",
+                    avatarUrl: "/files/ana",
                 },
             ],
         });
@@ -107,6 +121,8 @@ describe("registerJoinSpace", () => {
                     socketId: "socket-a",
                     userId: "user-a",
                     avatarSheetFileId: "file-a",
+                    name: "Ana",
+                    avatarUrl: "/files/ana",
                 },
             ],
         });
@@ -127,6 +143,8 @@ describe("registerJoinSpace", () => {
             socketId: "socket-b",
             userId: "user-b",
             avatarSheetFileId: "file-b",
+            name: "Bruno",
+            avatarUrl: null,
         });
     });
 
@@ -144,6 +162,42 @@ describe("registerJoinSpace", () => {
             socketId: "socket-b",
             userId: "user-b",
             avatarSheetFileId: null,
+            name: "Bruno",
+            avatarUrl: null,
+        });
+    });
+
+    it("reads the profiles of the peers and of the joiner in one query", async () => {
+        const peerA = createFakeSocket("socket-a", "user-a");
+        const socketB = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([peerA], "space:space-1");
+
+        registerJoinSpace(io as any, socketB as any);
+        await getJoinHandler(socketB)?.(validPayload);
+
+        expect(resolveUserProfilesMock).toHaveBeenCalledTimes(1);
+        expect(resolveUserProfilesMock).toHaveBeenCalledWith(["user-b", "user-a"]);
+    });
+
+    it("sends an empty name and no photo when the profile could not be read", async () => {
+        resolveUserProfilesMock.mockResolvedValue(new Map());
+        const peerA = createFakeSocket("socket-a", "user-a");
+        const socketB = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([peerA], "space:space-1");
+
+        registerJoinSpace(io as any, socketB as any);
+        await getJoinHandler(socketB)?.(validPayload);
+
+        expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
+            peers: [
+                {
+                    socketId: "socket-a",
+                    userId: "user-a",
+                    avatarSheetFileId: null,
+                    name: "",
+                    avatarUrl: null,
+                },
+            ],
         });
     });
 

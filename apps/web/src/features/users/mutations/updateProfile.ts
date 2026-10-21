@@ -14,9 +14,9 @@ export const useUpdateProfile = () => {
             const res = await api.put<{ user: User }>(USER_ME_PATH, data);
             return res.data.user;
         },
-        onSuccess: () =>
-            queryClient.invalidateQueries({
-                queryKey: getMeQueryOptions().queryKey,
-            }),
+        // The server sends the saved profile back, so the app's copy of who the
+        // person is takes it as it is (see AppLayout, which reads it live).
+        onSuccess: (user) =>
+            queryClient.setQueryData(getMeQueryOptions().queryKey, user),
     });
 };

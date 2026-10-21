@@ -4,6 +4,13 @@ export const AVATAR_EVENTS = {
     HOVER_CHANGED: "avatar:hover-changed",
 } as const;
 
+// Hover events of the avatars of the other people. Each avatar is a target, by
+// the socket id of its peer. A click on one selects it, and its name tag shows
+// the photo.
+export const REMOTE_AVATAR_EVENTS = {
+    HOVER_CHANGED: "remote-avatar:hover-changed",
+} as const;
+
 // The one target of that event: the avatar of the local person.
 export const OWN_AVATAR_TARGET_ID = "own-avatar";
 

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { MAP_OBJECT_ACTIONS } from "@standin/contracts";
+import { getInteractionPromptOffset } from "@/features/game/utils/getInteractionPromptOffset";
 import { INTERACTION_PROMPT_STYLE } from "@/features/game/consts/interaction";
 import { PLAYER_INTERACT_KEY } from "@/features/game/consts/player";
 import {
@@ -81,7 +82,10 @@ export class InteractionController {
     private positionPrompt(): void {
         this.promptText.setPosition(
             this.player.x,
-            this.player.y - INTERACTION_PROMPT_STYLE.ABOVE_PLAYER_OFFSET
+            this.player.y -
+                getInteractionPromptOffset(
+                    this.promptText.scene.cameras.main.zoom
+                )
         );
     }
 
