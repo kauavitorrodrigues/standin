@@ -9,12 +9,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { SignUpForm } from "@/features/auth/components/forms/SignUpForm";
 import { SignInForm } from "@/features/auth/components/forms/SignInForm";
+import { GithubSignInButton } from "@/features/auth/components/instances/GithubSignInButton";
+import { useOAuthErrorToast } from "@/features/auth/hooks/useOAuthErrorToast";
 
 type AuthMode = "sign-up" | "sign-in";
 
 export function AuthPage() {
     const [mode, setMode] = useState<AuthMode>("sign-up");
     const isSignUp = mode === "sign-up";
+
+    useOAuthErrorToast();
 
     return (
         <div className="flex min-h-dvh w-full items-center justify-center bg-background p-6">
@@ -29,6 +33,7 @@ export function AuthPage() {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                     {isSignUp ? <SignUpForm /> : <SignInForm />}
+                    <GithubSignInButton />
                     <Button
                         type="button"
                         variant="ghost"
