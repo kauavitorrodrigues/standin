@@ -5,6 +5,8 @@ import {
     ROOM_DOOR_STATES,
     type AssetDefinition,
     type PeerEmotePayload,
+    type PeerNearbyMessagePayload,
+    type PeerNearbyTypingPayload,
     type PlacedAsset,
     type PlayerPosition,
 } from "@standin/contracts";
@@ -59,6 +61,19 @@ import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
 import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
 import { EMOTE_RADIUS } from "@/features/game/consts/emote";
+import {
+    NEARBY_RATE_LIMIT,
+    NEARBY_TYPING_RATE_LIMIT,
+} from "@/features/game/consts/nearby";
+import {
+    NearbyBubbles,
+    type NearbyAnchor,
+} from "@/features/game/lib/NearbyBubbles";
+import type { NearbyMessageStore } from "@/features/game/lib/NearbyMessageStore";
+import { getNearbyRadius } from "@/features/game/utils/getNearbyRadius";
+import { isValidNearbyText } from "@/features/game/utils/isValidNearbyText";
+import { shouldAcceptNearbyMessage } from "@/features/game/utils/shouldAcceptNearbyMessage";
+import { sanitizeNearbyText } from "@/features/game/utils/sanitizeNearbyText";
 import { bindMapWheelZoom } from "@/features/game/utils/zoom";
 import { bindMapDragPan } from "@/features/game/utils/camera";
 import {
@@ -182,6 +197,18 @@ export class MapScene extends Phaser.Scene {
     private emoteParticles: EmoteParticles | null = null;
     private emoteTextures: EmojiTextureCache | null = null;
     private readonly emoteRateLimiter = new EmoteRateLimiter();
+    // Nearby messages: the store is owned by the page and handed in, the bubbles
+    // are drawn by the scene. A peer has a limit of its own for the text and
+    // another for the typing dots.
+    private nearbyStore: NearbyMessageStore | null = null;
+    private nearbyBubbles: NearbyBubbles | null = null;
+    private nearbyRadius = getNearbyRadius(0, 0);
+    private readonly nearbyRateLimiter = new EmoteRateLimiter(
+        NEARBY_RATE_LIMIT
+    );
+    private readonly nearbyTypingRateLimiter = new EmoteRateLimiter(
+        NEARBY_TYPING_RATE_LIMIT
+    );
     // Loads, shares and destroys the sheets of the avatars of this scene.
     private avatarSheets: AvatarSheetBinder | null = null;
     // The sheet of the local player, kept for when it arrives before the
@@ -428,6 +455,10 @@ export class MapScene extends Phaser.Scene {
         this.zoneHoverController?.setTargets(this.zoneAreas);
         const wallRectsAt = buildWallRectsAt(tilemap);
         this.rooms = buildRooms(zones);
+        this.nearbyRadius = getNearbyRadius(
+            tilemap.widthInPixels,
+            tilemap.heightInPixels
+        );
         this.roomDoorColliders = new RoomDoorColliders({
             set: (id, rects) =>
                 solidColliders.set(`${ROOM_DOOR_COLLIDER_PREFIX}${id}`, rects),
@@ -507,7 +538,24 @@ export class MapScene extends Phaser.Scene {
         bindMapWheelZoom(this, this.cameraController);
         bindMapDragPan(this, this.cameraController, () => this.canPanCamera());
 
+        // Timers are late in a tab in the background, so what expired is
+        // cleaned when the tab is back.
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                this.nearbyStore?.cleanupExpired();
+            }
+        };
+        document.addEventListener("visibilitychange", onVisibilityChange);
+
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            document.removeEventListener(
+                "visibilitychange",
+                onVisibilityChange
+            );
+            this.nearbyBubbles?.destroy();
+            this.nearbyBubbles = null;
+            this.nearbyRateLimiter.clear();
+            this.nearbyTypingRateLimiter.clear();
             // Silence every peer's <audio> element rather than just
             // forgetting about it here: update() (and with it,
             // updateRemoteVolumes) stops running the moment the scene shuts
@@ -548,6 +596,8 @@ export class MapScene extends Phaser.Scene {
         this.updateTileCursor();
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.updateNameTags();
+        this.nearbyBubbles?.update();
+        this.updateTypingMarks();
         this.updateRemoteHover();
         this.emoteParticles?.update(delta);
         this.emitLocalPosition();
@@ -1057,19 +1107,21 @@ export class MapScene extends Phaser.Scene {
     // dark layer of a room is there to keep (see shouldShowNameTag).
     private updateNameTags(): void {
         this.remoteAvatars.forEach((avatar) => {
-            avatar.setNameTagAllowed(
-                isRemoteNameTagAllowed({
-                    feet: avatar.gameObject,
-                    rooms: this.rooms,
-                    getRoomState: (key) =>
-                        this.roomSync?.getState(key) ?? ROOM_DOOR_STATES.OPEN,
-                    localRoomKey: this.currentRoomKey,
-                    entitlements: this.roomEntitlements,
-                    isDecorating: this.isDecorating,
-                    hasName: avatar.hasName,
-                    hasPosition: avatar.hasPosition,
-                })
-            );
+            avatar.setNameTagAllowed(this.isRemoteTagAllowed(avatar));
+        });
+    }
+
+    private isRemoteTagAllowed(avatar: RemoteAvatar): boolean {
+        return isRemoteNameTagAllowed({
+            feet: avatar.gameObject,
+            rooms: this.rooms,
+            getRoomState: (key) =>
+                this.roomSync?.getState(key) ?? ROOM_DOOR_STATES.OPEN,
+            localRoomKey: this.currentRoomKey,
+            entitlements: this.roomEntitlements,
+            isDecorating: this.isDecorating,
+            hasName: avatar.hasName,
+            hasPosition: avatar.hasPosition,
         });
     }
 
@@ -1110,6 +1162,8 @@ export class MapScene extends Phaser.Scene {
         this.seatOccupancy.remove(socketId);
         this.remoteUserIds.delete(socketId);
         this.emoteRateLimiter.remove(socketId);
+        this.nearbyRateLimiter.remove(socketId);
+        this.nearbyTypingRateLimiter.remove(socketId);
     }
 
     clearRemoteAvatars(): void {
@@ -1174,6 +1228,123 @@ export class MapScene extends Phaser.Scene {
             payload.emoji,
             payload.count
         );
+    }
+
+    // Hands in the store of the nearby messages, or null to let it go. The page
+    // owns the store, since the panel reads it too. Safe to call again.
+    setNearbyStore(store: NearbyMessageStore | null): void {
+        if (store === this.nearbyStore) return;
+
+        this.nearbyBubbles?.destroy();
+        this.nearbyBubbles = null;
+        this.nearbyStore = store;
+        if (!store) return;
+
+        this.nearbyBubbles = new NearbyBubbles({
+            scene: this,
+            store,
+            resolveAnchor: (userId) => this.findNearbyAnchor(userId),
+        });
+    }
+
+    // A peer sent a nearby message. The payload is not trusted: the text is
+    // validated and cleaned, the rate is limited, and the range and the room
+    // are measured here, never read from the peer. What is out of reach is
+    // dropped without a trace.
+    applyRemoteNearbyMessage(
+        socketId: string,
+        payload: PeerNearbyMessagePayload
+    ): void {
+        const avatar = this.remoteAvatars.get(socketId);
+        const userId = this.remoteUserIds.get(socketId);
+        if (!avatar || !userId || !this.player || !this.nearbyStore) return;
+        const isAccepted = shouldAcceptNearbyMessage({
+            text: payload.text,
+            distance: this.getCommunicationDistanceTo(avatar),
+            radius: this.nearbyRadius,
+            isRateAllowed: () =>
+                this.nearbyRateLimiter.allow(socketId, this.time.now),
+        });
+        if (!isAccepted) return;
+
+        this.nearbyStore.add(userId, sanitizeNearbyText(payload.text), {
+            isMine: false,
+        });
+    }
+
+    // Same checks as the message, with a looser rate limit.
+    applyRemoteNearbyTyping(
+        socketId: string,
+        payload: PeerNearbyTypingPayload
+    ): void {
+        const avatar = this.remoteAvatars.get(socketId);
+        const userId = this.remoteUserIds.get(socketId);
+        if (!avatar || !userId || !this.player || !this.nearbyStore) return;
+        if (!this.nearbyTypingRateLimiter.allow(socketId, this.time.now))
+            return;
+        if (this.getCommunicationDistanceTo(avatar) > this.nearbyRadius) {
+            // Someone who walked away stops showing the dots.
+            this.nearbyStore.setTyping(userId, false);
+            return;
+        }
+
+        this.nearbyStore.setTyping(userId, payload.isTyping);
+    }
+
+    // The local message goes through the same store as a remote one, since the
+    // mesh never sends it back to the person who wrote it.
+    playLocalNearbyMessage(text: string): void {
+        const userId = this.localUserProfile?.userId;
+        if (!userId || !this.nearbyStore) return;
+        if (!isValidNearbyText(text)) return;
+
+        this.nearbyStore.add(userId, sanitizeNearbyText(text), {
+            isMine: true,
+        });
+    }
+
+    playLocalNearbyTyping(isTyping: boolean): void {
+        const userId = this.localUserProfile?.userId;
+        if (!userId) return;
+
+        this.nearbyStore?.setTyping(userId, isTyping);
+    }
+
+    // The chat icon in the name tag of whoever is writing a nearby message.
+    private updateTypingMarks(): void {
+        const { nearbyStore } = this;
+        if (!nearbyStore) return;
+
+        const localUserId = this.localUserProfile?.userId;
+        this.player?.setTyping(
+            localUserId !== undefined && nearbyStore.isTyping(localUserId)
+        );
+        this.remoteUserIds.forEach((userId, socketId) => {
+            this.remoteAvatars
+                .get(socketId)
+                ?.setTyping(nearbyStore.isTyping(userId));
+        });
+    }
+
+    // The avatar of a person for the bubble: the local one, or the first remote
+    // avatar of that user (the same person can have more than one tab).
+    private findNearbyAnchor(userId: string): NearbyAnchor | null {
+        if (userId === this.localUserProfile?.userId && this.player) {
+            return { feet: this.player.gameObject, isAllowed: true };
+        }
+
+        for (const [socketId, remoteUserId] of this.remoteUserIds) {
+            if (remoteUserId !== userId) continue;
+
+            const avatar = this.remoteAvatars.get(socketId);
+            if (!avatar) continue;
+
+            return {
+                feet: avatar.gameObject,
+                isAllowed: this.isRemoteTagAllowed(avatar),
+            };
+        }
+        return null;
     }
 
     setLocalSocketIdProvider(provider: (() => string) | null): void {

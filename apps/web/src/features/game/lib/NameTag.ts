@@ -76,6 +76,11 @@ export class NameTag {
         this.element.setProps({ userId, profilePictureUrl });
     }
 
+    // The chat icon in place of the dot, while a nearby message is written.
+    setTyping(isTyping: boolean): void {
+        this.element.setProps({ isTyping });
+    }
+
     // The tag was clicked: the photo shows, it glows, and it draws over the
     // other tags.
     setDetailed(isDetailed: boolean): void {

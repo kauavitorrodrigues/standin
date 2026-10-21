@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { MessageCircleIcon } from "lucide-react";
 import { NAME_TAG } from "@/features/game/consts/name-tag";
 import { truncateName } from "@/features/game/utils/truncateName";
 import { UserAvatar } from "@/features/users/components/UserAvatar";
@@ -13,6 +14,9 @@ export type NameTagPillProps = {
     userId: string;
     // The photo of the profile. Without one the photo is the initial.
     profilePictureUrl: string | null;
+    // The person is writing a nearby message: the chat icon takes the place of
+    // the dot. With the photo shown there is no dot, so nothing changes.
+    isTyping?: boolean;
 };
 
 const getBackgroundColor = (isLocal: boolean): string =>
@@ -28,6 +32,7 @@ export const NameTagPill = ({
     isDetailed,
     userId,
     profilePictureUrl,
+    isTyping = false,
 }: NameTagPillProps) => {
     const backgroundColor = getBackgroundColor(isLocal);
     const boxStyle: CSSProperties = {
@@ -69,17 +74,7 @@ export const NameTagPill = ({
                         ringColor={backgroundColor}
                     />
                 ) : (
-                    <span
-                        style={{
-                            flexShrink: 0,
-                            width: NAME_TAG.DOT_SIZE,
-                            height: NAME_TAG.DOT_SIZE,
-                            borderRadius: "50%",
-                            backgroundColor: NAME_TAG.DOT_COLOR,
-                            marginLeft: NAME_TAG.DOT_OFFSET_X,
-                            marginRight: -NAME_TAG.DOT_OFFSET_X,
-                        }}
-                    />
+                    <NameTagStatus isTyping={isTyping} />
                 )}
                 <span
                     title={name}
@@ -149,3 +144,31 @@ const NameTagPhoto = ({
         />
     </span>
 );
+
+// The mark before the name when there is no photo: the green dot, or the chat
+// icon while the person writes a nearby message.
+const NameTagStatus = ({ isTyping }: { isTyping: boolean }) => {
+    if (isTyping) {
+        return (
+            <MessageCircleIcon
+                aria-hidden
+                size={NAME_TAG.TYPING_ICON_SIZE}
+                style={{ flexShrink: 0 }}
+            />
+        );
+    }
+
+    return (
+        <span
+            style={{
+                flexShrink: 0,
+                width: NAME_TAG.DOT_SIZE,
+                height: NAME_TAG.DOT_SIZE,
+                borderRadius: "50%",
+                backgroundColor: NAME_TAG.DOT_COLOR,
+                marginLeft: NAME_TAG.DOT_OFFSET_X,
+                marginRight: -NAME_TAG.DOT_OFFSET_X,
+            }}
+        />
+    );
+};

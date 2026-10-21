@@ -170,3 +170,55 @@ describe("parsePeerMessage for EMOTE", () => {
         expect(isMessageFromKnownSender(message!, undefined)).toBe(true);
     });
 });
+
+describe("parsePeerMessage for the nearby messages", () => {
+    it("accepts a text and keeps only the known field", () => {
+        expect(
+            parsePeerMessage({
+                type: PEER_MESSAGE_TYPES.NEARBY_MESSAGE,
+                payload: { text: "oi", extra: "x" },
+            })
+        ).toEqual({
+            type: PEER_MESSAGE_TYPES.NEARBY_MESSAGE,
+            payload: { text: "oi" },
+        });
+    });
+
+    it("rejects a text that is not a string", () => {
+        for (const text of [1, null, {}, undefined]) {
+            expect(
+                parsePeerMessage({
+                    type: PEER_MESSAGE_TYPES.NEARBY_MESSAGE,
+                    payload: { text },
+                })
+            ).toBeNull();
+        }
+    });
+
+    it("accepts the typing flag and rejects other values", () => {
+        expect(
+            parsePeerMessage({
+                type: PEER_MESSAGE_TYPES.NEARBY_TYPING,
+                payload: { isTyping: true },
+            })
+        ).toEqual({
+            type: PEER_MESSAGE_TYPES.NEARBY_TYPING,
+            payload: { isTyping: true },
+        });
+        expect(
+            parsePeerMessage({
+                type: PEER_MESSAGE_TYPES.NEARBY_TYPING,
+                payload: { isTyping: "yes" },
+            })
+        ).toBeNull();
+    });
+
+    it("needs no identity claim from the sender", () => {
+        const message: PeerMessage = {
+            type: PEER_MESSAGE_TYPES.NEARBY_MESSAGE,
+            payload: { text: "oi" },
+        };
+
+        expect(isMessageFromKnownSender(message, undefined)).toBe(true);
+    });
+});
