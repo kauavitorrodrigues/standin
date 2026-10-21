@@ -73,6 +73,14 @@ export type PeerMediaStatePayload = {
     isMicMuted: boolean;
 };
 
+// The sender is not in the payload: the channel already says who it is.
+export type PeerEmotePayload = {
+    // A single emoji.
+    emoji: string;
+    // How many of it float, from 1 to EMOTE_COMBO_MAX.
+    count: number;
+};
+
 export type PeerMessage =
     | { type: typeof PEER_MESSAGE_TYPES.POSITION; payload: PlayerPosition }
     | { type: typeof PEER_MESSAGE_TYPES.CHAT; payload: PeerChatPayload }
@@ -87,4 +95,5 @@ export type PeerMessage =
     | {
           type: typeof PEER_MESSAGE_TYPES.MEDIA_STATE;
           payload: PeerMediaStatePayload;
-      };
+      }
+    | { type: typeof PEER_MESSAGE_TYPES.EMOTE; payload: PeerEmotePayload };

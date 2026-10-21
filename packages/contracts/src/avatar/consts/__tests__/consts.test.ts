@@ -59,6 +59,7 @@ describe("dimensions", () => {
             BLINK: [AVATAR_FRAME_KINDS.IDLE],
             WALK: [AVATAR_FRAME_KINDS.WALK],
             SIT: [AVATAR_FRAME_KINDS.SIT_LEGS, AVATAR_FRAME_KINDS.SIT_CROSSED],
+            EMOTE: [AVATAR_FRAME_KINDS.EMOTE],
         } as const;
 
         for (const [animation, frames] of Object.entries(AVATAR_FRAMES)) {
@@ -68,7 +69,11 @@ describe("dimensions", () => {
                 for (const column of frames[direction]) {
                     const slot = AVATAR_SHEET_SLOTS[column];
 
-                    expect(slot.direction).toBe(direction);
+                    // The sheet only has the emote facing down, so every
+                    // direction shows that one.
+                    expect(slot.direction).toBe(
+                        animation === "EMOTE" ? PLAYER_DIRECTIONS.DOWN : direction
+                    );
                     expect(allowed).toContain(slot.kind);
                 }
             }
@@ -82,7 +87,10 @@ describe("dimensions", () => {
     });
 
     it("never gives one frame to two directions of the same animation", () => {
-        for (const frames of Object.values(AVATAR_FRAMES)) {
+        for (const [animation, frames] of Object.entries(AVATAR_FRAMES)) {
+            // The emote is the one animation the directions share.
+            if (animation === "EMOTE") continue;
+
             const columns = AVATAR_SHEET_DIRECTIONS.flatMap(
                 (direction) => frames[direction]
             );

@@ -4,6 +4,7 @@ import {
     LAYOUT_LAYER_NAMES,
     ROOM_DOOR_STATES,
     type AssetDefinition,
+    type PeerEmotePayload,
     type PlacedAsset,
     type PlayerPosition,
 } from "@standin/contracts";
@@ -54,6 +55,10 @@ import { findNearestFreeTile } from "@/features/game/utils/findNearestFreeTile";
 import { getDirectionVector } from "@/features/game/utils/getDirectionVector";
 import { InteractionController } from "@/features/game/lib/InteractionController";
 import { RemoteAvatar } from "@/features/game/lib/RemoteAvatar";
+import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
+import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
+import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
+import { EMOTE_RADIUS } from "@/features/game/consts/emote";
 import { bindMapWheelZoom } from "@/features/game/utils/zoom";
 import { bindMapDragPan } from "@/features/game/utils/camera";
 import {
@@ -173,6 +178,9 @@ export class MapScene extends Phaser.Scene {
     private isPlayerHovered = false;
     private isPlayerSelected = false;
     private remoteAvatars = new Map<string, RemoteAvatar>();
+    private emoteParticles: EmoteParticles | null = null;
+    private emoteTextures: EmojiTextureCache | null = null;
+    private readonly emoteRateLimiter = new EmoteRateLimiter();
     // Loads, shares and destroys the sheets of the avatars of this scene.
     private avatarSheets: AvatarSheetBinder | null = null;
     // The sheet of the local player, kept for when it arrives before the
@@ -391,7 +399,18 @@ export class MapScene extends Phaser.Scene {
         );
         this.game.events.on(PLAYER_EVENTS.HOVER_CHANGED, onPlayerHover);
         this.game.events.on(selectedEvent, onPlayerSelected);
+        this.emoteTextures = new EmojiTextureCache({
+            host: this,
+            filterMode: Phaser.Textures.FilterMode.LINEAR,
+        });
+        this.emoteParticles = new EmoteParticles(this, this.emoteTextures);
+
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.emoteParticles?.destroy();
+            this.emoteParticles = null;
+            this.emoteTextures?.destroy();
+            this.emoteTextures = null;
+            this.emoteRateLimiter.clear();
             this.game.events.off(PLAYER_EVENTS.HOVER_CHANGED, onPlayerHover);
             this.game.events.off(selectedEvent, onPlayerSelected);
             this.playerOutline?.destroy();
@@ -527,6 +546,7 @@ export class MapScene extends Phaser.Scene {
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
         this.updateNameTags();
         this.updateRemoteHover();
+        this.emoteParticles?.update(delta);
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
     }
@@ -1059,6 +1079,7 @@ export class MapScene extends Phaser.Scene {
         this.remoteAvatars.delete(socketId);
         this.seatOccupancy.remove(socketId);
         this.remoteUserIds.delete(socketId);
+        this.emoteRateLimiter.remove(socketId);
     }
 
     clearRemoteAvatars(): void {
@@ -1095,6 +1116,34 @@ export class MapScene extends Phaser.Scene {
             position.isSitting ? findSeatDepth(this.seatAreas, position) : null
         );
         this.seatOccupancy.track(socketId, position);
+    }
+
+    // A peer sent an emote. It is shown only from inside the range of the local
+    // avatar and the same private room, and never past the rate limit of that
+    // peer.
+    applyRemoteEmote(socketId: string, payload: PeerEmotePayload): void {
+        const avatar = this.remoteAvatars.get(socketId);
+        if (!avatar || !this.player) return;
+        if (!this.emoteRateLimiter.allow(socketId, this.time.now)) return;
+        if (this.getCommunicationDistanceTo(avatar) > EMOTE_RADIUS) return;
+
+        this.emoteParticles?.emit(
+            avatar.gameObject,
+            payload.emoji,
+            payload.count
+        );
+    }
+
+    // The local emote goes through the same display as a remote one, since the
+    // mesh never sends it back to the person who made it.
+    playLocalEmote(payload: PeerEmotePayload): void {
+        if (!this.player) return;
+
+        this.emoteParticles?.emit(
+            this.player.gameObject,
+            payload.emoji,
+            payload.count
+        );
     }
 
     setLocalSocketIdProvider(provider: (() => string) | null): void {
@@ -1141,22 +1190,7 @@ export class MapScene extends Phaser.Scene {
         const distances = new Map<string, number>();
 
         this.remoteAvatars.forEach((avatar, socketId) => {
-            const remoteRoomKey =
-                getRoomAt(this.rooms, {
-                    x: avatar.gameObject.x,
-                    y: avatar.gameObject.y,
-                })?.key ?? null;
-            // The distance between the feet of the two avatars.
-            const distance = getCommunicationDistance(
-                Phaser.Math.Distance.Between(
-                    player.x,
-                    player.y,
-                    avatar.gameObject.x,
-                    avatar.gameObject.y
-                ),
-                this.currentRoomKey,
-                remoteRoomKey
-            );
+            const distance = this.getCommunicationDistanceTo(avatar);
             distances.set(socketId, distance);
             const volume = calculateVolumeFromDistance(
                 distance,
@@ -1176,5 +1210,29 @@ export class MapScene extends Phaser.Scene {
             this.anyPeerAudible = anyAudible;
             this.proximityListener?.(anyAudible);
         }
+    }
+
+    // The distance between the feet of the local avatar and a remote one, as
+    // the media and emote rules see it: Infinity when they are not in the same
+    // private room.
+    private getCommunicationDistanceTo(avatar: RemoteAvatar): number {
+        const { player } = this;
+        if (!player) return Number.POSITIVE_INFINITY;
+
+        const remoteRoomKey =
+            getRoomAt(this.rooms, {
+                x: avatar.gameObject.x,
+                y: avatar.gameObject.y,
+            })?.key ?? null;
+        return getCommunicationDistance(
+            Phaser.Math.Distance.Between(
+                player.x,
+                player.y,
+                avatar.gameObject.x,
+                avatar.gameObject.y
+            ),
+            this.currentRoomKey,
+            remoteRoomKey
+        );
     }
 }

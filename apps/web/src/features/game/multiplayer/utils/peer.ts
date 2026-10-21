@@ -10,6 +10,7 @@ import {
     type PeerReactionPayload,
     type PeerTypingPayload,
 } from "@standin/contracts";
+import { validateEmote } from "@/features/game/utils/validateEmote";
 import { isPlayerPosition } from "./isPlayerPosition";
 
 // The nested `message` carries attachments/reactions arrays that a shallow
@@ -163,6 +164,10 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
                     payload: candidate.payload,
                 }
                 : null;
+        case PEER_MESSAGE_TYPES.EMOTE: {
+            const payload = validateEmote(candidate.payload);
+            return payload ? { type: PEER_MESSAGE_TYPES.EMOTE, payload } : null;
+        }
         default:
             return null;
     }
@@ -172,10 +177,17 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
 // it against the userId the server actually associates with that socket
 // (see space:joined/space:peer-joined). POSITION carries no identity claim
 // worth checking, so it's not part of PeerMessage's userId-bearing union
-// here.
-export const getClaimedUserId = (
-    message: Exclude<PeerMessage, { type: typeof PEER_MESSAGE_TYPES.POSITION }>
-): string => {
+// here. EMOTE carries none either: the channel already says who sent it.
+type MessageWithClaimedUser = Exclude<
+    PeerMessage,
+    {
+        type:
+            | typeof PEER_MESSAGE_TYPES.POSITION
+            | typeof PEER_MESSAGE_TYPES.EMOTE;
+    }
+>;
+
+export const getClaimedUserId = (message: MessageWithClaimedUser): string => {
     switch (message.type) {
         case PEER_MESSAGE_TYPES.CHAT:
             return message.payload.message.senderId;
@@ -198,12 +210,17 @@ export const getClaimedUserId = (
 // owns the socket it came from. A peer can put anyone's id in a payload, so
 // anything that speaks for a user must match the server's record. An unknown
 // socket (knownUserId undefined) never matches, so nothing from a peer the
-// server has not announced gets through. POSITION carries no identity claim.
+// server has not announced gets through. POSITION and EMOTE carry no identity
+// claim.
 export const isMessageFromKnownSender = (
     message: PeerMessage,
     knownUserId: string | undefined
 ): boolean => {
-    if (message.type === PEER_MESSAGE_TYPES.POSITION) return true;
+    switch (message.type) {
+        case PEER_MESSAGE_TYPES.POSITION:
+        case PEER_MESSAGE_TYPES.EMOTE:
+            return true;
+    }
 
     return getClaimedUserId(message) === knownUserId;
 };

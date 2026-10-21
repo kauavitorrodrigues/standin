@@ -1,7 +1,5 @@
-import { SmileIcon } from "lucide-react";
 import type { ScreenShareError } from "@/features/media-devices/consts/videoError";
 import type { LocalAudioStreamError } from "@/features/media-devices/consts/audioError";
-import { ControlButton } from "@/components/ControlButton";
 import { Separator } from "@/components/ui/separator";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -11,6 +9,8 @@ import {
 import { ScreenShareButton } from "@/features/spaces/components/pages/space-page/controls/ScreenShareButton";
 import { UserWidget } from "@/features/users/components/UserWidget";
 import { SPACE_CONTROLS_TOOLTIP_DELAY_MS } from "@/features/spaces/consts/controls";
+import type { ReactionsButtonState } from "@/features/emotes/types/reactions";
+import { ReactionsControl } from "@/features/emotes/components/instances/ReactionsControl";
 import { ProximityChatButton } from "@/features/spaces/components/pages/space-page/controls/ProximityChatButton";
 import { LeaveSpaceButton } from "@/features/spaces/components/pages/space-page/controls/LeaveSpaceButton";
 
@@ -25,6 +25,7 @@ type Props = {
     cameraError: LocalAudioStreamError | null;
     onStartScreenShare: () => void;
     onStopScreenShare: () => void;
+    reactions: ReactionsButtonState;
 };
 
 // The media and presence controls. Rendered in the floating bar over the
@@ -39,17 +40,16 @@ export const MediaControls = ({
     cameraError,
     onStartScreenShare,
     onStopScreenShare,
+    reactions,
 }: Props) => {
     return (
         <TooltipProvider delay={SPACE_CONTROLS_TOOLTIP_DELAY_MS}>
             <UserWidget />
             <MicToggleButton error={micError} />
             <CameraToggleButton error={cameraError} />
-            <ControlButton
-                type="button"
-                disabled
-                aria-label="Reações"
-                icon={SmileIcon}
+            <ReactionsControl
+                visible={isMeetingContext}
+                {...reactions}
             />
             <ProximityChatButton visible={isMeetingContext} />
             <ScreenShareButton
