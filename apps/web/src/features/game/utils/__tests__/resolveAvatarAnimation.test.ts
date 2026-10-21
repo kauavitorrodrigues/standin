@@ -8,6 +8,7 @@ describe("resolveAvatarAnimation", () => {
                 isSitting: false,
                 isMoving: false,
                 isBlinking: false,
+                isEmoting: false,
             })
         ).toBe("IDLE");
     });
@@ -18,6 +19,7 @@ describe("resolveAvatarAnimation", () => {
                 isSitting: false,
                 isMoving: true,
                 isBlinking: false,
+                isEmoting: false,
             })
         ).toBe("WALK");
     });
@@ -28,6 +30,7 @@ describe("resolveAvatarAnimation", () => {
                 isSitting: true,
                 isMoving: false,
                 isBlinking: false,
+                isEmoting: false,
             })
         ).toBe("SIT");
         expect(
@@ -35,6 +38,7 @@ describe("resolveAvatarAnimation", () => {
                 isSitting: true,
                 isMoving: true,
                 isBlinking: false,
+                isEmoting: false,
             })
         ).toBe("SIT");
     });
@@ -45,6 +49,7 @@ describe("resolveAvatarAnimation", () => {
                 isSitting: false,
                 isMoving: false,
                 isBlinking: true,
+                isEmoting: false,
             })
         ).toBe("BLINK");
     });
@@ -55,6 +60,7 @@ describe("resolveAvatarAnimation", () => {
                 isSitting: false,
                 isMoving: true,
                 isBlinking: true,
+                isEmoting: false,
             })
         ).toBe("WALK");
         expect(
@@ -62,6 +68,37 @@ describe("resolveAvatarAnimation", () => {
                 isSitting: true,
                 isMoving: false,
                 isBlinking: true,
+                isEmoting: false,
+            })
+        ).toBe("SIT");
+    });
+
+    it("plays the emote over idle and a blink", () => {
+        expect(
+            resolveAvatarAnimation({
+                isSitting: false,
+                isMoving: false,
+                isBlinking: false,
+                isEmoting: true,
+            })
+        ).toBe("EMOTE");
+        expect(
+            resolveAvatarAnimation({
+                isSitting: false,
+                isMoving: false,
+                isBlinking: true,
+                isEmoting: true,
+            })
+        ).toBe("EMOTE");
+    });
+
+    it("keeps sit over the emote", () => {
+        expect(
+            resolveAvatarAnimation({
+                isSitting: true,
+                isMoving: false,
+                isBlinking: false,
+                isEmoting: true,
             })
         ).toBe("SIT");
     });

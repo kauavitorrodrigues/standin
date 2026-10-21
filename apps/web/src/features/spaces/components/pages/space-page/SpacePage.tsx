@@ -96,7 +96,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const { handlers: peerChatHandlers, typingByConversation } =
         usePeerChatSync({ organizationId, userId: user.id });
 
-    const { localAudioError, onlineUserIds, video, ...broadcasts } =
+    const { localAudioError, onlineUserIds, video, sendEmote, ...broadcasts } =
         useSpaceConnection({
             organizationId,
             spaceId: space.id,
@@ -139,6 +139,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const media = useSpaceMediaControls({
         video,
         micError: localAudioError,
+        sendEmote,
     });
 
     const { peerChat, peerTyping, chatPage } = usePeerChatContextValues({

@@ -4,6 +4,7 @@ import {
     type PeerConfirmPayload,
     type PeerDeletePayload,
     type PeerEditPayload,
+    type PeerEmotePayload,
     type PeerMediaStatePayload,
     type PeerMessage,
     type PeerReactionPayload,
@@ -249,6 +250,13 @@ export class PeerConnectionManager {
     // triggered event, so it goes out immediately.
     broadcastDelete(payload: PeerDeletePayload): void {
         this.dispatch({ type: PEER_MESSAGE_TYPES.DELETE, payload });
+    }
+
+    // Same reasoning as broadcastChatMessage: an emote is a discrete, user-
+    // triggered event, and the combo is already grouped by EmoteSender. It goes
+    // to every peer on purpose; each receiver drops it when it is out of range.
+    broadcastEmote(payload: PeerEmotePayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.EMOTE, payload });
     }
 
     // Sent once the API call behind an earlier broadcastChatMessage

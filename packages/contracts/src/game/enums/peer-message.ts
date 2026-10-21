@@ -10,6 +10,7 @@ export const PEER_MESSAGE_TYPES = {
     DELETE: "DELETE",
     CONFIRM: "CONFIRM",
     MEDIA_STATE: "MEDIA_STATE",
+    EMOTE: "EMOTE",
 } as const;
 
 export type PeerMessageType =

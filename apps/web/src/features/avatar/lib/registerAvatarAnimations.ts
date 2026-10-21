@@ -3,6 +3,7 @@ import {
     AVATAR_FRAMES,
     AVATAR_SHEET_DIRECTIONS,
     type AvatarAnimation,
+    type AvatarAnimationConfig,
 } from "@standin/contracts";
 import { buildAvatarAnimationKey } from "./avatarKeys";
 
@@ -42,7 +43,8 @@ export const registerAvatarAnimations = (
             );
             if (host.anims.exists(key)) continue;
 
-            const { fps } = AVATAR_ANIMATIONS[animation];
+            const { fps, repeat = INFINITE_LOOP }: AvatarAnimationConfig =
+                AVATAR_ANIMATIONS[animation];
             const frames: readonly number[] =
                 AVATAR_FRAMES[animation][direction];
             host.anims.create({
@@ -51,7 +53,7 @@ export const registerAvatarAnimations = (
                     frames: [...frames],
                 }),
                 frameRate: fps,
-                repeat: INFINITE_LOOP,
+                repeat,
             });
         }
     });

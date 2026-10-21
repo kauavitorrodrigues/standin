@@ -200,6 +200,24 @@ describe("PeerConnectionManager connections", () => {
         expect(closed.sent).toHaveLength(0);
     });
 
+    it("broadcasts an emote as an EMOTE message to open links only", () => {
+        const { manager, connect } = setup();
+        const open = connect("a");
+        const closed = connect("b");
+        open.open();
+        open.sent.length = 0;
+
+        manager.broadcastEmote({ emoji: "👏", count: 2 });
+
+        expect(open.sent.map((raw) => JSON.parse(raw))).toEqual([
+            {
+                type: PEER_MESSAGE_TYPES.EMOTE,
+                payload: { emoji: "👏", count: 2 },
+            },
+        ]);
+        expect(closed.sent).toHaveLength(0);
+    });
+
     it("throttles position broadcasts", () => {
         const { manager, connect } = setup();
         const link = connect("a");
