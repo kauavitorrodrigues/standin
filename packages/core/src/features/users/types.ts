@@ -17,3 +17,14 @@ export type UserNameChange = {
 };
 
 export type UserNameListener = (change: UserNameChange) => void | Promise<void>;
+
+// A person changed or removed the profile picture. The URL is null when it was
+// removed.
+export type UserProfilePictureChange = {
+    userId: string;
+    profilePictureUrl: string | null;
+};
+
+export type UserProfilePictureListener = (
+    change: UserProfilePictureChange
+) => void | Promise<void>;
