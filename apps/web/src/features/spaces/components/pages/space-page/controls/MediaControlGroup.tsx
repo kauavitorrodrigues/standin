@@ -1,15 +1,23 @@
 import type { SpaceMediaControls } from "@/features/spaces/types/mediaControls";
 import { SpacePageLayout as LayoutPrimitive } from "@/features/spaces/components/pages/space-page/layout";
 import { MediaControls } from "@/features/spaces/components/pages/space-page/controls/MediaControls";
+import { AnimatedCollapse } from "@/components/ui/animated-collapse";
 import { useReactions } from "@/features/emotes/hooks/useReactions";
 import { ReactionsRow } from "@/features/emotes/components/views/ReactionsRow";
+import { NearbyChatLayer } from "@/features/nearby-chat/components/instances/NearbyChatLayer";
+import { useNearbyChat } from "@/features/nearby-chat/hooks/useNearbyChat";
+import { useControlsView } from "@/features/spaces/hooks/useControlsView";
+import { cn } from "@/lib/utils";
 
 type Props = SpaceMediaControls & {
     isMeetingContext: boolean;
 };
 
 // The media controls in their own group, ready to drop into the floating bar
-// or the chat footer. The reactions bar is the top row of the same card.
+// or the chat footer. The reactions bar (office only) and the nearby chat panel
+// are the top rows of the same card, and only one of them is open at a time.
+// The nearby chat also works over the chat view: the message reaches whoever is
+// nearby, it is only not drawn anywhere there.
 export const MediaControlGroup = ({
     isMeetingContext,
     canShareScreen,
@@ -17,32 +25,56 @@ export const MediaControlGroup = ({
     micError,
     cameraError,
     sendEmote,
+    nearbyChat,
 }: Props) => {
+    const controls = useControlsView();
     const reactions = useReactions({
         enabled: isMeetingContext,
         onSendEmote: sendEmote,
+        controls,
     });
+    const nearby = useNearbyChat({ enabled: true, controls });
 
     return (
-        <LayoutPrimitive.ControlGroup className="flex-col items-stretch gap-0">
+        <LayoutPrimitive.ControlGroup
+            className={cn(
+                "flex-col items-stretch gap-0",
+                nearby.isOpen && "rounded-b-[14px] bg-muted/85 backdrop-blur-md"
+            )}
+        >
+            <NearbyChatLayer
+                connection={nearbyChat}
+                isOpen={nearby.isOpen}
+                onOpen={nearby.open}
+                onClose={nearby.close}
+            />
             <ReactionsRow
                 isOpen={reactions.isOpen}
                 items={reactions.items}
                 onSelect={reactions.send}
             />
-            <div className="flex items-center justify-center gap-1">
-                <MediaControls
-                    isMeetingContext={isMeetingContext}
-                    canShareScreen={canShareScreen}
-                    isSharingScreen={screenShare.isSharing}
-                    screenShareError={screenShare.error}
-                    micError={micError}
-                    cameraError={cameraError}
-                    onStartScreenShare={screenShare.start}
-                    onStopScreenShare={screenShare.stop}
-                    reactions={reactions}
-                />
-            </div>
+            <AnimatedCollapse
+                open={!nearby.isOpen}
+                className="duration-150 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            >
+                <div className="flex items-center justify-center gap-1">
+                    <MediaControls
+                        isMeetingContext={isMeetingContext}
+                        canShareScreen={canShareScreen}
+                        isSharingScreen={screenShare.isSharing}
+                        screenShareError={screenShare.error}
+                        micError={micError}
+                        cameraError={cameraError}
+                        onStartScreenShare={screenShare.start}
+                        onStopScreenShare={screenShare.stop}
+                        reactions={reactions}
+                        nearbyChat={{
+                            isOpen: nearby.isOpen,
+                            onToggle: nearby.toggle,
+                        }}
+                    />
+                </div>
+            </AnimatedCollapse>
         </LayoutPrimitive.ControlGroup>
     );
 };

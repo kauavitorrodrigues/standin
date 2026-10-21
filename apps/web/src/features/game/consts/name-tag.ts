@@ -31,6 +31,8 @@ export const NAME_TAG = {
     // The tag of the local player has its own color.
     LOCAL_BACKGROUND_COLOR: "#5f4dc5",
     DOT_COLOR: "#00c245",
+    // The chat icon that takes the place of the dot while the person types.
+    TYPING_ICON_SIZE: 12,
     // The glow of the tag that was clicked.
     SELECTED_SHADOW: "0px 0px 8px 2px #3893e3",
     MAX_CHARACTERS: 20,

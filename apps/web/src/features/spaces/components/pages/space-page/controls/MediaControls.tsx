@@ -10,13 +10,14 @@ import { ScreenShareButton } from "@/features/spaces/components/pages/space-page
 import { UserWidget } from "@/features/users/components/UserWidget";
 import { SPACE_CONTROLS_TOOLTIP_DELAY_MS } from "@/features/spaces/consts/controls";
 import type { ReactionsButtonState } from "@/features/emotes/types/reactions";
+import type { NearbyChatButtonState } from "@/features/nearby-chat/types/nearby-chat";
 import { ReactionsControl } from "@/features/emotes/components/instances/ReactionsControl";
 import { ProximityChatButton } from "@/features/spaces/components/pages/space-page/controls/ProximityChatButton";
 import { LeaveSpaceButton } from "@/features/spaces/components/pages/space-page/controls/LeaveSpaceButton";
 
 type Props = {
-    // The screen share and proximity chat controls only exist where there is
-    // an office to meet people in. Over the chat they would only crowd the bar.
+    // The screen share and the reactions only exist where there is an office to
+    // meet people in. Over the chat they would only crowd the bar.
     isMeetingContext: boolean;
     canShareScreen: boolean;
     isSharingScreen: boolean;
@@ -26,6 +27,7 @@ type Props = {
     onStartScreenShare: () => void;
     onStopScreenShare: () => void;
     reactions: ReactionsButtonState;
+    nearbyChat: NearbyChatButtonState;
 };
 
 // The media and presence controls. Rendered in the floating bar over the
@@ -41,17 +43,15 @@ export const MediaControls = ({
     onStartScreenShare,
     onStopScreenShare,
     reactions,
+    nearbyChat,
 }: Props) => {
     return (
         <TooltipProvider delay={SPACE_CONTROLS_TOOLTIP_DELAY_MS}>
             <UserWidget />
             <MicToggleButton error={micError} />
             <CameraToggleButton error={cameraError} />
-            <ReactionsControl
-                visible={isMeetingContext}
-                {...reactions}
-            />
-            <ProximityChatButton visible={isMeetingContext} />
+            <ReactionsControl visible={isMeetingContext} {...reactions} />
+            <ProximityChatButton {...nearbyChat} />
             <ScreenShareButton
                 visible={isMeetingContext && canShareScreen}
                 error={screenShareError}

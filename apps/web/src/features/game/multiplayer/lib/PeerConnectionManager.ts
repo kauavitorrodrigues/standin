@@ -7,6 +7,8 @@ import {
     type PeerEmotePayload,
     type PeerMediaStatePayload,
     type PeerMessage,
+    type PeerNearbyMessagePayload,
+    type PeerNearbyTypingPayload,
     type PeerReactionPayload,
     type PeerTypingPayload,
     type PlayerPosition,
@@ -257,6 +259,19 @@ export class PeerConnectionManager {
     // to every peer on purpose; each receiver drops it when it is out of range.
     broadcastEmote(payload: PeerEmotePayload): void {
         this.dispatch({ type: PEER_MESSAGE_TYPES.EMOTE, payload });
+    }
+
+    // Same reasoning as broadcastEmote: a nearby message is a discrete, user-
+    // triggered event that goes to every peer on purpose, and each receiver
+    // drops it when it is out of range or in another room.
+    broadcastNearbyMessage(payload: PeerNearbyMessagePayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.NEARBY_MESSAGE, payload });
+    }
+
+    // Throttling and expiry are the caller's responsibility, same as
+    // broadcastTyping.
+    broadcastNearbyTyping(payload: PeerNearbyTypingPayload): void {
+        this.dispatch({ type: PEER_MESSAGE_TYPES.NEARBY_TYPING, payload });
     }
 
     // Sent once the API call behind an earlier broadcastChatMessage
