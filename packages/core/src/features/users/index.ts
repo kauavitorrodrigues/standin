@@ -3,6 +3,9 @@ import { deleteUser } from "./delete";
 import { findUserByEmail } from "./findByEmail";
 import { findUserById } from "./findById";
 import { findUsersByIds } from "./findManyByIds";
+import { createUserFromIdentity } from "./identities/createFromIdentity";
+import { findUserByIdentity } from "./identities/findByIdentity";
+import { linkIdentity } from "./identities/linkIdentity";
 import { isUserValid } from "./isValid";
 import { updateUser } from "./update";
 import { updateProfilePicture } from "./updateProfilePicture";
@@ -24,8 +27,20 @@ export const UserService = {
     // Hook for the socket: runs after a profile picture is set or removed.
     onProfilePictureChanged: onUserProfilePictureChanged,
     delete: deleteUser,
+    // Sign in with a provider (GitHub). The API reads the provider and hands
+    // over prepared data, the core only persists and applies the domain rules.
+    findByIdentity: findUserByIdentity,
+    linkIdentity,
+    createFromIdentity: createUserFromIdentity,
 };
 
+export type {
+    CreateFromIdentityInput,
+    CreateFromIdentityResult,
+    IdentityInput,
+    IdentityKey,
+    LinkIdentityInput,
+} from "./identities/types";
 export type {
     UserNameChange,
     UserNameListener,
