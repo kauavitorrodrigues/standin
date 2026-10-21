@@ -114,11 +114,11 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const { members } = OrganizationsQueries.useMembers();
     const names = buildNameLookup(members);
     useLocalAvatarSheet(handle?.game ?? null);
-    const avatars = new Map(members.map((m) => [m.id, m.avatarUrl]));
+    const avatars = new Map(members.map((m) => [m.id, m.profilePictureUrl]));
     useLocalUserProfile(handle?.game ?? null, {
         userId: user.id,
         name: user.name,
-        avatarUrl: avatars.get(user.id) ?? null,
+        profilePictureUrl: user.profilePictureUrl,
     });
 
     const {

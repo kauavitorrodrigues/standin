@@ -20,7 +20,7 @@ export const HeaderShell = ({ title, avatar, onBack, children }: Props) => {
                 <UserAvatar
                     id={avatar.id}
                     name={title}
-                    avatar={avatar.avatarUrl}
+                    avatar={avatar.profilePictureUrl}
                     size="xs"
                     className="size-6"
                 />

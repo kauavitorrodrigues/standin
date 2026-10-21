@@ -23,7 +23,7 @@ const OverflowAvatar = ({ hiddenCount }: { hiddenCount: number }) => {
 export const NearbySummary = ({ people }: Props) => {
     const { members } = OrganizationsQueries.useMembers();
     const avatarByUserId = new Map(
-        members.map((member) => [member.id, member.avatarUrl])
+        members.map((member) => [member.id, member.profilePictureUrl])
     );
     const visiblePeople = people.slice(0, NEARBY_MAX_VISIBLE_AVATARS);
     const hiddenCount = people.length - visiblePeople.length;

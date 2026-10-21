@@ -27,7 +27,7 @@ const resolvePeersInRoom = (io: Server, room: string) => {
 
 // What the tag shows when a profile could not be read: no name, so the client
 // keeps the tag hidden.
-const NO_PROFILE: UserProfile = { name: "", avatarUrl: null };
+const NO_PROFILE: UserProfile = { name: "", profilePictureUrl: null };
 
 // The sheet and the profile are read after the join, so the database never sits
 // between the snapshot and the join. The sheets are read one by one and the

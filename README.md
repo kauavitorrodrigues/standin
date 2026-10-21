@@ -31,6 +31,7 @@ The product goal is to give a small team a navigable "virtual office" with real-
 - **Reusable areas**: capture a block of tiles, objects, and an optional zone as an area, and stamp it onto any map.
 - **Rooms and doors**: a room is a private zone with walls and doors. Doors can be locked, and people outside ask to join. Communication is limited to the people in the same room.
 - **Custom avatars**: each person builds an avatar from parts (skin, hair, clothes, accessories) in an editor, and everyone in the space sees it change live. Whoever has none is a ghost. The full guide is in [docs/avatar.md](docs/avatar.md).
+- **Profile picture**: each person can upload a photo (cropped and shrunk on the server) that shows in lists, the chat and the name tag, and updates live for everyone in the space. It is separate from the avatar. See [docs/profile-picture.md](docs/profile-picture.md).
 - **Desks and seats**: members claim a desk, and avatars sit on seats. Each member can decorate the items on their own desk.
 - **Map templates**: the admin builds complete maps and publishes them as templates, which organization owners pick from when creating a space.
 - **Abstracted file storage**: a generic `files` entity behind a pluggable storage driver, so the instance operator picks where uploads actually live (see [Storage](#storage) below).

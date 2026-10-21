@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { canJoinSpaceMock, resolveAvatarSheetFileIdMock, resolveUserProfilesMock } =
-    vi.hoisted(() => ({
-        canJoinSpaceMock: vi.fn(),
-        resolveAvatarSheetFileIdMock: vi.fn(),
-        resolveUserProfilesMock: vi.fn(),
-    }));
+const {
+    canJoinSpaceMock,
+    resolveAvatarSheetFileIdMock,
+    resolveUserProfilesMock,
+} = vi.hoisted(() => ({
+    canJoinSpaceMock: vi.fn(),
+    resolveAvatarSheetFileIdMock: vi.fn(),
+    resolveUserProfilesMock: vi.fn(),
+}));
 
 vi.mock("../../services/resolveUserProfiles", () => ({
     resolveUserProfiles: resolveUserProfilesMock,
@@ -69,8 +72,8 @@ describe("registerJoinSpace", () => {
         resolveAvatarSheetFileIdMock.mockResolvedValue(null);
         resolveUserProfilesMock.mockResolvedValue(
             new Map([
-                ["user-a", { name: "Ana", avatarUrl: "/files/ana" }],
-                ["user-b", { name: "Bruno", avatarUrl: null }],
+                ["user-a", { name: "Ana", profilePictureUrl: "/files/ana" }],
+                ["user-b", { name: "Bruno", profilePictureUrl: null }],
             ])
         );
     });
@@ -97,7 +100,7 @@ describe("registerJoinSpace", () => {
                     userId: "user-a",
                     avatarSheetFileId: null,
                     name: "Ana",
-                    avatarUrl: "/files/ana",
+                    profilePictureUrl: "/files/ana",
                 },
             ],
         });
@@ -122,7 +125,7 @@ describe("registerJoinSpace", () => {
                     userId: "user-a",
                     avatarSheetFileId: "file-a",
                     name: "Ana",
-                    avatarUrl: "/files/ana",
+                    profilePictureUrl: "/files/ana",
                 },
             ],
         });
@@ -144,7 +147,7 @@ describe("registerJoinSpace", () => {
             userId: "user-b",
             avatarSheetFileId: "file-b",
             name: "Bruno",
-            avatarUrl: null,
+            profilePictureUrl: null,
         });
     });
 
@@ -163,7 +166,7 @@ describe("registerJoinSpace", () => {
             userId: "user-b",
             avatarSheetFileId: null,
             name: "Bruno",
-            avatarUrl: null,
+            profilePictureUrl: null,
         });
     });
 
@@ -176,7 +179,10 @@ describe("registerJoinSpace", () => {
         await getJoinHandler(socketB)?.(validPayload);
 
         expect(resolveUserProfilesMock).toHaveBeenCalledTimes(1);
-        expect(resolveUserProfilesMock).toHaveBeenCalledWith(["user-b", "user-a"]);
+        expect(resolveUserProfilesMock).toHaveBeenCalledWith([
+            "user-b",
+            "user-a",
+        ]);
     });
 
     it("sends an empty name and no photo when the profile could not be read", async () => {
@@ -195,7 +201,7 @@ describe("registerJoinSpace", () => {
                     userId: "user-a",
                     avatarSheetFileId: null,
                     name: "",
-                    avatarUrl: null,
+                    profilePictureUrl: null,
                 },
             ],
         });

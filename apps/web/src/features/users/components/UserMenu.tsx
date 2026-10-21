@@ -38,6 +38,7 @@ export function UserMenu({
                         <UserAvatarInfo
                             id={user.id}
                             name={user.name}
+                            avatar={user.profilePictureUrl}
                             size="sm"
                             hideInfo={compact}
                         />
@@ -50,6 +51,7 @@ export function UserMenu({
                         <UserAvatarInfo
                             id={user.id}
                             name={user.name}
+                            avatar={user.profilePictureUrl}
                             email={user.email}
                             size="default"
                             nameClassName="max-w-40"

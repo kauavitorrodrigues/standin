@@ -25,3 +25,4 @@ export * from "./avatar-categories";
 export * from "./user-avatar-parts";
 export * from "./user-avatar-bases";
 export * from "./user-avatar-sheets";
+export * from "./user-profile-pictures";

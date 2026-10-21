@@ -26,7 +26,7 @@ export const DirectConversationItem = ({
             <UserAvatar
                 id={other.id}
                 name={other.name}
-                avatar={other.avatarUrl}
+                avatar={other.profilePictureUrl}
                 size="xs"
             />
             <span className="flex-1 truncate">{other.name}</span>

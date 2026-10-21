@@ -29,6 +29,8 @@ import {
     removePeerId,
 } from "../utils/peer";
 import { applyNameChange } from "@/features/game/multiplayer/utils/applyNameChange";
+import { applyProfilePictureChange } from "@/features/game/multiplayer/utils/applyProfilePictureChange";
+import { invalidateProfilePictureQueries } from "@/features/users/utils/invalidateProfilePictureQueries";
 import { getMeQueryOptions } from "@/features/auth/queries/getMe";
 import { MY_AVATAR_QUERY_KEY } from "@/features/avatar/consts/editor/queryKeys";
 import { useMicEnabled } from "@/features/media-devices/hooks/useMicEnabled";
@@ -426,7 +428,7 @@ export function useSpaceConnection({
                 peer.socketId,
                 peer.userId,
                 peer.avatarSheetFileId,
-                { name: peer.name, avatarUrl: peer.avatarUrl }
+                { name: peer.name, profilePictureUrl: peer.profilePictureUrl }
             );
         });
     });
@@ -439,7 +441,7 @@ export function useSpaceConnection({
             peer.socketId,
             peer.userId,
             peer.avatarSheetFileId,
-            { name: peer.name, avatarUrl: peer.avatarUrl }
+            { name: peer.name, profilePictureUrl: peer.profilePictureUrl }
         );
     });
 
@@ -470,6 +472,26 @@ export function useSpaceConnection({
                     getMeQueryOptions().queryKey,
                     (previous) => previous && { ...previous, name }
                 ),
+        });
+    });
+
+    // Someone saved or removed their profile picture (see
+    // applyProfilePictureChange).
+    useSocketEvent("space:profile-picture-changed", (change) => {
+        applyProfilePictureChange({
+            change,
+            selfUserId: userId,
+            ownPictureUrl:
+                queryClient.getQueryData(getMeQueryOptions().queryKey)
+                    ?.profilePictureUrl ?? null,
+            scene: game ? getMapScene(game) : null,
+            updateOwnPicture: (profilePictureUrl) =>
+                queryClient.setQueryData(
+                    getMeQueryOptions().queryKey,
+                    (previous) => previous && { ...previous, profilePictureUrl }
+                ),
+            refreshPictures: () =>
+                void invalidateProfilePictureQueries(queryClient),
         });
     });
 

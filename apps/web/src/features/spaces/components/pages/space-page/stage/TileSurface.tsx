@@ -1,5 +1,6 @@
 import { VideoIcon } from "lucide-react";
 import { UserAvatar } from "@/features/users/components/UserAvatar";
+import { useProfilePictureOf } from "@/features/users/hooks/useProfilePictureOf";
 import type { StageTile } from "@/features/spaces/types/stage";
 import { useMirrorSelfCameraPreference } from "@/features/media-devices/hooks/useMirrorSelfCameraPreference";
 import { VideoElement } from "@/components/VideoElement";
@@ -15,6 +16,7 @@ type TileSurfaceProps = {
 // nearby without a camera.
 export const TileSurface = ({ tile, isVideoPaused = false }: TileSurfaceProps) => {
     const mirrorSelfCamera = useMirrorSelfCameraPreference();
+    const picture = useProfilePictureOf(tile.userId);
 
     if (tile.stream && isVideoPaused) {
         return (
@@ -41,6 +43,7 @@ export const TileSurface = ({ tile, isVideoPaused = false }: TileSurfaceProps) =
             <UserAvatar
                 id={tile.userId ?? tile.id}
                 name={tile.label}
+                avatar={picture}
                 size="sm"
             />
         </div>

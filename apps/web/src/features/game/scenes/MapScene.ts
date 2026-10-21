@@ -142,6 +142,7 @@ import { getRoomAt } from "@/features/game/utils/getRoomAt";
 import { getAvatarHitRect } from "@/features/game/utils/getAvatarHitRect";
 import { REMOTE_AVATAR_EVENTS } from "@/features/game/consts/avatar-hover";
 import { isRemoteNameTagAllowed } from "@/features/game/utils/isRemoteNameTagAllowed";
+import { PendingProfilePictures } from "@/features/game/lib/PendingProfilePictures";
 import { PendingUserNames } from "@/features/game/lib/PendingUserNames";
 import { RemoteSelection } from "@/features/game/lib/RemoteSelection";
 import { calculateVolumeFromDistance } from "@/features/game/multiplayer/utils/audio";
@@ -195,6 +196,8 @@ export class MapScene extends Phaser.Scene {
     private readonly remoteSelection = new RemoteSelection();
     // Names that arrived before the avatar they belong to was made.
     private readonly pendingUserNames = new PendingUserNames();
+    // Profile pictures that arrived before the avatar they belong to was made.
+    private readonly pendingProfilePictures = new PendingProfilePictures();
     // The decorator is open, and the tags of the others hide.
     private isDecorating = false;
     private seatOccupancy = new SeatOccupancy();
@@ -953,7 +956,13 @@ export class MapScene extends Phaser.Scene {
         this.remoteUserIds.set(socketId, userId);
         this.avatarSheets?.bind(socketId, avatar, avatarSheetFileId);
         avatar.setName(this.pendingUserNames.take(userId, profile.name));
-        avatar.setProfile({ userId, avatarUrl: profile.avatarUrl });
+        avatar.setProfile({
+            userId,
+            profilePictureUrl: this.pendingProfilePictures.take(
+                userId,
+                profile.profilePictureUrl
+            ),
+        });
     }
 
     // Who the local player is for the tag over it: the name, and the photo it
@@ -971,7 +980,7 @@ export class MapScene extends Phaser.Scene {
         this.player.setName(profile.name);
         this.player.setProfile({
             userId: profile.userId,
-            avatarUrl: profile.avatarUrl,
+            profilePictureUrl: profile.profilePictureUrl,
         });
     }
 
@@ -1017,10 +1026,31 @@ export class MapScene extends Phaser.Scene {
         if (!found) this.pendingUserNames.set(userId, name);
     }
 
+    // The photo on the tag of every remote avatar of a person, with no new
+    // scene. Used by space:profile-picture-changed. A person whose avatar is
+    // not made yet keeps the photo for when it is, since the event can come
+    // before `space:joined`.
+    setUserProfilePicture(
+        userId: string,
+        profilePictureUrl: string | null
+    ): void {
+        let found = false;
+        this.remoteUserIds.forEach((remoteUserId, socketId) => {
+            if (remoteUserId !== userId) return;
+
+            found = true;
+            this.remoteAvatars
+                .get(socketId)
+                ?.setProfile({ userId, profilePictureUrl });
+        });
+        if (!found) this.pendingProfilePictures.set(userId, profilePictureUrl);
+    }
+
     // A person left the room, so a name kept for their avatar is no longer one
     // to trust (see PendingUserNames).
     forgetPendingUserName(userId: string): void {
         this.pendingUserNames.forget(userId);
+        this.pendingProfilePictures.forget(userId);
     }
 
     // The tag of a remote avatar hides while it would give away a name that the

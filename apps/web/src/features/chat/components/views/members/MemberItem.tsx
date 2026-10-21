@@ -12,7 +12,7 @@ export const MemberItem = ({ member, onSelect }: Props) => (
         <UserAvatar
             id={member.id}
             name={member.name}
-            avatar={member.avatarUrl}
+            avatar={member.profilePictureUrl}
             size="default"
         />
         <span className="truncate text-sm font-medium">{member.name}</span>

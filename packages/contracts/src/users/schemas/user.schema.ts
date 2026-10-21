@@ -6,4 +6,5 @@ import { UserDataSchema } from "./user.data.schema";
 export const UserSchema = UserDataSchema.omit({ password: true }).extend({
     id: z.string({ error: UserErrorMessages.id.invalid }),
     role: z.enum(USER_ROLES),
+    profilePictureUrl: z.string().nullable(),
 });

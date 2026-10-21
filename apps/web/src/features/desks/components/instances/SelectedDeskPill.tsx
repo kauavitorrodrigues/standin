@@ -1,4 +1,5 @@
 import type { HoverState } from "@/features/game/types/hover";
+import { useProfilePictureOf } from "@/features/users/hooks/useProfilePictureOf";
 import { DESK_MESSAGES } from "../../consts/messages";
 import { DeskOwnerPill } from "../views/DeskOwnerPill";
 
@@ -21,6 +22,8 @@ export const SelectedDeskPill = ({
     onlineUserIds,
     onOpenProfile,
 }: SelectedDeskPillProps) => {
+    const ownerPicture = useProfilePictureOf(ownerId);
+
     if (!selected) return null;
 
     return (
@@ -29,6 +32,7 @@ export const SelectedDeskPill = ({
             owner={{
                 id: ownerId,
                 name: names.get(ownerId) ?? DESK_MESSAGES.OWNER_FALLBACK,
+                avatar: ownerPicture,
             }}
             isOnline={onlineUserIds.includes(ownerId)}
             placement="above"

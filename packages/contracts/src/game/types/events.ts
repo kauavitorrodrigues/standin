@@ -40,6 +40,7 @@ export const SpaceEvents = {
     SPACE_DUPLICATE_SESSION: "space:duplicate-session",
     SPACE_AVATAR_CHANGED: "space:avatar-changed",
     SPACE_NAME_CHANGED: "space:name-changed",
+    SPACE_PROFILE_PICTURE_CHANGED: "space:profile-picture-changed",
     WEBRTC_SIGNAL: "webrtc:signal",
 } as const;
 
@@ -72,6 +73,11 @@ export type AvatarChangedPayload = {
 export type NameChangedPayload = {
     userId: string;
     name: string;
+};
+
+export type ProfilePictureChangedPayload = {
+    userId: string;
+    profilePictureUrl: string | null;
 };
 
 export type PeerLeftPayload = {
@@ -129,6 +135,11 @@ export type ServerToClientEvents = {
     // A person in the room renamed themselves, so the tag over their avatar
     // changes with no refresh.
     "space:name-changed": (payload: NameChangedPayload) => void;
+    // A person in the room changed or removed their profile picture. Null
+    // means the picture was removed and the initial shows again.
+    "space:profile-picture-changed": (
+        payload: ProfilePictureChangedPayload
+    ) => void;
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
     "room:state": (payload: RoomStatePayload) => void;
     "room:states": (payload: RoomStatesPayload) => void;

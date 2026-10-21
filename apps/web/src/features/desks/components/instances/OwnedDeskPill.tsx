@@ -1,4 +1,5 @@
 import { useDwell } from "@/hooks/useDwell";
+import { useProfilePictureOf } from "@/features/users/hooks/useProfilePictureOf";
 import type { HoverState } from "@/features/game/types/hover";
 import { DESK_OWNER_PILL_DWELL_MS } from "../../consts/hover";
 import { DESK_MESSAGES } from "../../consts/messages";
@@ -28,6 +29,7 @@ export const OwnedDeskPill = ({
     onPointerLeave,
 }: OwnedDeskPillProps) => {
     const hasRested = useDwell(hover.id, DESK_OWNER_PILL_DWELL_MS);
+    const ownerPicture = useProfilePictureOf(ownerId);
     if (!hasRested) return null;
 
     return (
@@ -36,6 +38,7 @@ export const OwnedDeskPill = ({
             owner={{
                 id: ownerId,
                 name: names.get(ownerId) ?? DESK_MESSAGES.OWNER_FALLBACK,
+                avatar: ownerPicture,
             }}
             isOnline={onlineUserIds.includes(ownerId)}
             placement="below"

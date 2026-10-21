@@ -34,7 +34,7 @@ export const LabNameTag = ({ isVisible, name, x, feetY }: Props) => {
                 isLocal={false}
                 isDetailed={false}
                 userId=""
-                avatarUrl={null}
+                profilePictureUrl={null}
             />
         </div>
     );

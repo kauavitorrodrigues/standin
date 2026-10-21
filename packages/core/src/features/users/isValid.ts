@@ -1,8 +1,17 @@
 import bcrypt from "bcryptjs";
 import { userSelect } from "./consts/select";
-import { db, usersTable, eq, and, isNull } from "@standin/database";
+import {
+    db,
+    usersTable,
+    userProfilePicturesTable,
+    eq,
+    and,
+    isNull,
+} from "@standin/database";
 import { normalizeEmail } from "@standin/contracts";
 import type { SignInSchemaType, User } from "@standin/contracts";
+import { profilePictureJoin } from "./utils/profilePictureJoin";
+import { toUser } from "./utils/toUser";
 
 export const isUserValid = async ({
     email,
@@ -11,6 +20,7 @@ export const isUserValid = async ({
     const [user] = await db
         .select({ ...userSelect, password: usersTable.password })
         .from(usersTable)
+        .leftJoin(userProfilePicturesTable, profilePictureJoin)
         .where(
             and(
                 eq(usersTable.email, normalizeEmail(email)),
@@ -25,5 +35,5 @@ export const isUserValid = async ({
 
     const { password: _password, ...safeUser } = user;
 
-    return safeUser;
+    return toUser(safeUser);
 };

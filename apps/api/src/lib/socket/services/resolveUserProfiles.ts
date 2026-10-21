@@ -3,7 +3,7 @@ import { UserService } from "@standin/core";
 export type UserProfile = {
     name: string;
     // The photo of the profile, null when the person has none.
-    avatarUrl: string | null;
+    profilePictureUrl: string | null;
 };
 
 // What the tag over each avatar shows, by user id: the name, and the photo it
@@ -18,7 +18,7 @@ export const resolveUserProfiles = async (
         return new Map(
             users.map((user) => [
                 user.id,
-                { name: user.name, avatarUrl: user.avatarUrl },
+                { name: user.name, profilePictureUrl: user.profilePictureUrl },
             ])
         );
     } catch (error) {
