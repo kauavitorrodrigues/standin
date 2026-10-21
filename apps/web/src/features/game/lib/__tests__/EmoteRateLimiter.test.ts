@@ -42,3 +42,17 @@ describe("EmoteRateLimiter", () => {
         expect(limiter.allow("a", 0)).toBe(true);
     });
 });
+
+describe("EmoteRateLimiter with its own limit", () => {
+    it("uses the limit it was given", () => {
+        const limiter = new EmoteRateLimiter({
+            MAX_EVENTS: 2,
+            WINDOW_MS: 1000,
+        });
+
+        expect(limiter.allow("a", 0)).toBe(true);
+        expect(limiter.allow("a", 10)).toBe(true);
+        expect(limiter.allow("a", 20)).toBe(false);
+        expect(limiter.allow("a", 1000)).toBe(true);
+    });
+});

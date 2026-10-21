@@ -327,6 +327,16 @@ export function useSpaceConnection({
                             message.payload
                         );
                         return;
+                    case PEER_MESSAGE_TYPES.NEARBY_MESSAGE:
+                        (
+                            game ? getMapScene(game) : null
+                        )?.applyRemoteNearbyMessage(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.NEARBY_TYPING:
+                        (
+                            game ? getMapScene(game) : null
+                        )?.applyRemoteNearbyTyping(socketId, message.payload);
+                        return;
                     case PEER_MESSAGE_TYPES.MEDIA_STATE:
                         setRemoteMicMuted(
                             message.payload.userId,
@@ -703,6 +713,26 @@ export function useSpaceConnection({
         []
     );
 
+    // A nearby message goes to the mesh and is shown at once on the local
+    // avatar and in the list, since the mesh never sends it back. The text was
+    // already validated by the form that sent it.
+    const sendNearbyMessage = useCallback(
+        (text: string) => {
+            manager.broadcastNearbyMessage({ text });
+            const scene = game ? getMapScene(game) : null;
+            scene?.playLocalNearbyMessage(text);
+        },
+        [manager, game]
+    );
+    const sendNearbyTyping = useCallback(
+        (isTyping: boolean) => {
+            manager.broadcastNearbyTyping({ isTyping });
+            const scene = game ? getMapScene(game) : null;
+            scene?.playLocalNearbyTyping(isTyping);
+        },
+        [manager, game]
+    );
+
     return {
         connectedPeerIds,
         onlineUserIds,
@@ -723,5 +753,7 @@ export function useSpaceConnection({
         broadcastDelete,
         broadcastConfirm,
         sendEmote,
+        sendNearbyMessage,
+        sendNearbyTyping,
     };
 }

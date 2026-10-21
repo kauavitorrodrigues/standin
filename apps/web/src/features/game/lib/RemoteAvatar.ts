@@ -126,6 +126,10 @@ export class RemoteAvatar {
     }
 
     // The avatar was clicked: its tag shows the photo and glows.
+    setTyping(isTyping: boolean): void {
+        this.nameTag.setTyping(isTyping);
+    }
+
     setNameTagDetailed(isDetailed: boolean): void {
         this.nameTag.setDetailed(isDetailed);
     }

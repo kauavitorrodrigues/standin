@@ -105,6 +105,16 @@ const isPeerMediaStatePayload = (
     );
 };
 
+const isRecordWith = <K extends string, T extends "string" | "boolean">(
+    data: unknown,
+    key: K,
+    type: T
+): data is Record<K, T extends "string" ? string : boolean> => {
+    if (typeof data !== "object" || data === null) return false;
+
+    return typeof (data as Record<string, unknown>)[key] === type;
+};
+
 // Messages arrive over the raw WebRTC data channel, never validated
 // server-side (the server never inspects peer traffic by design). A
 // malicious or buggy peer can send anything, so guard the envelope and its
@@ -168,6 +178,22 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
             const payload = validateEmote(candidate.payload);
             return payload ? { type: PEER_MESSAGE_TYPES.EMOTE, payload } : null;
         }
+        case PEER_MESSAGE_TYPES.NEARBY_MESSAGE:
+            // Only the shape is checked here. The text itself is validated by
+            // the scene, which also measures range and room.
+            return isRecordWith(candidate.payload, "text", "string")
+                ? {
+                    type: PEER_MESSAGE_TYPES.NEARBY_MESSAGE,
+                    payload: { text: candidate.payload.text },
+                }
+                : null;
+        case PEER_MESSAGE_TYPES.NEARBY_TYPING:
+            return isRecordWith(candidate.payload, "isTyping", "boolean")
+                ? {
+                    type: PEER_MESSAGE_TYPES.NEARBY_TYPING,
+                    payload: { isTyping: candidate.payload.isTyping },
+                }
+                : null;
         default:
             return null;
     }
@@ -177,13 +203,16 @@ export const parsePeerMessage = (data: unknown): PeerMessage | null => {
 // it against the userId the server actually associates with that socket
 // (see space:joined/space:peer-joined). POSITION carries no identity claim
 // worth checking, so it's not part of PeerMessage's userId-bearing union
-// here. EMOTE carries none either: the channel already says who sent it.
+// here. EMOTE and the nearby messages carry none either: the channel already
+// says who sent it.
 type MessageWithClaimedUser = Exclude<
     PeerMessage,
     {
         type:
             | typeof PEER_MESSAGE_TYPES.POSITION
-            | typeof PEER_MESSAGE_TYPES.EMOTE;
+            | typeof PEER_MESSAGE_TYPES.EMOTE
+            | typeof PEER_MESSAGE_TYPES.NEARBY_MESSAGE
+            | typeof PEER_MESSAGE_TYPES.NEARBY_TYPING;
     }
 >;
 
@@ -219,6 +248,8 @@ export const isMessageFromKnownSender = (
     switch (message.type) {
         case PEER_MESSAGE_TYPES.POSITION:
         case PEER_MESSAGE_TYPES.EMOTE:
+        case PEER_MESSAGE_TYPES.NEARBY_MESSAGE:
+        case PEER_MESSAGE_TYPES.NEARBY_TYPING:
             return true;
     }
 

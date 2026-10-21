@@ -1,3 +1,4 @@
+import type { NearbyChatConnection } from "@/features/nearby-chat/types/nearby-chat";
 import type { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 
 type SpaceConnection = ReturnType<typeof useSpaceConnection>;
@@ -10,4 +11,5 @@ export type SpaceMediaControls = {
     micError: SpaceConnection["localAudioError"];
     cameraError: SpaceConnection["video"]["localCameraError"];
     sendEmote: SpaceConnection["sendEmote"];
+    nearbyChat: NearbyChatConnection;
 };
