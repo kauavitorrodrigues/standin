@@ -6,6 +6,7 @@ import {
 } from "@/features/game/consts/avatar-sprite";
 import { AVATAR_GHOST_TEXTURE_KEY } from "@/features/avatar/consts/textures";
 import { AvatarBlink } from "@/features/game/lib/AvatarBlink";
+import { NameTag } from "@/features/game/lib/NameTag";
 import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 import { playAvatarAnimation } from "@/features/game/utils/playAvatarAnimation";
 import {
@@ -22,6 +23,7 @@ export class RemoteAvatar {
     readonly gameObject: Phaser.GameObjects.Sprite;
     private textureKey: string;
     private readonly blink = new AvatarBlink();
+    private readonly nameTag: NameTag;
     private targetX: number;
     private targetY: number;
     // The avatar is constructed at the local spawn point (its peer's real
@@ -48,6 +50,11 @@ export class RemoteAvatar {
             .setOrigin(AVATAR_SPRITE_ORIGIN.x, AVATAR_SPRITE_ORIGIN.y);
         this.targetX = x;
         this.targetY = y;
+        this.nameTag = new NameTag({
+            scene,
+            isLocal: false,
+            target: this.gameObject,
+        });
         this.refresh();
     }
 
@@ -103,7 +110,43 @@ export class RemoteAvatar {
         this.refresh();
     }
 
+    // The name over the avatar. Empty hides the tag until there is a name.
+    setName(name: string): void {
+        this.nameTag.setName(name);
+    }
+
+    // The photo the tag shows when the avatar is clicked.
+    setProfile(profile: { userId: string; avatarUrl: string | null }): void {
+        this.nameTag.setProfile(profile);
+    }
+
+    // The avatar was clicked: its tag shows the photo and glows.
+    setNameTagDetailed(isDetailed: boolean): void {
+        this.nameTag.setDetailed(isDetailed);
+    }
+
+    // Whether the rules of the scene let the tag show (see shouldShowNameTag).
+    setNameTagAllowed(isAllowed: boolean): void {
+        this.nameTag.setAllowed(isAllowed);
+    }
+
+    get hasName(): boolean {
+        return this.nameTag.hasName;
+    }
+
+    // The position of the peer reached us. Before that the avatar stands at the
+    // spawn point of the local player, which is not where the peer is.
+    get hasPosition(): boolean {
+        return this.hasReceivedPosition;
+    }
+
+    // The tag is on the screen, so the avatar is worth a click.
+    get isNameTagShown(): boolean {
+        return this.nameTag.isShown;
+    }
+
     destroy(): void {
+        this.nameTag.destroy();
         this.gameObject.destroy();
     }
 

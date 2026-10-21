@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { getMeQueryOptions } from "@/features/auth/queries/getMe";
 import { organizationsQueryOptions } from "@/features/organizations/queries/organizations";
@@ -34,7 +35,16 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-    const { user, organization } = Route.useRouteContext();
+    const { user: routeUser, organization } = Route.useRouteContext();
+    // The route loads the signed in person once and never again (`staleTime:
+    // "static"`), so its copy goes stale when the person renames themselves. The
+    // app reads the person from the query instead, which saving the profile and
+    // `space:name-changed` write to, and starts from what the route loaded.
+    const { data: user = routeUser } = useQuery({
+        ...getMeQueryOptions(),
+        initialData: routeUser,
+        staleTime: Infinity,
+    });
 
     return (
         <AuthProvider user={user}>

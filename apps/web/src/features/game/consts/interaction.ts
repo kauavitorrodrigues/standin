@@ -1,7 +1,6 @@
-import { AVATAR } from "@standin/contracts";
-
 // The prompt sits over the name tag, which sits over the head of the avatar.
-const PROMPT_GAP_PX = 4;
+// The space between the prompt and the tag, in world px.
+export const INTERACTION_PROMPT_GAP_PX = 4;
 
 export const INTERACTION_PROMPT_STYLE = {
     FONT_SIZE: "16px",
@@ -10,8 +9,6 @@ export const INTERACTION_PROMPT_STYLE = {
     BACKGROUND_COLOR: "#00000099",
     PADDING_X: 12,
     PADDING_Y: 8,
-    // From the feet of the avatar up to the bottom of the prompt.
-    ABOVE_PLAYER_OFFSET: AVATAR.visible.h + PROMPT_GAP_PX,
     DEPTH: 100,
     ORIGIN_X: 0.5,
     ORIGIN_Y_BOTTOM: 1,

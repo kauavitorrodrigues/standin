@@ -114,6 +114,7 @@ import { SolidColliders } from "@/features/game/lib/SolidColliders";
 import { AvatarOutline } from "@/features/game/lib/AvatarOutline";
 import {
     findHoveredTarget,
+    getHoverClickEvent,
     getSelectedStateEvent,
 } from "@/features/game/utils/hover";
 import { HoverTargetController } from "@/features/game/lib/HoverTargetController";
@@ -128,7 +129,16 @@ import type { MapSceneInitData } from "@/features/game/types/tilemap";
 import { SEND_INTERVAL_MS } from "@/features/game/multiplayer/consts/sync";
 import { MAX_AUDIBLE_RADIUS } from "@/features/game/multiplayer/consts/audio";
 import { getCommunicationDistance } from "@/features/game/utils/canCommunicate";
+import {
+    NO_USER_TAG_PROFILE,
+    type UserTagProfile,
+} from "@/features/game/types/name-tag";
 import { getRoomAt } from "@/features/game/utils/getRoomAt";
+import { getAvatarHitRect } from "@/features/game/utils/getAvatarHitRect";
+import { REMOTE_AVATAR_EVENTS } from "@/features/game/consts/avatar-hover";
+import { isRemoteNameTagAllowed } from "@/features/game/utils/isRemoteNameTagAllowed";
+import { PendingUserNames } from "@/features/game/lib/PendingUserNames";
+import { RemoteSelection } from "@/features/game/lib/RemoteSelection";
 import { calculateVolumeFromDistance } from "@/features/game/multiplayer/utils/audio";
 import { ROOM_DOOR_PADLOCK } from "@/features/game/consts/room-door";
 import padlockUrl from "@assets/game/lock.png";
@@ -168,6 +178,17 @@ export class MapScene extends Phaser.Scene {
     // The sheet of the local player, kept for when it arrives before the
     // player exists. Null is the ghost.
     private localAvatarSheetFileId: string | null = null;
+    // Who the local player is for the name tag, kept for when it arrives before
+    // the player exists.
+    private localUserProfile: (UserTagProfile & { userId: string }) | null =
+        null;
+    private remoteHoverController: HoverTargetController | null = null;
+    // The remote avatar the mouse clicked, whose tag shows the photo.
+    private readonly remoteSelection = new RemoteSelection();
+    // Names that arrived before the avatar they belong to was made.
+    private readonly pendingUserNames = new PendingUserNames();
+    // The decorator is open, and the tags of the others hide.
+    private isDecorating = false;
     private seatOccupancy = new SeatOccupancy();
     private spawnPoint = { x: 0, y: 0 };
     private broadcastLocalPosition: ((state: PlayerPosition) => void) | null =
@@ -279,6 +300,7 @@ export class MapScene extends Phaser.Scene {
             new AvatarTextureRegistry(this, buildAvatarSheetUrl)
         );
         this.setLocalAvatarSheet(this.localAvatarSheetFileId);
+        this.applyLocalUserProfile();
 
         this.seatController = new SeatController(
             this.player,
@@ -338,12 +360,31 @@ export class MapScene extends Phaser.Scene {
             { drawsOutline: false, setsCursor: true }
         );
 
+        // The avatars of the others are targets of their own. A click on one
+        // selects it, and a click on anything else, the empty map included,
+        // lets it go.
+        this.remoteHoverController = new HoverTargetController(
+            this,
+            REMOTE_AVATAR_EVENTS.HOVER_CHANGED,
+            { drawsOutline: false, setsCursor: true }
+        );
+        const remoteClickEvent = getHoverClickEvent(
+            REMOTE_AVATAR_EVENTS.HOVER_CHANGED
+        );
+        const onRemoteClick = (socketId: string | null) =>
+            this.selectRemoteAvatar(socketId);
+        this.game.events.on(remoteClickEvent, onRemoteClick);
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+            this.game.events.off(remoteClickEvent, onRemoteClick)
+        );
+
         this.playerOutline = new AvatarOutline(this, this.player.gameObject);
         const onPlayerHover = (hover: unknown) => {
             this.isPlayerHovered = hover !== null;
         };
         const onPlayerSelected = (selected: unknown) => {
             this.isPlayerSelected = selected !== null;
+            this.player?.setNameTagDetailed(this.isPlayerSelected);
         };
         const selectedEvent = getSelectedStateEvent(
             PLAYER_EVENTS.HOVER_CHANGED
@@ -456,6 +497,8 @@ export class MapScene extends Phaser.Scene {
             });
             this.remoteAvatars.forEach((avatar) => avatar.destroy());
             this.remoteAvatars.clear();
+            this.remoteSelection.clear();
+            this.isDecorating = false;
             this.avatarSheets?.releaseAll();
             this.avatarSheets = null;
             this.seatOccupancy.clear();
@@ -482,6 +525,8 @@ export class MapScene extends Phaser.Scene {
         this.updatePlayerHover();
         this.updateTileCursor();
         this.remoteAvatars.forEach((avatar) => avatar.update(delta));
+        this.updateNameTags();
+        this.updateRemoteHover();
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
     }
@@ -646,9 +691,12 @@ export class MapScene extends Phaser.Scene {
     // hold the camera still for a press. `null` gives both back.
     setDecoratorGuards(guards: { canPan: () => boolean } | null): void {
         this.canPanCamera = guards?.canPan ?? (() => true);
+        this.isDecorating = guards !== null;
         this.deskHoverController?.setEnabled(guards === null);
         this.zoneHoverController?.setEnabled(guards === null);
         this.playerHoverController?.setEnabled(guards === null);
+        this.remoteHoverController?.setEnabled(guards === null);
+        if (guards !== null) this.selectRemoteAvatar(null);
         this.tileCursor?.setEnabled(guards === null);
         this.pathWalker.cancel();
     }
@@ -870,7 +918,8 @@ export class MapScene extends Phaser.Scene {
     spawnRemoteAvatar(
         socketId: string,
         userId: string,
-        avatarSheetFileId: string | null = null
+        avatarSheetFileId: string | null = null,
+        profile: UserTagProfile = NO_USER_TAG_PROFILE
     ): void {
         if (this.remoteAvatars.has(socketId)) return;
 
@@ -883,6 +932,95 @@ export class MapScene extends Phaser.Scene {
         this.remoteAvatars.set(socketId, avatar);
         this.remoteUserIds.set(socketId, userId);
         this.avatarSheets?.bind(socketId, avatar, avatarSheetFileId);
+        avatar.setName(this.pendingUserNames.take(userId, profile.name));
+        avatar.setProfile({ userId, avatarUrl: profile.avatarUrl });
+    }
+
+    // Who the local player is for the tag over it: the name, and the photo it
+    // shows when it is clicked. Safe to call before the player exists, and
+    // again with the same profile.
+    setLocalUserProfile(profile: UserTagProfile & { userId: string }): void {
+        this.localUserProfile = profile;
+        this.applyLocalUserProfile();
+    }
+
+    private applyLocalUserProfile(): void {
+        const profile = this.localUserProfile;
+        if (!profile || !this.player) return;
+
+        this.player.setName(profile.name);
+        this.player.setProfile({
+            userId: profile.userId,
+            avatarUrl: profile.avatarUrl,
+        });
+    }
+
+    // Feeds the hover of the remote avatars with where each one stands. An
+    // avatar whose tag has no name or is hidden is not a target, since the
+    // click would show nothing.
+    private updateRemoteHover(): void {
+        const { remoteHoverController } = this;
+        if (!remoteHoverController) return;
+
+        const targets: HoverTarget[] = [];
+        this.remoteAvatars.forEach((avatar, socketId) => {
+            if (!avatar.isNameTagShown) return;
+
+            targets.push({
+                id: socketId,
+                bounds: getAvatarHitRect(avatar.gameObject),
+            });
+        });
+        remoteHoverController.setTargets(targets);
+        remoteHoverController.update();
+    }
+
+    // The avatar of a peer was clicked, or none. Its tag shows the photo and
+    // glows until another click on the map.
+    private selectRemoteAvatar(socketId: string | null): void {
+        this.remoteSelection.select(socketId, (id) =>
+            this.remoteAvatars.get(id)
+        );
+    }
+
+    // The name over every avatar of a remote person, with no new scene. Used by
+    // space:name-changed. A person whose avatar is not made yet keeps the name
+    // for when it is, since the event can come before `space:joined`.
+    setUserName(userId: string, name: string): void {
+        let found = false;
+        this.remoteUserIds.forEach((remoteUserId, socketId) => {
+            if (remoteUserId !== userId) return;
+
+            found = true;
+            this.remoteAvatars.get(socketId)?.setName(name);
+        });
+        if (!found) this.pendingUserNames.set(userId, name);
+    }
+
+    // A person left the room, so a name kept for their avatar is no longer one
+    // to trust (see PendingUserNames).
+    forgetPendingUserName(userId: string): void {
+        this.pendingUserNames.forget(userId);
+    }
+
+    // The tag of a remote avatar hides while it would give away a name that the
+    // dark layer of a room is there to keep (see shouldShowNameTag).
+    private updateNameTags(): void {
+        this.remoteAvatars.forEach((avatar) => {
+            avatar.setNameTagAllowed(
+                isRemoteNameTagAllowed({
+                    feet: avatar.gameObject,
+                    rooms: this.rooms,
+                    getRoomState: (key) =>
+                        this.roomSync?.getState(key) ?? ROOM_DOOR_STATES.OPEN,
+                    localRoomKey: this.currentRoomKey,
+                    entitlements: this.roomEntitlements,
+                    isDecorating: this.isDecorating,
+                    hasName: avatar.hasName,
+                    hasPosition: avatar.hasPosition,
+                })
+            );
+        });
     }
 
     // Draws the local player with the sheet of the avatar the person has now.
@@ -915,6 +1053,7 @@ export class MapScene extends Phaser.Scene {
     }
 
     removeRemoteAvatar(socketId: string): void {
+        this.remoteSelection.remove(socketId);
         this.avatarSheets?.release(socketId);
         this.remoteAvatars.get(socketId)?.destroy();
         this.remoteAvatars.delete(socketId);
@@ -923,6 +1062,7 @@ export class MapScene extends Phaser.Scene {
     }
 
     clearRemoteAvatars(): void {
+        this.remoteSelection.clear();
         this.remoteAvatars.forEach((_avatar, socketId) =>
             this.avatarSheets?.release(socketId)
         );

@@ -14,6 +14,7 @@ import type { SeatSpot } from "@/features/game/utils/buildSeatAreas";
 import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 import { playAvatarAnimation } from "@/features/game/utils/playAvatarAnimation";
 import { AvatarBlink } from "@/features/game/lib/AvatarBlink";
+import { NameTag } from "@/features/game/lib/NameTag";
 import { resolveAvatarAnimation } from "@/features/game/utils/resolveAvatarAnimation";
 
 // The local avatar. Its position is the anchor of the sprite, the point where
@@ -27,6 +28,7 @@ export class Player {
     private readonly mapHeightPx: number;
     private textureKey: string;
     private readonly blink = new AvatarBlink();
+    private readonly nameTag: NameTag;
     // What the movement keys ask for right now, each axis -1, 0 or 1.
     moveAxis = { x: 0, y: 0 };
 
@@ -52,6 +54,7 @@ export class Player {
         this.body.setSize(AVATAR.body.w, AVATAR.body.h, false);
         this.body.setOffset(AVATAR_BODY_OFFSET.x, AVATAR_BODY_OFFSET.y);
         this.body.setCollideWorldBounds(true);
+        this.nameTag = new NameTag({ scene, isLocal: true, target: sprite });
         this.update();
     }
 
@@ -110,6 +113,21 @@ export class Player {
         this.textureKey = textureKey;
         this.gameObject.setTexture(textureKey, AVATAR_FIRST_FRAME);
         this.updateAnimation();
+    }
+
+    // The name over the avatar. Empty hides the tag until there is a name.
+    setName(name: string): void {
+        this.nameTag.setName(name);
+    }
+
+    // The photo the tag shows when the avatar is clicked.
+    setProfile(profile: { userId: string; avatarUrl: string | null }): void {
+        this.nameTag.setProfile(profile);
+    }
+
+    // The avatar was clicked: its tag shows the photo and glows.
+    setNameTagDetailed(isDetailed: boolean): void {
+        this.nameTag.setDetailed(isDetailed);
     }
 
     // What changes with the position and the state: depth and animation.

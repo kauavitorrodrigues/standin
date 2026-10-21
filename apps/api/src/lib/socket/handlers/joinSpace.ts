@@ -4,6 +4,10 @@ import { buildSpaceRoom } from "../utils/buildSpaceRoom";
 import { RoomStates } from "../utils/roomStates";
 import { canJoinSpace } from "../services/canJoinSpace";
 import { resolveAvatarSheetFileId } from "../services/resolveAvatarSheetFileId";
+import {
+    resolveUserProfiles,
+    type UserProfile,
+} from "../services/resolveUserProfiles";
 import { isSpaceOwner } from "../services/isSpaceOwner";
 import { applyJoinEffects, sendEntitlements } from "../utils/applyJoinEffects";
 
@@ -21,15 +25,35 @@ const resolvePeersInRoom = (io: Server, room: string) => {
         }));
 };
 
-// The sheet is read after the join, so the database never sits between the
-// snapshot and the join.
-const attachAvatarSheets = (peers: { socketId: string; userId: string }[]) =>
-    Promise.all(
-        peers.map(async (peer) => ({
+// What the tag shows when a profile could not be read: no name, so the client
+// keeps the tag hidden.
+const NO_PROFILE: UserProfile = { name: "", avatarUrl: null };
+
+// The sheet and the profile are read after the join, so the database never sits
+// between the snapshot and the join. The sheets are read one by one and the
+// profiles in a single query, all at once.
+const attachPresenceData = async (
+    peers: { socketId: string; userId: string }[],
+    userId: string
+) => {
+    const [profiles, peerSheets, avatarSheetFileId] = await Promise.all([
+        resolveUserProfiles([userId, ...peers.map((peer) => peer.userId)]),
+        Promise.all(peers.map((peer) => resolveAvatarSheetFileId(peer.userId))),
+        resolveAvatarSheetFileId(userId),
+    ]);
+
+    return {
+        peers: peers.map((peer, index) => ({
             ...peer,
-            avatarSheetFileId: await resolveAvatarSheetFileId(peer.userId),
-        }))
-    );
+            avatarSheetFileId: peerSheets[index],
+            ...(profiles.get(peer.userId) ?? NO_PROFILE),
+        })),
+        self: {
+            avatarSheetFileId,
+            ...(profiles.get(userId) ?? NO_PROFILE),
+        },
+    };
+};
 
 // A user is identified per-socket (one browser tab = one connection), not
 // per-account, so nothing stops the same account from joining the same
@@ -111,16 +135,16 @@ export function registerJoinSpace(io: Server, socket: Socket) {
             socket.data.spaceId = spaceId;
             await socket.join(room);
 
-            const [peersWithAvatar, avatarSheetFileId] = await Promise.all([
-                attachAvatarSheets(remainingPeers),
-                resolveAvatarSheetFileId(userId),
-            ]);
+            const { peers: peersWithAvatar, self } = await attachPresenceData(
+                remainingPeers,
+                userId
+            );
 
             socket.emit(SpaceEvents.SPACE_JOINED, { peers: peersWithAvatar });
             socket.to(room).emit(SpaceEvents.SPACE_PEER_JOINED, {
                 socketId: socket.id,
                 userId,
-                avatarSheetFileId,
+                ...self,
             });
             socket.emit(RoomEvents.ROOM_STATES, {
                 rooms: RoomStates.listNotOpen(spaceId),
