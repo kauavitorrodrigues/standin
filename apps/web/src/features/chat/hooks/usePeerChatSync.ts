@@ -59,7 +59,7 @@ export const usePeerChatSync = ({
                         {
                             id: message.senderId,
                             name: senderName,
-                            avatarUrl: null,
+                            profilePictureUrl: null,
                         }
                     )
             );

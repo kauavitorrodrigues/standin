@@ -35,7 +35,6 @@ export const usersTable = pgTable(
         name: varchar("name", { length: 255 }).notNull(),
         email: varchar("email", { length: 255 }).notNull(),
         password: text("password").notNull(),
-        avatar: text("avatar"),
         role: userRoleEnum("role").notNull().default(USER_ROLES.USER),
 
         // Date columns

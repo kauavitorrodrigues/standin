@@ -131,7 +131,10 @@ export class Player {
     }
 
     // The photo the tag shows when the avatar is clicked.
-    setProfile(profile: { userId: string; avatarUrl: string | null }): void {
+    setProfile(profile: {
+        userId: string;
+        profilePictureUrl: string | null;
+    }): void {
         this.nameTag.setProfile(profile);
     }
 

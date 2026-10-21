@@ -4,8 +4,8 @@ import { getDeskRemovalPrompt } from "@/features/maps/__shared__/utils/getDeskRe
 import { joinNames } from "@/features/maps/__shared__/utils/joinNames";
 
 const members: UserSummary[] = [
-    { id: "u1", name: "Ana", avatarUrl: null },
-    { id: "u2", name: "Bia", avatarUrl: null },
+    { id: "u1", name: "Ana", profilePictureUrl: null },
+    { id: "u2", name: "Bia", profilePictureUrl: null },
 ];
 
 describe("getDeskRemovalPrompt", () => {

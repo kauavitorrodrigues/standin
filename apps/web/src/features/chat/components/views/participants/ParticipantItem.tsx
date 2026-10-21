@@ -7,7 +7,7 @@ export const ParticipantItem = ({ participant }: Props) => (
     <UserAvatarInfo
         id={participant.id}
         name={participant.name}
-        avatar={participant.avatarUrl}
+        avatar={participant.profilePictureUrl}
         size="sm"
         className="p-2"
     />

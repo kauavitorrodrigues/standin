@@ -28,6 +28,7 @@ export function UserWidget() {
                         <UserAvatar
                             id={user.id}
                             name={user.name}
+                            avatar={user.profilePictureUrl}
                             className="size-9 rounded-xl after:rounded-xl"
                             fallbackClassName="rounded-xl text-sm"
                         />
@@ -41,6 +42,7 @@ export function UserWidget() {
                         <UserAvatarInfo
                             id={user.id}
                             name={user.name}
+                            avatar={user.profilePictureUrl}
                             size="default"
                             nameClassName="max-w-40"
                         />

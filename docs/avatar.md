@@ -4,6 +4,11 @@ Every person has one avatar, the same in every space. It is a stack of parts
 (skin, hair, clothes, accessories) picked in a window copied from the Gather
 editor. Whoever has no avatar is drawn as a ghost.
 
+The avatar is not the **profile picture**. The profile picture is a square
+photo shown in lists, the chat and the name tag, and it is independent from
+the avatar: changing one never changes the other. See
+[profile-picture.md](profile-picture.md).
+
 This page is for people who use or maintain the feature.
 
 ## Who can do what

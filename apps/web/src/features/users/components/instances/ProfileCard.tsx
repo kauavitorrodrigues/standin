@@ -7,7 +7,7 @@ import { ProfileActions } from "../views/ProfileActions";
 import { ProfileHeader } from "../views/ProfileHeader";
 
 type ProfileCardProps = {
-    user: { id: string; name: string; avatarUrl?: string | null };
+    user: { id: string; name: string; profilePictureUrl?: string | null };
     isOnline: boolean;
     onClose: () => void;
     actions: ReactNode;
@@ -30,7 +30,7 @@ export const ProfileCard = ({
             <ProfileHeader
                 id={user.id}
                 name={user.name}
-                avatar={user.avatarUrl}
+                avatar={user.profilePictureUrl}
                 isOnline={isOnline}
                 localTime={formatLocalTime(now)}
                 onClose={onClose}

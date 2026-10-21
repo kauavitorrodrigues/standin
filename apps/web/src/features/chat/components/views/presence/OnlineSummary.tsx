@@ -20,7 +20,7 @@ export const OnlineSummary = ({ onlineUsers }: Props) => {
                         key={user.id}
                         id={user.id}
                         name={user.name}
-                        avatar={user.avatarUrl}
+                        avatar={user.profilePictureUrl}
                         size="xs"
                         className="ring-2 ring-card"
                     />

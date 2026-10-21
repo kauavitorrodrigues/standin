@@ -13,7 +13,7 @@ export const PersonItem = ({ person, isOnline, isSelf }: Props) => (
             <UserAvatar
                 id={person.id}
                 name={person.name}
-                avatar={person.avatarUrl}
+                avatar={person.profilePictureUrl}
                 size="md"
                 className={isOnline ? undefined : "opacity-50"}
             />

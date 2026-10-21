@@ -25,6 +25,7 @@ import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
 import { broadcastAvatarChange } from "@/lib/socket/services/broadcastAvatarChange";
 import { broadcastNameChange } from "@/lib/socket/services/broadcastNameChange";
+import { broadcastProfilePictureChange } from "@/lib/socket/services/broadcastProfilePictureChange";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
 export function createSocketServer(
@@ -48,6 +49,10 @@ export function createSocketServer(
     // Registered once per server. Runs after a person is renamed, so the tag
     // over their avatar changes in the spaces where they are.
     UserService.onNameChanged(broadcastNameChange);
+
+    // Registered once per server. Runs after a person sets or removes the
+    // profile picture, so the tag over their avatar changes with no refresh.
+    UserService.onProfilePictureChanged(broadcastProfilePictureChange);
 
     io.on("connection", (socket) => {
         // Every authenticated connection joins its own user room, regardless

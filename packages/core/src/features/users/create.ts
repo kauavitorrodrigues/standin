@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { assignRandomAvatar } from "../avatar/user/assignRandomAvatar";
 import { BCRYPT_SALT_ROUNDS } from "./consts";
-import { userSelect } from "./consts/select";
+import { readUser } from "./utils/readUser";
 import { db, usersTable, eq, and, isNull } from "@standin/database";
 import { normalizeEmail, UserAlreadyExistsError } from "@standin/contracts";
 import type { User, UserDataSchemaType } from "@standin/contracts";
@@ -24,14 +24,14 @@ export const createUser = async (data: UserDataSchemaType): Promise<User> => {
 
     const password = await bcrypt.hash(rawPassword, BCRYPT_SALT_ROUNDS);
 
-    const [user] = await db
+    const [created] = await db
         .insert(usersTable)
         .values({ name, email: normalizedEmail, password })
-        .returning(userSelect);
+        .returning({ id: usersTable.id });
 
     // A new user starts with a random avatar. It never fails the sign up, and
     // an empty catalog leaves the user as the ghost.
-    await assignRandomAvatar(user.id);
+    await assignRandomAvatar(created.id);
 
-    return user;
+    return readUser(created.id);
 };

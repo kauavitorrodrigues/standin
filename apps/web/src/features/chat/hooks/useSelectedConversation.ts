@@ -26,6 +26,8 @@ export const useSelectedConversation = (
     return {
         id,
         title: other?.name ?? FALLBACK_TITLE,
-        avatar: other ? { id: other.id, avatarUrl: other.avatarUrl } : null,
+        avatar: other
+            ? { id: other.id, profilePictureUrl: other.profilePictureUrl }
+            : null,
     };
 };

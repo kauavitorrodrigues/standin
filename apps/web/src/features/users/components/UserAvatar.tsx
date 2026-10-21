@@ -1,7 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { API_BASE_URL } from "@/lib/api/url";
 import { cn } from "@/lib/utils";
 import { getInitial } from "../utils/getInitial";
 import { getAvatarHue } from "../utils/getAvatarHue";
+import { resolveProfilePictureUrl } from "../utils/resolveProfilePictureUrl";
 
 export type UserAvatarSize = "xs" | "sm" | "default" | "md" | "lg" | "xl";
 
@@ -26,14 +28,17 @@ const INITIAL_TEXT_CLASSES: Record<UserAvatarSize, string> = {
 type Props = {
     id: string;
     name: string;
+    // The profile picture as the API sends it (`/files/:id`), or null. It is
+    // resolved here, so every caller passes the raw value.
     avatar?: string | null;
     size?: UserAvatarSize;
     className?: string;
     fallbackClassName?: string;
 };
 
-// Without a picture the avatar is the person's first initial on a flat color
-// derived from their id: plain DOM, nothing to render or animate.
+// Without a picture, or while it loads or fails to load, the avatar is the
+// person's first initial on a flat color derived from their id: plain DOM,
+// nothing to render or animate.
 export const UserAvatar = ({
     id,
     name,
@@ -43,7 +48,10 @@ export const UserAvatar = ({
     fallbackClassName,
 }: Props) => (
     <Avatar className={cn(AVATAR_SIZE_CLASSES[size], className)}>
-        <AvatarImage src={avatar ?? undefined} alt="" />
+        <AvatarImage
+            src={resolveProfilePictureUrl(avatar, API_BASE_URL)}
+            alt=""
+        />
         <AvatarFallback
             className={cn(
                 "font-medium text-white",

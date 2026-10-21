@@ -64,6 +64,13 @@
       "when": 1792106624259,
       "tag": "0008_add_avatar_parts_bases_and_sheets",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792588880526,
+      "tag": "0009_add_user_profile_pictures",
+      "breakpoints": true
     }
   ]
 }

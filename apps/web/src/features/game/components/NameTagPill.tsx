@@ -12,7 +12,7 @@ export type NameTagPillProps = {
     isDetailed: boolean;
     userId: string;
     // The photo of the profile. Without one the photo is the initial.
-    avatarUrl: string | null;
+    profilePictureUrl: string | null;
 };
 
 const getBackgroundColor = (isLocal: boolean): string =>
@@ -27,7 +27,7 @@ export const NameTagPill = ({
     isLocal,
     isDetailed,
     userId,
-    avatarUrl,
+    profilePictureUrl,
 }: NameTagPillProps) => {
     const backgroundColor = getBackgroundColor(isLocal);
     const boxStyle: CSSProperties = {
@@ -65,7 +65,7 @@ export const NameTagPill = ({
                     <NameTagPhoto
                         userId={userId}
                         name={name}
-                        avatarUrl={avatarUrl}
+                        profilePictureUrl={profilePictureUrl}
                         ringColor={backgroundColor}
                     />
                 ) : (
@@ -107,7 +107,7 @@ export const NameTagPill = ({
 type NameTagPhotoProps = {
     userId: string;
     name: string;
-    avatarUrl: string | null;
+    profilePictureUrl: string | null;
     // The ring that cuts the online badge out of the photo.
     ringColor: string;
 };
@@ -116,7 +116,7 @@ type NameTagPhotoProps = {
 const NameTagPhoto = ({
     userId,
     name,
-    avatarUrl,
+    profilePictureUrl,
     ringColor,
 }: NameTagPhotoProps) => (
     <span
@@ -128,7 +128,12 @@ const NameTagPhoto = ({
             height: NAME_TAG.PHOTO_SIZE,
         }}
     >
-        <UserAvatar id={userId} name={name} avatar={avatarUrl} size="xs" />
+        <UserAvatar
+            id={userId}
+            name={name}
+            avatar={profilePictureUrl}
+            size="xs"
+        />
         <span
             style={{
                 position: "absolute",

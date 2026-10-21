@@ -4,6 +4,7 @@ import type { MessageSender, MessageWithDetails } from "@standin/contracts";
 import { MotionMessageScrollerItem } from "@/components/ui/message-scroller";
 import { MessageGroup } from "@/features/chat/components/views/messages/MessageGroup";
 import { MessagesEmptyState } from "@/features/chat/components/views/messages/ContentStates";
+import { buildOwnSender } from "@/features/chat/utils/buildOwnSender";
 import { resolveSender } from "@/features/chat/utils/resolveSender";
 import { MESSAGE_EXIT } from "@/features/chat/consts/messages";
 import type { MessageGroup as MessageGroupType } from "@/features/chat/utils/groupMessagesBySender";
@@ -11,7 +12,11 @@ import type { MessageGroup as MessageGroupType } from "@/features/chat/utils/gro
 type Props = {
     groups: MessageGroupType[];
     users: Record<string, MessageSender>;
-    currentUser: { id: string; name: string };
+    currentUser: {
+        id: string;
+        name: string;
+        profilePictureUrl: string | null;
+    };
     hasSingleViewer: boolean;
     newMessageIds: ReadonlySet<string>;
     editedMessageIds: ReadonlySet<string>;
@@ -38,8 +43,13 @@ export const MessageGroupList = ({
     // prop every render, defeating React.memo(MessageGroup) for exactly
     // the groups the current user sent.
     const ownSender: MessageSender = useMemo(
-        () => ({ id: currentUser.id, name: currentUser.name, avatarUrl: null }),
-        [currentUser.id, currentUser.name]
+        () =>
+            buildOwnSender({
+                id: currentUser.id,
+                name: currentUser.name,
+                profilePictureUrl: currentUser.profilePictureUrl,
+            }),
+        [currentUser.id, currentUser.name, currentUser.profilePictureUrl]
     );
 
     if (groups.length === 0) return <MessagesEmptyState />;

@@ -18,7 +18,7 @@ export const resolveSender = (
         users[senderId] ?? {
             id: senderId,
             name: "Usuário removido",
-            avatarUrl: null,
+            profilePictureUrl: null,
         }
     );
 };

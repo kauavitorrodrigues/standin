@@ -65,12 +65,22 @@ export const removeMessage = (
     }),
 });
 
+const withMissingSender = (
+    users: Record<string, MessageSender>,
+    sender: MessageSender | undefined
+): Record<string, MessageSender> => {
+    if (!sender || users[sender.id]) return users;
+    return { ...users, [sender.id]: sender };
+};
+
 export const prependMessage = (
     data: MessagesData | undefined,
     message: MessageWithDetails,
     // Only needed for a message arriving over P2P: it isn't backed by a
     // fetched page, so its sender may not be in `users` yet, and resolving
-    // a display name would otherwise fall back to a "removed user" label.
+    // a display name would otherwise fall back to a "removed user" label. It
+    // only fills a missing entry: the one the server sent already has the
+    // picture, which a peer message does not carry.
     sender?: MessageSender
 ): MessagesData => {
     const [firstPage = EMPTY_MESSAGES_PAGE, ...restPages] = data?.pages ?? [];
@@ -88,9 +98,7 @@ export const prependMessage = (
             {
                 ...firstPage,
                 messages: [message, ...firstPage.messages],
-                users: sender
-                    ? { ...firstPage.users, [sender.id]: sender }
-                    : firstPage.users,
+                users: withMissingSender(firstPage.users, sender),
             },
             ...restPages,
         ],
