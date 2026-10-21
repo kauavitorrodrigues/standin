@@ -12,7 +12,7 @@
 
 A 2D top-down virtual space for small teams, with a built-in map editor, real-time presence over WebRTC/P2P, text/attachment chat, proximity voice, and proximity camera and screen sharing.
 
-[Overview](#overview) • [Features](#features) • [How It Works](#how-it-works) • [Map Editor](#map-editor) • [Architecture](#architecture) • [Storage](#storage) • [Getting Started](#getting-started) • [Scripts](#scripts) • [Deployment](#deployment)
+[Overview](#overview) • [Features](#features) • [How It Works](#how-it-works) • [Map Editor](#map-editor) • [Architecture](#architecture) • [Storage](#storage) • [Getting Started](#getting-started) • [Sign in with GitHub](#sign-in-with-github) • [Scripts](#scripts) • [Deployment](#deployment)
 
 </div>
 
@@ -32,6 +32,7 @@ The product goal is to give a small team a navigable "virtual office" with real-
 - **Rooms and doors**: a room is a private zone with walls and doors. Doors can be locked, and people outside ask to join. Communication is limited to the people in the same room.
 - **Custom avatars**: each person builds an avatar from parts (skin, hair, clothes, accessories) in an editor, and everyone in the space sees it change live. Whoever has none is a ghost. The full guide is in [docs/avatar.md](docs/avatar.md).
 - **Profile picture**: each person can upload a photo (cropped and shrunk on the server) that shows in lists, the chat and the name tag, and updates live for everyone in the space. It is separate from the avatar. See [docs/profile-picture.md](docs/profile-picture.md).
+- **Sign in with GitHub (optional)**: an instance can offer a "Entrar com GitHub" button next to the e-mail and password form. It is off until the instance owner creates a GitHub App and fills three variables in `.env`. See [Sign in with GitHub](#sign-in-with-github) and [docs/github-login.md](docs/github-login.md).
 - **Desks and seats**: members claim a desk, and avatars sit on seats. Each member can decorate the items on their own desk.
 - **Map templates**: the admin builds complete maps and publishes them as templates, which organization owners pick from when creating a space.
 - **Abstracted file storage**: a generic `files` entity behind a pluggable storage driver, so the instance operator picks where uploads actually live (see [Storage](#storage) below).
@@ -239,6 +240,11 @@ FRONTEND_URL="http://localhost:5173"
 # defaults to "local" if omitted
 STORAGE_DRIVER=local
 
+# optional: sign in with GitHub, on only when all three are set
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+GITHUB_CALLBACK_URL=""
+
 # WEB
 VITE_BASE_API_URL="http://localhost:3001"
 ```
@@ -273,6 +279,10 @@ The seed is idempotent by key and never deletes anything.
 ```bash
 pnpm dev
 ```
+
+## Sign in with GitHub
+
+Optional and off by default. To turn it on, create a GitHub App for your instance, set `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` and `GITHUB_CALLBACK_URL` in `.env` and restart the API. The callback URL registered in the App and `GITHUB_CALLBACK_URL` must be the same string: `<API URL>/auth/github/callback` (in development, `http://localhost:3001/auth/github/callback`). After the login the API sends the browser to `FRONTEND_URL`. With the variables unset, `GET /auth/github` answers 404 and the button does not show. The full steps, what the login does and does not do, and the notes for a future GitHub integration are in [docs/github-login.md](docs/github-login.md).
 
 ## Scripts
 

@@ -4,6 +4,7 @@ import { UserService } from "@standin/core";
 import { parseSchema } from "@/utils/parseSchema";
 import { createToken } from "../services/createToken";
 import { sendSignUpError } from "../utils/sendAuthError";
+import { setTokenCookie } from "../utils/setTokenCookie";
 
 export const signup: RequestHandler = async (req, res) => {
     try {
@@ -13,12 +14,7 @@ export const signup: RequestHandler = async (req, res) => {
         const user = await UserService.create(data);
         const token = createToken(user);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        setTokenCookie(res, token);
 
         res.status(201).json({ user, token });
     } catch (error) {
