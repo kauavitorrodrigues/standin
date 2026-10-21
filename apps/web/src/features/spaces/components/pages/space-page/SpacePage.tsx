@@ -41,6 +41,7 @@ import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 import { useLocalAvatarSheet } from "@/features/game/hooks/useLocalAvatarSheet";
+import { useLocalUserProfile } from "@/features/game/hooks/useLocalUserProfile";
 import { useSpaceMapLock } from "@/features/maps/organizations/hooks/useSpaceMapLock";
 import { LockBanner } from "@/features/spaces/components/pages/space-page/controls/LockBanner";
 import { OwnDeskProfileCard } from "@/features/desks/components/instances/OwnDeskProfileCard";
@@ -114,6 +115,11 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const names = buildNameLookup(members);
     useLocalAvatarSheet(handle?.game ?? null);
     const avatars = new Map(members.map((m) => [m.id, m.avatarUrl]));
+    useLocalUserProfile(handle?.game ?? null, {
+        userId: user.id,
+        name: user.name,
+        avatarUrl: avatars.get(user.id) ?? null,
+    });
 
     const {
         isGridOpen,

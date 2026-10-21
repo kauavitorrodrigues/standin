@@ -23,8 +23,9 @@ export const AVATAR = {
     body: { w: 24, h: 16 },
     // Click and hover area, from the anchor.
     hit: { w: 24, h: 36 },
-    // Distance in px between the visible top and the name tag.
-    nameTagGap: 4,
+    // Distance in px between the visible top and the tip of the tail of the
+    // name tag. Measured on the Gather tag over a bare avatar.
+    nameTagGap: 7,
     // How many px of the avatar, from the feet up, the front of a seat piece
     // hides while it is sat.
     seatedCover: 14,
