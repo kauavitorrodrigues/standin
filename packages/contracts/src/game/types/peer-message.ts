@@ -81,6 +81,16 @@ export type PeerEmotePayload = {
     count: number;
 };
 
+// The sender is not in the payload: the channel already says who it is.
+export type PeerNearbyMessagePayload = {
+    // Plain text. The receiver validates it and never renders it as HTML.
+    text: string;
+};
+
+export type PeerNearbyTypingPayload = {
+    isTyping: boolean;
+};
+
 export type PeerMessage =
     | { type: typeof PEER_MESSAGE_TYPES.POSITION; payload: PlayerPosition }
     | { type: typeof PEER_MESSAGE_TYPES.CHAT; payload: PeerChatPayload }
@@ -96,4 +106,12 @@ export type PeerMessage =
           type: typeof PEER_MESSAGE_TYPES.MEDIA_STATE;
           payload: PeerMediaStatePayload;
       }
-    | { type: typeof PEER_MESSAGE_TYPES.EMOTE; payload: PeerEmotePayload };
+    | { type: typeof PEER_MESSAGE_TYPES.EMOTE; payload: PeerEmotePayload }
+    | {
+          type: typeof PEER_MESSAGE_TYPES.NEARBY_MESSAGE;
+          payload: PeerNearbyMessagePayload;
+      }
+    | {
+          type: typeof PEER_MESSAGE_TYPES.NEARBY_TYPING;
+          payload: PeerNearbyTypingPayload;
+      };

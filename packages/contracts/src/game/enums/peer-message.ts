@@ -11,6 +11,8 @@ export const PEER_MESSAGE_TYPES = {
     CONFIRM: "CONFIRM",
     MEDIA_STATE: "MEDIA_STATE",
     EMOTE: "EMOTE",
+    NEARBY_MESSAGE: "NEARBY_MESSAGE",
+    NEARBY_TYPING: "NEARBY_TYPING",
 } as const;
 
 export type PeerMessageType =
