@@ -1,3 +1,4 @@
+import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
 import type { SpaceDetails } from "@standin/contracts";
 import { useOrganizationId } from "@/features/organizations/hooks/useOrganizationId";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -96,14 +97,28 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const { handlers: peerChatHandlers, typingByConversation } =
         usePeerChatSync({ organizationId, userId: user.id });
 
-    const { localAudioError, onlineUserIds, video, sendEmote, ...broadcasts } =
-        useSpaceConnection({
-            organizationId,
-            spaceId: space.id,
-            userId: user.id,
-            game: handle?.game ?? null,
-            ...peerChatHandlers,
-        });
+    const {
+        localAudioError,
+        onlineUserIds,
+        video,
+        sendEmote,
+        sendNearbyMessage,
+        sendNearbyTyping,
+        ...broadcasts
+    } = useSpaceConnection({
+        organizationId,
+        spaceId: space.id,
+        userId: user.id,
+        game: handle?.game ?? null,
+        ...peerChatHandlers,
+    });
+    const nearbyChat = useNearbyChatConnection({
+        game: handle?.game ?? null,
+        spaceId: space.id,
+        userId: user.id,
+        sendMessage: sendNearbyMessage,
+        sendTyping: sendNearbyTyping,
+    });
 
     const currentRoom = useCurrentRoom(handle?.game ?? null);
     const walk = useWalkState(handle?.game ?? null);
@@ -140,6 +155,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         video,
         micError: localAudioError,
         sendEmote,
+        nearbyChat,
     });
 
     const { peerChat, peerTyping, chatPage } = usePeerChatContextValues({
