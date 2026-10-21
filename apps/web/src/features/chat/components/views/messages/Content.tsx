@@ -18,7 +18,11 @@ import type { MessageGroup as MessageGroupType } from "@/features/chat/utils/gro
 type Props = {
     groups: MessageGroupType[];
     users: Record<string, MessageSender>;
-    currentUser: { id: string; name: string };
+    currentUser: {
+        id: string;
+        name: string;
+        profilePictureUrl: string | null;
+    };
     hasSingleViewer: boolean;
     newMessageIds: ReadonlySet<string>;
     editedMessageIds: ReadonlySet<string>;
