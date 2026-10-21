@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import { AvatarService } from "@standin/core";
+import { AvatarService, UserService } from "@standin/core";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -24,6 +24,7 @@ import { registerRoomJoinRequest } from "@/lib/socket/handlers/roomJoinRequest";
 import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
 import { broadcastAvatarChange } from "@/lib/socket/services/broadcastAvatarChange";
+import { broadcastNameChange } from "@/lib/socket/services/broadcastNameChange";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
 export function createSocketServer(
@@ -43,6 +44,10 @@ export function createSocketServer(
     // Registered once per server. Runs when the sheet of a person is replaced
     // or cleared, before the core deletes the old file.
     AvatarService.onSheetChanged(broadcastAvatarChange);
+
+    // Registered once per server. Runs after a person is renamed, so the tag
+    // over their avatar changes in the spaces where they are.
+    UserService.onNameChanged(broadcastNameChange);
 
     io.on("connection", (socket) => {
         // Every authenticated connection joins its own user room, regardless
