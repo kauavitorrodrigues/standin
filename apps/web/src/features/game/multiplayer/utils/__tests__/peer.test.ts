@@ -135,3 +135,38 @@ describe("isMessageFromKnownSender", () => {
         expect(isMessageFromKnownSender(position, undefined)).toBe(true);
     });
 });
+
+describe("parsePeerMessage for EMOTE", () => {
+    const emote = (payload: unknown) => ({
+        type: PEER_MESSAGE_TYPES.EMOTE,
+        payload,
+    });
+
+    it("accepts one emoji with a count", () => {
+        expect(parsePeerMessage(emote({ emoji: "👏", count: 3 }))).toEqual(
+            emote({ emoji: "👏", count: 3 })
+        );
+    });
+
+    it("clamps the count into the combo", () => {
+        expect(parsePeerMessage(emote({ emoji: "👏", count: 99 }))).toEqual(
+            emote({ emoji: "👏", count: 4 })
+        );
+        expect(parsePeerMessage(emote({ emoji: "👏", count: 0 }))).toEqual(
+            emote({ emoji: "👏", count: 1 })
+        );
+    });
+
+    it("rejects what is not one emoji", () => {
+        for (const emoji of ["", "hello", "👏👏", 7, null]) {
+            expect(parsePeerMessage(emote({ emoji, count: 1 }))).toBeNull();
+        }
+    });
+
+    it("believes an emote from any known or unknown socket, since it names no user", () => {
+        const message = parsePeerMessage(emote({ emoji: "👏", count: 1 }));
+
+        expect(message).not.toBeNull();
+        expect(isMessageFromKnownSender(message!, undefined)).toBe(true);
+    });
+});

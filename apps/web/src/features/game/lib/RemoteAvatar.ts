@@ -7,6 +7,7 @@ import {
 import { AVATAR_GHOST_TEXTURE_KEY } from "@/features/avatar/consts/textures";
 import { AvatarBlink } from "@/features/game/lib/AvatarBlink";
 import { NameTag } from "@/features/game/lib/NameTag";
+import { EmoteState } from "@/features/game/lib/EmoteState";
 import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 import { playAvatarAnimation } from "@/features/game/utils/playAvatarAnimation";
 import {
@@ -24,6 +25,7 @@ export class RemoteAvatar {
     private textureKey: string;
     private readonly blink = new AvatarBlink();
     private readonly nameTag: NameTag;
+    private readonly emote = new EmoteState();
     private targetX: number;
     private targetY: number;
     // The avatar is constructed at the local spawn point (its peer's real
@@ -145,6 +147,15 @@ export class RemoteAvatar {
         return this.nameTag.isShown;
     }
 
+    // The gesture of an emote of the peer. Only a standing avatar that is not
+    // walking does it.
+    playEmote(): void {
+        if (this.isSitting || this.isMoving()) return;
+
+        this.emote.play(this.gameObject.scene.time.now);
+        this.refresh();
+    }
+
     destroy(): void {
         this.nameTag.destroy();
         this.gameObject.destroy();
@@ -163,14 +174,11 @@ export class RemoteAvatar {
             })
         );
 
-        const isMoving = isRemoteAvatarMoving(this.gameObject, {
-            x: this.targetX,
-            y: this.targetY,
-        });
-        const isBlinking = this.blink.update(
-            this.gameObject.scene.time.now,
-            !this.isSitting && !isMoving
-        );
+        const isMoving = this.isMoving();
+        const now = this.gameObject.scene.time.now;
+        const canStand = !this.isSitting && !isMoving;
+        const isEmoting = this.emote.update(now, canStand);
+        const isBlinking = this.blink.update(now, canStand && !isEmoting);
         playAvatarAnimation(
             this.gameObject,
             this.textureKey,
@@ -178,8 +186,16 @@ export class RemoteAvatar {
                 isSitting: this.isSitting,
                 isMoving,
                 isBlinking,
+                isEmoting,
             }),
             this.direction
         );
+    }
+
+    private isMoving(): boolean {
+        return isRemoteAvatarMoving(this.gameObject, {
+            x: this.targetX,
+            y: this.targetY,
+        });
     }
 }

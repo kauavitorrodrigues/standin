@@ -17,6 +17,7 @@ import { socket } from "../socket";
 import { useSocketEvent } from "./useSocketEvent";
 import { JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getMapScene } from "@/features/game/utils/map";
+import { EmoteSender } from "@/features/game/lib/EmoteSender";
 import { SCENE_EVENTS } from "@/features/game/consts/scene-keys";
 import { PeerConnectionManager } from "../lib/PeerConnectionManager";
 import { RemoteAudioManager } from "../lib/RemoteAudioManager";
@@ -317,6 +318,12 @@ export function useSpaceConnection({
                         return;
                     case PEER_MESSAGE_TYPES.CONFIRM:
                         onConfirm?.(socketId, message.payload);
+                        return;
+                    case PEER_MESSAGE_TYPES.EMOTE:
+                        (game ? getMapScene(game) : null)?.applyRemoteEmote(
+                            socketId,
+                            message.payload
+                        );
                         return;
                     case PEER_MESSAGE_TYPES.MEDIA_STATE:
                         setRemoteMicMuted(
@@ -652,6 +659,28 @@ export function useSpaceConnection({
         [manager]
     );
 
+    // Clicks in the same emoji are grouped into one event, which is sent to
+    // the peers and shown on the local avatar at the same time. The sender is
+    // rebuilt when the game appears, so it always finds the scene.
+    const emoteSenderRef = useRef<EmoteSender | null>(null);
+    useEffect(() => {
+        const sender = new EmoteSender((payload) => {
+            manager.broadcastEmote(payload);
+            const scene = game ? getMapScene(game) : null;
+            scene?.playLocalEmote(payload);
+        });
+        emoteSenderRef.current = sender;
+
+        return () => {
+            sender.destroy();
+            emoteSenderRef.current = null;
+        };
+    }, [manager, game]);
+    const sendEmote = useCallback(
+        (emoji: string) => emoteSenderRef.current?.send(emoji),
+        []
+    );
+
     return {
         connectedPeerIds,
         onlineUserIds,
@@ -671,5 +700,6 @@ export function useSpaceConnection({
         broadcastEdit,
         broadcastDelete,
         broadcastConfirm,
+        sendEmote,
     };
 }
