@@ -4,7 +4,10 @@ export const MAP_CAMERA_CONFIG = {
     MAX_ZOOM: 4,
     ZOOM_STEP: 1,
     ZOOM_TWEEN_DURATION_MS: 100,
-    FOLLOW_ROUND_PIXELS: true,
+    // Off on purpose: Phaser would floor the scroll to whole world px, which
+    // shakes the avatar at a high zoom. The controller snaps the scroll to whole
+    // screen px instead (see `MapCameraController`).
+    FOLLOW_ROUND_PIXELS: false,
     // 1 locks the view to the avatar. A lower value makes the camera trail the
     // avatar, and with pixel rounding on both the sprite and the scroll land on
     // different pixels from frame to frame, which shows up as jitter.
