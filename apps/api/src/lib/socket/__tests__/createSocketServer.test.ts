@@ -14,6 +14,7 @@ const {
     registerDisconnectMock,
     onSheetChangedMock,
     onNameChangedMock,
+    onProfilePictureChangedMock,
 } = vi.hoisted(() => {
     const useMock = vi.fn();
     const onMock = vi.fn();
@@ -41,6 +42,7 @@ const {
         registerDisconnectMock: vi.fn(),
         onSheetChangedMock: vi.fn(),
         onNameChangedMock: vi.fn(),
+        onProfilePictureChangedMock: vi.fn(),
     };
 });
 
@@ -50,11 +52,17 @@ vi.mock("socket.io", () => ({
 
 vi.mock("@standin/core", () => ({
     AvatarService: { onSheetChanged: onSheetChangedMock },
-    UserService: { onNameChanged: onNameChangedMock },
+    UserService: {
+        onNameChanged: onNameChangedMock,
+        onProfilePictureChanged: onProfilePictureChangedMock,
+    },
 }));
 
 vi.mock("../services/broadcastNameChange", () => ({
     broadcastNameChange: vi.fn(),
+}));
+vi.mock("../services/broadcastProfilePictureChange", () => ({
+    broadcastProfilePictureChange: vi.fn(),
 }));
 vi.mock("../services/broadcastAvatarChange", () => ({
     broadcastAvatarChange: vi.fn(),
@@ -193,6 +201,17 @@ describe("createSocketServer", () => {
             await import("../services/broadcastNameChange");
         expect(onNameChangedMock).toHaveBeenCalledTimes(1);
         expect(onNameChangedMock).toHaveBeenCalledWith(broadcastNameChange);
+    });
+
+    it("registers the profile picture listener once per server", async () => {
+        createSocketServer({} as any);
+
+        const { broadcastProfilePictureChange } =
+            await import("../services/broadcastProfilePictureChange");
+        expect(onProfilePictureChangedMock).toHaveBeenCalledTimes(1);
+        expect(onProfilePictureChangedMock).toHaveBeenCalledWith(
+            broadcastProfilePictureChange
+        );
     });
 
     it("joins the socket to its own user room on connection", () => {
