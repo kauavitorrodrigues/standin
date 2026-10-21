@@ -3,6 +3,7 @@ import {
     MAP_CURSORS,
     MAP_DRAG_THRESHOLD_PX,
 } from "@/features/game/consts/camera";
+import { getCursorClaims } from "@/features/game/utils/CursorClaims";
 import { HOVER_OUTLINE } from "@/features/editor/consts/hover-outline";
 import { drawObjectOutline } from "@/features/editor/utils/drawObjectOutline";
 import type { HoverState, HoverTarget } from "@/features/game/types/hover";
@@ -171,12 +172,15 @@ export class HoverTargetController {
         );
     }
 
-    // Only on a change of target, so a drag in progress keeps its own cursor.
+    // Only on a change of target, so a drag in progress keeps its own cursor. The
+    // pointer is shared with the other controllers of the canvas (CursorClaims).
     private syncCursor(hover: HoverState | null): void {
         if (!this.setsCursor) return;
         if (hover?.id === this.last?.id) return;
 
-        this.scene.game.canvas.style.cursor = hover
+        const { canvas } = this.scene.game;
+        const isPointer = getCursorClaims(canvas).claim(this, hover !== null);
+        canvas.style.cursor = isPointer
             ? HOVER_OUTLINE.CURSOR
             : MAP_CURSORS.IDLE;
     }
