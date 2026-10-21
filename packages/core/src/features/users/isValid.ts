@@ -30,6 +30,9 @@ export const isUserValid = async ({
 
     if (!user) return false;
 
+    // A person who only signs in with a provider has no password to check.
+    if (!user.password) return false;
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return false;
 

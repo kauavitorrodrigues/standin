@@ -22,6 +22,7 @@ import { conversationsTable } from "./conversations";
 import { conversationParticipantsTable } from "./conversation-participants";
 import { messagesTable } from "./messages";
 import { messageReactionsTable } from "./message-reactions";
+import { userIdentitiesTable } from "./user-identities";
 
 export const userRoleEnum = pgEnum("user_role", USER_ROLES);
 
@@ -34,7 +35,8 @@ export const usersTable = pgTable(
         // Properties columns
         name: varchar("name", { length: 255 }).notNull(),
         email: varchar("email", { length: 255 }).notNull(),
-        password: text("password").notNull(),
+        // Null for a person who only signs in with a provider (GitHub).
+        password: text("password"),
         role: userRoleEnum("role").notNull().default(USER_ROLES.USER),
 
         // Date columns
@@ -61,4 +63,5 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
     conversationParticipants: many(conversationParticipantsTable),
     messages: many(messagesTable),
     messageReactions: many(messageReactionsTable),
+    identities: many(userIdentitiesTable),
 }));
