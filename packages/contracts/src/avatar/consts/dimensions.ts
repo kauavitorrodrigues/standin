@@ -50,12 +50,22 @@ export const AVATAR_SHEET_DIRECTIONS = [
 // How many frames per second each animation plays. BLINK is one frame, so its
 // length is set by the game (`AVATAR_BLINK`), not by the fps. The key of an
 // animation in a scene is `{animation}_{direction}`, for example `WALK_left`.
+//
+// Every animation loops forever unless it says how many times it plays again
+// after the first (`repeat`), so EMOTE with a repeat of 1 plays twice and
+// stops on its last frame.
+export type AvatarAnimationConfig = {
+    fps: number;
+    repeat?: number;
+};
+
 export const AVATAR_ANIMATIONS = {
     IDLE: { fps: 1 },
     WALK: { fps: 8 },
     SIT: { fps: 1 },
     BLINK: { fps: 1 },
-} as const;
+    EMOTE: { fps: 8, repeat: 1 },
+} as const satisfies Record<string, AvatarAnimationConfig>;
 
 export type AvatarAnimation = keyof typeof AVATAR_ANIMATIONS;
 
@@ -63,8 +73,10 @@ export type AvatarAnimation = keyof typeof AVATAR_ANIMATIONS;
 // play. Read from the Gather sheet of 72 frames: the standing poses start each
 // direction (down 0, left 9, up 18, right 23), the walks are four frames per
 // direction (down 32, left 40, up 48, right 56), and the sitting frames are
-// down 68, left 14, up 21 and right 28. The other frames of the sheet (run,
-// emotes and the rest of the poses) are not used yet.
+// down 68, left 14, up 21 and right 28. The emote is the arms up pose, which
+// the sheet only has facing down, so every direction plays those frames and
+// the avatar turns to the viewer for the gesture. The other frames of the
+// sheet (run and the rest of the poses) are not used yet.
 export const AVATAR_FRAMES = {
     IDLE: {
         [PLAYER_DIRECTIONS.DOWN]: [0],
@@ -92,6 +104,12 @@ export const AVATAR_FRAMES = {
         [PLAYER_DIRECTIONS.UP]: [18],
         [PLAYER_DIRECTIONS.RIGHT]: [26],
     },
+    EMOTE: {
+        [PLAYER_DIRECTIONS.DOWN]: [5, 6, 7, 8],
+        [PLAYER_DIRECTIONS.LEFT]: [5, 6, 7, 8],
+        [PLAYER_DIRECTIONS.UP]: [5, 6, 7, 8],
+        [PLAYER_DIRECTIONS.RIGHT]: [5, 6, 7, 8],
+    },
 } as const satisfies Record<
     AvatarAnimation,
     Record<(typeof AVATAR_SHEET_DIRECTIONS)[number], readonly number[]>
@@ -101,7 +119,7 @@ export const AVATAR_FRAMES = {
 // frames each, SIT_LEGS is sitting with the legs out in front and SIT_CROSSED
 // is sitting with the legs folded under, and EMOTE is the poses with the arms
 // up. These come from reading the Gather sheet of 72 frames, so the frames
-// without a game animation yet (run and the emotes) are still in their place
+// without a game animation yet (run and the second emote) are still in their place
 // for whoever edits the sheet in a drawing tool.
 export const AVATAR_FRAME_KINDS = {
     IDLE: "IDLE",

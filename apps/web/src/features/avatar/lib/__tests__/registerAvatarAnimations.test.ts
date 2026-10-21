@@ -56,6 +56,26 @@ describe("registerAvatarAnimations", () => {
         );
     });
 
+    it("plays the emote a finite number of times and loops the rest", () => {
+        const fake = createFakeAvatarHost();
+
+        registerAvatarAnimations(fake.host, TEXTURE);
+
+        const repeatOf = (animation: string) =>
+            (
+                fake.mocks.anims.create.mock.calls
+                    .map(([config]) => config)
+                    .find(
+                        (config) => config.key === `${TEXTURE}:${animation}_down`
+                    ) as { repeat?: number } | undefined
+            )?.repeat;
+        expect(repeatOf("EMOTE")).toBe(AVATAR_ANIMATIONS.EMOTE.repeat);
+        expect(repeatOf("WALK")).toBe(-1);
+        expect(repeatOf("IDLE")).toBe(-1);
+        expect(repeatOf("SIT")).toBe(-1);
+        expect(repeatOf("BLINK")).toBe(-1);
+    });
+
     it("registers a texture only once", () => {
         const fake = createFakeAvatarHost();
 
