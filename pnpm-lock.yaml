@@ -631,6 +631,9 @@ importers:
       '@standin/contracts':
         specifier: workspace:*
         version: link:../contracts
+      zod:
+        specifier: 4.5.1
+        version: 4.5.1
     devDependencies:
       '@standin/tsconfig':
         specifier: workspace:*

@@ -12,7 +12,8 @@
         "test": "vitest run"
     },
     "dependencies": {
-        "@standin/contracts": "workspace:*"
+        "@standin/contracts": "workspace:*",
+        "zod": "4.5.1"
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",

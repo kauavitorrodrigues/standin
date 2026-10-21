@@ -3,6 +3,7 @@ import { SignInSchema } from "@standin/contracts";
 import { UserService } from "@standin/core";
 import { parseSchema } from "@/utils/parseSchema";
 import { createToken } from "../services/createToken";
+import { setTokenCookie } from "../utils/setTokenCookie";
 import {
     sendInvalidCredentialsError,
     sendSignInError,
@@ -18,12 +19,7 @@ export const signin: RequestHandler = async (req, res) => {
 
         const token = createToken(user);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        setTokenCookie(res, token);
 
         res.json({ user, token });
     } catch (error) {
