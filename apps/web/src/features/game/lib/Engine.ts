@@ -49,6 +49,12 @@ export const createGameEngine = ({
         scale: {
             mode: Phaser.Scale.RESIZE,
         },
+        // The layer over the canvas where the name tags live. It does not take
+        // the mouse: the game reads the pointer by position.
+        dom: {
+            createContainer: true,
+            pointerEvents: "none",
+        },
         physics: {
             default: GAME_PHYSICS_CONFIG.SYSTEM,
             arcade: {
