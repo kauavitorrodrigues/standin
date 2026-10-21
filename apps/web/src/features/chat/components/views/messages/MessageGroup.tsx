@@ -71,7 +71,7 @@ const MessageGroupComponent = ({
                 <UserAvatarInfo
                     id={sender.id}
                     name={sender.name}
-                    avatar={sender.avatarUrl}
+                    avatar={sender.profilePictureUrl}
                     hideInfo
                     size="sm"
                     className="mt-0.5"

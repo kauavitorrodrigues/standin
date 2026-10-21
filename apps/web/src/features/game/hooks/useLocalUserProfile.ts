@@ -7,7 +7,7 @@ type Params = {
     userId: string;
     name: string;
     // The photo of the profile, null when the person has none.
-    avatarUrl: string | null;
+    profilePictureUrl: string | null;
 };
 
 // Keeps the tag over the local player on the name and the photo of the signed
@@ -16,13 +16,17 @@ type Params = {
 // scene is created, since the profile can be there before the map is.
 export const useLocalUserProfile = (
     game: Phaser.Game | null,
-    { userId, name, avatarUrl }: Params
+    { userId, name, profilePictureUrl }: Params
 ): void => {
     useEffect(() => {
         if (!game) return;
 
         const apply = (): void => {
-            getMapScene(game)?.setLocalUserProfile({ userId, name, avatarUrl });
+            getMapScene(game)?.setLocalUserProfile({
+                userId,
+                name,
+                profilePictureUrl,
+            });
         };
 
         apply();
@@ -31,5 +35,5 @@ export const useLocalUserProfile = (
         return () => {
             game.events.off(SCENE_EVENTS.MAP_READY, apply);
         };
-    }, [game, userId, name, avatarUrl]);
+    }, [game, userId, name, profilePictureUrl]);
 };

@@ -426,7 +426,7 @@ export function useSpaceConnection({
                 peer.socketId,
                 peer.userId,
                 peer.avatarSheetFileId,
-                { name: peer.name, avatarUrl: peer.avatarUrl }
+                { name: peer.name, profilePictureUrl: peer.profilePictureUrl }
             );
         });
     });
@@ -439,7 +439,7 @@ export function useSpaceConnection({
             peer.socketId,
             peer.userId,
             peer.avatarSheetFileId,
-            { name: peer.name, avatarUrl: peer.avatarUrl }
+            { name: peer.name, profilePictureUrl: peer.profilePictureUrl }
         );
     });
 

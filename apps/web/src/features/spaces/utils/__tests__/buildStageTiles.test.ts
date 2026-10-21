@@ -17,8 +17,8 @@ const remote = (
 });
 
 const names = buildNameLookup([
-    { id: "u1", name: "Ana", avatarUrl: null },
-    { id: "u2", name: "Bruno", avatarUrl: null },
+    { id: "u1", name: "Ana", profilePictureUrl: null },
+    { id: "u2", name: "Bruno", profilePictureUrl: null },
 ]);
 
 type Input = Parameters<typeof build>[0];

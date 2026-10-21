@@ -21,7 +21,7 @@ type Params = {
 // Who the tag is of, for the photo it shows when it is clicked.
 type Profile = {
     userId: string;
-    avatarUrl: string | null;
+    profilePictureUrl: string | null;
 };
 
 // The name over an avatar. It is placed over the feet it follows, with its
@@ -49,7 +49,7 @@ export class NameTag {
                 isLocal,
                 isDetailed: false,
                 userId: "",
-                avatarUrl: null,
+                profilePictureUrl: null,
             },
             { scalesWithZoom: NAME_TAG.SCALES_WITH_ZOOM }
         )
@@ -72,8 +72,8 @@ export class NameTag {
         this.refreshVisibility();
     }
 
-    setProfile({ userId, avatarUrl }: Profile): void {
-        this.element.setProps({ userId, avatarUrl });
+    setProfile({ userId, profilePictureUrl }: Profile): void {
+        this.element.setProps({ userId, profilePictureUrl });
     }
 
     // The tag was clicked: the photo shows, it glows, and it draws over the

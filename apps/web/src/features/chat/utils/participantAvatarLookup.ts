@@ -6,4 +6,4 @@ import type { UserSummary } from "@standin/contracts";
 export const buildParticipantAvatarLookup = (
     participants: UserSummary[]
 ): Map<string, string | null> =>
-    new Map(participants.map((participant) => [participant.id, participant.avatarUrl]));
+    new Map(participants.map((participant) => [participant.id, participant.profilePictureUrl]));

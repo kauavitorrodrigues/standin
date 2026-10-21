@@ -3,7 +3,7 @@ import type { UserSummary } from "@standin/contracts";
 import { splitPeopleByPresence } from "../splitPeopleByPresence";
 
 const person = (id: string, name: string) =>
-    ({ id, name, avatarUrl: null }) as UserSummary;
+    ({ id, name, profilePictureUrl: null }) as UserSummary;
 
 const people = [person("1", "Kauã"), person("2", "Teste"), person("3", "Ana")];
 

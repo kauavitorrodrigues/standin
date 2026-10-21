@@ -18,5 +18,5 @@ export type RemotePlayer = {
     name: string;
     // The photo of the profile, shown on the tag when it is clicked. Null means
     // the person has none, and the tag shows the initial.
-    avatarUrl: string | null;
+    profilePictureUrl: string | null;
 };

@@ -18,19 +18,19 @@ describe("resolveUserProfiles", () => {
 
     it("maps each user id to its name and photo", async () => {
         findManyByIdsMock.mockResolvedValue([
-            { id: "user-a", name: "Ana", avatarUrl: "/files/ana" },
-            { id: "user-b", name: "Bruno", avatarUrl: null },
+            { id: "user-a", name: "Ana", profilePictureUrl: "/files/ana" },
+            { id: "user-b", name: "Bruno", profilePictureUrl: null },
         ]);
 
         const profiles = await resolveUserProfiles(["user-a", "user-b"]);
 
         expect(profiles.get("user-a")).toEqual({
             name: "Ana",
-            avatarUrl: "/files/ana",
+            profilePictureUrl: "/files/ana",
         });
         expect(profiles.get("user-b")).toEqual({
             name: "Bruno",
-            avatarUrl: null,
+            profilePictureUrl: null,
         });
     });
 
