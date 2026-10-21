@@ -9,4 +9,5 @@ export type SpaceMediaControls = {
     screenShare: SpaceConnection["video"]["screenShare"];
     micError: SpaceConnection["localAudioError"];
     cameraError: SpaceConnection["video"]["localCameraError"];
+    sendEmote: SpaceConnection["sendEmote"];
 };

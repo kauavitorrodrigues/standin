@@ -7,6 +7,7 @@ type SpaceConnection = ReturnType<typeof useSpaceConnection>;
 type SpaceMediaControlsOptions = {
     video: SpaceConnection["video"];
     micError: SpaceConnection["localAudioError"];
+    sendEmote: SpaceConnection["sendEmote"];
 };
 
 // Called once per page: the share availability hook has side effects (it
@@ -14,6 +15,7 @@ type SpaceMediaControlsOptions = {
 export const useSpaceMediaControls = ({
     video,
     micError,
+    sendEmote,
 }: SpaceMediaControlsOptions): SpaceMediaControls => {
     const { canShareScreen } = useScreenShareAvailability({
         isSharing: video.screenShare.isSharing,
@@ -26,5 +28,6 @@ export const useSpaceMediaControls = ({
         screenShare: video.screenShare,
         micError,
         cameraError: video.localCameraError,
+        sendEmote,
     };
 };
