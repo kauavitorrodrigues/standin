@@ -15,7 +15,7 @@ const buildSocket = (connected: boolean) => {
     return { socket, listeners };
 };
 
-const input = { organizationId: "org", spaceId: "space", userId: "me" };
+const input = { spaceId: "space" };
 
 describe("joinSpacePresence", () => {
     it("connects and joins on connect when the socket is closed", () => {
@@ -35,6 +35,15 @@ describe("joinSpacePresence", () => {
 
         expect(socket.connect).not.toHaveBeenCalled();
         expect(socket.emit).toHaveBeenCalledWith("space:join", input);
+    });
+
+    it("sends nothing but the space, the server decides who joins and where", () => {
+        const { socket } = buildSocket(true);
+        joinSpacePresence({ socket, ...input });
+
+        expect(socket.emit).toHaveBeenCalledWith("space:join", {
+            spaceId: "space",
+        });
     });
 
     it("removes the listener and disconnects on teardown", () => {

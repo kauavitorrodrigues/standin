@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     PEER_MESSAGE_TYPES,
-    type Organization,
     type PeerChatPayload,
     type PeerConfirmPayload,
     type PeerDeletePayload,
@@ -51,7 +50,6 @@ import {
 } from "@/features/media-devices/lib/mediaDevicePreferences";
 
 export type UseSpaceConnectionOptions = {
-    organizationId: Organization["id"];
     spaceId: Space["id"];
     userId: User["id"];
     game: Phaser.Game | null;
@@ -72,7 +70,6 @@ export type UseSpaceConnectionOptions = {
 // while the scene isn't mounted yet, e.g. before the game engine finishes
 // its first render).
 export function useSpaceConnection({
-    organizationId,
     spaceId,
     userId,
     game,
@@ -614,7 +611,7 @@ export function useSpaceConnection({
         // also re-joins automatically if the socket ever reconnects after a
         // drop, not just on the initial handshake.
         const onConnect = () => {
-            socket.emit("space:join", { organizationId, spaceId, userId });
+            socket.emit("space:join", { spaceId });
         };
 
         const joinTimeout = setTimeout(() => {
@@ -659,7 +656,6 @@ export function useSpaceConnection({
     }, [
         manager,
         remoteAudioManager,
-        organizationId,
         spaceId,
         userId,
         iceReady,

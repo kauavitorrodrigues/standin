@@ -1,14 +1,18 @@
 import type { Server, Socket } from "socket.io";
 import { RoomEvents, SpaceEvents, SpaceJoinSchema } from "@standin/contracts";
+import { SpaceGuestService } from "@standin/core";
 import { buildSpaceRoom } from "../utils/buildSpaceRoom";
 import { RoomStates } from "../utils/roomStates";
-import { canJoinSpace } from "../services/canJoinSpace";
+import {
+    resolveJoinAccess,
+    type JoinAccess,
+} from "../services/resolveJoinAccess";
+import { buildHostRoom } from "../utils/buildHostRoom";
 import { resolveAvatarSheetFileId } from "../services/resolveAvatarSheetFileId";
 import {
     resolveUserProfiles,
     type UserProfile,
 } from "../services/resolveUserProfiles";
-import { isSpaceOwner } from "../services/isSpaceOwner";
 import { applyJoinEffects, sendEntitlements } from "../utils/applyJoinEffects";
 
 // The snapshot stays synchronous on purpose, see the comment where it is taken.
@@ -78,25 +82,44 @@ const disconnectDuplicateSessions = (
         });
 };
 
+// A host hears the requests of guests from now on, and learns right away the
+// ones that came in while no host was around.
+const joinAsHost = async (socket: Socket, spaceId: string) => {
+    await socket.join(buildHostRoom(spaceId));
+    const pending = await SpaceGuestService.listPending(spaceId);
+    pending.forEach((guest) => {
+        socket.emit(SpaceEvents.SPACE_GUEST_REQUESTED, { guest });
+    });
+};
+
+// Hosts are members of the organization, which does not end by itself in a
+// join. A guest pass can, so a guest is checked again.
+const stillHasAccess = async (
+    userId: string,
+    spaceId: string,
+    access: JoinAccess
+): Promise<boolean> => {
+    if (access.isHost) return true;
+    return (await resolveJoinAccess(userId, spaceId)) !== null;
+};
+
 export function registerJoinSpace(io: Server, socket: Socket) {
     socket.on(SpaceEvents.SPACE_JOIN, async (payload) => {
         try {
             const parsed = SpaceJoinSchema.safeParse(payload);
             if (!parsed.success) return;
 
-            const { organizationId, spaceId, userId } = parsed.data;
-            // The authenticated identity always wins over whatever userId the
-            // client claims in the payload.
-            if (userId !== socket.data.userId) return;
+            // Only the space comes from the client. The person is the one the
+            // token authenticated, and the organization comes from the space.
+            const { spaceId } = parsed.data;
+            const userId = socket.data.userId as string;
 
             // Already in that space: nothing to do, and re-broadcasting would
             // duplicate peers/renegotiate connections on the client.
             if (socket.data.spaceId === spaceId) return;
 
-            const allowed = await canJoinSpace(userId, organizationId, spaceId);
-            if (!allowed) return;
-
-            const owner = await isSpaceOwner(userId, organizationId);
+            const access = await resolveJoinAccess(userId, spaceId);
+            if (!access) return;
 
             const previousSpaceId = socket.data.spaceId;
             if (previousSpaceId) {
@@ -106,6 +129,7 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                     userId,
                 });
                 await socket.leave(previousRoom);
+                await socket.leave(buildHostRoom(previousSpaceId));
                 const { changes, effects } = RoomStates.removeSocket(
                     previousSpaceId,
                     socket.id
@@ -133,7 +157,17 @@ export function registerJoinSpace(io: Server, socket: Socket) {
             );
 
             socket.data.spaceId = spaceId;
+            socket.data.isGuest = !access.isHost;
             await socket.join(room);
+
+            // The access can end while the join is in flight: a kick that landed
+            // before the socket was in the room had nobody to cut. Looking again
+            // once inside closes that gap.
+            if (!(await stillHasAccess(userId, spaceId, access))) {
+                await socket.leave(room);
+                socket.data.spaceId = null;
+                return;
+            }
 
             const { peers: peersWithAvatar, self } = await attachPresenceData(
                 remainingPeers,
@@ -149,7 +183,8 @@ export function registerJoinSpace(io: Server, socket: Socket) {
             socket.emit(RoomEvents.ROOM_STATES, {
                 rooms: RoomStates.listNotOpen(spaceId),
             });
-            if (owner) RoomStates.setOwner(spaceId, socket.id);
+            if (access.isOwner) RoomStates.setOwner(spaceId, socket.id);
+            if (access.isHost) await joinAsHost(socket, spaceId);
             sendEntitlements(new Map([[socket.id, socket]]), spaceId, userId);
         } catch (error) {
             console.error(error);

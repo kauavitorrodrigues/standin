@@ -15,16 +15,13 @@ import {
     vi,
 } from "vitest";
 
-const { canJoinSpaceMock, resolveSheetMock } = vi.hoisted(() => ({
-    canJoinSpaceMock: vi.fn(),
+const { resolveJoinAccessMock, resolveSheetMock } = vi.hoisted(() => ({
+    resolveJoinAccessMock: vi.fn(),
     resolveSheetMock: vi.fn(),
 }));
 
-vi.mock("../../services/canJoinSpace", () => ({
-    canJoinSpace: canJoinSpaceMock,
-}));
-vi.mock("../../services/isSpaceOwner", () => ({
-    isSpaceOwner: vi.fn().mockResolvedValue(false),
+vi.mock("../../services/resolveJoinAccess", () => ({
+    resolveJoinAccess: resolveJoinAccessMock,
 }));
 vi.mock("../../services/resolveAvatarSheetFileId", () => ({
     resolveAvatarSheetFileId: resolveSheetMock,
@@ -65,7 +62,7 @@ describe("avatar change with several clients in a space", () => {
         const joined = new Promise<void>((resolve) =>
             socket.once("space:joined", () => resolve())
         );
-        socket.emit("space:join", { organizationId: "org", spaceId, userId });
+        socket.emit("space:join", { spaceId });
         await joined;
         return { socket, changes };
     };
@@ -95,7 +92,10 @@ describe("avatar change with several clients in a space", () => {
 
     beforeEach(() => {
         RoomStates.clear();
-        canJoinSpaceMock.mockResolvedValue(true);
+        resolveJoinAccessMock.mockResolvedValue({
+            isHost: false,
+            isOwner: false,
+        });
         resolveSheetMock.mockResolvedValue(null);
     });
 

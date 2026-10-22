@@ -4,17 +4,18 @@ import { Server } from "socket.io";
 import { io as connectClient, type Socket as ClientSocket } from "socket.io-client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { canJoinSpaceMock } = vi.hoisted(() => ({
-    canJoinSpaceMock: vi.fn(),
+const { resolveJoinAccessMock } = vi.hoisted(() => ({
+    resolveJoinAccessMock: vi.fn(),
 }));
 
-vi.mock("../../services/canJoinSpace", () => ({
-    canJoinSpace: canJoinSpaceMock,
+// Members are hosts: they hear the requests of guests, none here.
+vi.mock("@standin/core", () => ({
+    SpaceGuestService: { listPending: async () => [] },
+}));
+vi.mock("../../services/resolveJoinAccess", () => ({
+    resolveJoinAccess: resolveJoinAccessMock,
 }));
 
-vi.mock("../../services/isSpaceOwner", () => ({
-    isSpaceOwner: vi.fn().mockResolvedValue(false),
-}));
 
 import { registerJoinSpace } from "../joinSpace";
 import { registerDisconnect } from "../disconnect";
@@ -58,11 +59,7 @@ describe("room doors with several clients in a space", () => {
             if (!this.socket.connected) {
                 await new Promise<void>((r) => this.socket.once("connect", () => r()));
             }
-            this.socket.emit("space:join", {
-                organizationId: "org",
-                spaceId,
-                userId: this.userId,
-            });
+            this.socket.emit("space:join", { spaceId });
             await vi.waitFor(() => expect(this.snapshots.length).toBe(before + 1));
             return this;
         }
@@ -104,7 +101,7 @@ describe("room doors with several clients in a space", () => {
 
     beforeEach(() => {
         RoomStates.clear();
-        canJoinSpaceMock.mockResolvedValue(true);
+        resolveJoinAccessMock.mockResolvedValue({ isHost: true, isOwner: false });
     });
 
     const cleanup = () => {

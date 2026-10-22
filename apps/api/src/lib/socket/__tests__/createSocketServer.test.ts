@@ -15,6 +15,7 @@ const {
     onSheetChangedMock,
     onNameChangedMock,
     onProfilePictureChangedMock,
+    onSpaceGuestEventMock,
 } = vi.hoisted(() => {
     const useMock = vi.fn();
     const onMock = vi.fn();
@@ -43,6 +44,7 @@ const {
         onSheetChangedMock: vi.fn(),
         onNameChangedMock: vi.fn(),
         onProfilePictureChangedMock: vi.fn(),
+        onSpaceGuestEventMock: vi.fn(),
     };
 });
 
@@ -52,6 +54,7 @@ vi.mock("socket.io", () => ({
 
 vi.mock("@standin/core", () => ({
     AvatarService: { onSheetChanged: onSheetChangedMock },
+    SpaceGuestService: { onEvent: onSpaceGuestEventMock },
     UserService: {
         onNameChanged: onNameChangedMock,
         onProfilePictureChanged: onProfilePictureChangedMock,
@@ -63,6 +66,9 @@ vi.mock("../services/broadcastNameChange", () => ({
 }));
 vi.mock("../services/broadcastProfilePictureChange", () => ({
     broadcastProfilePictureChange: vi.fn(),
+}));
+vi.mock("../services/broadcastSpaceGuestEvent", () => ({
+    broadcastSpaceGuestEvent: vi.fn(),
 }));
 vi.mock("../services/broadcastAvatarChange", () => ({
     broadcastAvatarChange: vi.fn(),
@@ -211,6 +217,17 @@ describe("createSocketServer", () => {
         expect(onProfilePictureChangedMock).toHaveBeenCalledTimes(1);
         expect(onProfilePictureChangedMock).toHaveBeenCalledWith(
             broadcastProfilePictureChange
+        );
+    });
+
+    it("registers the space guest listener once per server", async () => {
+        createSocketServer({} as any);
+
+        const { broadcastSpaceGuestEvent } =
+            await import("../services/broadcastSpaceGuestEvent");
+        expect(onSpaceGuestEventMock).toHaveBeenCalledTimes(1);
+        expect(onSpaceGuestEventMock).toHaveBeenCalledWith(
+            broadcastSpaceGuestEvent
         );
     });
 
