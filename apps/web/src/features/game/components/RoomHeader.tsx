@@ -9,6 +9,28 @@ type RoomHeaderProps = {
     state: RoomDoorState;
     onLock: () => void;
     onUnlock: () => void;
+    // A guest takes part in the room but does not lock it.
+    canLock?: boolean;
+};
+
+type LockControlProps = Pick<
+    RoomHeaderProps,
+    "state" | "onLock" | "onUnlock" | "canLock"
+>;
+
+const LockControl = ({
+    state,
+    onLock,
+    onUnlock,
+    canLock = true,
+}: LockControlProps) => {
+    if (!canLock) return null;
+
+    return (
+        <FloatingWidget>
+            <RoomLockButton state={state} onLock={onLock} onUnlock={onUnlock} />
+        </FloatingWidget>
+    );
 };
 
 export const RoomHeader = ({
@@ -16,6 +38,7 @@ export const RoomHeader = ({
     state,
     onLock,
     onUnlock,
+    canLock,
 }: RoomHeaderProps) => {
     if (roomLabel === null) return null;
 
@@ -27,13 +50,12 @@ export const RoomHeader = ({
                     {roomLabel}
                 </span>
             </FloatingWidget>
-            <FloatingWidget>
-                <RoomLockButton
-                    state={state}
-                    onLock={onLock}
-                    onUnlock={onUnlock}
-                />
-            </FloatingWidget>
+            <LockControl
+                state={state}
+                onLock={onLock}
+                onUnlock={onUnlock}
+                canLock={canLock}
+            />
         </div>
     );
 };

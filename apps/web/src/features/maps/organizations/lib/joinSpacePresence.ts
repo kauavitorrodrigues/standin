@@ -2,9 +2,7 @@ import type { PresenceSocket } from "../types/presenceSocket";
 
 type JoinSpacePresenceInput = {
     socket: PresenceSocket;
-    organizationId: string;
     spaceId: string;
-    userId: string;
 };
 
 // Joins the space room and nothing else: no peer connections, no media and no
@@ -14,12 +12,11 @@ type JoinSpacePresenceInput = {
 // the same way the space page does when it unmounts.
 export const joinSpacePresence = ({
     socket,
-    organizationId,
     spaceId,
-    userId,
 }: JoinSpacePresenceInput): (() => void) => {
-    const onConnect = () =>
-        socket.emit("space:join", { organizationId, spaceId, userId });
+    // Only the space goes: the server knows who is joining from the token and
+    // which organization the space belongs to from the space itself.
+    const onConnect = () => socket.emit("space:join", { spaceId });
 
     socket.on("connect", onConnect);
 

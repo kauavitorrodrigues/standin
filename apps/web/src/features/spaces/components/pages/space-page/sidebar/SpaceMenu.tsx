@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LogOutIcon, UserPlusIcon } from "lucide-react";
+import { LogOutIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,19 +9,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "@/components/ui/toast";
-import { InviteMessages } from "@/features/spaces/components/forms/Messages";
 import { LogoGlyph } from "@/components/logos";
 
 // The logo opens the space actions instead of navigating. New actions are
 // added here as the space gains them. Items that need the space (such as
 // Edit) come in as children, because the unavailable page has no space.
 export const SpaceMenu = ({ children }: { children?: ReactNode }) => {
-    const copyInviteLink = () => {
-        navigator.clipboard.writeText(window.location.href);
-        toast.add({ title: InviteMessages.copied, type: "success" });
-    };
-
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
@@ -42,10 +35,6 @@ export const SpaceMenu = ({ children }: { children?: ReactNode }) => {
                 sideOffset={12}
                 className="w-60"
             >
-                <DropdownMenuItem onClick={copyInviteLink}>
-                    <UserPlusIcon />
-                    Convidar pessoas
-                </DropdownMenuItem>
                 {children}
                 <DropdownMenuSeparator className="my-1.5" />
                 <DropdownMenuItem render={<Link to="/home" />}>

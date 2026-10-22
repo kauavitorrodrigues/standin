@@ -3,6 +3,7 @@ import { Content } from "./Content";
 import { ControlGroup } from "./ControlGroup";
 import { FloatingCard } from "./FloatingCard";
 import { Controls } from "./Controls";
+import { RightStack } from "./RightStack";
 import { TopControls } from "./TopControls";
 
 export const SpacePageLayout = {
@@ -10,6 +11,7 @@ export const SpacePageLayout = {
     Controls,
     ControlGroup,
     TopControls,
+    RightStack,
     Content,
     FloatingCard,
 };

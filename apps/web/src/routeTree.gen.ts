@@ -16,6 +16,7 @@ import { Route as AppDefaultRouteImport } from './routes/_app/_default'
 import { Route as AppDefaultHomeRouteImport } from './routes/_app/_default/home'
 import { Route as AppDefaultLibraryRouteImport } from './routes/_app/_default/library'
 import { Route as AppDevAvatarLabRouteImport } from './routes/_app/dev/avatar-lab'
+import { Route as AppInviteTokenRouteImport } from './routes/_app/invite/$token'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces/$spaceId'
 import { Route as AppSpacesNewRouteImport } from './routes/_app/spaces/new'
 import { Route as AppSpacesSpaceIdEditRouteImport } from './routes/_app/spaces/$spaceId_.edit'
@@ -72,6 +73,11 @@ const AppDefaultLibraryRoute = AppDefaultLibraryRouteImport.update({
 const AppDevAvatarLabRoute = AppDevAvatarLabRouteImport.update({
   id: '/dev/avatar-lab',
   path: '/dev/avatar-lab',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInviteTokenRoute = AppInviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AppDefaultHomeRoute
   '/library': typeof AppDefaultLibraryRouteWithChildren
   '/dev/avatar-lab': typeof AppDevAvatarLabRoute
+  '/invite/$token': typeof AppInviteTokenRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/home': typeof AppDefaultHomeRoute
   '/library': typeof AppDefaultLibraryRouteWithChildren
   '/dev/avatar-lab': typeof AppDevAvatarLabRoute
+  '/invite/$token': typeof AppInviteTokenRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spaces/new': typeof AppSpacesNewRoute
   '/spaces/$spaceId/edit': typeof AppSpacesSpaceIdEditRoute
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/_app/_default/home': typeof AppDefaultHomeRoute
   '/_app/_default/library': typeof AppDefaultLibraryRouteWithChildren
   '/_app/dev/avatar-lab': typeof AppDevAvatarLabRoute
+  '/_app/invite/$token': typeof AppInviteTokenRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spaces/new': typeof AppSpacesNewRoute
   '/_app/spaces/$spaceId_/edit': typeof AppSpacesSpaceIdEditRoute
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/library'
     | '/dev/avatar-lab'
+    | '/invite/$token'
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/library'
     | '/dev/avatar-lab'
+    | '/invite/$token'
     | '/spaces/$spaceId'
     | '/spaces/new'
     | '/spaces/$spaceId/edit'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/_app/_default/home'
     | '/_app/_default/library'
     | '/_app/dev/avatar-lab'
+    | '/_app/invite/$token'
     | '/_app/spaces/$spaceId'
     | '/_app/spaces/new'
     | '/_app/spaces/$spaceId_/edit'
@@ -467,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: '/dev/avatar-lab'
       fullPath: '/dev/avatar-lab'
       preLoaderRoute: typeof AppDevAvatarLabRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/invite/$token': {
+      id: '/_app/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof AppInviteTokenRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/spaces/$spaceId': {
@@ -730,6 +749,7 @@ interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRouteWithChildren
   AppDefaultRoute: typeof AppDefaultRouteWithChildren
   AppDevAvatarLabRoute: typeof AppDevAvatarLabRoute
+  AppInviteTokenRoute: typeof AppInviteTokenRoute
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpacesNewRoute: typeof AppSpacesNewRoute
   AppSpacesSpaceIdEditRoute: typeof AppSpacesSpaceIdEditRoute
@@ -739,6 +759,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRouteWithChildren,
   AppDefaultRoute: AppDefaultRouteWithChildren,
   AppDevAvatarLabRoute: AppDevAvatarLabRoute,
+  AppInviteTokenRoute: AppInviteTokenRoute,
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpacesNewRoute: AppSpacesNewRoute,
   AppSpacesSpaceIdEditRoute: AppSpacesSpaceIdEditRoute,

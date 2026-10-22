@@ -40,6 +40,8 @@ export const previewTemplate = async (
         canEdit: false,
         canDecorate: false,
         membership: null,
+        guest: null,
+        canView: true,
     });
 
     return { map, tilesets, assets, placed };

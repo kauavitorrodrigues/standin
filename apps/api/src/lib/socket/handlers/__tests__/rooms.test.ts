@@ -15,7 +15,7 @@ function createSocket(id: string, spaceId: string | null = "s1") {
     const peerEmit = vi.fn();
     const socket = {
         id,
-        data: { userId: id, spaceId },
+        data: { userId: id, spaceId, isGuest: undefined as boolean | undefined },
         emit: vi.fn(),
         to: vi.fn(() => ({ emit: peerEmit })),
         on: vi.fn((event: string, fn: (p: unknown) => void) => {
@@ -31,7 +31,8 @@ function createSocket(id: string, spaceId: string | null = "s1") {
     return {
         socket,
         peerEmit,
-        send: (event: string, payload: unknown) => handlers.get(event)?.(payload),
+        send: (event: string, payload: unknown) =>
+            handlers.get(event)?.(payload),
     };
 }
 
@@ -48,18 +49,30 @@ describe("room handlers", () => {
         const a = createSocket("a");
         a.send("room:crossed", { roomKey, direction: "in" });
         expect(io.to).toHaveBeenCalledWith("space:s1");
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "closed" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "closed",
+        });
         a.send("room:crossed", { roomKey, direction: "out" });
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "open" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "open",
+        });
     });
 
     it("opens a closed door by stepping on it and ignores it otherwise", () => {
         const a = createSocket("a");
         a.send("room:crossed", { roomKey, direction: "in" });
         a.send("room:open", { roomKey });
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "open" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "open",
+        });
         a.send("room:open", { roomKey });
-        expect(a.socket.emit).toHaveBeenCalledWith("room:state", { roomKey, state: "open" });
+        expect(a.socket.emit).toHaveBeenCalledWith("room:state", {
+            roomKey,
+            state: "open",
+        });
     });
 
     it("lets only who is inside lock and unlock", () => {
@@ -67,13 +80,25 @@ describe("room handlers", () => {
         const b = createSocket("b");
         a.send("room:crossed", { roomKey, direction: "in" });
         b.send("room:lock", { roomKey });
-        expect(b.socket.emit).toHaveBeenCalledWith("room:state", { roomKey, state: "closed" });
+        expect(b.socket.emit).toHaveBeenCalledWith("room:state", {
+            roomKey,
+            state: "closed",
+        });
         a.send("room:lock", { roomKey });
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "locked" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "locked",
+        });
         b.send("room:unlock", { roomKey });
-        expect(b.socket.emit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "locked" });
+        expect(b.socket.emit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "locked",
+        });
         a.send("room:unlock", { roomKey });
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "closed" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "closed",
+        });
     });
 
     it("refuses to enter a locked room and opens it when the locker leaves", () => {
@@ -82,9 +107,15 @@ describe("room handlers", () => {
         a.send("room:crossed", { roomKey, direction: "in" });
         a.send("room:lock", { roomKey });
         b.send("room:crossed", { roomKey, direction: "in" });
-        expect(b.socket.emit).toHaveBeenCalledWith("room:state", { roomKey, state: "locked" });
+        expect(b.socket.emit).toHaveBeenCalledWith("room:state", {
+            roomKey,
+            state: "locked",
+        });
         a.send("room:crossed", { roomKey, direction: "out" });
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "open" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "open",
+        });
     });
 
     it("ignores a socket that has not joined a space", () => {
@@ -104,9 +135,14 @@ describe("room handlers", () => {
         const a = createSocket("a");
         a.send("room:crossed", { roomKey, direction: "in" });
         a.send("room:lock", { roomKey });
-        expect(RoomStates.listNotOpen("s1")).toEqual([{ roomKey, state: "locked" }]);
+        expect(RoomStates.listNotOpen("s1")).toEqual([
+            { roomKey, state: "locked" },
+        ]);
         a.send("disconnect", undefined);
-        expect(a.peerEmit).toHaveBeenCalledWith("room:state", { roomKey, state: "open" });
+        expect(a.peerEmit).toHaveBeenCalledWith("room:state", {
+            roomKey,
+            state: "open",
+        });
         expect(RoomStates.listNotOpen("s1")).toEqual([]);
     });
 
@@ -119,10 +155,16 @@ describe("room handlers", () => {
         const b = createSocket("b");
         b.send("room:present", { roomKey });
         expect(roomEmit).not.toHaveBeenCalled();
-        expect(b.socket.emit).toHaveBeenCalledWith("room:state", { roomKey, state: "locked" });
+        expect(b.socket.emit).toHaveBeenCalledWith("room:state", {
+            roomKey,
+            state: "locked",
+        });
 
         b.send("room:unlock", { roomKey });
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "closed" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "closed",
+        });
     });
 
     it("room:present is ignored outside a space and with a bad payload", () => {
@@ -139,6 +181,34 @@ describe("room handlers", () => {
         a.send("room:present", { roomKey });
         a.send("room:lock", { roomKey });
         a.send("room:crossed", { roomKey, direction: "out" });
-        expect(roomEmit).toHaveBeenLastCalledWith("room:state", { roomKey, state: "open" });
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "open",
+        });
+    });
+
+    it("lets a guest be in a room but not lock or unlock it", () => {
+        const guest = createSocket("g");
+        guest.socket.data.isGuest = true;
+        guest.send("room:crossed", { roomKey, direction: "in" });
+        roomEmit.mockClear();
+
+        guest.send("room:lock", { roomKey });
+        expect(roomEmit).not.toHaveBeenCalled();
+
+        guest.send("room:unlock", { roomKey });
+        expect(roomEmit).not.toHaveBeenCalled();
+    });
+
+    it("lets a member lock the room the guest is in", () => {
+        const member = createSocket("m");
+        member.send("room:crossed", { roomKey, direction: "in" });
+
+        member.send("room:lock", { roomKey });
+
+        expect(roomEmit).toHaveBeenLastCalledWith("room:state", {
+            roomKey,
+            state: "locked",
+        });
     });
 });

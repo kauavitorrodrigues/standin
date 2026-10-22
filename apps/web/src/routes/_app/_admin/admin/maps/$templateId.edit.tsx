@@ -3,7 +3,9 @@ import { templateDetailsQueryOptions } from "@/features/maps/templates/queries/u
 import { mapRenderQueryOptions } from "@/features/game/queries/useMapRender";
 import { TemplateMapEditorPage } from "@/features/maps/templates/components/pages/TemplateMapEditorPage";
 
-export const Route = createFileRoute("/_app/_admin/admin/maps/$templateId/edit")({
+export const Route = createFileRoute(
+    "/_app/_admin/admin/maps/$templateId/edit"
+)({
     beforeLoad: async ({ context, params }) => {
         const template = await context.queryClient
             .query({

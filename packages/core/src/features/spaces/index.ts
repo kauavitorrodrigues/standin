@@ -6,14 +6,21 @@ import { findSpaceRefById } from "./findRefById";
 import { updateSpace } from "./update";
 import { deleteSpace } from "./delete";
 import { deleteSpacesByOrganizationId } from "./deleteByOrganizationId";
+import { findSpaceView } from "./findView";
 
 export const SpaceService = {
     create: createSpace,
     listByOrganization: listSpacesByOrganization,
     findById: findSpaceById,
     findDetailsById: findSpaceDetailsById,
+    findView: findSpaceView,
     findRefById: findSpaceRefById,
     update: updateSpace,
     delete: deleteSpace,
     deleteByOrganizationId: deleteSpacesByOrganizationId,
 };
+
+export { SpaceGuestService } from "./guests";
+export { SpaceInviteService } from "./guests/invites";
+export type { AdmittedGuest, ExpiredGuest, SpaceGuestEvent } from "./guests";
+export type { SpaceRef } from "./types/space-ref";

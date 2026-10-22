@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import { AvatarService, UserService } from "@standin/core";
+import { AvatarService, SpaceGuestService, UserService } from "@standin/core";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -25,6 +25,7 @@ import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
 import { broadcastAvatarChange } from "@/lib/socket/services/broadcastAvatarChange";
 import { broadcastNameChange } from "@/lib/socket/services/broadcastNameChange";
+import { broadcastSpaceGuestEvent } from "@/lib/socket/services/broadcastSpaceGuestEvent";
 import { broadcastProfilePictureChange } from "@/lib/socket/services/broadcastProfilePictureChange";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
@@ -53,6 +54,10 @@ export function createSocketServer(
     // Registered once per server. Runs after a person sets or removes the
     // profile picture, so the tag over their avatar changes with no refresh.
     UserService.onProfilePictureChanged(broadcastProfilePictureChange);
+
+    // Registered once per server. Runs on every step of the approval of a
+    // guest, so the hosts and the guest hear it as it happens.
+    SpaceGuestService.onEvent(broadcastSpaceGuestEvent);
 
     io.on("connection", (socket) => {
         // Every authenticated connection joins its own user room, regardless

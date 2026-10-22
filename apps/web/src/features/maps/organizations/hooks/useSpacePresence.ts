@@ -16,9 +16,7 @@ export const useSpacePresence = (target: PresenceTarget) => {
 
         return joinSpacePresence({
             socket: socket as unknown as PresenceSocket,
-            organizationId,
             spaceId,
-            userId,
         });
     }, [organizationId, spaceId, userId]);
 };

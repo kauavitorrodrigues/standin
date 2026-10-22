@@ -1,4 +1,5 @@
 import { OrganizationsQueries } from "@/features/organizations/queries";
+import { GuestSpacesSection } from "@/features/spaces/guests/components/instances/GuestSpacesSection";
 import { SpacesPage } from "@/features/spaces/components/pages/SpacesPage";
 import {
     OrganizationsEmptyState,
@@ -33,6 +34,7 @@ function Content() {
 export function OrganizationsPage() {
     return (
         <div className="flex w-full flex-1 flex-col bg-background">
+            <GuestSpacesSection />
             <Content />
         </div>
     );
