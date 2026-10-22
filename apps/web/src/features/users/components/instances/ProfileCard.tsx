@@ -15,7 +15,8 @@ type ProfileCardProps = {
     decorate?: ProfileDecorate;
 };
 
-// The profile of the person, docked to the top right corner of the space.
+// The profile of the person. It sits in the right stack of the space, where the
+// other floating cards line up under it.
 export const ProfileCard = ({
     user,
     isOnline,
@@ -26,7 +27,7 @@ export const ProfileCard = ({
     const now = useMinuteClock();
 
     return (
-        <SpacePageLayout.FloatingCard className="absolute top-3 right-3 z-40 w-80 p-3">
+        <SpacePageLayout.FloatingCard className="w-full p-3">
             <ProfileHeader
                 id={user.id}
                 name={user.name}

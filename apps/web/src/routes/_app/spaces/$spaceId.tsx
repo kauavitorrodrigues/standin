@@ -1,25 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { spaceDetailsQueryOptions } from "@/features/spaces/queries/useDetails";
+import { spaceViewQueryOptions } from "@/features/spaces/guests/queries/spaceView";
 import { spaceSearchSchema } from "@/features/spaces/schemas/spaceSearch";
-import { SpacePage } from "@/features/spaces/components/pages/space-page/SpacePage";
+import { SpaceEntry } from "@/features/spaces/guests/components/pages/SpaceEntry";
 
 export const Route = createFileRoute("/_app/spaces/$spaceId")({
     validateSearch: spaceSearchSchema,
+    // The person decides nothing about what they are: the server tells a
+    // member from a guest, so the space is loaded by its id alone and the
+    // active organization is not needed to open it.
     beforeLoad: async ({ context, params }) => {
-        const organizationId = context.organization?.id;
-        if (organizationId) {
-            await context.queryClient
-                .query({
-                    ...spaceDetailsQueryOptions(organizationId, params.spaceId),
-                    staleTime: "static",
-                })
-                .catch(() => null);
-        }
+        await context.queryClient
+            .query({
+                ...spaceViewQueryOptions(params.spaceId),
+                staleTime: "static",
+            })
+            .catch(() => null);
     },
     component: RouteComponent,
 });
 
 function RouteComponent() {
     const { spaceId } = Route.useParams();
-    return <SpacePage spaceId={spaceId} />;
+    return <SpaceEntry spaceId={spaceId} />;
 }

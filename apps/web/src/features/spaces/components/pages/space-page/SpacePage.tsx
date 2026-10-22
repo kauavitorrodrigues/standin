@@ -1,4 +1,5 @@
 import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
+import { useState } from "react";
 import type { SpaceDetails } from "@standin/contracts";
 import { useOrganizationId } from "@/features/organizations/hooks/useOrganizationId";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -54,6 +55,8 @@ import { useDecoratorSession } from "@/features/decorator/hooks/useDecoratorSess
 import type { DecorateAvailability } from "@/features/decorator/types/decorate-availability";
 import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
+import { GuestRequests } from "@/features/spaces/guests/components/instances/GuestRequests";
+import { GuestsDialog } from "@/features/spaces/guests/components/instances/GuestsDialog";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
     return (
@@ -84,6 +87,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const { user } = useAuth();
     const organizationId = useOrganizationId();
+    const [isGuestsOpen, setIsGuestsOpen] = useState(false);
 
     const peoplePanel = usePeoplePanel({ view, selectView });
 
@@ -106,7 +110,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         sendNearbyTyping,
         ...broadcasts
     } = useSpaceConnection({
-        organizationId,
         spaceId: space.id,
         userId: user.id,
         game: handle?.game ?? null,
@@ -185,6 +188,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     chatFooter={<ChatFooter tiles={stageTiles} media={media} />}
                     onDecorate={() => decorator.open()}
                     decorateAvailability={decorateAvailability}
+                    onOpenGuests={() => setIsGuestsOpen(true)}
                 />
                 <SpacePeoplePanel
                     isMounted={peoplePanel.isMounted}
@@ -202,12 +206,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         onLock={currentRoom.onLock}
                         onUnlock={currentRoom.onUnlock}
                     />
-                    <RoomJoinRequests
-                        requests={currentRoom.pendingRequests}
-                        names={names}
-                        avatars={avatars}
-                        onAnswer={currentRoom.onAnswer}
-                    />
                     <WalkChip isWalking={walk.isWalking} onCancel={walk.cancel} />
                     <LockedDoorDialog {...lockedDoor} />
                     <ZoneLabel handle={handle} />
@@ -222,17 +220,28 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         onOpenProfile={profileCard.open}
                         onCloseProfile={profileCard.close}
                     />
-                    <ProfileCardSlot
-                        isOpen={profileCard.isOpen && !decorator.isOpen}
-                        spaceId={space.id}
-                        isMapLocked={mapLock.isLocked}
-                        decorateAvailability={decorateAvailability}
-                        onDecorate={(focus) => {
-                            profileCard.close();
-                            decorator.open(focus);
-                        }}
-                        onClose={profileCard.close}
-                    />
+                    <LayoutPrimitive.RightStack
+                        isBelowStageToggle={layout.isStageToggleVisible}
+                    >
+                        <ProfileCardSlot
+                            isOpen={profileCard.isOpen && !decorator.isOpen}
+                            spaceId={space.id}
+                            isMapLocked={mapLock.isLocked}
+                            decorateAvailability={decorateAvailability}
+                            onDecorate={(focus) => {
+                                profileCard.close();
+                                decorator.open(focus);
+                            }}
+                            onClose={profileCard.close}
+                        />
+                        <RoomJoinRequests
+                            requests={currentRoom.pendingRequests}
+                            names={names}
+                            avatars={avatars}
+                            onAnswer={currentRoom.onAnswer}
+                        />
+                        <GuestRequests spaceId={space.id} />
+                    </LayoutPrimitive.RightStack>
                     <Decorator
                         session={decorator}
                         handle={handle}
@@ -266,6 +275,11 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     </LayoutPrimitive.Controls>
                 </LayoutPrimitive.Content>
             </LayoutPrimitive.Body>
+            <GuestsDialog
+                spaceId={space.id}
+                open={isGuestsOpen}
+                onOpenChange={setIsGuestsOpen}
+            />
         </SpacePageRoot>
     );
 }
