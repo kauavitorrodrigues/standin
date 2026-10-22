@@ -12,6 +12,8 @@ export * from "./asset-parts";
 export * from "./map-assets";
 export * from "./desk-assignments";
 export * from "./spaces";
+export * from "./space-invite-links";
+export * from "./space-guests";
 export * from "./conversations";
 export * from "./conversation-participants";
 export * from "./conversation-reads";

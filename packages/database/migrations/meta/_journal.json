@@ -78,6 +78,13 @@
       "when": 1792599442106,
       "tag": "0010_add_user_identities_and_nullable_password",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792667130610,
+      "tag": "0011_add_space_guests",
+      "breakpoints": true
     }
   ]
 }
