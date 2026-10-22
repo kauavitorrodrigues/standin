@@ -15,6 +15,7 @@ import { EditMapMenuItem } from "@/features/maps/organizations/components/instan
 import { ChatQueries } from "@/features/chat/queries";
 import { SettingsDialog } from "@/features/settings/components/dialogs/SettingsDialog";
 import { RailButton } from "@/features/spaces/components/pages/space-page/sidebar/RailButton";
+import { GuestsMenuItem } from "@/features/spaces/guests/components/instances/GuestsMenuItem";
 import { SpaceMenu } from "@/features/spaces/components/pages/space-page/sidebar/SpaceMenu";
 import { SPACE_VIEWS, type SpaceView } from "@/features/spaces/consts/view";
 
@@ -27,6 +28,8 @@ type Props = {
     // Opens the decorator with no focus, from the space menu.
     onDecorate: () => void;
     decorateAvailability: DecorateAvailability;
+    // Opens the guests dialog, from the space menu.
+    onOpenGuests: () => void;
 };
 
 type FrameProps = { children: ReactNode };
@@ -47,6 +50,7 @@ export const Rail = ({
     onTogglePeople,
     onDecorate,
     decorateAvailability,
+    onOpenGuests,
 }: Props) => {
     const { total: unreadTotal } = ChatQueries.useUnreadCounts();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -59,6 +63,7 @@ export const Rail = ({
                     onDecorate={onDecorate}
                 />
                 <EditMapMenuItem spaceId={space.id} mapId={space.map.id} />
+                <GuestsMenuItem onOpen={onOpenGuests} />
             </SpaceMenu>
             <RailButton icon={SearchIcon} label="Buscar" disabled />
             <RailButton

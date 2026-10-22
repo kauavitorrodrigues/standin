@@ -5,11 +5,24 @@ import {
     updatedAtColumn,
     uuidPrimaryKeyColumn,
 } from "./common";
-import { text, varchar, pgTable, index, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+    text,
+    varchar,
+    pgEnum,
+    pgTable,
+    index,
+    uniqueIndex,
+} from "drizzle-orm/pg-core";
+import { SPACE_GUEST_ACCESS } from "@standin/contracts";
 import { organizationsTable } from "./organizations";
 import { mapsTable } from "./maps";
 import { usersTable } from "./users";
 import { conversationsTable } from "./conversations";
+
+export const spaceGuestAccessEnum = pgEnum(
+    "space_guest_access",
+    SPACE_GUEST_ACCESS
+);
 
 export const spacesTable = pgTable(
     "spaces",
@@ -19,6 +32,9 @@ export const spacesTable = pgTable(
 
         // Properties columns
         name: varchar("name", { length: 255 }).notNull(),
+        guestAccess: spaceGuestAccessEnum("guest_access")
+            .notNull()
+            .default(SPACE_GUEST_ACCESS.ALLOWED),
 
         // Relations columns
         organizationId: text("organization_id")

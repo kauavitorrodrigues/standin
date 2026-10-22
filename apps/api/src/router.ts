@@ -10,6 +10,11 @@ import { libraryRouter } from "./features/library/routes";
 import { RequiresLibraryAdmin } from "./features/library/middleware/requiresLibraryAdmin";
 import { mapsRouter } from "./features/maps/routes";
 import { desksRouter } from "./features/desks/routes";
+import {
+    guestSpacesAccessRouter,
+    invitesAccessRouter,
+    spaceAccessRouter,
+} from "./features/spaces/guests/routes";
 import { filesRouter } from "./features/files/routes";
 import {
     avatarBasesRouter,
@@ -25,6 +30,8 @@ router.use("/auth", authRouter);
 // The avatar of the signed in user. It comes before the users router, which
 // only has `/me`.
 router.use("/users/me/avatar", myAvatarRouter);
+// The spaces the person entered as a guest. Also before the users router.
+router.use("/users/me/guest-spaces", RequiresAuth, guestSpacesAccessRouter);
 router.use("/users", usersRouter);
 router.use("/organizations", organizationsRouter);
 router.use("/ice-servers", iceRouter);
@@ -70,5 +77,8 @@ router.use("/avatar", avatarCatalogRouter);
 // Reading and editing maps, and the desks of a space.
 router.use("/maps", RequiresAuth, mapsRouter);
 router.use("/spaces/:spaceId/desks", RequiresAuth, desksRouter);
+// A space by its id alone, for members and guests, and the invites to it.
+router.use("/spaces", RequiresAuth, spaceAccessRouter);
+router.use("/invites", RequiresAuth, invitesAccessRouter);
 
 export default router;

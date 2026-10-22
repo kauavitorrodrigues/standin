@@ -8,6 +8,8 @@ export function registerRoomUnlock(io: Server, socket: Socket) {
         try {
             const { spaceId } = socket.data;
             if (!spaceId) return;
+            // A guest takes part in the meetings; running them is the members'.
+            if (socket.data.isGuest) return;
 
             const parsed = RoomUnlockSchema.safeParse(payload);
             if (!parsed.success) return;

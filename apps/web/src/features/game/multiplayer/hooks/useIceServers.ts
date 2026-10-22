@@ -5,11 +5,15 @@ import { ICE_SERVERS_REFETCH_INTERVAL_MS } from "../consts/ice";
 
 export const ICE_SERVERS_QUERY_KEY = "iceServers";
 
-export const iceServersQueryOptions = () =>
+// The credentials go only to who may be in the space, so the space is part of
+// the request and of the key.
+export const iceServersQueryOptions = (spaceId: string) =>
     queryOptions({
-        queryKey: [ICE_SERVERS_QUERY_KEY],
+        queryKey: [ICE_SERVERS_QUERY_KEY, spaceId],
         queryFn: async (): Promise<RTCIceServer[]> => {
-            const res = await api.get<IceServersResponse>("/ice-servers");
+            const res = await api.get<IceServersResponse>("/ice-servers", {
+                params: { spaceId },
+            });
             return res.data.iceServers;
         },
         staleTime: ICE_SERVERS_REFETCH_INTERVAL_MS,
@@ -19,4 +23,5 @@ export const iceServersQueryOptions = () =>
         refetchInterval: ICE_SERVERS_REFETCH_INTERVAL_MS,
     });
 
-export const useIceServers = () => useQuery(iceServersQueryOptions());
+export const useIceServers = (spaceId: string) =>
+    useQuery(iceServersQueryOptions(spaceId));

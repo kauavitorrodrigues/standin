@@ -4,13 +4,18 @@ import { Server } from "socket.io";
 import { io as connectClient, type Socket as ClientSocket } from "socket.io-client";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { canJoinSpaceMock, isSpaceOwnerMock } = vi.hoisted(() => ({
-    canJoinSpaceMock: vi.fn(),
-    isSpaceOwnerMock: vi.fn(),
+const { resolveJoinAccessMock } = vi.hoisted(() => ({
+    resolveJoinAccessMock: vi.fn(),
 }));
 
-vi.mock("../../services/canJoinSpace", () => ({ canJoinSpace: canJoinSpaceMock }));
-vi.mock("../../services/isSpaceOwner", () => ({ isSpaceOwner: isSpaceOwnerMock }));
+// Members are hosts: they hear the requests of guests, none here.
+vi.mock("@standin/core", () => ({
+    SpaceGuestService: { listPending: async () => [] },
+    AvatarService: { ensureSheetUpToDate: async () => null },
+}));
+vi.mock("../../services/resolveJoinAccess", () => ({
+    resolveJoinAccess: resolveJoinAccessMock,
+}));
 
 import { registerJoinSpace } from "../joinSpace";
 import { registerDisconnect } from "../disconnect";
@@ -59,11 +64,7 @@ describe("request to join a locked room with several clients", () => {
             if (!this.socket.connected) {
                 await new Promise<void>((r) => this.socket.once("connect", () => r()));
             }
-            this.socket.emit("space:join", {
-                organizationId: "org",
-                spaceId,
-                userId: this.userId,
-            });
+            this.socket.emit("space:join", { spaceId });
             await vi.waitFor(() => expect(this.joined).toBe(before + 1));
             await vi.waitFor(() => expect(this.entitlements.length).toBeGreaterThan(0));
             return this;
@@ -107,8 +108,10 @@ describe("request to join a locked room with several clients", () => {
 
     beforeEach(() => {
         RoomStates.clear();
-        canJoinSpaceMock.mockResolvedValue(true);
-        isSpaceOwnerMock.mockImplementation(async (userId: string) => userId === "owner");
+        resolveJoinAccessMock.mockImplementation(async (userId: string) => ({
+            isHost: true,
+            isOwner: userId === "owner",
+        }));
     });
 
     afterEach(() => {

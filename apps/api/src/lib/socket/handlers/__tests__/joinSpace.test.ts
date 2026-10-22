@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-    canJoinSpaceMock,
+    resolveJoinAccessMock,
     resolveAvatarSheetFileIdMock,
     resolveUserProfilesMock,
+    listPendingMock,
 } = vi.hoisted(() => ({
-    canJoinSpaceMock: vi.fn(),
+    resolveJoinAccessMock: vi.fn(),
+    listPendingMock: vi.fn(),
     resolveAvatarSheetFileIdMock: vi.fn(),
     resolveUserProfilesMock: vi.fn(),
 }));
@@ -18,12 +20,13 @@ vi.mock("../../services/resolveAvatarSheetFileId", () => ({
     resolveAvatarSheetFileId: resolveAvatarSheetFileIdMock,
 }));
 
-vi.mock("../../services/canJoinSpace", () => ({
-    canJoinSpace: canJoinSpaceMock,
+vi.mock("../../services/resolveJoinAccess", () => ({
+    resolveJoinAccess: resolveJoinAccessMock,
 }));
 
-vi.mock("../../services/isSpaceOwner", () => ({
-    isSpaceOwner: vi.fn().mockResolvedValue(false),
+vi.mock("@standin/core", () => ({
+    SpaceGuestService: { listPending: listPendingMock },
+    AvatarService: { ensureSheetUpToDate: async () => null },
 }));
 
 import { registerJoinSpace } from "../joinSpace";
@@ -31,7 +34,11 @@ import { registerJoinSpace } from "../joinSpace";
 function createFakeSocket(id: string, userId: string) {
     return {
         id,
-        data: { userId, spaceId: null as string | null },
+        data: {
+            userId,
+            spaceId: null as string | null,
+            isGuest: undefined as boolean | undefined,
+        },
         join: vi.fn(),
         leave: vi.fn(),
         emit: vi.fn(),
@@ -59,16 +66,16 @@ function getJoinHandler(socket: ReturnType<typeof createFakeSocket>) {
     return socket.on.mock.calls.find(([event]) => event === "space:join")?.[1];
 }
 
-const validPayload = {
-    organizationId: "org-1",
-    spaceId: "space-1",
-    userId: "user-b",
-};
+const validPayload = { spaceId: "space-1" };
+
+const MEMBER = { isHost: true, isOwner: false };
+const GUEST = { isHost: false, isOwner: false };
 
 describe("registerJoinSpace", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        canJoinSpaceMock.mockResolvedValue(true);
+        resolveJoinAccessMock.mockResolvedValue(GUEST);
+        listPendingMock.mockResolvedValue([]);
         resolveAvatarSheetFileIdMock.mockResolvedValue(null);
         resolveUserProfilesMock.mockResolvedValue(
             new Map([
@@ -86,11 +93,7 @@ describe("registerJoinSpace", () => {
         registerJoinSpace(io as any, socketB as any);
         await getJoinHandler(socketB)?.(validPayload);
 
-        expect(canJoinSpaceMock).toHaveBeenCalledWith(
-            "user-b",
-            "org-1",
-            "space-1"
-        );
+        expect(resolveJoinAccessMock).toHaveBeenCalledWith("user-b", "space-1");
         expect(socketB.join).toHaveBeenCalledWith("space:space-1");
         expect(socketB.data.spaceId).toBe("space-1");
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
@@ -207,19 +210,21 @@ describe("registerJoinSpace", () => {
         });
     });
 
-    it("ignores a join whose userId does not match the authenticated socket", async () => {
+    it("trusts the token and the database, never an organization or user sent by the client", async () => {
         const socket = createFakeSocket("socket-a", "user-a");
-        const io = createFakeIo([socket], "space:space-1");
+        const io = createFakeIo([], "space:space-1");
 
         registerJoinSpace(io as any, socket as any);
         await getJoinHandler(socket)?.({
             ...validPayload,
             userId: "someone-else",
+            organizationId: "org-of-someone-else",
         });
 
-        expect(socket.join).not.toHaveBeenCalled();
-        expect(socket.emit).not.toHaveBeenCalled();
-        expect(canJoinSpaceMock).not.toHaveBeenCalled();
+        expect(resolveJoinAccessMock).toHaveBeenCalled();
+        for (const call of resolveJoinAccessMock.mock.calls) {
+            expect(call).toEqual(["user-a", "space-1"]);
+        }
     });
 
     it("ignores an invalid payload", async () => {
@@ -232,8 +237,8 @@ describe("registerJoinSpace", () => {
         expect(socket.join).not.toHaveBeenCalled();
     });
 
-    it("ignores the join when the user is not a member of the organization or the space does not exist", async () => {
-        canJoinSpaceMock.mockResolvedValue(false);
+    it("ignores the join when the user is neither a member nor an admitted guest, or the space does not exist", async () => {
+        resolveJoinAccessMock.mockResolvedValue(null);
         const socket = createFakeSocket("socket-b", "user-b");
         const io = createFakeIo([], "space:space-1");
 
@@ -252,7 +257,7 @@ describe("registerJoinSpace", () => {
         registerJoinSpace(io as any, socket as any);
         await getJoinHandler(socket)?.(validPayload);
 
-        expect(canJoinSpaceMock).not.toHaveBeenCalled();
+        expect(resolveJoinAccessMock).not.toHaveBeenCalled();
         expect(socket.join).not.toHaveBeenCalled();
         expect(socket.emit).not.toHaveBeenCalled();
     });
@@ -303,5 +308,104 @@ describe("registerJoinSpace", () => {
 
         expect(peerA.emit).not.toHaveBeenCalledWith("space:duplicate-session");
         expect(peerA.disconnect).not.toHaveBeenCalled();
+    });
+
+    it("puts a host in the host room and tells them who is waiting", async () => {
+        resolveJoinAccessMock.mockResolvedValue(MEMBER);
+        const waiting = { id: "g1", spaceId: "space-1", name: "Caio" };
+        listPendingMock.mockResolvedValue([waiting]);
+        const socket = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([], "space:space-1");
+
+        registerJoinSpace(io as any, socket as any);
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(socket.join).toHaveBeenCalledWith("space-hosts:space-1");
+        expect(listPendingMock).toHaveBeenCalledWith("space-1");
+        expect(socket.emit).toHaveBeenCalledWith("space:guest-requested", {
+            guest: waiting,
+        });
+    });
+
+    it("keeps a guest out of the host room and away from the requests", async () => {
+        resolveJoinAccessMock.mockResolvedValue(GUEST);
+        const socket = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([], "space:space-1");
+
+        registerJoinSpace(io as any, socket as any);
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(socket.join).not.toHaveBeenCalledWith("space-hosts:space-1");
+        expect(listPendingMock).not.toHaveBeenCalled();
+        expect(socket.emit).not.toHaveBeenCalledWith(
+            "space:guest-requested",
+            expect.anything()
+        );
+    });
+
+    it("leaves the host room of the previous space", async () => {
+        const socket = createFakeSocket("socket-b", "user-b");
+        socket.data.spaceId = "space-old";
+        const io = createFakeIo([], "space:space-1");
+
+        registerJoinSpace(io as any, socket as any);
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(socket.leave).toHaveBeenCalledWith("space-hosts:space-old");
+    });
+
+    it("marks a guest socket as a guest and a member as not", async () => {
+        const guestSocket = createFakeSocket("socket-g", "user-g");
+        resolveJoinAccessMock.mockResolvedValue(GUEST);
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            guestSocket as any
+        );
+        await getJoinHandler(guestSocket)?.(validPayload);
+
+        const memberSocket = createFakeSocket("socket-m", "user-m");
+        resolveJoinAccessMock.mockResolvedValue(MEMBER);
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            memberSocket as any
+        );
+        await getJoinHandler(memberSocket)?.(validPayload);
+
+        expect(guestSocket.data.isGuest).toBe(true);
+        expect(memberSocket.data.isGuest).toBe(false);
+    });
+
+    it("looks again at a guest once inside, and puts out one whose pass ended meanwhile", async () => {
+        resolveJoinAccessMock
+            .mockResolvedValueOnce(GUEST)
+            .mockResolvedValueOnce(null);
+        const socket = createFakeSocket("socket-g", "user-g");
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            socket as any
+        );
+
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(resolveJoinAccessMock).toHaveBeenCalledTimes(2);
+        expect(socket.leave).toHaveBeenCalledWith("space:space-1");
+        expect(socket.data.spaceId).toBeNull();
+        expect(socket.emit).not.toHaveBeenCalledWith(
+            "space:joined",
+            expect.anything()
+        );
+    });
+
+    it("does not look again at a member: the organization does not end by itself in a join", async () => {
+        resolveJoinAccessMock.mockResolvedValue(MEMBER);
+        const socket = createFakeSocket("socket-m", "user-m");
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            socket as any
+        );
+
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(resolveJoinAccessMock).toHaveBeenCalledTimes(1);
     });
 });

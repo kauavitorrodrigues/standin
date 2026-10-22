@@ -28,6 +28,12 @@ import type {
 } from "../../maps/editor/types";
 import type { z } from "zod/v4";
 import type {
+    SpaceGuestRemovedPayload,
+    SpaceGuestRequestedPayload,
+    SpaceGuestStatusPayload,
+    SpaceGuestUpdatedPayload,
+} from "../../spaces/guests/types";
+import type {
     ChatMessageSeenPayload,
     ChatUnreadChangedPayload,
 } from "../../chat/types/events";
@@ -40,6 +46,10 @@ export const SpaceEvents = {
     SPACE_DUPLICATE_SESSION: "space:duplicate-session",
     SPACE_AVATAR_CHANGED: "space:avatar-changed",
     SPACE_NAME_CHANGED: "space:name-changed",
+    SPACE_GUEST_REQUESTED: "space:guest-requested",
+    SPACE_GUEST_STATUS: "space:guest-status",
+    SPACE_GUEST_REMOVED: "space:guest-removed",
+    SPACE_GUEST_UPDATED: "space:guest-updated",
     SPACE_PROFILE_PICTURE_CHANGED: "space:profile-picture-changed",
     WEBRTC_SIGNAL: "webrtc:signal",
 } as const;
@@ -140,6 +150,15 @@ export type ServerToClientEvents = {
     "space:profile-picture-changed": (
         payload: ProfilePictureChangedPayload
     ) => void;
+    // A person asked to enter the space as a guest. Only the hosts hear it.
+    "space:guest-requested": (payload: SpaceGuestRequestedPayload) => void;
+    // The answer to the request of a guest, sent to that guest alone.
+    "space:guest-status": (payload: SpaceGuestStatusPayload) => void;
+    // A request of the space was answered, expired or reopened. Only the
+    // hosts hear it, to refresh the list they act on.
+    "space:guest-updated": (payload: SpaceGuestUpdatedPayload) => void;
+    // The guest lost the access (kicked, expired or guest access turned off).
+    "space:guest-removed": (payload: SpaceGuestRemovedPayload) => void;
     "webrtc:signal": (payload: WebrtcSignalOutput) => void;
     "room:state": (payload: RoomStatePayload) => void;
     "room:states": (payload: RoomStatesPayload) => void;

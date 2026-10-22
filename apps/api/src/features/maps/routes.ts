@@ -10,9 +10,10 @@ import { MapController } from "./controllers";
 // What is left is reading and editing them.
 const router = Router();
 
+// The one map route a guest of the space may call: the render, to see the map.
 router.get(
     "/:mapId/render",
-    RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    RequiresMapAccess(MAP_ACCESS_MODES.VIEW),
     MapController.render
 );
 router.get(

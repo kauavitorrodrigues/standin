@@ -8,10 +8,10 @@ import {
     and,
 } from "@standin/database";
 import type { Organization } from "@standin/contracts";
-import { SpaceService } from "../spaces";
+import { SpaceGuestService, SpaceService } from "../spaces";
 
 export const deleteOrganization = async (id: string): Promise<Organization> => {
-    return db.transaction(async (tx) => {
+    const { organization, removedGuests } = await db.transaction(async (tx) => {
         const [organization] = await tx
             .update(organizationsTable)
             .set({ deletedAt: new Date() })
@@ -28,8 +28,12 @@ export const deleteOrganization = async (id: string): Promise<Organization> => {
                 )
             );
 
-        await SpaceService.deleteByOrganizationId(id, tx);
+        const removedGuests = await SpaceService.deleteByOrganizationId(id, tx);
 
-        return organization;
+        return { organization, removedGuests };
     });
+
+    // The guests inside lose their sockets once the deletion is committed.
+    await SpaceGuestService.publishRemoved(removedGuests);
+    return organization;
 };

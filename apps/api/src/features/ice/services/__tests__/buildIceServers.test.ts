@@ -5,6 +5,7 @@ import {
     buildTurnCredentials,
     DEFAULT_TURN_PORT,
     DEFAULT_TURN_TTL_SECONDS,
+    limitIceConfigForGuest,
     readIceServersConfig,
 } from "../buildIceServers";
 
@@ -13,7 +14,12 @@ const NOW_SECONDS = 1_700_000_000;
 
 describe("buildTurnCredentials", () => {
     it("puts the expiry and the user id in the username", () => {
-        const { username } = buildTurnCredentials("user-1", "s3cret", 3600, NOW_MS);
+        const { username } = buildTurnCredentials(
+            "user-1",
+            "s3cret",
+            3600,
+            NOW_MS
+        );
         expect(username).toBe(`${NOW_SECONDS + 3600}:user-1`);
     });
 
@@ -143,5 +149,45 @@ describe("readIceServersConfig", () => {
             ttlSeconds: DEFAULT_TURN_TTL_SECONDS,
             port: DEFAULT_TURN_PORT,
         });
+    });
+});
+
+describe("limitIceConfigForGuest", () => {
+    const config = {
+        host: "turn.example.com",
+        secret: "s3cret",
+        ttlSeconds: 3600,
+        port: 3478,
+    };
+
+    it("cuts the lifetime of the credentials of a guest", () => {
+        expect(limitIceConfigForGuest(config)?.ttlSeconds).toBe(20 * 60);
+    });
+
+    it("never lengthens a lifetime that is already shorter", () => {
+        expect(
+            limitIceConfigForGuest({ ...config, ttlSeconds: 60 })?.ttlSeconds
+        ).toBe(60);
+    });
+
+    it("changes nothing else about the config", () => {
+        expect(limitIceConfigForGuest(config)).toMatchObject({
+            host: config.host,
+            secret: config.secret,
+            port: config.port,
+        });
+    });
+
+    it("keeps no TURN as no TURN", () => {
+        expect(limitIceConfigForGuest(null)).toBeNull();
+    });
+
+    it("gives a credential that expires sooner in the username", () => {
+        const limited = limitIceConfigForGuest(config)!;
+        const [turn] = buildIceServers("u1", limited, NOW_MS).filter(
+            (server) => server.username
+        );
+
+        expect(turn.username).toBe(`${NOW_SECONDS + 20 * 60}:u1`);
     });
 });

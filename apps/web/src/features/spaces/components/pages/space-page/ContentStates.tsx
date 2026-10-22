@@ -20,7 +20,7 @@ export const SpaceNotFoundState = () => (
             variant="empty"
             icon={SearchX}
             title="Espaço não encontrado"
-            message="Esse espaço não existe mais ou foi removido."
+            message="Esse espaço não existe mais, foi removido ou você ainda não tem acesso. Se recebeu um link de convite, abra o link do convite para pedir para entrar."
         />
     </div>
 );

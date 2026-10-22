@@ -1,6 +1,7 @@
 export enum ErrorMessages {
     SERVER_ERROR = "Erro inesperado",
     UNAUTHORIZED = "Não autorizado",
+    TOO_MANY_REQUESTS = "Muitas tentativas, tente novamente em instantes",
     FORBIDDEN = "Você não tem permissão para realizar esta ação",
     INVALID_CREDENTIALS = "Email ou senha inválidos",
     SIGNUP = "Erro ao criar conta",
