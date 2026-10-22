@@ -100,7 +100,7 @@ export function useSpaceConnection({
     // the "share screen" button is offered at all.
     const [nearbyUserIds, setNearbyUserIds] = useState<string[]>([]);
 
-    const iceServersQuery = useIceServers();
+    const iceServersQuery = useIceServers(spaceId);
     // A failed request must not block joining: without ICE servers, peers
     // still connect over direct candidates.
     const iceReady = iceServersQuery.isSuccess || iceServersQuery.isError;

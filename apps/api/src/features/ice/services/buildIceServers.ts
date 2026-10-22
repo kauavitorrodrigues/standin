@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import type { IceServer } from "@standin/contracts";
+import { GUEST_ICE_TTL_SECONDS, type IceServer } from "@standin/contracts";
 
 export type IceServersConfig = {
     host: string;
@@ -62,6 +62,19 @@ export const buildIceServers = (
             credential,
         },
     ];
+};
+
+// A guest holds relay credentials for less time than a member: one who was
+// sent out does not keep a relay open for long. Null stays null.
+export const limitIceConfigForGuest = (
+    config: IceServersConfig | null
+): IceServersConfig | null => {
+    if (!config) return null;
+
+    return {
+        ...config,
+        ttlSeconds: Math.min(config.ttlSeconds, GUEST_ICE_TTL_SECONDS),
+    };
 };
 
 // Reads the three env vars as a group: TURN is either fully configured or
