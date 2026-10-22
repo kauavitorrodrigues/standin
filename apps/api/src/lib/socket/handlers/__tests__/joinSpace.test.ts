@@ -26,6 +26,7 @@ vi.mock("../../services/resolveJoinAccess", () => ({
 
 vi.mock("@standin/core", () => ({
     SpaceGuestService: { listPending: listPendingMock },
+    AvatarService: { ensureSheetUpToDate: async () => null },
 }));
 
 import { registerJoinSpace } from "../joinSpace";

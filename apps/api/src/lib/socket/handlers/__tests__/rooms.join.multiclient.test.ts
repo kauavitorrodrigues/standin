@@ -11,6 +11,7 @@ const { resolveJoinAccessMock } = vi.hoisted(() => ({
 // Members are hosts: they hear the requests of guests, none here.
 vi.mock("@standin/core", () => ({
     SpaceGuestService: { listPending: async () => [] },
+    AvatarService: { ensureSheetUpToDate: async () => null },
 }));
 vi.mock("../../services/resolveJoinAccess", () => ({
     resolveJoinAccess: resolveJoinAccessMock,
