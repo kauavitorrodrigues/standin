@@ -5,12 +5,16 @@ import type { Space } from "@standin/contracts";
 import { serializeSpace } from "./utils/serializeSpace";
 import { ConversationService } from "../conversations";
 import { MapService } from "../maps";
+import {
+    deleteSpaceGuestsBySpaceIds,
+    publishGuestsRemoved,
+} from "./guests/deleteBySpaceIds";
 
 export const deleteSpace = async (
     organizationId: string,
     id: string
 ): Promise<Space> => {
-    return db.transaction(async (tx) => {
+    const { space, removedGuests } = await db.transaction(async (tx) => {
         const [space] = await tx
             .update(spacesTable)
             .set({ deletedAt: new Date() })
@@ -27,7 +31,12 @@ export const deleteSpace = async (
 
         await ConversationService.deleteBySpaceIds([space.id], tx);
         await MapService.deleteByIds([space.mapId], tx);
+        const removedGuests = await deleteSpaceGuestsBySpaceIds([space.id], tx);
 
-        return serializeSpace(space);
+        return { space, removedGuests };
     });
+
+    // The guests inside lose their sockets once the deletion is committed.
+    await publishGuestsRemoved(removedGuests);
+    return serializeSpace(space);
 };

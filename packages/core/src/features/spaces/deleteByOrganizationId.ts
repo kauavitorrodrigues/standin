@@ -2,11 +2,15 @@ import { spacesTable, eq, and, isNull } from "@standin/database";
 import type { Transaction } from "@standin/database";
 import { ConversationService } from "../conversations";
 import { MapService } from "../maps";
+import {
+    deleteSpaceGuestsBySpaceIds,
+    type RemovedGuest,
+} from "./guests/deleteBySpaceIds";
 
 export const deleteSpacesByOrganizationId = async (
     organizationId: string,
     tx: Transaction
-): Promise<void> => {
+): Promise<RemovedGuest[]> => {
     const deletedSpaces = await tx
         .update(spacesTable)
         .set({ deletedAt: new Date() })
@@ -24,6 +28,10 @@ export const deleteSpacesByOrganizationId = async (
     );
     await MapService.deleteByIds(
         deletedSpaces.map(({ mapId }) => mapId),
+        tx
+    );
+    return deleteSpaceGuestsBySpaceIds(
+        deletedSpaces.map(({ id }) => id),
         tx
     );
 };
