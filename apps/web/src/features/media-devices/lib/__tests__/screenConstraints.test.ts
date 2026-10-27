@@ -50,6 +50,27 @@ describe("getScreenTrackConstraints", () => {
     });
 });
 
+describe("HD off", () => {
+    const high = { ...DEFAULT_SCREEN_SHARE_SETTINGS, resolution: "2880p" as const };
+
+    it("uses the HIGH box when HD is allowed", () => {
+        expect(getScreenTrackConstraints(high).width).toEqual({ max: 2880 });
+    });
+
+    it("falls back to the MED box when HD is off", () => {
+        expect(getScreenTrackConstraints(high, false).width).toEqual({ max: 1920 });
+    });
+
+    it("keeps LOW when HD is off", () => {
+        expect(
+            getScreenTrackConstraints(
+                { ...DEFAULT_SCREEN_SHARE_SETTINGS, resolution: "720p" },
+                false
+            ).width
+        ).toEqual({ max: 1280 });
+    });
+});
+
 describe("getScreenContentHint", () => {
     it("keeps the chosen hint by default", () => {
         expect(getScreenContentHint(DEFAULT_SCREEN_SHARE_SETTINGS)).toBe("motion");
@@ -72,6 +93,17 @@ describe("getScreenContentHint", () => {
                 resolution: "720p",
             })
         ).toBe("text");
+    });
+});
+
+describe("getScreenContentHint with HD off", () => {
+    it("stays detail at MED when optimized for video", () => {
+        expect(
+            getScreenContentHint(
+                { ...DEFAULT_SCREEN_SHARE_SETTINGS, highQuality: true, resolution: "2880p" },
+                false
+            )
+        ).toBe("detail");
     });
 });
 

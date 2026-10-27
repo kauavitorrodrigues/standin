@@ -3,9 +3,7 @@ import {
     canCommunicate,
     getCommunicationDistance,
 } from "@/features/game/utils/canCommunicate";
-import { getPeerMediaPolicies } from "@/features/game/multiplayer/utils/mediaPolicy";
-import { calculateVolumeFromDistance } from "@/features/game/multiplayer/utils/audio";
-import { MAX_AUDIBLE_RADIUS } from "@/features/game/multiplayer/consts/audio";
+import { calculatePresetVolume } from "@/features/game/multiplayer/utils/proximityRadii";
 
 describe("canCommunicate", () => {
     it("allows two avatars in the same room", () => {
@@ -32,17 +30,9 @@ describe("getCommunicationDistance", () => {
         expect(getCommunicationDistance(40, null, null)).toBe(40);
     });
 
-    it("makes a blocked avatar unreachable by media policies and volume", () => {
+    it("makes a blocked avatar unreachable by the volume", () => {
         const distance = getCommunicationDistance(10, null, "a");
         expect(distance).toBe(Number.POSITIVE_INFINITY);
-        expect(calculateVolumeFromDistance(distance, MAX_AUDIBLE_RADIUS)).toBe(
-            0
-        );
-
-        const policies = getPeerMediaPolicies(
-            new Map([["peer", distance]]),
-            new Set(["peer"])
-        );
-        expect(policies.get("peer")).toEqual({ audio: false, video: false });
+        expect(calculatePresetVolume("Long", distance)).toBe(0);
     });
 });

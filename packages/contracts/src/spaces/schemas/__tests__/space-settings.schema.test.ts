@@ -8,13 +8,27 @@ describe("SpaceSettingsSchema", () => {
     it("applies the defaults to an empty object", () => {
         expect(SpaceSettingsSchema.parse({})).toEqual({
             enableSendNearbyInMapView: true,
+            proximityPreset: "Long",
         });
     });
 
     it("keeps a saved value", () => {
         expect(
             SpaceSettingsSchema.parse({ enableSendNearbyInMapView: false })
-        ).toEqual({ enableSendNearbyInMapView: false });
+        ).toEqual({
+            enableSendNearbyInMapView: false,
+            proximityPreset: "Long",
+        });
+    });
+
+    it("keeps a saved preset and rejects one that does not exist", () => {
+        expect(
+            SpaceSettingsSchema.parse({ proximityPreset: "Short" })
+                .proximityPreset
+        ).toBe("Short");
+        expect(
+            SpaceSettingsSchema.safeParse({ proximityPreset: "Huge" }).success
+        ).toBe(false);
     });
 
     it("rejects a value that is not a boolean", () => {

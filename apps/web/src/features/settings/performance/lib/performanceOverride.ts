@@ -10,11 +10,14 @@ export type PerformanceOverride = {
     settings: Partial<PerformanceSettings>;
     // Camera sends at CAMERA_ENCODING_FLOOR_BITRATE (see getVideoEncoding).
     lowCameraBitrate: boolean;
+    // A screen share starts at the MED tier even when HIGH is chosen.
+    hdScreenShareOff: boolean;
 };
 
 export const NO_PERFORMANCE_OVERRIDE: PerformanceOverride = {
     settings: {},
     lowCameraBitrate: false,
+    hdScreenShareOff: false,
 };
 
 export const performanceOverrideStore = createMemoryStore<PerformanceOverride>(
@@ -26,7 +29,6 @@ export const resolveEffectiveSettings = (
     override: PerformanceOverride
 ): PerformanceSettings => ({
     fpsLimit: override.settings.fpsLimit ?? user.fpsLimit,
-    maxVideoPeers: override.settings.maxVideoPeers ?? user.maxVideoPeers,
     reduceMotion: override.settings.reduceMotion ?? user.reduceMotion,
 });
 

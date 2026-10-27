@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { MAX_MEDIA_VIEWS } from "@standin/contracts";
 import { cn } from "@/lib/utils";
 import { acquireGameInputLock } from "@/features/game/utils/inputLock";
 import { isEditableElement } from "@/features/game/utils/player";
 import type { StageTile } from "@/features/spaces/types/stage";
+import type { MediaView } from "@/features/game/multiplayer/types/mediaView";
+import { tileMediaViews } from "@/features/spaces/utils/tileMediaViews";
+import { useElementSize } from "@/features/spaces/hooks/useElementSize";
 import { AutoFitGrid } from "@/features/spaces/components/pages/space-page/stage/AutoFitGrid";
 import { VideoTile } from "@/features/spaces/components/pages/space-page/stage/VideoTile";
 
@@ -13,6 +17,36 @@ type AllTilesViewProps = {
     initialTileId?: string;
     isClosing: boolean;
     onClose: () => void;
+    // The people shown in big tiles, each with the layer that tile needs.
+    onFocusChange: (views: MediaView[]) => void;
+};
+
+// The main area of the featured tile. It is its own component so the
+// measurement starts when the area mounts.
+const FeaturedArea = ({
+    tile,
+    onSelect,
+    onWidthChange,
+}: {
+    tile: StageTile;
+    onSelect: () => void;
+    onWidthChange: (width: number) => void;
+}) => {
+    const { ref, size } = useElementSize<HTMLDivElement>();
+
+    useEffect(() => {
+        onWidthChange(size.width);
+    }, [size.width, onWidthChange]);
+
+    return (
+        <div ref={ref} className="min-h-0 flex-1">
+            <VideoTile
+                tile={tile}
+                onSelect={onSelect}
+                className="aspect-auto size-full"
+            />
+        </div>
+    );
 };
 
 // Every camera and screen at once, covering only the game area: the sidebar
@@ -25,6 +59,7 @@ export const AllTilesView = ({
     initialTileId,
     isClosing,
     onClose,
+    onFocusChange,
 }: AllTilesViewProps) => {
     // `undefined` means "nothing chosen yet", which defaults to the first
     // screen. `null` is the viewer explicitly asking for the plain grid.
@@ -37,6 +72,26 @@ export const AllTilesView = ({
             ? tiles.find((tile) => tile.slot === "screen")
             : tiles.find((tile) => tile.id === chosenId);
     const others = tiles.filter((tile) => tile.id !== featured?.id);
+
+    // The real width of the featured tile, or of a grid tile. The layer
+    // follows it, also when the window is resized.
+    const [tileWidth, setTileWidth] = useState(0);
+
+    // A string key keeps the effect from running on every new tiles array or
+    // on every pixel of a resize: it changes only when the views do.
+    const viewsKey = JSON.stringify(
+        tileMediaViews(
+            tiles,
+            featured,
+            tileWidth,
+            window.devicePixelRatio,
+            MAX_MEDIA_VIEWS
+        )
+    );
+    useEffect(() => {
+        onFocusChange(JSON.parse(viewsKey) as MediaView[]);
+    }, [viewsKey, onFocusChange]);
+    useEffect(() => () => onFocusChange([]), [onFocusChange]);
 
     // The view covers the game, so the character must not walk around behind
     // it. The chat and the rest of the page stay usable.
@@ -86,13 +141,11 @@ export const AllTilesView = ({
 
                 {featured ? (
                     <>
-                        <div className="min-h-0 flex-1">
-                            <VideoTile
-                                tile={featured}
-                                onSelect={() => setChosenId(null)}
-                                className="aspect-auto size-full"
-                            />
-                        </div>
+                        <FeaturedArea
+                            tile={featured}
+                            onSelect={() => setChosenId(null)}
+                            onWidthChange={setTileWidth}
+                        />
                         {others.length > 0 && (
                             // The strip never scrolls: the tiles share the row
                             // and shrink together once it is full.
@@ -115,7 +168,11 @@ export const AllTilesView = ({
                         )}
                     </>
                 ) : (
-                    <AutoFitGrid tiles={tiles} onSelect={setChosenId} />
+                    <AutoFitGrid
+                        tiles={tiles}
+                        onSelect={setChosenId}
+                        onTileWidthChange={setTileWidth}
+                    />
                 )}
             </div>
         </div>

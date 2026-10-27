@@ -6,6 +6,7 @@ import { buildSpaceRoom } from "../utils/buildSpaceRoom";
 import { applyJoinEffects } from "../utils/applyJoinEffects";
 import { PresenceStore } from "../presence/PresenceStore";
 import { SpaceInterests } from "../realtime/SpaceInterests";
+import { MediaRuntime } from "@/lib/media/MediaRuntime";
 
 export function registerDisconnect(socket: Socket) {
     // "disconnect" (not "disconnecting") works here because the room is
@@ -25,6 +26,7 @@ export function registerDisconnect(socket: Socket) {
 
         PresenceStore.remove(spaceId, socket.id);
         SpaceInterests.remove(spaceId, socket.id);
+        MediaRuntime.leave(spaceId, socket.id);
 
         const room = buildSpaceRoom(spaceId);
         socket.to(room).emit(SpaceEvents.SPACE_PEER_LEFT, {

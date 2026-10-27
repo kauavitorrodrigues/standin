@@ -44,4 +44,9 @@ describe("getNearbyRadius", () => {
         expect(getNearbyRadius(4 * TILE, 4 * TILE)).toBe(5 * TILE);
         expect(getNearbyRadius(0, 0)).toBe(5 * TILE);
     });
+
+    it("follows the preset of the space", () => {
+        expect(getNearbyRadius(100 * TILE, 80 * TILE, "Short")).toBe(5 * TILE);
+        expect(getNearbyRadius(100 * TILE, 80 * TILE, "Long")).toBe(12 * TILE);
+    });
 });

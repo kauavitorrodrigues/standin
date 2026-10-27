@@ -1,7 +1,4 @@
-import {
-    type PerformanceSettings,
-    type VideoPeerLimit,
-} from "@/features/settings/performance/consts/performanceSettings";
+import { type PerformanceSettings } from "@/features/settings/performance/consts/performanceSettings";
 import { createMemoryStore, type MemoryStore } from "@/lib/createMemoryStore";
 import { type LocalPreference } from "@/lib/createLocalPreference";
 import {
@@ -23,12 +20,12 @@ export type DegradationNotice = {
 
 export const degradationNoticeStore = createMemoryStore<DegradationNotice | null>(null);
 
-// Degraded values, mapped onto standin's independent knobs: 30 fps, at most 2
-// video peers (never raising a lower user choice) and reduced motion.
-export const getDegradedSettings = (user: PerformanceSettings): PerformanceSettings => {
-    const maxVideoPeers: VideoPeerLimit = Number(user.maxVideoPeers) < 2 ? user.maxVideoPeers : "2";
-    return { fpsLimit: "30", maxVideoPeers, reduceMotion: true };
-};
+// Degraded values, mapped onto standin's independent knobs: 30 fps and reduced
+// motion.
+export const getDegradedSettings = (): PerformanceSettings => ({
+    fpsLimit: "30",
+    reduceMotion: true,
+});
 
 type Deps = {
     preference: LocalPreference<PerformanceSettings>;
@@ -58,7 +55,7 @@ export class DegradationEffects {
         this.active = true;
 
         const user = this.deps.preference.get();
-        const lowered = getDegradedSettings(user);
+        const lowered = getDegradedSettings();
         const promoted =
             hardwareLimited &&
             this.deps.history.record(this.deps.now()) >= HARDWARE_DEGRADATION_PROMOTE_COUNT;
@@ -66,9 +63,9 @@ export class DegradationEffects {
         if (promoted) {
             this.previousPreference = user;
             this.deps.preference.set(lowered);
-            this.deps.override.set({ settings: {}, lowCameraBitrate: true });
+            this.deps.override.set({ settings: {}, lowCameraBitrate: true, hdScreenShareOff: true });
         } else {
-            this.deps.override.set({ settings: lowered, lowCameraBitrate: true });
+            this.deps.override.set({ settings: lowered, lowCameraBitrate: true, hdScreenShareOff: true });
         }
         this.deps.notice.set({ signalId, promoted });
     }

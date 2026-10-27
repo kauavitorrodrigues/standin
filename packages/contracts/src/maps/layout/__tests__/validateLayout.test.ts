@@ -80,12 +80,6 @@ const cases: Case[] = [
         mutate: (l) => (l.width = 25),
     },
     {
-        code: Code.TIER_DISABLED,
-        severity: "errors",
-        context: { level: "creation", sizeTier: "M" },
-        mutate: () => undefined,
-    },
-    {
         code: Code.NO_TILE_LAYER,
         severity: "errors",
         mutate: (l) => (getGround(l).name = "floor"),

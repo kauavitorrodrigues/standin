@@ -12,7 +12,8 @@
         "test": "vitest run"
     },
     "dependencies": {
-        "@standin/contracts": "workspace:*"
+        "@standin/contracts": "workspace:*",
+        "mediasoup": "3.32.0"
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",

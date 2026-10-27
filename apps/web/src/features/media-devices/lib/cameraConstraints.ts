@@ -1,5 +1,5 @@
 import {
-    CAMERA_FRAME_RATE,
+    CAMERA_FRAME_RATES,
     CAMERA_RESOLUTIONS,
     type CameraResolution,
 } from "@/features/media-devices/consts/videoSettings";
@@ -9,5 +9,5 @@ export const getCameraConstraints = (
 ): MediaTrackConstraints => ({
     width: { ideal: CAMERA_RESOLUTIONS[resolution].width },
     height: { ideal: CAMERA_RESOLUTIONS[resolution].height },
-    frameRate: { ideal: CAMERA_FRAME_RATE },
+    frameRate: { ideal: CAMERA_FRAME_RATES[resolution] },
 });

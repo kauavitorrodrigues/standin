@@ -1,12 +1,11 @@
 import { AVATAR_ANIMATIONS, AVATAR_FRAMES } from "@standin/contracts";
 import { PLACED_ASSET_DEPTH } from "@/features/game/consts/placed-assets";
-import { MAX_AUDIBLE_RADIUS } from "@/features/game/multiplayer/consts/audio";
 
 const MS_PER_SECOND = 1000;
 
 // Emoji is a light social signal, so it is seen from a little farther than a
-// voice is heard.
-export const EMOTE_RADIUS = MAX_AUDIBLE_RADIUS * 2;
+// voice is heard: this many times the reach of the voice of the space.
+export const EMOTE_REACH_FACTOR = 2;
 
 // How long the gesture of the avatar lasts: every frame of the emote, played
 // the first time and again for each repeat of the animation.

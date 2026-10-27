@@ -11,11 +11,17 @@ import type { LocalAudioStreamError } from "@/features/media-devices/consts/audi
 import { useCameraResolutionPreference } from "@/features/media-devices/hooks/useCameraResolutionPreference";
 import { useCameraPreviewLock } from "@/features/media-devices/hooks/useCameraPreviewLock";
 import { acquireCameraStream } from "@/features/media-devices/lib/acquireCameraStream";
+import {
+    readDeviceLimit,
+    roomLimitFor,
+    smallestResolution,
+} from "@/features/media-devices/lib/cameraLimits";
+import { type CameraResolution } from "@/features/media-devices/consts/videoSettings";
 
 // Camera counterpart of useLocalAudioStream. The device is only opened
 // while the camera toggle is on, and released the moment it is turned off,
 // so the camera light never stays on for a stream nobody is sending.
-export function useLocalCameraStream() {
+export function useLocalCameraStream(onlineCount: number = 1) {
     const [stream, setStream] = useState<MediaStream | null>(null);
     // The stream also lives in a ref so the cleanup can stop its tracks
     // directly. Doing it inside a setState updater is not safe: updaters must
@@ -33,7 +39,18 @@ export function useLocalCameraStream() {
     useEffect(() => subscribeToDeviceEnabledPreference("camera", setEnabled), []);
     useEffect(() => subscribeToPreferredDeviceId("camera", setDeviceId), []);
     // A new resolution in the settings acquires the camera again.
-    const resolution = useCameraResolutionPreference();
+    const preferredResolution = useCameraResolutionPreference();
+    // What the space and this machine allow caps the choice, so a crowded
+    // space or a weak machine does not get a resolution it cannot carry.
+    const [deviceLimit] = useState(readDeviceLimit);
+    const [roomLimit, setRoomLimit] = useState<CameraResolution>("1080p");
+    const nextRoomLimit = roomLimitFor(onlineCount, roomLimit);
+    if (nextRoomLimit !== roomLimit) setRoomLimit(nextRoomLimit);
+    const resolution = smallestResolution(
+        preferredResolution,
+        deviceLimit,
+        roomLimit
+    );
     // The settings preview takes the device over while it runs.
     const isPreviewing = useCameraPreviewLock();
 

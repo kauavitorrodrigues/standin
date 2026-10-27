@@ -10,6 +10,7 @@ import { ScreenShareButton } from "@/features/spaces/components/pages/space-page
 import { UserWidget } from "@/features/users/components/UserWidget";
 import { SPACE_CONTROLS_TOOLTIP_DELAY_MS } from "@/features/spaces/consts/controls";
 import type { ReactionsButtonState } from "@/features/emotes/types/reactions";
+import type { UserStatusPanelState } from "@/features/spaces/hooks/useUserStatusPanel";
 import type { NearbyChatButtonState } from "@/features/nearby-chat/types/nearby-chat";
 import { ReactionsControl } from "@/features/emotes/components/instances/ReactionsControl";
 import { ProximityChatButton } from "@/features/spaces/components/pages/space-page/controls/ProximityChatButton";
@@ -26,6 +27,7 @@ type Props = {
     cameraError: LocalAudioStreamError | null;
     onStartScreenShare: () => void;
     onStopScreenShare: () => void;
+    userStatus: UserStatusPanelState;
     reactions: ReactionsButtonState;
     nearbyChat: NearbyChatButtonState;
 };
@@ -42,12 +44,16 @@ export const MediaControls = ({
     cameraError,
     onStartScreenShare,
     onStopScreenShare,
+    userStatus,
     reactions,
     nearbyChat,
 }: Props) => {
     return (
         <TooltipProvider delay={SPACE_CONTROLS_TOOLTIP_DELAY_MS}>
-            <UserWidget />
+            <UserWidget
+                isOpen={userStatus.isOpen}
+                onToggle={userStatus.onToggle}
+            />
             <MicToggleButton error={micError} />
             <CameraToggleButton error={cameraError} />
             <ReactionsControl visible={isMeetingContext} {...reactions} />

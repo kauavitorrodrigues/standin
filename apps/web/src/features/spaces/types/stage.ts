@@ -1,4 +1,4 @@
-import type { RemoteVideoSlot } from "@/features/game/multiplayer/utils/remoteVideo";
+import type { RemoteVideoSlot } from "@/features/game/multiplayer/types/remoteVideo";
 
 export type StageTile = {
     id: string;

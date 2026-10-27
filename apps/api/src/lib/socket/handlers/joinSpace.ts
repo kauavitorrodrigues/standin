@@ -16,6 +16,7 @@ import { resolveUserProfile } from "../services/resolveUserProfile";
 import { applyJoinEffects, sendEntitlements } from "../utils/applyJoinEffects";
 import { PresenceStore } from "../presence/PresenceStore";
 import { SpaceInterests } from "../realtime/SpaceInterests";
+import { MediaRuntime } from "@/lib/media/MediaRuntime";
 import type { PresenceEntry } from "../presence/PresenceStore";
 
 // What the person who joins needs to be drawn: the only thing read from the
@@ -29,7 +30,15 @@ const resolveSelfEntry = async (
         resolveUserProfile(userId),
         resolveAvatarSheetFileId(userId),
     ]);
-    return { socketId, userId, avatarSheetFileId, ...profile };
+    return {
+        socketId,
+        userId,
+        avatarSheetFileId,
+        muted: true,
+        headphones: false,
+        focus: false,
+        ...profile,
+    };
 };
 
 // A user is identified per-socket (one browser tab = one connection), not
@@ -83,12 +92,18 @@ const toPeerPayload = ({
     avatarSheetFileId,
     name,
     profilePictureUrl,
+    muted,
+    headphones,
+    focus,
 }: PresenceEntry) => ({
     socketId,
     userId,
     avatarSheetFileId,
     name,
     profilePictureUrl,
+    muted,
+    headphones,
+    focus,
 });
 
 const leavePreviousSpace = async (
@@ -100,6 +115,7 @@ const leavePreviousSpace = async (
     const previousRoom = buildSpaceRoom(previousSpaceId);
     PresenceStore.remove(previousSpaceId, socket.id);
     SpaceInterests.remove(previousSpaceId, socket.id);
+    MediaRuntime.leave(previousSpaceId, socket.id);
     socket.to(previousRoom).emit(SpaceEvents.SPACE_PEER_LEFT, {
         socketId: socket.id,
         userId,
@@ -180,6 +196,7 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                 if (!(await stillHasAccess(userId, spaceId, access))) {
                     PresenceStore.remove(spaceId, socket.id);
                     SpaceInterests.remove(spaceId, socket.id);
+                    MediaRuntime.leave(spaceId, socket.id);
                     await socket.leave(room);
                     socket.data.spaceId = null;
                     return;
@@ -196,6 +213,9 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                     avatarSheetFileId: self.avatarSheetFileId,
                     name: self.name,
                     profilePictureUrl: self.profilePictureUrl,
+                    muted: self.muted,
+                    headphones: self.headphones,
+                    focus: self.focus,
                 });
                 socket.emit(RoomEvents.ROOM_STATES, {
                     rooms: RoomStates.listNotOpen(spaceId),

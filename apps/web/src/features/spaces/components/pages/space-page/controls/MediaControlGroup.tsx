@@ -6,6 +6,8 @@ import { useReactions } from "@/features/emotes/hooks/useReactions";
 import { ReactionsRow } from "@/features/emotes/components/views/ReactionsRow";
 import { NearbyChatLayer } from "@/features/nearby-chat/components/instances/NearbyChatLayer";
 import { useNearbyChat } from "@/features/nearby-chat/hooks/useNearbyChat";
+import { UserStatusRow } from "@/features/spaces/components/pages/space-page/controls/UserStatusRow";
+import { useUserStatusPanel } from "@/features/spaces/hooks/useUserStatusPanel";
 import { useControlsView } from "@/features/spaces/hooks/useControlsView";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +38,8 @@ export const MediaControlGroup = ({
         controls,
     });
     
+    const userStatus = useUserStatusPanel({ controls });
+
     const nearby = useNearbyChat({
         enabled: nearbyChat.isEnabled,
         controls,
@@ -54,6 +58,7 @@ export const MediaControlGroup = ({
                 onOpen={nearby.open}
                 onClose={nearby.close}
             />
+            <UserStatusRow isOpen={userStatus.isOpen} />
             <ReactionsRow
                 isOpen={reactions.isOpen}
                 items={reactions.items}
@@ -73,6 +78,7 @@ export const MediaControlGroup = ({
                         cameraError={cameraError}
                         onStartScreenShare={screenShare.start}
                         onStopScreenShare={screenShare.stop}
+                        userStatus={userStatus}
                         reactions={reactions}
                         nearbyChat={{
                             isEnabled: nearbyChat.isEnabled,

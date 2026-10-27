@@ -6,6 +6,12 @@ export type PresenceEntry = {
     profilePictureUrl: string | null;
     // The sheet the avatar is drawn with, null for the ghost.
     avatarSheetFileId: string | null;
+    // Whether the microphone is muted. Starts muted until the person says so.
+    muted: boolean;
+    // Whether the person has headphones on, and talks to nobody.
+    headphones: boolean;
+    // Whether the person is in focus mode.
+    focus: boolean;
 };
 
 export type PresenceProfile = Pick<
@@ -117,6 +123,40 @@ const removeSocketEverywhere = (socketId: string): void => {
     [...spaces.keys()].forEach((spaceId) => remove(spaceId, socketId));
 };
 
+// Returns whether the state changed.
+const setMuted = (
+    spaceId: string,
+    socketId: string,
+    muted: boolean
+): boolean => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry || entry.muted === muted) return false;
+
+    space.bySocket.set(socketId, { ...entry, muted });
+    return true;
+};
+
+// Returns whether the state changed.
+const setPrivacy = (
+    spaceId: string,
+    socketId: string,
+    privacy: Pick<PresenceEntry, "headphones" | "focus">
+): boolean => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry) return false;
+    if (
+        entry.headphones === privacy.headphones &&
+        entry.focus === privacy.focus
+    ) {
+        return false;
+    }
+
+    space.bySocket.set(socketId, { ...entry, ...privacy });
+    return true;
+};
+
 const clear = () => spaces.clear();
 
 export const PresenceStore = {
@@ -129,5 +169,7 @@ export const PresenceStore = {
     findSocketIdsOfUser,
     findSpaceIdsOfUser,
     updateUser,
+    setMuted,
+    setPrivacy,
     clear,
 };

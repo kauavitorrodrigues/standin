@@ -82,6 +82,9 @@ function createFakeIo(
             socketId: peer.id,
             userId: peer.data.userId,
             avatarSheetFileId: sheets[peer.data.userId] ?? null,
+            muted: true,
+            headphones: false,
+            focus: false,
             ...(PROFILES[peer.data.userId] ?? {
                 name: "",
                 profilePictureUrl: null,
@@ -144,6 +147,9 @@ describe("registerJoinSpace", () => {
                     avatarSheetFileId: null,
                     name: "Ana",
                     profilePictureUrl: "/files/ana",
+                    muted: true,
+                    headphones: false,
+                    focus: false,
                 },
             ],
         });
@@ -171,6 +177,9 @@ describe("registerJoinSpace", () => {
                     avatarSheetFileId: "file-a",
                     name: "Ana",
                     profilePictureUrl: "/files/ana",
+                    muted: true,
+                    headphones: false,
+                    focus: false,
                 },
             ],
         });
@@ -193,6 +202,9 @@ describe("registerJoinSpace", () => {
             avatarSheetFileId: "file-b",
             name: "Bruno",
             profilePictureUrl: null,
+            muted: true,
+            headphones: false,
+            focus: false,
         });
     });
 
@@ -212,6 +224,9 @@ describe("registerJoinSpace", () => {
             avatarSheetFileId: null,
             name: "Bruno",
             profilePictureUrl: null,
+            muted: true,
+            headphones: false,
+            focus: false,
         });
     });
 
@@ -261,6 +276,9 @@ describe("registerJoinSpace", () => {
             avatarSheetFileId: null,
             name: "Bruno",
             profilePictureUrl: null,
+            muted: true,
+            headphones: false,
+            focus: false,
         });
 
         socket.data.spaceId = "space-1";

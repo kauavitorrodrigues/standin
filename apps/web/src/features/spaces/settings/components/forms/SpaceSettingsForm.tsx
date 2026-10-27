@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/toast";
 import { SpaceSettingsMessages } from "../../consts/messages";
 import { SpaceSettingsMutations } from "../../mutations";
 import { SendNearbyField } from "../fields/SendNearbyField";
+import { ProximityPresetField } from "../fields/ProximityPresetField";
 
 type Props = {
     spaceId: string;
@@ -45,6 +46,10 @@ export const SpaceSettingsForm = ({ spaceId, settings, onClose }: Props) => {
             className="flex flex-col gap-5"
         >
             <SendNearbyField control={form.control} disabled={isSubmitting} />
+            <ProximityPresetField
+                control={form.control}
+                disabled={isSubmitting}
+            />
             <FormDialogControls
                 onClose={onClose}
                 submitLabel="Salvar"

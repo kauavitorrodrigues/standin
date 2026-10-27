@@ -41,6 +41,7 @@ import { buildNameLookup } from "@/features/spaces/utils/buildStageTiles";
 import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
 import { usePinnedVideos } from "@/features/spaces/hooks/usePinnedVideos";
 import { useAutoPinScreen } from "@/features/spaces/hooks/useAutoPinScreen";
+import { useSyncPinnedPeople } from "@/features/spaces/hooks/useSyncPinnedPeople";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 import { useLocalAvatarSheet } from "@/features/game/hooks/useLocalAvatarSheet";
@@ -159,6 +160,11 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         pin: pinnedVideos.pin,
         openGrid: () => openGrid(),
     });
+    useSyncPinnedPeople({
+        tiles: stageTiles,
+        pinnedIds: pinnedVideos.pinnedIds,
+        setPins: video.setPins,
+    });
 
     const layout = useSpacePageLayout({
         view,
@@ -273,6 +279,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         pinnedIds={pinnedVideos.pinnedIds}
                         onTogglePin={pinnedVideos.togglePin}
                         onActiveVideosChange={video.setActiveVideoIds}
+                        onFocusChange={video.setFocus}
                     />
                     <LayoutPrimitive.TopControls
                         visible={layout.isStageToggleVisible}

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_PERFORMANCE_SETTINGS } from "../../consts/performanceSettings";
-import { getFpsLimit, getMaxVideoPeers } from "../performanceValues";
+import { getFpsLimit } from "../performanceValues";
 
 const createMemoryStorage = (): Storage => {
     const data = new Map<string, string>();
@@ -19,7 +19,6 @@ const createMemoryStorage = (): Storage => {
 describe("performance values", () => {
     it("keeps today's behavior by default", () => {
         expect(getFpsLimit(DEFAULT_PERFORMANCE_SETTINGS)).toBe(0);
-        expect(getMaxVideoPeers(DEFAULT_PERFORMANCE_SETTINGS)).toBe(4);
         expect(DEFAULT_PERFORMANCE_SETTINGS.reduceMotion).toBe(false);
     });
 
@@ -27,11 +26,9 @@ describe("performance values", () => {
         const settings = {
             ...DEFAULT_PERFORMANCE_SETTINGS,
             fpsLimit: "30",
-            maxVideoPeers: "2",
         } as const;
 
         expect(getFpsLimit(settings)).toBe(30);
-        expect(getMaxVideoPeers(settings)).toBe(2);
     });
 });
 
@@ -56,7 +53,6 @@ describe("performance settings preference", () => {
 
         expect(performanceSettingsPreference.get()).toEqual({
             fpsLimit: "auto",
-            maxVideoPeers: "2",
             reduceMotion: false,
         });
     });

@@ -10,6 +10,9 @@ export const SCREEN_RESOLUTION_TIERS = {
 
 export type ScreenResolutionTier = keyof typeof SCREEN_RESOLUTION_TIERS;
 
+// The tier a share falls back to when the performance level says HD is off.
+export const SCREEN_HD_OFF_TIER: ScreenResolutionTier = "MED";
+
 // getDisplayMedia is asked for the highest tier, which is narrowed afterwards.
 export const SCREEN_CAPTURE_REQUEST_MAX = 2880;
 
@@ -17,10 +20,11 @@ export const SCREEN_CAPTURE_REQUEST_MAX = 2880;
 // otherwise hand the encoder several times more pixels per frame than it can
 // keep up with on a modest machine, which stutters the share and the rest of
 // the page with it. The encoder limits (see getVideoEncoding) then only have
-// to tune bitrate. The two choices map to the LOW and MED tiers.
+// to tune bitrate. The default is the MED tier, HIGH is opt in and LOW is the 720p choice.
 export const SCREEN_RESOLUTIONS = {
     "720p": "LOW",
     "1080p": "MED",
+    "2880p": "HIGH",
 } as const satisfies Record<string, ScreenResolutionTier>;
 
 export type ScreenResolution = keyof typeof SCREEN_RESOLUTIONS;

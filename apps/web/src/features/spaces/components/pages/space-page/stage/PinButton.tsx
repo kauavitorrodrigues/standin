@@ -13,7 +13,7 @@ export const PinButton = ({ isPinned, onToggle }: PinButtonProps) => {
             type="button"
             aria-label={isPinned ? "Desafixar vídeo" : "Fixar vídeo"}
             title={isPinned ? "Desafixar" : "Fixar"}
-            className="absolute top-1.5 left-1.5 flex size-6 items-center justify-center rounded-md bg-neutral-900/70 text-white opacity-0 backdrop-blur-md transition-opacity group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 focus-visible:opacity-100"
+            className="absolute top-1.5 left-1.5 flex size-6 items-center justify-center rounded-md bg-neutral-900/80 text-white opacity-0 transition-opacity group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 focus-visible:opacity-100"
             onClick={(event) => {
                 event.stopPropagation();
                 onToggle();

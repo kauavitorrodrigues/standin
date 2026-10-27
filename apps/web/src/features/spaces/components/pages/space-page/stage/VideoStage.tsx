@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { STAGE_VIEW_TRANSITION_MS } from "@/features/spaces/consts/stage";
 import { useStageCarousel } from "@/features/spaces/hooks/useStageCarousel";
 import { usePresence } from "@/hooks/usePresence";
+import type { MediaView } from "@/features/game/multiplayer/types/mediaView";
 import type { StageTile } from "@/features/spaces/types/stage";
 import { StageFrame } from "@/features/spaces/components/pages/space-page/stage/StageFrame";
 import { AllTilesView } from "@/features/spaces/components/pages/space-page/stage/AllTilesView";
@@ -21,6 +22,8 @@ type VideoStageProps = {
     // Ids of the videos on screen, or `null` for all of them. Videos off the
     // current page are not attached, so they are not decoded.
     onActiveVideosChange: (ids: ReadonlySet<string> | null) => void;
+    // Who is in a big tile of the full view, with the layer each one needs.
+    onFocusChange: (views: MediaView[]) => void;
 };
 
 export const VideoStage = ({
@@ -32,6 +35,7 @@ export const VideoStage = ({
     pinnedIds,
     onTogglePin,
     onActiveVideosChange,
+    onFocusChange,
 }: VideoStageProps) => {
     const {
         visible,
@@ -99,6 +103,7 @@ export const VideoStage = ({
                     initialTileId={gridTileId}
                     isClosing={isExiting}
                     onClose={onCloseGrid}
+                    onFocusChange={onFocusChange}
                 />
             )}
         </>

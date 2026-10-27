@@ -2,6 +2,7 @@ export const CAMERA_RESOLUTIONS = {
     "360p": { width: 640, height: 360 },
     "480p": { width: 854, height: 480 },
     "720p": { width: 1280, height: 720 },
+    "1080p": { width: 1920, height: 1080 },
 } as const;
 
 export type CameraResolution = keyof typeof CAMERA_RESOLUTIONS;
@@ -10,7 +11,12 @@ export const CAMERA_RESOLUTION_IDS = Object.keys(
     CAMERA_RESOLUTIONS
 ) as CameraResolution[];
 
-export const CAMERA_FRAME_RATE = 24;
+export const CAMERA_FRAME_RATES: Record<CameraResolution, number> = {
+    "360p": 24,
+    "480p": 24,
+    "720p": 24,
+    "1080p": 30,
+};
 
 export const DEFAULT_CAMERA_RESOLUTION: CameraResolution = "360p";
 export const CAMERA_RESOLUTION_STORAGE_KEY = "media_camera_resolution";

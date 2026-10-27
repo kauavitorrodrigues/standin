@@ -1,4 +1,5 @@
 import { MAX_PINNED_VIDEOS } from "@/features/spaces/consts/stage";
+import type { StageTile } from "@/features/spaces/types/stage";
 import type { PinnedVideo } from "@/features/spaces/types/pinnedVideos";
 
 // Pins a video: an inactive
@@ -28,3 +29,21 @@ export const removePinnedVideo = (
     pinned: readonly PinnedVideo[],
     tileId: string
 ): readonly PinnedVideo[] => pinned.filter((entry) => entry.tileId !== tileId);
+
+/**
+ * The remote people behind the pinned tiles, in pin order, without repeats.
+ * The own tiles are left out because the server never sends the own media
+ * back.
+ */
+export const pinnedRemoteUserIds = (
+    tiles: readonly StageTile[],
+    pinnedIds: readonly string[]
+): string[] => {
+    const userIds: string[] = [];
+    pinnedIds.forEach((tileId) => {
+        const tile = tiles.find((candidate) => candidate.id === tileId);
+        if (!tile || tile.isSelf || tile.userId === null) return;
+        if (!userIds.includes(tile.userId)) userIds.push(tile.userId);
+    });
+    return userIds;
+};

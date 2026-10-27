@@ -1,5 +1,5 @@
 import {
-    MAX_CAPACITY,
+    MAX_SPACE_CAPACITY,
     MAX_LAYOUT_BYTES,
     MAX_OBJECTS_PER_MAP,
 } from "../consts/constants";
@@ -48,7 +48,7 @@ export const validateLayout = (
     if (
         context.level === LAYOUT_VALIDATION_LEVELS.CREATION &&
         context.sizeTier &&
-        SIZE_TIERS[context.sizeTier].minPeople > MAX_CAPACITY
+        SIZE_TIERS[context.sizeTier].minPeople > MAX_SPACE_CAPACITY
     ) {
         errors.push(
             createIssue(Code.TIER_DISABLED, "sizeTier", Messages.tierDisabled)

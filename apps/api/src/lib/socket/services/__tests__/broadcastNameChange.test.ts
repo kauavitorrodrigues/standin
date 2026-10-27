@@ -17,6 +17,9 @@ const join = (spaceId: string, socketId: string, userId: string) =>
         name: "Old",
         profilePictureUrl: null,
         avatarSheetFileId: null,
+        muted: true,
+        headphones: false,
+        focus: false,
     });
 
 describe("broadcastNameChange", () => {

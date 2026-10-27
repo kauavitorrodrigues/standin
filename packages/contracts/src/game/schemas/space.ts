@@ -14,14 +14,3 @@ export const MapJoinSchema = z.object({
         .string({ error: GameErrorMessages.mapJoin.mapId.required })
         .min(1, { error: GameErrorMessages.mapJoin.mapId.required }),
 });
-
-export const WebrtcSignalSchema = z.object({
-    targetSocketId: z
-        .string({
-            error: GameErrorMessages.webrtcSignal.targetSocketId.required,
-        })
-        .min(1, {
-            error: GameErrorMessages.webrtcSignal.targetSocketId.required,
-        }),
-    signal: z.unknown(),
-});

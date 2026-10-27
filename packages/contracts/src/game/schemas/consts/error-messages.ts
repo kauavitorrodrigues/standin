@@ -50,9 +50,4 @@ export const GameErrorMessages = {
             invalid: "The typing state must be true or false.",
         },
     },
-    webrtcSignal: {
-        targetSocketId: {
-            required: "The target socket is required.",
-        },
-    },
 } as const;

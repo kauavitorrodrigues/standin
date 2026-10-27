@@ -10,5 +10,7 @@ export default defineConfig({
         "@standin/contracts",
         "@standin/core",
         "@standin/database",
+        "@standin/infra",
+        "@standin/media",
     ],
 });

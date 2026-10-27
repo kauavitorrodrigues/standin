@@ -9,6 +9,7 @@ import {
     type ScreenResolutionTier,
     type ScreenShareSettings,
 } from "@/features/media-devices/consts/streamingSettings";
+import { resolveScreenTier } from "@/features/media-devices/utils/resolveScreenTier";
 
 // The request handed to getDisplayMedia: always the highest box, with the
 // cursor drawn. The tier and the frame rate are applied after the capture.
@@ -20,25 +21,32 @@ export const getScreenCaptureConstraints = (): MediaTrackConstraints =>
         cursor: "always",
     }) as MediaTrackConstraints;
 
-export const getScreenTier = ({
-    resolution,
-}: ScreenShareSettings): ScreenResolutionTier => SCREEN_RESOLUTIONS[resolution];
+/**
+ * The tier of a share: the chosen resolution, held at MED when the
+ * performance level says HD is off.
+ */
+export const getScreenTier = (
+    { resolution }: ScreenShareSettings,
+    hdAllowed = true
+): ScreenResolutionTier =>
+    resolveScreenTier(SCREEN_RESOLUTIONS[resolution], hdAllowed);
 
 // Whether the share is optimized for video: only when asked for and when the
 // tier was not narrowed to LOW.
-const isOptimizedForVideo = (settings: ScreenShareSettings) =>
-    settings.highQuality && getScreenTier(settings) !== "LOW";
+const isOptimizedForVideo = (settings: ScreenShareSettings, hdAllowed: boolean) =>
+    settings.highQuality && getScreenTier(settings, hdAllowed) !== "LOW";
 
 // The constraints applied to the track after the capture.
 export const getScreenTrackConstraints = (
-    settings: ScreenShareSettings
+    settings: ScreenShareSettings,
+    hdAllowed = true
 ): MediaTrackConstraints => {
-    const frameRate = isOptimizedForVideo(settings)
+    const frameRate = isOptimizedForVideo(settings, hdAllowed)
         ? SCREEN_HIGH_QUALITY_FRAME_RATE
         : SCREEN_FRAME_RATES[settings.frameRate];
 
     return {
-        ...SCREEN_RESOLUTION_TIERS[getScreenTier(settings)],
+        ...SCREEN_RESOLUTION_TIERS[getScreenTier(settings, hdAllowed)],
         frameRate: { ideal: frameRate, max: frameRate },
     };
 };
@@ -47,10 +55,11 @@ export const getScreenTrackConstraints = (
 // it the user's own choice stands, whose default is "motion" because the
 // detail hint made the share crawl.
 export const getScreenContentHint = (
-    settings: ScreenShareSettings
+    settings: ScreenShareSettings,
+    hdAllowed = true
 ): ScreenContentHint => {
     if (!settings.highQuality) return settings.contentHint;
-    return isOptimizedForVideo(settings) ? "detail" : "text";
+    return isOptimizedForVideo(settings, hdAllowed) ? "detail" : "text";
 };
 
 export const getIdleGraceMs = ({ idleGrace }: ScreenShareSettings) =>

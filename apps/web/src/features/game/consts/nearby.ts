@@ -1,16 +1,14 @@
 import { TILE_SIZE } from "@standin/contracts";
 
-// How far a nearby message reaches, in tiles. 12 tiles is the long preset.
-// It is not the radius of the voice (MAX_AUDIBLE_RADIUS), which stays as it is.
-export const NEARBY_RADIUS_TILES = 12;
-
+// How far a nearby message reaches is the cutoff of the preset of the space
+// (see getNearbyRadius). On a small map it shrinks, but never under the short
+// preset.
 // On a small map the radius shrinks, but never under the short preset.
 export const NEARBY_RADIUS_MIN_TILES = 5;
 
 // The radius never covers more than this share of the shorter side of the map.
 export const NEARBY_MAP_MAX_SHARE = 0.5;
 
-export const NEARBY_RADIUS_MAX_PX = NEARBY_RADIUS_TILES * TILE_SIZE;
 export const NEARBY_RADIUS_MIN_PX = NEARBY_RADIUS_MIN_TILES * TILE_SIZE;
 
 // A person that is typing shows the dots until this long after the last event.

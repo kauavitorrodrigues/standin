@@ -37,17 +37,19 @@ flowchart LR
     done --> todo
 ```
 
-| Area                                    | State                                   | Why it matters                                |
-| --------------------------------------- | --------------------------------------- | --------------------------------------------- |
-| Joining a space                         | Done and measured                       | 50 people join together in under 60 ms (p99)  |
-| Position, emote, nearby message, typing | Done and measured                       | Goes through the server, not between browsers |
-| Chat, edits, deletes, reactions         | Done                                    | The server sends them after they are saved    |
-| Audio and video                         | **Still a mesh between browsers (P2P)** | Stops being usable at about 8 to 12 people    |
-| Space size                              | **`MAX_CAPACITY = 10`** (Code)          | The M, L and XL space sizes are disabled      |
+| Area                                    | State                                   | Why it matters                                                            |
+| --------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------- |
+| Joining a space                         | Done and measured                       | 50 people join together in under 60 ms (p99)                              |
+| Position, emote, nearby message, typing | Done and measured                       | Goes through the server, not between browsers                             |
+| Chat, edits, deletes, reactions         | Done                                    | The server sends them after they are saved                                |
+| Audio and video                         | **Through a media server (SFU)**, built | Measured with synthetic senders, not yet with real browsers (section 4.7) |
+| Space size                              | **`MAX_SPACE_CAPACITY = 80`** (Code)    | The M, L and XL space sizes are enabled                                   |
 
 **In one sentence:** a space can hold 50 people moving, chatting and emoting
-today, but only about 10 can safely share camera and microphone until the SFU
-exists.
+today, and the media server forwards the audio and video of that many people.
+The numbers for the media server come from synthetic senders on one machine
+(section 4.7). They still have to be confirmed with real browsers on a real
+server (section 6.6).
 
 ## 2. How it works
 
@@ -79,8 +81,9 @@ flowchart TB
    hears what.
 2. **Database path (done).** The database is read when a person joins and
    when a cache expires. Walking around costs **zero queries**.
-3. **Media path (not built).** Audio and video still go straight between
-   browsers.
+3. **Media path (built).** Each browser sends its audio and video once to the
+   media server inside the API, and the server forwards them to the people
+   the planner chose (section 4.7).
 
 ### 2.2 Joining a space
 
@@ -197,16 +200,19 @@ without its own limit shares one bucket (30 per second, burst 60).
 
 ### 3.2 Other constants (Code)
 
-| Constant             | Value                         | What it controls                     |
-| -------------------- | ----------------------------- | ------------------------------------ |
-| Server tick          | 100 ms                        | How often position batches go out    |
-| Client send interval | 80 ms (about 12.5 per second) | Fastest a browser sends its position |
-| Area of interest     | 3,000 px + 200 px margin      | Who is told about whom               |
-| Event radius         | 640 px                        | Reach of emotes and nearby messages  |
-| World limit          | 100,000 px                    | Positions beyond it are refused      |
-| Postgres pool        | 20 (`DATABASE_POOL_MAX`)      | Connections to the database          |
-| Audible radius       | 120 px                        | Where audio starts in the P2P mesh   |
-| Space size limit     | 10 people (`MAX_CAPACITY`)    | Disables M, L and XL spaces          |
+| Constant             | Value                                                                              | What it controls                     |
+| -------------------- | ---------------------------------------------------------------------------------- | ------------------------------------ |
+| Server tick          | 100 ms                                                                             | How often position batches go out    |
+| Client send interval | 80 ms (about 12.5 per second)                                                      | Fastest a browser sends its position |
+| Area of interest     | 3,000 px + 200 px margin                                                           | Who is told about whom               |
+| Event radius         | 640 px                                                                             | Reach of emotes and nearby messages  |
+| World limit          | 100,000 px                                                                         | Positions beyond it are refused      |
+| Postgres pool        | 20 (`DATABASE_POOL_MAX`)                                                           | Connections to the database          |
+| Audible radius       | From the space preset: Long 384 px (kept to 414 px), Short 160 px (kept to 190 px) | Where audio and video start and stop |
+| Space size limit     | 80 people (`MAX_SPACE_CAPACITY`)                                                   | Tiers above it are disabled          |
+| Media tick           | 250 ms                                                                             | How often the planner runs           |
+| Loudest speakers     | 4                                                                                  | Voices a person hears at once        |
+| Videos at once       | 2                                                                                  | The carousel size of a person        |
 
 ### 3.3 What is not checked
 
@@ -314,6 +320,138 @@ Per person that is about 15.8 KB/s (126 kbps) received, of which positions are
 people was the relay of emotes and nearby messages: each one reaches all 199
 others, so their count grows with the square of the people.
 
+### 4.7 The media server, with synthetic senders
+
+Measured with `apps/api/src/scripts/medialoadtest/mediaLoadTest.ts` on one
+development machine, over the loopback, one run each, 20 s after a mass join.
+One real worker, the real rooms and the real planner. The people are
+synthetic: one ffmpeg encodes one Opus tone and one VP8 picture, and a fan-out
+sends a copy of every packet to each sender under its own SSRC. Everybody
+stands within 100 px (the worst case, every one hears and sees the same
+neighbourhood) and 30% of them walk on each tick.
+
+| People | Mics | Cameras | Screens | Streams out | Worker CPU     | Tick p50 / p99 | First stream             |
+| ------ | ---- | ------- | ------- | ----------- | -------------- | -------------- | ------------------------ |
+| 25     | 25   | 10      | 2       | 150         | 1.0% of a core | 0.6 / 40 ms    | 18 ms (p50)              |
+| 50     | 25   | 10      | 2       | 300         | 1.2% of a core | 1.1 / 59 ms    | 15 ms (p50)              |
+| 50     | 50   | 20      | 2       | 300         | 1.9% of a core | 1.4 / 3 ms     | 26 ms (p50), 29 ms (p99) |
+
+**One hour soak (scenario g).** 50 people, 50 microphones, 20 cameras and 2
+screens, everybody in earshot, 30% walking, one hour, the same synthetic setup.
+Sampled every 30 seconds.
+
+| Measure                             | Start  | After 30 min | End (60 min)   |
+| ----------------------------------- | ------ | ------------ | -------------- |
+| Consumers                           | 300    | 300          | 300            |
+| Transports                          | 100    | 100          | 100            |
+| Process memory                      | 177 MB | 181 MB       | 181 MB         |
+| Worker memory (peak)                | 17 MB  | 44 MB        | 44 MB          |
+| Consumers created in the whole hour | 302    |              | 302            |
+| Consumers closed in the whole hour  | 2      |              | 2              |
+| Worker CPU, average                 |        |              | 2.0% of a core |
+| Planner tick p50 / p99              |        |              | 1.3 / 2.3 ms   |
+
+The counts of transports and consumers never moved, nothing was created or
+closed after the first seconds, and the memory of the process grew by 4 MB and
+stopped. The memory of the worker rose to 44 MB in the first half hour while its
+buffers filled and was flat for the second half. It is the peak size the
+worker reports, so it can only grow, which makes a flat line the useful signal.
+This covers the server side with synthetic senders. The browser heap is still
+to be measured with a real tab.
+
+What the numbers say:
+
+- Each person receives at most 4 voices and 2 videos, so 50 people make 300
+  streams (6 each) however many send. The planner and the applier cost about
+  1 ms a tick.
+- Nobody was dropped or swapped while people walked inside the hysteresis band:
+  0 consumers closed a second in the dense runs.
+- Joining 50 people at once took a few milliseconds of server time.
+
+- Killing the worker process (`SIGKILL`) makes the API start a new one in about
+  a second and send `media:reset` to every client. A test does it with a real
+  worker (`apps/api/src/lib/media/__tests__/workerDeath.test.ts`). The part of
+  scenario e that needs 50 real clients reconnecting is still to be measured.
+
+What they do **not** say:
+
+- The transports are plain RTP on the loopback, with no SRTP encryption and no
+  real network. A real WebRTC transport adds encryption, congestion control and
+  retransmission, so the real CPU is higher. The target of under 70% of a core
+  still has to be confirmed with real browsers.
+- The synthetic microphones carry no audio level header, so the ranking of
+  loud speakers is not exercised. The rule that ran was the nearest four,
+  with the people already heard keeping their place.
+- A camera is one layer here, not the three simulcast layers. The layer
+  switching of a real simulcast camera does not work on plain transports (see
+  4.8), so the tests below use one layer at the quality being measured.
+- "First stream" is only meaningful when people are in range at the start. In
+  the spread layout it measures how long until somebody walks near.
+
+### 4.8 Bandwidth by video quality
+
+Measured with the same tool and setup as 4.7, one run each, 10 to 15 s, over the
+loopback. Every receiver gets 2 videos, all in the same quality, which is the
+heavy case: in use most receive the low layer and only the tile in focus is
+sharp. 10 or 15 people speak and 4 or 8 have a camera. Everybody stands within
+100 px.
+
+20 people, 10 speakers, 4 cameras:
+
+| Video quality                 | In Mbps | Out Mbps | Out per person | Worker CPU | Tick p99 |
+| ----------------------------- | ------- | -------- | -------------- | ---------- | -------- |
+| low (320x180, 150 kbps)       | 1.3     | 11.0     | 0.55           | 2.9%       | 35 ms    |
+| mid (640x360, 500 kbps)       | 2.8     | 23.7     | 1.18           | 3.6%       | 35 ms    |
+| high (1280x720, 2 Mbps)       | 9.2     | 92.5     | 4.63           | 6.1%       | 34 ms    |
+| full HD (1920x1080, 3.5 Mbps) | 15.8    | 160.6    | 8.03           | 8.7%       | 35 ms    |
+
+50 people, 15 speakers, 8 cameras:
+
+| Video quality                 | In Mbps | Out Mbps | Out per person | Worker CPU | Tick p99 | Process memory |
+| ----------------------------- | ------- | -------- | -------------- | ---------- | -------- | -------------- |
+| low (320x180, 150 kbps)       | 2.2     | 27.7     | 0.55           | 6.1%       | 68 ms    | 174 MB         |
+| mid (640x360, 500 kbps)       | 5.2     | 61.4     | 1.23           | 8.5%       | 64 ms    | 164 MB         |
+| high (1280x720, 2 Mbps)       | 17.8    | 201.0    | 4.02           | 13.3%      | 114 ms   | 174 MB         |
+| full HD (1920x1080, 3.5 Mbps) | 31.9    | 383.3    | 7.67           | 19.6%      | 100 ms   | 225 MB         |
+
+What the numbers say:
+
+- The output matches the count: 2 videos per receiver times the bitrate of the
+  layer, plus about 3 Mbps of audio for 20 people. The input matches the cameras
+  times the bitrate, plus the microphones.
+- The worker is not the limit. The worst case, 50 people all receiving 2 full
+  HD videos, uses 20% of a core.
+- The limit that moves is the network. The same worst case needs 383 Mbps out
+  of the server, and each person downloads 7.7 Mbps. A port of 1 Gbps holds it,
+  a smaller plan does not.
+- Going from 20 to 50 people multiplies the output by about 2.4, in step with
+  the number of consumers.
+- The tick of the planner is the number that grows with the headcount: 35 ms at
+  20 people and 64 to 114 ms at 50 when everybody is marked for a new plan on
+  every tick. It runs every 250 ms.
+
+How to run it:
+
+```
+pnpm exec tsx src/scripts/medialoadtest/mediaLoadTest.ts --people 50 --speakers 15 --cameras 8 --quality high --duration 15
+```
+
+`--quality low|mid|high` picks the picture every camera sends, `--full-hd`
+uses the full HD sizes, `--people 20,50` runs several sizes, and `--layout
+spread` scatters the people.
+
+Not proven by these runs:
+
+- **Real simulcast.** The tool can send three layers (`--layers 3`) and the
+  server receives all of them (the input is the sum of the three), but a
+  consumer asked for a higher layer stays on the lowest one. The server needs
+  the sender reports of the camera to line up the layers, which ffmpeg does not
+  send on the port of a plain transport, and the reports made by the tool were
+  not accepted. The output of `--layers 3` and `--view` is not valid. The layer
+  choice was checked by hand in Chrome and Firefox instead.
+- Packet loss, delay and encryption. It is all loopback.
+- The pictures are a test pattern, which compresses differently from a camera.
+
 ## 5. What you need to run it
 
 ### 5.1 The server today (no audio or video through it)
@@ -328,11 +466,12 @@ others, so their count grows with the square of the people.
 
 One small server is enough for the data path. The limit is not CPU.
 
-### 5.2 With audio and video through a server (not built)
+### 5.2 With audio and video through a server
 
-All of this is an **Estimate** from the design and public benchmarks. It
-assumes the plan: one SFU worker (mediasoup), a carousel of 2 videos per
-person and the 4 loudest speakers in audio.
+The server is built. The sizing below is still an **Estimate** from the design
+and public benchmarks, except what section 4.7 measured with synthetic senders.
+It assumes one SFU worker (mediasoup), a carousel of 2 videos per person and
+the 4 loudest speakers in audio.
 
 ```mermaid
 flowchart LR
@@ -494,15 +633,14 @@ flowchart LR
     M --> L2["Limit today: browsers, about 10<br/>Limit planned: one media worker, about 80"]
 ```
 
-| Path                                          | What limits it                                       | Where it stops                                                      |
-| --------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
-| Data (movement, emotes, nearby message, chat) | The single API process: one CPU core and its network | Several hundred people in the worst case (see 6.2). Measured to 200 |
-| Media today (P2P mesh)                        | Every browser connects to every other browser        | About 10 people                                                     |
-| Media planned (SFU)                           | One media worker handles one space                   | About 80 people, depending on the caps (see 6.3). Not built         |
+| Path                                          | What limits it                                       | Where it stops                                                        |
+| --------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------- |
+| Data (movement, emotes, nearby message, chat) | The single API process: one CPU core and its network | Several hundred people in the worst case (see 6.2). Measured to 200   |
+| Media (SFU)                                   | One media worker handles one space                   | About 80 people, depending on the caps (see 6.3). Synthetic load only |
 
 The server has **no headcount limit of its own** in the join code. The 50 and
-the 200 bots joined without a check. The limit of 10 comes from `MAX_CAPACITY`, which
-disables the larger space sizes (M, L and XL) when a space is created.
+the 200 bots joined without a check. The limit of 80 comes from `MAX_SPACE_CAPACITY`, which
+disables the space sizes whose smallest group is above it when a space is created.
 
 ### 6.2 The data path: how the cost grows
 
@@ -703,8 +841,13 @@ server.
 0. **The memory growth at 200 people is unexplained.** The API went from
    215 to 400 MB in 20 seconds and stayed there. A longer run is needed
    (section 6.6).
-1. **No SFU.** Audio and video are a P2P mesh, so there is no support for 50
-   people on camera. Until it exists keep `MAX_CAPACITY = 10`.
+1. **The SFU is measured mostly with synthetic senders.** The server numbers
+   (4.7 and 4.8) come from them. The browser side was checked by hand in
+   Chrome and Firefox, with two people, but with no recorded numbers: no one
+   hour browser soak was run, the
+   deploy-with-50-connected scenario (e) and the weak client scenario (f) were
+   not run, and the provider checks (`iperf3 -u`, CPU steal) need the real
+   machine.
 2. **The hosting question is open.** UDP on the host is unconfirmed.
 3. **No real-browser numbers.** Memory, frame time, name tag cost and audio
    contexts were only measured in tests, not in a tab.

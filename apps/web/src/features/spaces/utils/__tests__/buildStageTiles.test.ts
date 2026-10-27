@@ -1,16 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { buildNameLookup, buildStageTiles as build } from "@/features/spaces/utils/buildStageTiles";
+import {
+    buildNameLookup,
+    buildStageTiles as build,
+} from "@/features/spaces/utils/buildStageTiles";
 import type { RemoteVideo } from "@/features/game/multiplayer/types/remoteVideo";
 
 const stream = (name: string) => ({ name }) as unknown as MediaStream;
 
 const remote = (
     socketId: string,
-    userId: string | null,
+    userId: string,
     slot: RemoteVideo["slot"]
 ): RemoteVideo => ({
     id: `${socketId}:${slot}`,
-    socketId,
     userId,
     slot,
     stream: stream(`${socketId}-${slot}`),
@@ -73,7 +75,7 @@ describe("buildStageTiles", () => {
         const tiles = buildStageTiles({
             remoteVideos: [
                 remote("s1", "ghost", "camera"),
-                remote("s2", null, "camera"),
+                remote("s2", "stranger", "camera"),
             ],
             localCameraStream: null,
             localScreenStream: null,

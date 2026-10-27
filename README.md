@@ -41,8 +41,8 @@ The product goal is to give a team a navigable "virtual office" with real-time p
 - **Own auth**: password-based sign-up/login (bcrypt) and JWT, with no external provider dependency.
 - **Chat messaging**: text and attachment messages, in two conversation shapes: a `DIRECT` conversation between members, or a `SPACE` conversation shared by every member of that space (both scoped to the organization).
 - **Room for a lot of people**: a space holds many people at once, depending on the server. See the [performance guide](docs/performance.md).
-- **Proximity voice chat**: peer-to-peer voice over WebRTC (a mesh between browsers) that unlocks automatically between two users when their avatars get close enough inside a space.
-- **Proximity camera and screen sharing**: the same rule as voice, applied to video. Only the people in range receive it, and videos render centered over the map.
+- **Proximity voice chat**: voice through a media server (an SFU) that runs inside the API, forwarded automatically between users when their avatars get close enough inside a space, so a space can hold dozens of people on microphone.
+- **Proximity camera and screen sharing**: the same rule as voice, applied to video. The server picks the few videos each person sees (a shared screen first), and videos render centered over the map.
 
 ## Documentation
 
@@ -77,7 +77,7 @@ When a space loads, the app asks the API for a render payload (layout, tilesets 
 
 ### Real-time, voice, video and chat
 
-People in the same space see each other move, emote and talk in real time over Socket.IO. Voice, camera and screen sharing are peer-to-peer and follow proximity, and chat has a conversation for each space plus direct conversations. The details are in the [real-time and media guide](docs/realtime.md).
+People in the same space see each other move, emote and talk in real time over Socket.IO. Voice, camera and screen sharing go through the media server and follow proximity, and chat has a conversation for each space plus direct conversations. The details are in the [real-time and media guide](docs/realtime.md).
 
 ## Storage
 
@@ -210,7 +210,7 @@ pnpm --filter api backfill:avatar-sheets                                        
 
 ## Deployment
 
-Standin is meant to be self-hosted: a server and a PostgreSQL database are the only hard requirements, with no proprietary platform lock-in. `web` and `api` are deployed separately, and the steps (build, migrations, the API process, the static web build, storage, a TURN relay and HTTPS) are in the [deployment guide](docs/deployment.md).
+Standin is meant to be self-hosted: a server and a PostgreSQL database are the only hard requirements, with no proprietary platform lock-in. `web` and `api` are deployed separately, and the steps (build, migrations, the API process, the static web build, the media port, storage and HTTPS) are in the [deployment guide](docs/deployment.md).
 
 ## Maintenance Notes
 

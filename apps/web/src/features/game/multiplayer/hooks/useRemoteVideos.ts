@@ -1,92 +1,61 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { RemoteVideo } from "@/features/game/multiplayer/types/remoteVideo";
+import { useCallback, useRef, useState } from "react";
+import type { RemoteVideo } from "../types/remoteVideo";
+import type { SfuRemoteTrack } from "../types/sfu";
 import {
     areRemoteVideosEqual,
-    NO_REMOTE_MEDIA_STATE,
-    resolveVideoTracks,
-    type RemoteMediaState,
-    type RemoteVideoSlot,
+    dedupeEntries,
+    slotOfSource,
+    type RemoteVideoEntry,
 } from "../utils/remoteVideo";
-import type { RemoteTrack } from "../types/transport";
 
-type PeerMedia = {
-    tracksByStreamId: Map<string, MediaStreamTrack>;
-    state: RemoteMediaState;
-};
-
-const VIDEO_SLOTS: RemoteVideoSlot[] = ["camera", "screen"];
-
-// Keeps the incoming video of every peer and turns it into the flat list the
-// UI renders. Two independent facts have to be true before a video shows:
-// the peer announced the stream (MEDIA_STATE) and the track itself arrived,
-// and they can happen in either order, so both are stored and resolved
-// together on every change.
-export function useRemoteVideos(
-    getUserId: (socketId: string) => string | undefined
-) {
+/**
+ * Keeps the videos the server is sending to this person and turns them into
+ * the flat list the UI renders. The source of each consumer tells a camera
+ * from a screen, so nothing is announced apart from the stream.
+ *
+ * `setActiveVideoIds` limits decoding to the videos the stage shows: the
+ * others keep their track but have no stream attached.
+ */
+export function useRemoteVideos() {
+    
     const [remoteVideos, setRemoteVideos] = useState<RemoteVideo[]>([]);
-    const peersRef = useRef(new Map<string, PeerMedia>());
-    // One MediaStream per track, reused across resolves so a React re-render
-    // does not hand <video> a new srcObject (which restarts playback).
+    
+    const entriesRef = useRef(new Map<string, RemoteVideoEntry>());
+    
+    // One MediaStream per track, reused across syncs so a React re-render does
+    // not hand <video> a new srcObject (which restarts playback).
     const streamsRef = useRef(new Map<string, MediaStream>());
-    const getUserIdRef = useRef(getUserId);
+    
     // Ids of the videos the stage is rendering. `null` means all of them
     // (full grid open, or no stage yet).
+    // 
     const activeIdsRef = useRef<ReadonlySet<string> | null>(null);
 
-    useEffect(() => {
-        getUserIdRef.current = getUserId;
-    }, [getUserId]);
-
     const sync = useCallback(() => {
-        const next: RemoteVideo[] = [];
         const usedTrackIds = new Set<string>();
+        const next = dedupeEntries(entriesRef.current).map((entry) => {
+            const id = `${entry.userId}:${entry.slot}`;
+            const isActive =
+                activeIdsRef.current === null || activeIdsRef.current.has(id);
+            const video: RemoteVideo = {
+                id,
+                userId: entry.userId,
+                slot: entry.slot,
+                stream: null,
+            };
+            if (!isActive) return video;
 
-        peersRef.current.forEach((media, socketId) => {
-            const resolved = resolveVideoTracks(
-                media.tracksByStreamId,
-                media.state
-            );
-
-            VIDEO_SLOTS.forEach((slot) => {
-                const track = resolved[slot];
-                if (!track) return;
-
-                const id = `${socketId}:${slot}`;
-                const isActive =
-                    activeIdsRef.current === null ||
-                    activeIdsRef.current.has(id);
-                if (!isActive) {
-                    next.push({
-                        id,
-                        socketId,
-                        userId: getUserIdRef.current(socketId) ?? null,
-                        slot,
-                        stream: null,
-                    });
-                    return;
-                }
-
-                usedTrackIds.add(track.id);
-                const stream =
-                    streamsRef.current.get(track.id) ??
-                    new MediaStream([track]);
-                streamsRef.current.set(track.id, stream);
-
-                next.push({
-                    id,
-                    socketId,
-                    userId: getUserIdRef.current(socketId) ?? null,
-                    slot,
-                    stream,
-                });
-            });
+            usedTrackIds.add(entry.track.id);
+            const stream =
+                streamsRef.current.get(entry.track.id) ??
+                new MediaStream([entry.track]);
+            streamsRef.current.set(entry.track.id, stream);
+            return { ...video, stream };
         });
 
         streamsRef.current.forEach((_stream, trackId) => {
             if (!usedTrackIds.has(trackId)) streamsRef.current.delete(trackId);
         });
-
         setRemoteVideos((previous) =>
             areRemoteVideosEqual(previous, next) ? previous : next
         );
@@ -100,66 +69,32 @@ export function useRemoteVideos(
         [sync]
     );
 
-    const getPeer = useCallback((socketId: string): PeerMedia => {
-        const existing = peersRef.current.get(socketId);
-        if (existing) return existing;
-
-        const created: PeerMedia = {
-            tracksByStreamId: new Map(),
-            state: NO_REMOTE_MEDIA_STATE,
-        };
-        peersRef.current.set(socketId, created);
-        return created;
-    }, []);
-
     const addTrack = useCallback(
-        (socketId: string, { track, streamId }: RemoteTrack) => {
-            if (track.kind !== "video" || !streamId) return;
+        ({ consumerId, userId, source, kind, track }: SfuRemoteTrack) => {
+            if (kind !== "video") return;
 
-            const peer = getPeer(socketId);
-            peer.tracksByStreamId.set(streamId, track);
-            track.addEventListener(
-                "ended",
-                () => {
-                    if (peer.tracksByStreamId.get(streamId) === track) {
-                        peer.tracksByStreamId.delete(streamId);
-                    }
-                    sync();
-                },
-                { once: true }
-            );
+            entriesRef.current.set(consumerId, {
+                userId,
+                slot: slotOfSource(source),
+                track,
+            });
             sync();
         },
-        [getPeer, sync]
+        [sync]
     );
 
-    const setState = useCallback(
-        (socketId: string, state: RemoteMediaState) => {
-            getPeer(socketId).state = state;
-            sync();
-        },
-        [getPeer, sync]
-    );
-
-    const removePeer = useCallback(
-        (socketId: string) => {
-            if (!peersRef.current.delete(socketId)) return;
+    const removeConsumer = useCallback(
+        (consumerId: string) => {
+            if (!entriesRef.current.delete(consumerId)) return;
             sync();
         },
         [sync]
     );
 
     const clear = useCallback(() => {
-        peersRef.current.clear();
+        entriesRef.current.clear();
         sync();
     }, [sync]);
 
-    return {
-        remoteVideos,
-        addTrack,
-        setState,
-        removePeer,
-        clear,
-        setActiveVideoIds,
-    };
+    return { remoteVideos, addTrack, removeConsumer, clear, setActiveVideoIds };
 }

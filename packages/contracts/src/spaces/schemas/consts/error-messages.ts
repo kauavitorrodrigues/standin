@@ -16,6 +16,9 @@ export const SpaceErrorMessages = {
     },
     settings: {
         invalid: "A space setting must be true or false.",
+        proximityPreset: {
+            invalid: "The proximity preset must be Short or Long.",
+        },
     },
     mapId: {
         invalid: "The space map ID is invalid.",

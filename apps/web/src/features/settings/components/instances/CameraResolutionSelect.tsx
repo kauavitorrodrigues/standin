@@ -11,9 +11,17 @@ import {
 } from "@/features/media-devices/consts/videoSettings";
 import { useCameraResolutionPreference } from "@/features/media-devices/hooks/useCameraResolutionPreference";
 import { cameraResolutionPreference } from "@/features/media-devices/lib/videoSettingsPreferences";
+import {
+    readDeviceLimit,
+    smallestResolution,
+} from "@/features/media-devices/lib/cameraLimits";
 
 export const CameraResolutionSelect = () => {
     const resolution = useCameraResolutionPreference();
+    // A weak machine is not offered the biggest resolution.
+    const offered = CAMERA_RESOLUTION_IDS.filter(
+        (id) => smallestResolution(id, readDeviceLimit()) === id
+    );
 
     return (
         <Select
@@ -31,7 +39,7 @@ export const CameraResolutionSelect = () => {
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                {CAMERA_RESOLUTION_IDS.map((id) => (
+                {offered.map((id) => (
                     <SelectItem key={id} value={id}>
                         {id}
                     </SelectItem>

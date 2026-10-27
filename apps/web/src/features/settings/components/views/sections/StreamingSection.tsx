@@ -16,6 +16,7 @@ export const StreamingSection = () => (
                     options={[
                         { value: "720p", label: "720p" },
                         { value: "1080p", label: "1080p" },
+                        { value: "2880p", label: "Máxima (2880p)" },
                     ]}
                 />
             </SettingsRow>

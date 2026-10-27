@@ -30,7 +30,7 @@ export const VideoSection = () => {
             <SettingsGroup label="Qualidade">
                 <SettingsRow
                     title="Resolução"
-                    description="Resoluções maiores usam mais do seu processador. O envio continua limitado para não pesar na conexão"
+                    description="Resoluções maiores usam mais do seu processador e da sua internet de envio. Em espaços cheios a resolução é reduzida sozinha para não pesar para todos"
                 >
                     <CameraResolutionSelect />
                 </SettingsRow>

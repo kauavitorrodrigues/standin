@@ -2,7 +2,7 @@ import type { ProximityMagnitude, ProximityPreset } from "@standin/contracts";
 
 export type ProducerKind = "audio" | "camera" | "screen" | "screen-audio";
 
-export type SimulcastLayer = "low" | "high";
+export type SimulcastLayer = "low" | "mid" | "high";
 
 // "ambient" is the hook for awareness without a decoded stream. The planner
 // only emits "strong" for now.
@@ -12,6 +12,14 @@ export type PersonState = {
     id: string;
     // Key of the private room the person stands in, null outside every room.
     roomKey: string | null;
+    // A muted person gets no audio consumer for others. Their screen audio is
+    // not affected.
+    muted: boolean;
+    // Headphones on: the person has no connection with anybody, in both
+    // directions, for audio and video.
+    headphones: boolean;
+    // Focus mode. Stored and shown, it does not change strong connections.
+    focusMode: boolean;
     // Active producer id per kind, absent when the person is not producing it.
     producers: Partial<Record<ProducerKind, string>>;
 };
@@ -30,7 +38,10 @@ export type DesiredConsumer = CurrentConsumer & {
 };
 
 // What the magnitude rules see of one side of a pair.
-export type RulePlayer = Pick<PersonState, "id" | "roomKey">;
+export type RulePlayer = Pick<
+    PersonState,
+    "id" | "roomKey" | "headphones" | "focusMode"
+>;
 
 export type MagnitudeRule = (
     playerA: RulePlayer,
@@ -71,8 +82,11 @@ export type PlanInput = {
     current: ReadonlyMap<string, readonly CurrentConsumer[]>;
     // When each receiver last had a change applied.
     lastChangeAt: ReadonlyMap<string, number>;
-    // The person each receiver has focused, who gets the high layer.
-    focus?: ReadonlyMap<string, string>;
+    // The layer each receiver asks for per person, a person left out gets low.
+    focus?: ReadonlyMap<string, ReadonlyMap<string, SimulcastLayer>>;
+    // The people each receiver pinned, in pin order. A pinned person that is
+    // within the video reach sorts before everything else for the video slots.
+    pins?: ReadonlyMap<string, readonly string[]>;
     config?: Partial<PlannerConfig>;
 };
 

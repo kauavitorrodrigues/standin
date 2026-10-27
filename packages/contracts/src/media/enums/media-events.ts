@@ -1,0 +1,24 @@
+export const MediaEvents = {
+    GET_CAPABILITIES: "media:get-capabilities",
+    CREATE_TRANSPORT: "media:create-transport",
+    CONNECT_TRANSPORT: "media:connect-transport",
+    PRODUCE: "media:produce",
+    CLOSE_PRODUCER: "media:close-producer",
+    CONSUMER_READY: "media:consumer-ready",
+    SET_FOCUS: "media:set-focus",
+    SET_PINS: "media:set-pins",
+    SET_LOW_QUALITY: "media:set-low-quality",
+    CONSUMER_NEW: "media:consumer-new",
+    CONSUMER_CLOSED: "media:consumer-closed",
+    SPEAKERS: "media:speakers",
+    RESET: "media:reset",
+    PRODUCER_DEMAND: "media:producer-demand",
+    RESTART: "media:restart",
+    RESTART_ICE: "media:restart-ice",
+    STATE_CHANGED: "media:state-changed",
+    SET_MUTED: "media:set-muted",
+    SET_PRIVACY: "media:set-privacy",
+    PRIVACY_CHANGED: "media:privacy-changed",
+} as const;
+
+export type MediaEvent = (typeof MediaEvents)[keyof typeof MediaEvents];

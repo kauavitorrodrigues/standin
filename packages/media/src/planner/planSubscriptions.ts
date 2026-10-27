@@ -1,17 +1,14 @@
 import { calculateProximityMagnitude } from "@standin/contracts";
 import type { ProximityMagnitude } from "@standin/contracts";
 import {
-    AUDIO_ENTER_RADIUS,
-    AUDIO_EXIT_RADIUS,
     CAROUSEL_SIZE,
     LOUDEST_SPEAKERS,
     MIN_CHANGE_INTERVAL_MS,
     PROXIMITY_PRESET,
     PX_PER_TILE,
-    VIDEO_ENTER_RADIUS,
-    VIDEO_EXIT_RADIUS,
     VIDEO_PAUSE_MAGNITUDE,
 } from "../consts/planner";
+import { radiiForPreset } from "./utils/radiiForPreset";
 import { DEFAULT_MAGNITUDE_RULES, applyMagnitudeRules } from "./magnitudeRules";
 import type {
     CurrentConsumer,
@@ -25,13 +22,15 @@ import type {
     SimulcastLayer,
 } from "./types";
 
+const DEFAULT_RADII = radiiForPreset(PROXIMITY_PRESET, PX_PER_TILE);
+
 export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
     loudestSpeakers: LOUDEST_SPEAKERS,
     carouselSize: CAROUSEL_SIZE,
-    audioEnterRadius: AUDIO_ENTER_RADIUS,
-    audioExitRadius: AUDIO_EXIT_RADIUS,
-    videoEnterRadius: VIDEO_ENTER_RADIUS,
-    videoExitRadius: VIDEO_EXIT_RADIUS,
+    audioEnterRadius: DEFAULT_RADII.enterRadius,
+    audioExitRadius: DEFAULT_RADII.exitRadius,
+    videoEnterRadius: DEFAULT_RADII.enterRadius,
+    videoExitRadius: DEFAULT_RADII.exitRadius,
     pxPerTile: PX_PER_TILE,
     preset: PROXIMITY_PRESET,
     videoPauseMagnitude: VIDEO_PAUSE_MAGNITUDE,
@@ -45,6 +44,8 @@ type Candidate = {
     mag: ProximityMagnitude;
     audioReachable: boolean;
     videoReachable: boolean;
+    // The receiver already hears this person.
+    holdsAudio: boolean;
 };
 
 type VideoEntry = {
@@ -52,6 +53,8 @@ type VideoEntry = {
     source: "camera" | "screen";
     producerId: string;
     incumbent: boolean;
+    // Position in the pin order of the receiver, NOT_PINNED when not pinned.
+    pinRank: number;
 };
 
 type Desired = {
@@ -61,6 +64,8 @@ type Desired = {
     reachable: Set<string>;
 };
 
+const NOT_PINNED = Number.MAX_SAFE_INTEGER;
+
 const KIND_ORDER: Record<ProducerKind, number> = {
     audio: 0,
     camera: 1,
@@ -68,7 +73,11 @@ const KIND_ORDER: Record<ProducerKind, number> = {
     "screen-audio": 3,
 };
 
-const VIDEO_KINDS: readonly ProducerKind[] = ["camera", "screen", "screen-audio"];
+const VIDEO_KINDS: readonly ProducerKind[] = [
+    "camera",
+    "screen",
+    "screen-audio",
+];
 
 const compareText = (left: string, right: string): number => {
     if (left < right) return -1;
@@ -78,10 +87,16 @@ const compareText = (left: string, right: string): number => {
 
 const layerFor = (
     source: "camera" | "screen",
-    focused: boolean
+    requested: SimulcastLayer | undefined
 ): SimulcastLayer | null => {
     if (source === "screen") return null;
-    return focused ? "high" : "low";
+    return requested ?? "low";
+};
+
+// Place of a person in the pins of a receiver, or NOT_PINNED.
+const pinRankOf = (pinned: readonly string[], personId: string): number => {
+    const index = pinned.indexOf(personId);
+    return index === -1 ? NOT_PINNED : index;
 };
 
 const distanceBetween = (
@@ -130,7 +145,8 @@ const buildDesired = (
         heldKinds.set(consumer.personId, kinds);
     });
     const speakerRank = new Map(input.speakers.map((id, index) => [id, index]));
-    const rankOf = (id: string) => speakerRank.get(id) ?? Number.POSITIVE_INFINITY;
+    const rankOf = (id: string) =>
+        speakerRank.get(id) ?? Number.POSITIVE_INFINITY;
 
     const candidates: Candidate[] = [];
     input.people.forEach((person) => {
@@ -166,7 +182,14 @@ const buildDesired = (
             );
 
         if (audioReachable || videoReachable) reachable.add(person.id);
-        candidates.push({ person, distance, mag, audioReachable, videoReachable });
+        candidates.push({
+            person,
+            distance,
+            mag,
+            audioReachable,
+            videoReachable,
+            holdsAudio,
+        });
     });
 
     const consumers: DesiredConsumer[] = [];
@@ -176,23 +199,35 @@ const buildDesired = (
     candidates
         .filter(
             (candidate) =>
-                candidate.audioReachable && candidate.person.producers.audio
+                candidate.audioReachable &&
+                !candidate.person.muted &&
+                candidate.person.producers.audio
         )
         .sort(
             (a, b) =>
                 rankOf(a.person.id) - rankOf(b.person.id) ||
+                // Who is already heard keeps the slot, so walking past someone
+                // slightly closer does not swap the voices on every step.
+                Number(b.holdsAudio) - Number(a.holdsAudio) ||
                 a.distance - b.distance ||
                 compareText(a.person.id, b.person.id)
         )
         .slice(0, config.loudestSpeakers)
         .forEach(({ person }) => {
             consumers.push(
-                toDesired(person.id, person.producers.audio!, "audio", null, false)
+                toDesired(
+                    person.id,
+                    person.producers.audio!,
+                    "audio",
+                    null,
+                    false
+                )
             );
         });
 
-    // Video: screens take the slots first, a camera and a screen of the same
+    // Video: pinned people take the slots first, then screens, a camera and a screen of the same
     // person are separate entries, incumbents win ties against newcomers.
+    const pinned = input.pins?.get(receiver.id) ?? [];
     const entries: VideoEntry[] = [];
     candidates
         .filter((candidate) => candidate.videoReachable)
@@ -206,6 +241,7 @@ const buildDesired = (
                     source,
                     producerId,
                     incumbent: kinds?.has(source) ?? false,
+                    pinRank: pinRankOf(pinned, candidate.person.id),
                 });
             });
         });
@@ -218,6 +254,7 @@ const buildDesired = (
     entries
         .sort(
             (a, b) =>
+                a.pinRank - b.pinRank ||
                 sourcePriority(a) - sourcePriority(b) ||
                 speakingRank(a) - speakingRank(b) ||
                 Number(b.incumbent) - Number(a.incumbent) ||
@@ -227,17 +264,29 @@ const buildDesired = (
         .slice(0, config.carouselSize)
         .forEach((entry) => {
             const { person, mag } = entry.candidate;
-            const focused = input.focus?.get(receiver.id) === person.id;
-            const layer = layerFor(entry.source, focused);
+            const requested = input.focus?.get(receiver.id)?.get(person.id);
+            const layer = layerFor(entry.source, requested);
             const paused = mag.video <= config.videoPauseMagnitude;
             consumers.push(
-                toDesired(person.id, entry.producerId, entry.source, layer, paused)
+                toDesired(
+                    person.id,
+                    entry.producerId,
+                    entry.source,
+                    layer,
+                    paused
+                )
             );
 
             const screenAudio = person.producers["screen-audio"];
             if (entry.source === "screen" && screenAudio && mag.audio > 0) {
                 consumers.push(
-                    toDesired(person.id, screenAudio, "screen-audio", null, false)
+                    toDesired(
+                        person.id,
+                        screenAudio,
+                        "screen-audio",
+                        null,
+                        false
+                    )
                 );
             }
         });
@@ -255,7 +304,9 @@ const diffConsumers = (
     desired: DesiredConsumer[],
     held: readonly CurrentConsumer[]
 ): ReceiverPlan => {
-    const heldById = new Map(held.map((consumer) => [consumer.producerId, consumer]));
+    const heldById = new Map(
+        held.map((consumer) => [consumer.producerId, consumer])
+    );
     const desiredIds = new Set(desired.map((consumer) => consumer.producerId));
 
     const plan: ReceiverPlan = {
@@ -278,7 +329,10 @@ const diffConsumers = (
         if (want.paused && !have.paused) plan.pause.push(want.producerId);
         if (!want.paused && have.paused) plan.resume.push(want.producerId);
         if (want.layer && want.layer !== have.layer) {
-            plan.setLayer.push({ producerId: want.producerId, layer: want.layer });
+            plan.setLayer.push({
+                producerId: want.producerId,
+                layer: want.layer,
+            });
         }
     });
 
@@ -291,12 +345,30 @@ const diffConsumers = (
     return plan;
 };
 
+// The radii follow the preset of the config unless the caller sets them
+// explicitly.
+const resolveConfig = (overrides?: Partial<PlannerConfig>): PlannerConfig => {
+    const preset = overrides?.preset ?? DEFAULT_PLANNER_CONFIG.preset;
+    const pxPerTile = overrides?.pxPerTile ?? DEFAULT_PLANNER_CONFIG.pxPerTile;
+    const { enterRadius, exitRadius } = radiiForPreset(preset, pxPerTile);
+    return {
+        ...DEFAULT_PLANNER_CONFIG,
+        audioEnterRadius: enterRadius,
+        audioExitRadius: exitRadius,
+        videoEnterRadius: enterRadius,
+        videoExitRadius: exitRadius,
+        ...overrides,
+    };
+};
+
 // Pure planner, decision D4: the server decides who each person consumes and
 // the client never chooses. Runs only for the receivers in `dirtyIds`, and
 // for the same input always returns the same plans.
 export const planSubscriptions = (input: PlanInput): PlanResult => {
-    const config: PlannerConfig = { ...DEFAULT_PLANNER_CONFIG, ...input.config };
-    const peopleById = new Map(input.people.map((person) => [person.id, person]));
+    const config = resolveConfig(input.config);
+    const peopleById = new Map(
+        input.people.map((person) => [person.id, person])
+    );
     const receivers = [...input.dirtyIds]
         .filter((id) => peopleById.has(id))
         .sort(compareText);

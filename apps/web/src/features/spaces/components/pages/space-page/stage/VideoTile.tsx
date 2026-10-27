@@ -48,13 +48,13 @@ export const VideoTile = ({
         {showExpandHint && (
             <span
                 aria-hidden
-                className="pointer-events-none absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-md bg-neutral-900/70 text-white opacity-0 backdrop-blur-md transition-opacity group-hover/tile:opacity-100 group-focus-visible/tile:opacity-100"
+                className="pointer-events-none absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-md bg-neutral-900/80 text-white opacity-0 transition-opacity group-hover/tile:opacity-100 group-focus-visible/tile:opacity-100"
             >
                 <Maximize2Icon className="size-3.5" />
             </span>
         )}
         <TilePin isPinned={isPinned} onTogglePin={onTogglePin} />
-        <figcaption className="absolute bottom-1.5 left-1.5 flex max-w-[calc(100%-0.75rem)] items-center gap-1 rounded-md bg-neutral-900/70 px-1.5 py-0.5 text-xs text-white backdrop-blur-md">
+        <figcaption className="absolute bottom-1.5 left-1.5 flex max-w-[calc(100%-0.75rem)] items-center gap-1 rounded-md bg-neutral-900/80 px-1.5 py-0.5 text-xs text-white">
             {tile.slot === "screen" && (
                 <MonitorIcon className="size-3 shrink-0" />
             )}

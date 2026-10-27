@@ -46,6 +46,13 @@ const neighbors = (
 const get = (spaceId: string, socketId: string): PlayerPosition | undefined =>
     spaces.get(spaceId)?.get(socketId);
 
+// Read side for the media planner: where a socket is and who is near a point.
+const indexOf = (spaceId: string) => ({
+    get: (socketId: string) => spaces.get(spaceId)?.get(socketId),
+    query: (x: number, y: number, radius: number) =>
+        spaces.get(spaceId)?.query(x, y, radius) ?? [],
+});
+
 // One tick: every space with something pending says what each person has to
 // hear. A space left empty by the tick is forgotten.
 const flushAll = (
@@ -72,6 +79,7 @@ export const SpaceInterests = {
     remove,
     neighbors,
     get,
+    indexOf,
     flushAll,
     clear,
 };

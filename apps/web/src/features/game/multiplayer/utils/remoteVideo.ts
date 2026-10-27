@@ -1,51 +1,14 @@
-import type { PeerMediaStatePayload } from "@standin/contracts";
-
-export type RemoteVideoSlot = "camera" | "screen";
-
-export type RemoteMediaState = Pick<
-    PeerMediaStatePayload,
-    "cameraStreamId" | "screenStreamId"
->;
-
-export const NO_REMOTE_MEDIA_STATE: RemoteMediaState = {
-    cameraStreamId: null,
-    screenStreamId: null,
-};
-
-export type ResolvedVideoTracks = Record<
-    RemoteVideoSlot,
-    MediaStreamTrack | null
->;
-
-// Both camera and screen reach the receiver as plain video tracks. What
-// tells them apart is the id of the stream the sender attached each one to,
-// announced separately in MEDIA_STATE. A track only counts as live when the
-// sender currently announces its stream id AND the track itself has
-// arrived, in whichever order those two things happened.
-export const resolveVideoTracks = (
-    tracksByStreamId: ReadonlyMap<string, MediaStreamTrack>,
-    state: RemoteMediaState
-): ResolvedVideoTracks => {
-    const find = (streamId: string | null): MediaStreamTrack | null => {
-        if (!streamId) return null;
-
-        const track = tracksByStreamId.get(streamId);
-        return track && track.readyState !== "ended" ? track : null;
-    };
-
-    return {
-        camera: find(state.cameraStreamId),
-        screen: find(state.screenStreamId),
-    };
-};
+import type { RemoteVideo } from "../types/remoteVideo";
 
 export type RemoteVideoIdentity = {
     id: string;
     stream: MediaStream | null;
 };
 
-// Used to skip a React state update when a proximity tick or a repeated
-// announcement resolved to exactly what is already being shown.
+/**
+ * True when two lists show the same videos. Used to skip a React state update
+ * when a repeated announcement resolved to what is already being shown.
+ */
 export const areRemoteVideosEqual = (
     first: readonly RemoteVideoIdentity[],
     second: readonly RemoteVideoIdentity[]
@@ -56,3 +19,25 @@ export const areRemoteVideosEqual = (
             video.id === second[index].id &&
             video.stream === second[index].stream
     );
+
+export type RemoteVideoEntry = Pick<RemoteVideo, "userId" | "slot"> & {
+    track: MediaStreamTrack;
+};
+
+/** A camera and a screen are the only video sources a person sends. */
+export const slotOfSource = (source: string): RemoteVideo["slot"] =>
+    source === "screen" ? "screen" : "camera";
+
+/**
+ * One entry per person and slot. When the server replaces a consumer, the
+ * newest one wins.
+ */
+export const dedupeEntries = (
+    entries: Iterable<[string, RemoteVideoEntry]>
+): RemoteVideoEntry[] => {
+    const byId = new Map<string, RemoteVideoEntry>();
+    for (const [, entry] of entries) {
+        byId.set(`${entry.userId}:${entry.slot}`, entry);
+    }
+    return [...byId.values()];
+};

@@ -1,10 +1,9 @@
-import type { RemoteVideoSlot } from "@/features/game/multiplayer/utils/remoteVideo";
+export type RemoteVideoSlot = "camera" | "screen";
 
 export type RemoteVideo = {
-    // `${socketId}:${slot}`, stable while that peer keeps sending that slot.
+    // `${userId}:${slot}`, stable while that person keeps sending that slot.
     id: string;
-    socketId: string;
-    userId: string | null;
+    userId: string;
     slot: RemoteVideoSlot;
     // `null` while the video is off the stage page: the track is kept but
     // nothing is attached to it, so nothing gets decoded.

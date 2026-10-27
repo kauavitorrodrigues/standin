@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
     TILE_GRID_ASPECT_RATIO,
     TILE_GRID_GAP_PX,
@@ -11,11 +12,17 @@ import { VideoTile } from "@/features/spaces/components/pages/space-page/stage/V
 type AutoFitGridProps = {
     tiles: StageTile[];
     onSelect: (id: string) => void;
+    // The width every tile has now, so the caller can pick a video layer.
+    onTileWidthChange: (width: number) => void;
 };
 
 // Fills the space it is given with the largest tiles that all fit at once.
 // It never scrolls: when the window shrinks, so do the tiles.
-export const AutoFitGrid = ({ tiles, onSelect }: AutoFitGridProps) => {
+export const AutoFitGrid = ({
+    tiles,
+    onSelect,
+    onTileWidthChange,
+}: AutoFitGridProps) => {
     const { ref, size } = useElementSize<HTMLDivElement>();
     const { tileWidth, tileHeight } = computeTileGrid({
         count: tiles.length,
@@ -25,6 +32,10 @@ export const AutoFitGrid = ({ tiles, onSelect }: AutoFitGridProps) => {
         aspectRatio: TILE_GRID_ASPECT_RATIO,
         widthTolerance: TILE_GRID_WIDTH_TOLERANCE,
     });
+
+    useEffect(() => {
+        onTileWidthChange(tileWidth);
+    }, [tileWidth, onTileWidthChange]);
 
     return (
         <div

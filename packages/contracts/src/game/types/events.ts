@@ -18,7 +18,6 @@ import type { MapServerEvents } from "../../maps/types/events";
 import type {
     MapJoinSchema,
     SpaceJoinSchema,
-    WebrtcSignalSchema,
 } from "../schemas/space";
 import type {
     SpaceEmoteSchema,
@@ -34,6 +33,30 @@ import type {
     EditorLockPayload,
 } from "../../maps/editor/types";
 import type { z } from "zod/v4";
+import type {
+    MediaCapabilitiesAck,
+    MediaCloseProducerInput,
+    MediaConnectTransportInput,
+    MediaConsumerClosedPayload,
+    MediaConsumerNewPayload,
+    MediaConsumerReadyInput,
+    MediaCreateTransportAck,
+    MediaCreateTransportInput,
+    MediaOkAck,
+    MediaProducerDemandPayload,
+    MediaProduceAck,
+    MediaRestartIceAck,
+    MediaRestartIceInput,
+    MediaProduceInput,
+    MediaSetFocusInput,
+    MediaSetLowQualityInput,
+    MediaSetMutedInput,
+    MediaSetPinsInput,
+    MediaSetPrivacyInput,
+    MediaPrivacyChangedPayload,
+    MediaSpeakersPayload,
+    MediaStateChangedPayload,
+} from "../../media/types";
 import type { SpaceSettings } from "../../spaces/types/space-settings";
 import type {
     SpaceGuestRemovedPayload,
@@ -70,7 +93,6 @@ export const SpaceEvents = {
     SPACE_EMOTE: "space:emote",
     SPACE_NEARBY_MESSAGE: "space:nearby-message",
     SPACE_NEARBY_TYPING: "space:nearby-typing",
-    WEBRTC_SIGNAL: "webrtc:signal",
 } as const;
 
 export const EditorEvents = {
@@ -86,7 +108,6 @@ export type SpaceEvent = (typeof SpaceEvents)[keyof typeof SpaceEvents];
 
 export type SpaceJoinPayload = z.infer<typeof SpaceJoinSchema>;
 export type MapJoinPayload = z.infer<typeof MapJoinSchema>;
-export type WebrtcSignalInput = z.infer<typeof WebrtcSignalSchema>;
 export type SpacePositionInput = z.infer<typeof SpacePositionSchema>;
 export type SpaceEmoteInput = z.infer<typeof SpaceEmoteSchema>;
 export type SpaceNearbyMessageInput = z.infer<typeof SpaceNearbyMessageSchema>;
@@ -144,14 +165,8 @@ export type PeerLeftPayload = {
     userId: string;
 };
 
-export type WebrtcSignalOutput = {
-    fromSocketId: string;
-    signal: unknown;
-};
-
 export type ClientToServerEvents = {
     "space:join": (payload: SpaceJoinPayload) => void;
-    "webrtc:signal": (payload: WebrtcSignalInput) => void;
     // Where the avatar is now. Sent when it changed, volatile: a lost one is
     // replaced by the next.
     "space:position": (payload: SpacePositionInput) => void;
@@ -159,6 +174,47 @@ export type ClientToServerEvents = {
     "space:nearby-message": (payload: SpaceNearbyMessageInput) => void;
     "space:nearby-typing": (payload: SpaceNearbyTypingInput) => void;
     "chat:typing": (payload: ChatTypingInput) => void;
+    "media:get-capabilities": (
+        ack: (response: MediaCapabilitiesAck) => void
+    ) => void;
+    // Drops every transport, producer and consumer of this socket, so the
+    // client can build its media session again from nothing.
+    "media:restart": (ack: (response: MediaOkAck) => void) => void;
+    // New ICE parameters for a transport, to recover it without a new session.
+    "media:restart-ice": (
+        payload: MediaRestartIceInput,
+        ack: (response: MediaRestartIceAck) => void
+    ) => void;
+    "media:create-transport": (
+        payload: MediaCreateTransportInput,
+        ack: (response: MediaCreateTransportAck) => void
+    ) => void;
+    "media:connect-transport": (
+        payload: MediaConnectTransportInput,
+        ack: (response: MediaOkAck) => void
+    ) => void;
+    "media:produce": (
+        payload: MediaProduceInput,
+        ack: (response: MediaProduceAck) => void
+    ) => void;
+    "media:close-producer": (
+        payload: MediaCloseProducerInput,
+        ack: (response: MediaOkAck) => void
+    ) => void;
+    "media:consumer-ready": (
+        payload: MediaConsumerReadyInput,
+        ack: (response: MediaOkAck) => void
+    ) => void;
+    // The cameras this one shows in a tile big enough to need more than the
+    // low layer, each with the layer the tile calls for.
+    "media:set-focus": (payload: MediaSetFocusInput) => void;
+    // The people this one pinned, who keep a video slot while close enough.
+    "media:set-pins": (payload: MediaSetPinsInput) => void;
+    // A weak machine asks for the low layer and fewer streams.
+    "media:set-low-quality": (payload: MediaSetLowQualityInput) => void;
+    "media:set-muted": (payload: MediaSetMutedInput) => void;
+    // The privacy modes: headphones cut every connection, focus is shown.
+    "media:set-privacy": (payload: MediaSetPrivacyInput) => void;
     // An avatar went across the threshold of a room, or stepped on the cell of
     // a closed door. The server decides the state, the client only proposes.
     "room:crossed": (payload: RoomCrossedPayload) => void;
@@ -218,7 +274,6 @@ export type ServerToClientEvents = {
     "space:guest-updated": (payload: SpaceGuestUpdatedPayload) => void;
     // The guest lost the access (kicked, expired or guest access turned off).
     "space:guest-removed": (payload: SpaceGuestRemovedPayload) => void;
-    "webrtc:signal": (payload: WebrtcSignalOutput) => void;
     // The positions that changed around this person, once per tick.
     "space:positions": (payload: SpacePositionsPayload) => void;
     "space:emote": (payload: SpaceEmoteOutput) => void;
@@ -236,6 +291,14 @@ export type ServerToClientEvents = {
     "chat:message-deleted": (payload: ChatMessageDeletedPayload) => void;
     "chat:reaction-toggled": (payload: ChatReactionToggledPayload) => void;
     "chat:typing": (payload: ChatTypingPayload) => void;
+    "media:consumer-new": (payload: MediaConsumerNewPayload) => void;
+    "media:consumer-closed": (payload: MediaConsumerClosedPayload) => void;
+    "media:producer-demand": (payload: MediaProducerDemandPayload) => void;
+    "media:speakers": (payload: MediaSpeakersPayload) => void;
+    "media:state-changed": (payload: MediaStateChangedPayload) => void;
+    "media:privacy-changed": (payload: MediaPrivacyChangedPayload) => void;
+    // The media server restarted, so the client builds its device again.
+    "media:reset": () => void;
     // Sent to the editing session that lost its lock (expired, or taken over
     // by another session of the same person).
     "editor:lock_lost": (payload: EditorLockLostPayload) => void;

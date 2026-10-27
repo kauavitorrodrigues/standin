@@ -29,17 +29,14 @@ export const ATTEMPT_RATE_WINDOW_MS = 30000;
 // a measured value.
 export const ATTEMPT_RATE_MAX_ATTEMPTS = 8;
 
-// After this many failed restarts the link gives up and reports itself
-// closed, instead of retrying forever against a peer that's really gone.
-export const ICE_RESTART_MAX_ATTEMPTS = 4;
-
-// Both sides create the data channel with the same explicit id ("negotiated"),
-// so neither needs to wait for the other's ondatachannel and there is no
-// initiator-only setup step to race against.
-export const DATA_CHANNEL_LABEL = "data";
-export const DATA_CHANNEL_ID = 0;
-
 // What a space reads before the join answers. The schema owns the defaults.
 export const DEFAULT_SPACE_SETTINGS: SpaceSettings = SpaceSettingsSchema.parse(
     {}
 );
+
+// How many ICE restarts of one transport are tried before the whole media
+// session is built again.
+export const ICE_RESTART_MAX_ATTEMPTS = 4;
+
+// How long a transport gets to be connected again after an ICE restart.
+export const ICE_RESTART_CONNECT_TIMEOUT_MS = 10000;

@@ -14,7 +14,11 @@ import {
     index,
     uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { SPACE_GUEST_ACCESS } from "@standin/contracts";
+import {
+    DEFAULT_PROXIMITY_PRESET,
+    SPACE_GUEST_ACCESS,
+    SPACE_PROXIMITY_PRESETS,
+} from "@standin/contracts";
 import { organizationsTable } from "./organizations";
 import { mapsTable } from "./maps";
 import { usersTable } from "./users";
@@ -23,6 +27,11 @@ import { conversationsTable } from "./conversations";
 export const spaceGuestAccessEnum = pgEnum(
     "space_guest_access",
     SPACE_GUEST_ACCESS
+);
+
+export const spaceProximityPresetEnum = pgEnum(
+    "space_proximity_preset",
+    SPACE_PROXIMITY_PRESETS
 );
 
 export const spacesTable = pgTable(
@@ -42,6 +51,9 @@ export const spacesTable = pgTable(
         enableSendNearbyInMapView: boolean("enable_send_nearby_in_map_view")
             .notNull()
             .default(true),
+        proximityPreset: spaceProximityPresetEnum("proximity_preset")
+            .notNull()
+            .default(DEFAULT_PROXIMITY_PRESET),
 
         // Relations columns
         organizationId: text("organization_id")

@@ -4,13 +4,15 @@ import {
     LAYOUT_LAYER_NAMES,
     ROOM_DOOR_STATES,
     type AssetDefinition,
-    type PeerEmotePayload,
-    type PeerNearbyMessagePayload,
-    type PeerNearbyTypingPayload,
+    type SpaceEmoteInput,
+    type SpaceNearbyMessageInput,
+    type SpaceNearbyTypingInput,
     type PlacedAsset,
     PLAYER_DIRECTIONS,
     type PlayerPosition,
     type RoomDoorState,
+    type ProximityPreset,
+    DEFAULT_PROXIMITY_PRESET,
 } from "@standin/contracts";
 import {
     GAME_SCENE_KEYS,
@@ -62,7 +64,7 @@ import { RemoteAvatar } from "@/features/game/lib/RemoteAvatar";
 import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
 import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
-import { EMOTE_RADIUS } from "@/features/game/consts/emote";
+import { getEmoteRadius } from "@/features/game/utils/getEmoteRadius";
 import {
     NEARBY_RATE_LIMIT,
     NEARBY_TYPING_RATE_LIMIT,
@@ -150,7 +152,6 @@ import {
 import { resolveDefaultSpawnPoint } from "@/features/game/utils/map";
 import type { MapSceneInitData } from "@/features/game/types/tilemap";
 import { SEND_INTERVAL_MS } from "@/features/game/multiplayer/consts/sync";
-import { MAX_AUDIBLE_RADIUS } from "@/features/game/multiplayer/consts/audio";
 import { getCommunicationDistance } from "@/features/game/utils/canCommunicate";
 import {
     NO_USER_TAG_PROFILE,
@@ -166,7 +167,7 @@ import { isRemoteNameTagAllowed } from "@/features/game/utils/isRemoteNameTagAll
 import { PendingProfilePictures } from "@/features/game/lib/PendingProfilePictures";
 import { PendingUserNames } from "@/features/game/lib/PendingUserNames";
 import { RemoteSelection } from "@/features/game/lib/RemoteSelection";
-import { calculateVolumeFromDistance } from "@/features/game/multiplayer/utils/audio";
+import { calculatePresetVolume } from "@/features/game/multiplayer/utils/proximityRadii";
 import { ROOM_DOOR_PADLOCK } from "@/features/game/consts/room-door";
 import padlockUrl from "@assets/game/lock.png";
 
@@ -235,6 +236,8 @@ export class MapScene extends Phaser.Scene {
     private nearbyStore: NearbyMessageStore | null = null;
     private nearbyBubbles: NearbyBubbles | null = null;
     private nearbyRadius = getNearbyRadius(0, 0);
+    // The size of the map in px, known once the scene is created.
+    private mapSizePx = { width: 0, height: 0 };
     private readonly nearbyRateLimiter = new EmoteRateLimiter(
         NEARBY_RATE_LIMIT
     );
@@ -269,6 +272,8 @@ export class MapScene extends Phaser.Scene {
     // The user id of each remote peer, to find its avatar sheet.
     private remoteUserIds = new Map<string, string>();
     private anyPeerAudible = false;
+    // The reach of the voice and video of the space, set by the owner.
+    private proximityPreset: ProximityPreset = DEFAULT_PROXIMITY_PRESET;
     private proximityListener: ((anyPeerAudible: boolean) => void) | null =
         null;
     private peerDistanceListener:
@@ -492,9 +497,14 @@ export class MapScene extends Phaser.Scene {
         this.zoneHoverController?.setTargets(this.zoneAreas);
         const wallRectsAt = buildWallRectsAt(tilemap);
         this.rooms = buildRooms(zones);
+        this.mapSizePx = {
+            width: tilemap.widthInPixels,
+            height: tilemap.heightInPixels,
+        };
         this.nearbyRadius = getNearbyRadius(
             tilemap.widthInPixels,
-            tilemap.heightInPixels
+            tilemap.heightInPixels,
+            this.proximityPreset
         );
         this.roomDoorColliders = new RoomDoorColliders({
             set: (id, rects) =>
@@ -1282,11 +1292,12 @@ export class MapScene extends Phaser.Scene {
     // A peer sent an emote. It is shown only from inside the range of the local
     // avatar and the same private room, and never past the rate limit of that
     // peer.
-    applyRemoteEmote(socketId: string, payload: PeerEmotePayload): void {
+    applyRemoteEmote(socketId: string, payload: SpaceEmoteInput): void {
         const avatar = this.remoteAvatars.get(socketId);
         if (!avatar || !this.player) return;
         if (!this.emoteRateLimiter.allow(socketId, this.time.now)) return;
-        if (this.getCommunicationDistanceTo(avatar) > EMOTE_RADIUS) return;
+        const emoteRadius = getEmoteRadius(this.proximityPreset);
+        if (this.getCommunicationDistanceTo(avatar) > emoteRadius) return;
 
         this.emoteParticles?.emit(
             avatar.gameObject,
@@ -1297,7 +1308,7 @@ export class MapScene extends Phaser.Scene {
 
     // The local emote goes through the same display as a remote one, since the
     // mesh never sends it back to the person who made it.
-    playLocalEmote(payload: PeerEmotePayload): void {
+    playLocalEmote(payload: SpaceEmoteInput): void {
         if (!this.player) return;
 
         this.emoteParticles?.emit(
@@ -1330,7 +1341,7 @@ export class MapScene extends Phaser.Scene {
     // dropped without a trace.
     applyRemoteNearbyMessage(
         socketId: string,
-        payload: PeerNearbyMessagePayload
+        payload: SpaceNearbyMessageInput
     ): void {
         const avatar = this.remoteAvatars.get(socketId);
         const userId = this.remoteUserIds.get(socketId);
@@ -1352,7 +1363,7 @@ export class MapScene extends Phaser.Scene {
     // Same checks as the message, with a looser rate limit.
     applyRemoteNearbyTyping(
         socketId: string,
-        payload: PeerNearbyTypingPayload
+        payload: SpaceNearbyTypingInput
     ): void {
         const avatar = this.remoteAvatars.get(socketId);
         const userId = this.remoteUserIds.get(socketId);
@@ -1434,6 +1445,16 @@ export class MapScene extends Phaser.Scene {
         this.seatOccupancy.setLocalSocketIdProvider(provider);
     }
 
+    // Changes the reach of the voice. Applied on the next volume tick.
+    setProximityPreset(preset: ProximityPreset): void {
+        this.proximityPreset = preset;
+        this.nearbyRadius = getNearbyRadius(
+            this.mapSizePx.width,
+            this.mapSizePx.height,
+            preset
+        );
+    }
+
     setProximityListener(
         listener: ((anyPeerAudible: boolean) => void) | null
     ): void {
@@ -1476,10 +1497,7 @@ export class MapScene extends Phaser.Scene {
         this.remoteAvatars.forEach((avatar, socketId) => {
             const distance = this.getCommunicationDistanceTo(avatar);
             distances.set(socketId, distance);
-            const volume = calculateVolumeFromDistance(
-                distance,
-                MAX_AUDIBLE_RADIUS
-            );
+            const volume = calculatePresetVolume(this.proximityPreset, distance);
             if (volume > 0) anyAudible = true;
 
             updateRemoteVolume(socketId, volume);

@@ -54,15 +54,17 @@ describe("SocketManager", () => {
         const io = createIoMock();
         SocketManager.set(io as any);
 
-        SocketManager.emitToSocket("socket-a", "webrtc:signal", {
-            fromSocketId: "socket-b",
-            signal: { type: "offer" },
+        SocketManager.emitToSocket("socket-a", "space:emote", {
+            socketId: "socket-b",
+            emoji: "x",
+            count: 1,
         });
 
         expect(io.__toMock).toHaveBeenCalledWith("socket-a");
-        expect(io.__emitMock).toHaveBeenCalledWith("webrtc:signal", {
-            fromSocketId: "socket-b",
-            signal: { type: "offer" },
+        expect(io.__emitMock).toHaveBeenCalledWith("space:emote", {
+            socketId: "socket-b",
+            emoji: "x",
+            count: 1,
         });
     });
 

@@ -217,6 +217,15 @@ export const RoomStates = {
     // Drops a socket from every room of the space. A locked room left with
     // nobody inside opens, so it is never locked forever. Returns the rooms
     // whose state changed and what to tell about the requests.
+    // The private room each socket is inside right now, for who is in one.
+    roomKeysBySocket(spaceId: string): Map<string, string> {
+        const bySocket = new Map<string, string>();
+        spaces.get(spaceId)?.forEach((room, roomKey) => {
+            room.inside.forEach((socketId) => bySocket.set(socketId, roomKey));
+        });
+        return bySocket;
+    },
+
     removeSocket(spaceId: string, socketId: string): RoomRemoval {
         owners.get(spaceId)?.delete(socketId);
         const rooms = spaces.get(spaceId);

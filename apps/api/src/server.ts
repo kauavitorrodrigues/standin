@@ -5,6 +5,10 @@ import { createSocketServer } from "@/lib/socket/createSocketServer";
 import { startLockSweeper } from "@/lib/socket/startLockSweeper";
 import { startGuestSweeper } from "@/lib/socket/startGuestSweeper";
 import { startPositionTicker } from "@/lib/socket/realtime/startPositionTicker";
+import { MediaRuntime } from "@/lib/media/MediaRuntime";
+import { readMediaConfig } from "@/lib/media/readMediaConfig";
+import { startMediaTicker } from "@/lib/media/startMediaTicker";
+import { MediaLogMessages } from "@/lib/media/consts/messages";
 import { SocketManager } from "@/lib/socket/socketManager";
 import { ShutdownError, ShutdownTimeoutError } from "@/errors/ShutdownError";
 
@@ -17,6 +21,18 @@ createSocketServer(server);
 const stopLockSweeper = startLockSweeper();
 const stopGuestSweeper = startGuestSweeper();
 const stopPositionTicker = startPositionTicker();
+const stopMediaTicker = startMediaTicker();
+
+const mediaConfig = readMediaConfig();
+if (mediaConfig.enabled) {
+    MediaRuntime.start(mediaConfig.options)
+        .then(() =>
+            MediaRuntime.startTelemetry((usage) =>
+                console.log(MediaLogMessages.usage, JSON.stringify(usage))
+            )
+        )
+        .catch((error) => console.error(MediaLogMessages.restartFailed, error));
+}
 
 const PORT = process.env.SERVER_PORT || 3001;
 
@@ -41,6 +57,8 @@ async function gracefulShutdown(signal: string) {
     stopLockSweeper();
     stopGuestSweeper();
     stopPositionTicker();
+    stopMediaTicker();
+    MediaRuntime.stop();
 
     try {
         // Closes the underlying httpServer too (it was handed to socket.io

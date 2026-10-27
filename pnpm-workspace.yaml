@@ -5,9 +5,11 @@ packages:
 
 allowBuilds:
   esbuild: true
+  mediasoup: true
 
 minimumReleaseAgeExclude:
   - zod@4.5.1
+  - mediasoup@3.32.0
 
 saveExact: true
 savePrefix: ""

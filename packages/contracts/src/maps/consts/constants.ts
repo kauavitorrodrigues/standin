@@ -4,8 +4,11 @@ export const TILE_SIZE = 32;
 export const MAX_MAP_TILES = 100;
 export const MIN_MAP_TILES = { width: 12, height: 8 };
 
-// Limit of the P2P audio mesh. Tiers that start above it are not enabled.
-export const MAX_CAPACITY = 10;
+// Most people one space holds, set by what one media worker can forward
+// (about 500 streams, 6 per person). Tiers that start above it are not enabled.
+// The number of videos each person sees at once is a separate limit, the
+// carousel size of the subscription planner.
+export const MAX_SPACE_CAPACITY = 80;
 
 // Cap on the serialized layout, besides the per tier dimension limit.
 export const MAX_LAYOUT_BYTES = 1024 * 1024;

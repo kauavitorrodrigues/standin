@@ -5,22 +5,10 @@ import {
     WEAK_DEVICE_MIN_MEMORY_GB,
 } from "../consts/audio";
 
-// Linear volume falloff by proximity: 1 right on top of the peer, 0 at
-// (and beyond) maxRadius. Clamped so a distance past maxRadius never goes
-// negative.
-export const calculateVolumeFromDistance = (
-    distance: number,
-    maxRadius: number
-): number => {
-    if (maxRadius <= 0) return 0;
-    const clampedDistance = Math.min(Math.max(distance, 0), maxRadius);
-    return 1 - clampedDistance / maxRadius;
-};
-
 export type AudibleCandidate = {
     id: string;
     isSpeaking: boolean;
-    // The local distance curve's volume (see calculateVolumeFromDistance).
+    // The local distance curve's volume (see calculatePresetVolume).
     volume: number;
 };
 
@@ -43,7 +31,8 @@ export const selectAudiblePeers = (
     return new Set(ranked.slice(0, Math.max(ceiling, 0)).map((c) => c.id));
 };
 
-// 4 on weak machines, 8 otherwise. A browser that does not expose a signal
+// 4 on weak machines, 8 otherwise. Both stay at or above the 4 voices the
+// server sends in normal mode. A browser that does not expose a signal
 // (Safari and Firefox have no deviceMemory) is not treated as weak for it.
 export const getAudibleCeiling = (hardware: {
     hardwareConcurrency?: number;

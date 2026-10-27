@@ -24,6 +24,8 @@ export type SpaceInterest = {
     get: (socketId: string) => PlayerPosition | undefined;
     // The sockets within `radius` of a person, the person left out.
     neighbors: (socketId: string, radius: number) => string[];
+    // Every socket within `radius` of a point, the one at the point included.
+    query: (x: number, y: number, radius: number) => string[];
     // What each person has to hear since the last flush: the ones who came into
     // sight, the known ones who changed, and the ones who went out. A person
     // with nothing to hear is not in the result.
@@ -195,6 +197,7 @@ export const createSpaceInterest = ({
         has: (socketId) => positions.has(socketId),
         get: (socketId) => positions.get(socketId),
         neighbors,
+        query: (x, y, reach) => grid.query(x, y, reach),
         flush,
         hasPending: () => dirty.size > 0 || structuralChange,
         isEmpty: () => positions.size === 0,

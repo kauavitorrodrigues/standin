@@ -21,23 +21,6 @@ export const PerformanceSection = () => (
                 />
             </SettingsRow>
         </SettingsGroup>
-        <SettingsGroup label="Vídeo">
-            <SettingsRow
-                title="Máximo de pessoas recebendo seu vídeo"
-                description="Cada pessoa que recebe a sua câmera ou tela é mais um envio da sua máquina. Reduza se a sua conexão ou o seu computador estiverem pesados"
-            >
-                <PerformanceSettingsSelect
-                    field="maxVideoPeers"
-                    ariaLabel="Máximo de pessoas recebendo o seu vídeo"
-                    options={[
-                        { value: "1", label: "1 pessoa" },
-                        { value: "2", label: "2 pessoas" },
-                        { value: "3", label: "3 pessoas" },
-                        { value: "4", label: "4 pessoas" },
-                    ]}
-                />
-            </SettingsRow>
-        </SettingsGroup>
         <SettingsGroup label="Interface">
             <SettingsRow
                 title="Reduzir animações"

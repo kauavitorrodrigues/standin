@@ -1,0 +1,18 @@
+# SITE_ADDRESS is the public domain, which makes Caddy fetch and renew the
+# HTTPS certificate by itself. With the default the site is served on
+# localhost for a local trial.
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	# The API lives under /api. The prefix is removed before it reaches the API.
+	# WebSocket upgrades (Socket.IO) are forwarded without extra settings.
+	handle_path /api/* {
+		reverse_proxy app:{$SERVER_PORT:3001}
+	}
+
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+}

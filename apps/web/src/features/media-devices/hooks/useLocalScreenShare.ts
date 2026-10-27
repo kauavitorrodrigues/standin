@@ -6,6 +6,7 @@ import {
     getScreenTrackConstraints,
 } from "@/features/media-devices/lib/screenConstraints";
 import { screenShareSettingsPreference } from "@/features/media-devices/lib/streamingSettingsPreferences";
+import { performanceOverrideStore } from "@/features/settings/performance/lib/performanceOverride";
 import { classifyScreenShareError } from "@/features/media-devices/lib/classifyScreenShareError";
 
 // Screen capture is always started by an explicit click (browsers require a
@@ -36,6 +37,7 @@ export function useLocalScreenShare() {
         // Read when the share starts: a change in the settings applies to
         // the next share, not to the one already running.
         const settings = screenShareSettingsPreference.get();
+        const hdAllowed = !performanceOverrideStore.get().hdScreenShareOff;
 
         try {
             const displayStream = await navigator.mediaDevices.getDisplayMedia({
@@ -71,7 +73,7 @@ export function useLocalScreenShare() {
             // too. A browser that refuses them keeps the share
             // running at what it captured.
             await track
-                .applyConstraints(getScreenTrackConstraints(settings))
+                .applyConstraints(getScreenTrackConstraints(settings, hdAllowed))
                 .catch(() => undefined);
 
             // The page may have unmounted, or the person may have stopped
@@ -82,7 +84,7 @@ export function useLocalScreenShare() {
             }
 
             // See getScreenContentHint for what each hint trades away.
-            track.contentHint = getScreenContentHint(settings);
+            track.contentHint = getScreenContentHint(settings, hdAllowed);
 
             streamRef.current = displayStream;
             setStream(displayStream);

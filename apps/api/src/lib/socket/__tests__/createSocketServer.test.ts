@@ -10,11 +10,11 @@ const {
     registerEditorAcquireMock,
     registerEditorHeartbeatMock,
     registerEditorReleaseMock,
-    registerWebrtcSignalMock,
     registerDisconnectMock,
     registerSpacePositionMock,
     registerSpaceEventsMock,
     registerChatTypingMock,
+    registerMediaMock,
     onSheetChangedMock,
     onNameChangedMock,
     onProfilePictureChangedMock,
@@ -42,11 +42,11 @@ const {
         registerEditorAcquireMock: vi.fn(),
         registerEditorHeartbeatMock: vi.fn(),
         registerEditorReleaseMock: vi.fn(),
-        registerWebrtcSignalMock: vi.fn(),
         registerDisconnectMock: vi.fn(),
         registerSpacePositionMock: vi.fn(),
         registerSpaceEventsMock: vi.fn(),
         registerChatTypingMock: vi.fn(),
+        registerMediaMock: vi.fn(),
         onSheetChangedMock: vi.fn(),
         onNameChangedMock: vi.fn(),
         onProfilePictureChangedMock: vi.fn(),
@@ -113,8 +113,8 @@ vi.mock("../handlers/joinMap", () => ({
     registerJoinMap: registerJoinMapMock,
 }));
 
-vi.mock("../handlers/webrtcSignal", () => ({
-    registerWebrtcSignal: registerWebrtcSignalMock,
+vi.mock("@/lib/media/handlers/registerMedia", () => ({
+    registerMedia: registerMediaMock,
 }));
 
 vi.mock("../handlers/spacePosition", () => ({
@@ -203,10 +203,7 @@ describe("createSocketServer", () => {
         expect(registerEditorAcquireMock).toHaveBeenCalledWith(fakeSocket);
         expect(registerEditorHeartbeatMock).toHaveBeenCalledWith(fakeSocket);
         expect(registerEditorReleaseMock).toHaveBeenCalledWith(fakeSocket);
-        expect(registerWebrtcSignalMock).toHaveBeenCalledWith(
-            serverInstanceMock,
-            fakeSocket
-        );
+        expect(registerMediaMock).toHaveBeenCalledWith(fakeSocket);
         expect(registerDisconnectMock).toHaveBeenCalledWith(fakeSocket);
         expect(registerSpacePositionMock).toHaveBeenCalledWith(fakeSocket);
         expect(registerSpaceEventsMock).toHaveBeenCalledWith(

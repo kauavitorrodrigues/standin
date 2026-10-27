@@ -10,10 +10,7 @@ import {
 const buildDeps = () => {
     const deps = {
         socket: { connect: vi.fn(), disconnect: vi.fn() },
-        peers: {
-            restartIceOnAllPeers: vi.fn(),
-            simulateTransportFailureOnAllPeers: vi.fn(),
-        },
+        media: { rebuildSession: vi.fn() },
         reload: vi.fn(),
         setTimeout: vi.fn(),
     } satisfies ScenarioDeps;
@@ -41,23 +38,27 @@ describe("simulateScenario", () => {
         expect(LONG_NETWORK_BLIP_RELOAD_MS).toBe(5000);
     });
 
-    it("ice-restart restarts ICE on every peer", () => {
+    it("ice-restart builds the media session again", () => {
         const deps = buildDeps();
         simulateScenario("ice-restart", deps);
-        expect(deps.peers.restartIceOnAllPeers).toHaveBeenCalledOnce();
+        expect(deps.media.rebuildSession).toHaveBeenCalledOnce();
     });
 
-    it("transport-failure publishes without disconnecting", () => {
+    it("transport-failure builds the media session again without disconnecting", () => {
         const deps = buildDeps();
         simulateScenario("transport-failure", deps);
-        expect(
-            deps.peers.simulateTransportFailureOnAllPeers
-        ).toHaveBeenCalledOnce();
+        expect(deps.media.rebuildSession).toHaveBeenCalledOnce();
         expect(deps.socket.disconnect).not.toHaveBeenCalled();
     });
 
+    it("network-blip-all reconnects the socket like network-blip", () => {
+        const deps = buildDeps();
+        simulateScenario("network-blip-all", deps);
+        expect(deps.socket.disconnect).toHaveBeenCalledOnce();
+        expect(deps.socket.connect).toHaveBeenCalledOnce();
+    });
+
     it.each([
-        "network-blip-all",
         "network-blip-with-media-state-mismatch",
         "network-blip-while-update-consumer",
         "recover-transport-with-no-signaling",

@@ -4,10 +4,14 @@ type SinkableAudioElement = HTMLAudioElement & {
     setSinkId?: (deviceId: string) => Promise<void>;
 };
 
-// One instance per Space session, mirroring PeerConnectionManager: owns a
-// hidden <audio> element per connected peer, playing its remote media
-// stream. Volume per peer is set separately (see MapScene's distance-based
-// calculation) rather than baked in here.
+/**
+ * Audio element manager for the SFU. One instance per Space session, it owns
+ * a hidden <audio> element per remote voice the server sends, playing its
+ * media stream. Elements are keyed by the socket id of the speaker, the same
+ * id the scene uses to set the distance based volume (see MapScene), so the
+ * volume is set separately rather than baked in here. The audible ceiling is
+ * only a safety net and never drops below what the server sends.
+ */
 export class RemoteAudioManager {
     private readonly audioElements = new Map<string, HTMLAudioElement>();
     // Elements whose play() was rejected by the browser's autoplay policy.
@@ -42,9 +46,9 @@ export class RemoteAudioManager {
 
     attach(socketId: string, stream: MediaStream): void {
         const audio = this.audioElements.get(socketId) ?? new Audio();
-        // Only the audio tracks: this manager's job is voice, and a peer
-        // connection could in principle carry a video track too (e.g. a
-        // future screen share) that has no business playing through here.
+        // Only the audio tracks: this manager's job is voice, and the stream
+        // could in principle carry a video track too (e.g. a screen share)
+        // that has no business playing through here.
         audio.srcObject = new MediaStream(stream.getAudioTracks());
         audio.autoplay = true;
         // Starts silent, not at the browser default of 1: the distance-based

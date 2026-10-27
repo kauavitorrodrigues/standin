@@ -36,3 +36,13 @@ export const PROXIMITY_PRESETS = {
 } as const;
 
 export type ProximityPreset = keyof typeof PROXIMITY_PRESETS;
+
+// The names of the presets as values, for the schema of the settings of a space
+// and for the database enum.
+export const SPACE_PROXIMITY_PRESETS = {
+    SHORT: "Short",
+    LONG: "Long",
+} as const;
+
+// A space that never chose a preset hears at the Long reach.
+export const DEFAULT_PROXIMITY_PRESET: ProximityPreset = "Long";

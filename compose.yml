@@ -17,6 +17,59 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # The API with the media server inside it. Behind the "app" profile so a
+  # plain `docker compose up` (local development) starts only the database.
+  # Start the whole deployment with `docker compose --profile app up -d`.
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+      target: app
+    container_name: standin_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SERVER_PORT: ${SERVER_PORT:-3001}
+      SERVER_URL: ${SERVER_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      MEDIA_WORKERS: ${MEDIA_WORKERS:-1}
+      MEDIA_LISTEN_IP: 0.0.0.0
+      MEDIA_LISTEN_PORT: ${MEDIA_LISTEN_PORT:-44444}
+      # The public address of the machine. Without it clients cannot reach the
+      # media port.
+      MEDIA_ANNOUNCED_ADDRESS: ${MEDIA_ANNOUNCED_ADDRESS:?set the public address of the machine}
+    ports:
+      # One port for all media, over UDP first and TCP as the fallback.
+      - "${MEDIA_LISTEN_PORT:-44444}:${MEDIA_LISTEN_PORT:-44444}/udp"
+      - "${MEDIA_LISTEN_PORT:-44444}:${MEDIA_LISTEN_PORT:-44444}/tcp"
+    volumes:
+      - uploads:/app/apps/api/public
+    restart: unless-stopped
+
+  # Serves the web build and forwards /api to the app, with HTTPS from a
+  # certificate Caddy gets by itself for SITE_ADDRESS.
+  proxy:
+    profiles: ["app"]
+    build:
+      context: .
+      target: proxy
+    container_name: standin_proxy
+    depends_on:
+      - app
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      SERVER_PORT: ${SERVER_PORT:-3001}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+    restart: unless-stopped
+
   # STUN/TURN relay for peers that cannot reach each other directly (strict
   # NAT, corporate firewall). Optional: it sits behind the "turn" profile, so
   # a plain `docker compose up` does not start it. Enable with
@@ -86,4 +139,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  uploads:
+    driver: local
+  caddy_data:
     driver: local

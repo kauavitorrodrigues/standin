@@ -19,4 +19,11 @@ export type RemotePlayer = {
     // The photo of the profile, shown on the tag when it is clicked. Null means
     // the person has none, and the tag shows the initial.
     profilePictureUrl: string | null;
+    // Whether the microphone of the person is muted. Starts muted, and the
+    // person tells otherwise when they turn it on.
+    muted: boolean;
+    // Whether the person has headphones on and talks to nobody.
+    headphones: boolean;
+    // Whether the person is in focus mode.
+    focus: boolean;
 };

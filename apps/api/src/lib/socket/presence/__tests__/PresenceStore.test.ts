@@ -7,6 +7,9 @@ const entry = (socketId: string, userId: string): PresenceEntry => ({
     name: userId,
     profilePictureUrl: null,
     avatarSheetFileId: null,
+    muted: true,
+    headphones: false,
+    focus: false,
 });
 
 describe("PresenceStore", () => {
@@ -62,5 +65,17 @@ describe("PresenceStore", () => {
         expect(PresenceStore.get("space-1", "s1")?.name).toBe("Ana");
         expect(PresenceStore.get("space-2", "s2")?.name).toBe("Ana");
         expect(PresenceStore.get("space-2", "s3")?.name).toBe("u2");
+    });
+
+    it("stores the privacy flags and tells whether they changed", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        const privacy = { headphones: true, focus: false };
+
+        expect(PresenceStore.setPrivacy("space-1", "s1", privacy)).toBe(true);
+        expect(PresenceStore.get("space-1", "s1")?.headphones).toBe(true);
+        expect(PresenceStore.setPrivacy("space-1", "s1", privacy)).toBe(false);
+        expect(PresenceStore.setPrivacy("space-1", "nobody", privacy)).toBe(
+            false
+        );
     });
 });

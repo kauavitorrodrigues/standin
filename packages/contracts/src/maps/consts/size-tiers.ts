@@ -1,4 +1,4 @@
-import { MAX_CAPACITY } from "./constants";
+import { MAX_SPACE_CAPACITY } from "./constants";
 import { MAP_SIZE_TIERS } from "../enums/map-size-tier";
 
 export const SIZE_TIERS = {
@@ -28,7 +28,7 @@ export const SIZE_TIERS = {
     },
     [MAP_SIZE_TIERS.XL]: {
         minPeople: 51,
-        maxPeople: 150,
+        maxPeople: MAX_SPACE_CAPACITY,
         maxWidth: 100,
         maxHeight: 100,
     },
@@ -36,7 +36,7 @@ export const SIZE_TIERS = {
 
 export type SizeTier = keyof typeof SIZE_TIERS;
 
-// A tier is enabled when its smallest group already fits the audio mesh.
+// A tier is enabled when its smallest group fits in one space.
 export const ENABLED_SIZE_TIERS = (
     Object.keys(SIZE_TIERS) as SizeTier[]
-).filter((tier) => SIZE_TIERS[tier].minPeople <= MAX_CAPACITY);
+).filter((tier) => SIZE_TIERS[tier].minPeople <= MAX_SPACE_CAPACITY);

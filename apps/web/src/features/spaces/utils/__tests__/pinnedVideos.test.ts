@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     addPinnedVideo,
+    pinnedRemoteUserIds,
     removePinnedVideo,
 } from "@/features/spaces/utils/pinnedVideos";
 
@@ -51,5 +52,31 @@ describe("removePinnedVideo", () => {
         expect(removePinnedVideo(pinned, "a")).toEqual([
             { tileId: "b", pinnedAt: 2 },
         ]);
+    });
+});
+
+describe("pinnedRemoteUserIds", () => {
+    const tile = (id: string, userId: string | null, isSelf = false) =>
+        ({
+            id,
+            slot: "camera",
+            stream: null,
+            userId,
+            label: id,
+            isSelf,
+            isMuted: false,
+        }) as const;
+
+    it("maps pinned tiles to remote users in pin order without repeats", () => {
+        const tiles = [
+            tile("a:camera", "a"),
+            tile("a:screen", "a"),
+            tile("b:avatar", "b"),
+            tile("me", "me", true),
+        ];
+        expect(
+            pinnedRemoteUserIds(tiles, ["b:avatar", "a:camera", "a:screen"])
+        ).toEqual(["b", "a"]);
+        expect(pinnedRemoteUserIds(tiles, ["me", "gone"])).toEqual([]);
     });
 });

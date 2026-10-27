@@ -1,107 +1,37 @@
 import { describe, expect, it } from "vitest";
 import {
     areRemoteVideosEqual,
-    NO_REMOTE_MEDIA_STATE,
-    resolveVideoTracks,
+    dedupeEntries,
+    slotOfSource,
 } from "../remoteVideo";
 
-const track = (id: string, readyState: MediaStreamTrackState = "live") =>
-    ({ id, readyState }) as unknown as MediaStreamTrack;
+const track = (id: string) => ({ id }) as unknown as MediaStreamTrack;
 
-describe("resolveVideoTracks", () => {
-    it("resolves nothing when the sender announces nothing", () => {
-        const tracks = new Map([["s1", track("t1")]]);
-
-        expect(resolveVideoTracks(tracks, NO_REMOTE_MEDIA_STATE)).toEqual({
-            camera: null,
-            screen: null,
-        });
+describe("remote video helpers", () => {
+    it("tells a screen from a camera by its source", () => {
+        expect(slotOfSource("screen")).toBe("screen");
+        expect(slotOfSource("camera")).toBe("camera");
     });
 
-    it("maps each announced stream id to its slot", () => {
-        const camera = track("cam");
-        const screen = track("scr");
-        const tracks = new Map([
-            ["s-cam", camera],
-            ["s-scr", screen],
+    it("keeps the newest entry for a person and slot", () => {
+        const entries = dedupeEntries([
+            ["c1", { userId: "a", slot: "camera", track: track("old") }],
+            ["c2", { userId: "a", slot: "camera", track: track("new") }],
+            ["c3", { userId: "a", slot: "screen", track: track("screen") }],
         ]);
-
-        expect(
-            resolveVideoTracks(tracks, {
-                cameraStreamId: "s-cam",
-                screenStreamId: "s-scr",
-            })
-        ).toEqual({ camera, screen });
-    });
-
-    it("does not confuse camera and screen when only one is announced", () => {
-        const camera = track("cam");
-        const screen = track("scr");
-        const tracks = new Map([
-            ["s-cam", camera],
-            ["s-scr", screen],
+        expect(entries.map((entry) => entry.track.id)).toEqual([
+            "new",
+            "screen",
         ]);
-
-        expect(
-            resolveVideoTracks(tracks, {
-                cameraStreamId: null,
-                screenStreamId: "s-scr",
-            })
-        ).toEqual({ camera: null, screen });
     });
 
-    it("waits for a track that was announced before it arrived", () => {
+    it("compares by id and stream", () => {
+        const stream = {} as MediaStream;
         expect(
-            resolveVideoTracks(new Map(), {
-                cameraStreamId: "s-cam",
-                screenStreamId: null,
-            }).camera
-        ).toBeNull();
-    });
-
-    it("ignores an ended track", () => {
-        const tracks = new Map([["s-cam", track("cam", "ended")]]);
-
-        expect(
-            resolveVideoTracks(tracks, {
-                cameraStreamId: "s-cam",
-                screenStreamId: null,
-            }).camera
-        ).toBeNull();
-    });
-});
-
-describe("areRemoteVideosEqual", () => {
-    const streamA = {} as MediaStream;
-    const streamB = {} as MediaStream;
-
-    it("is equal for the same ids and stream identities", () => {
-        expect(
-            areRemoteVideosEqual(
-                [{ id: "a:camera", stream: streamA }],
-                [{ id: "a:camera", stream: streamA }]
-            )
+            areRemoteVideosEqual([{ id: "a", stream }], [{ id: "a", stream }])
         ).toBe(true);
-    });
-
-    it("differs when the stream object changed", () => {
         expect(
-            areRemoteVideosEqual(
-                [{ id: "a:camera", stream: streamA }],
-                [{ id: "a:camera", stream: streamB }]
-            )
-        ).toBe(false);
-    });
-
-    it("differs in length or id", () => {
-        expect(areRemoteVideosEqual([], [{ id: "a", stream: streamA }])).toBe(
-            false
-        );
-        expect(
-            areRemoteVideosEqual(
-                [{ id: "a", stream: streamA }],
-                [{ id: "b", stream: streamA }]
-            )
+            areRemoteVideosEqual([{ id: "a", stream }], [{ id: "b", stream }])
         ).toBe(false);
     });
 });

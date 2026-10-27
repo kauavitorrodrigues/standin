@@ -36,6 +36,7 @@ import { useSpacePageLayout } from "@/features/spaces/hooks/useSpacePageLayout";
 import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
 import { usePinnedVideos } from "@/features/spaces/hooks/usePinnedVideos";
 import { useAutoPinScreen } from "@/features/spaces/hooks/useAutoPinScreen";
+import { useSyncPinnedPeople } from "@/features/spaces/hooks/useSyncPinnedPeople";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGuestRemoved } from "../../hooks/useGuestRemoved";
 import { GuestProfileCard } from "../instances/GuestProfileCard";
@@ -129,6 +130,11 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
         pin: pinnedVideos.pin,
         openGrid: () => openGrid(),
     });
+    useSyncPinnedPeople({
+        tiles: stageTiles,
+        pinnedIds: pinnedVideos.pinnedIds,
+        setPins: video.setPins,
+    });
 
     const layout = useSpacePageLayout({
         view: SPACE_VIEWS.SPACE,
@@ -185,6 +191,7 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
                         pinnedIds={pinnedVideos.pinnedIds}
                         onTogglePin={pinnedVideos.togglePin}
                         onActiveVideosChange={video.setActiveVideoIds}
+                        onFocusChange={video.setFocus}
                     />
                     <LayoutPrimitive.TopControls
                         visible={layout.isStageToggleVisible}

@@ -10,6 +10,7 @@ vi.mock("../../services/resolveSpaceSettings", () => ({
 import { registerSpacePosition } from "../spacePosition";
 import { registerSpaceEvents } from "../spaceEvents";
 import { SpaceInterests } from "../../realtime/SpaceInterests";
+import { mediaDirty } from "@/lib/media/MediaRuntime";
 
 const createSocket = (id: string, spaceId: string | null) => {
     const handlers = new Map<string, (payload: unknown) => void>();
@@ -40,6 +41,27 @@ describe("registerSpacePosition", () => {
             direction: "up",
             isSitting: false,
         });
+    });
+
+    it("marks a person who moved for the media planner, and not one who stood still", () => {
+        const socket = createSocket("s1", "space-mark");
+        registerSpacePosition(socket as any);
+        const take = () =>
+            mediaDirty.take(
+                "space-mark",
+                { get: () => undefined, query: () => [] },
+                new Map(),
+                100
+            );
+
+        socket.fire("space:position", position);
+        expect([...take()]).toEqual(["s1"]);
+
+        socket.fire("space:position", position);
+        expect([...take()]).toEqual([]);
+
+        socket.fire("space:position", { ...position, x: 200 });
+        expect([...take()]).toEqual(["s1"]);
     });
 
     it("ignores a socket that is in no space and an invalid payload", () => {

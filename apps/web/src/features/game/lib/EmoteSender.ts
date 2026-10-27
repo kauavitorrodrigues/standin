@@ -2,7 +2,7 @@ import {
     EMOTE_COMBO_MAX,
     EMOTE_COMBO_MIN,
     EMOTE_COMBO_WINDOW_MS,
-    type PeerEmotePayload,
+    type SpaceEmoteInput,
 } from "@standin/contracts";
 
 /**
@@ -12,11 +12,11 @@ import {
  * runs with fake timers.
  */
 export class EmoteSender {
-    private readonly dispatch: (payload: PeerEmotePayload) => void;
-    private group: PeerEmotePayload | null = null;
+    private readonly dispatch: (payload: SpaceEmoteInput) => void;
+    private group: SpaceEmoteInput | null = null;
     private timer: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(dispatch: (payload: PeerEmotePayload) => void) {
+    constructor(dispatch: (payload: SpaceEmoteInput) => void) {
         this.dispatch = dispatch;
     }
 
@@ -42,7 +42,7 @@ export class EmoteSender {
     }
 
     // A group is over when another emoji comes or when it is full.
-    private isClosedBy(group: PeerEmotePayload, emoji: string): boolean {
+    private isClosedBy(group: SpaceEmoteInput, emoji: string): boolean {
         return group.emoji !== emoji || group.count >= EMOTE_COMBO_MAX;
     }
 

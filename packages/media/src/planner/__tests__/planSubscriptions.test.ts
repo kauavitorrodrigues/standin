@@ -13,10 +13,15 @@ type Spot = { x: number; y: number };
 const person = (
     id: string,
     kinds: ProducerKind[] = ["audio"],
-    roomKey: string | null = null
+    roomKey: string | null = null,
+    muted = false,
+    privacy: { headphones?: boolean; focusMode?: boolean } = {}
 ): PersonState => ({
     id,
     roomKey,
+    muted,
+    headphones: privacy.headphones ?? false,
+    focusMode: privacy.focusMode ?? false,
     producers: Object.fromEntries(kinds.map((kind) => [kind, `${id}:${kind}`])),
 });
 
@@ -54,16 +59,27 @@ const plan = (
 const at = (x: number): Spot => ({ x, y: 0 });
 const ids = (list: { producerId: string }[]) => list.map((c) => c.producerId);
 
+// The radii of the old fixed config, passed explicitly to keep the tests of
+// the hysteresis on small numbers.
+const SMALL_RADII = {
+    audioEnterRadius: 120,
+    audioExitRadius: 150,
+    videoEnterRadius: 120,
+    videoExitRadius: 150,
+};
+
 describe("planSubscriptions hysteresis", () => {
     const spots = { me: at(0), ann: at(135) };
     const people = [person("me", []), person("ann")];
+    const config = SMALL_RADII;
 
     it("does not pick up someone between the enter and exit radius", () => {
-        expect(plan(spots, people).create).toEqual([]);
+        expect(plan(spots, people, { config }).create).toEqual([]);
     });
 
     it("keeps someone already consumed until the exit radius", () => {
         const result = plan(spots, people, {
+            config,
             current: new Map([["me", [held("ann", "audio")]]]),
         });
         expect(result.changed).toBe(false);
@@ -73,6 +89,7 @@ describe("planSubscriptions hysteresis", () => {
     it("drops someone beyond the exit radius", () => {
         const far = { me: at(0), ann: at(151) };
         const result = plan(far, people, {
+            config,
             current: new Map([["me", [held("ann", "audio")]]]),
         });
         expect(ids(result.close)).toEqual(["ann:audio"]);
@@ -83,6 +100,7 @@ describe("planSubscriptions hysteresis", () => {
         const flips: boolean[] = [];
         [115, 125, 140, 148, 125, 119, 149, 130].forEach((x) => {
             const result = plan({ me: at(0), ann: at(x) }, people, {
+                config,
                 current: new Map([["me", consumers]]),
             });
             flips.push(result.changed);
@@ -118,6 +136,21 @@ describe("planSubscriptions audio", () => {
             "e:audio",
             "f:audio",
         ]);
+    });
+
+    it("keeps who is already heard instead of swapping for someone slightly closer", () => {
+        const result = plan(spots, people, {
+            current: new Map([
+                ["me", [held("e", "audio"), held("f", "audio")]],
+            ]),
+        });
+        expect(ids(result.desired)).toEqual([
+            "a:audio",
+            "b:audio",
+            "e:audio",
+            "f:audio",
+        ]);
+        expect(ids(result.close)).toEqual([]);
     });
 
     it("never gives audio to the receiver itself", () => {
@@ -156,7 +189,7 @@ describe("planSubscriptions video", () => {
         ]);
     });
 
-    it("uses the low layer unless the tile is focused", () => {
+    it("uses the low layer unless a layer is requested", () => {
         const spots = { me: at(0), a: at(10), b: at(20) };
         const people = [
             person("me", []),
@@ -164,21 +197,94 @@ describe("planSubscriptions video", () => {
             person("b", ["camera"]),
         ];
         const result = plan(spots, people, {
-            focus: new Map([["me", "b"]]),
+            focus: new Map([["me", new Map([["b", "high" as const]])]]),
         });
         expect(result.desired.map((d) => d.layer)).toEqual(["low", "high"]);
+    });
+
+    it("tells the mid layer from the high layer", () => {
+        const spots = { me: at(0), a: at(10), b: at(20) };
+        const people = [
+            person("me", []),
+            person("a", ["camera"]),
+            person("b", ["camera"]),
+        ];
+        const result = plan(spots, people, {
+            focus: new Map([
+                [
+                    "me",
+                    new Map([
+                        ["a", "mid" as const],
+                        ["b", "high" as const],
+                    ]),
+                ],
+            ]),
+        });
+        expect(result.desired.map((d) => d.layer)).toEqual(["mid", "high"]);
+    });
+
+    it("ignores a requested person who is not around", () => {
+        const spots = { me: at(0), a: at(10) };
+        const people = [person("me", []), person("a", ["camera"])];
+        const result = plan(spots, people, {
+            focus: new Map([["me", new Map([["ghost", "high" as const]])]]),
+        });
+        expect(result.desired.map((d) => d.layer)).toEqual(["low"]);
+    });
+
+    it("never gives a layer to a screen", () => {
+        const spots = { me: at(0), a: at(10) };
+        const people = [person("me", []), person("a", ["screen"])];
+        const result = plan(spots, people, {
+            focus: new Map([["me", new Map([["a", "high" as const]])]]),
+        });
+        expect(result.desired.map((d) => d.layer)).toEqual([null]);
     });
 
     it("asks for a layer change on an existing consumer", () => {
         const spots = { me: at(0), a: at(10) };
         const people = [person("me", []), person("a", ["camera"])];
         const result = plan(spots, people, {
-            focus: new Map([["me", "a"]]),
+            focus: new Map([["me", new Map([["a", "high" as const]])]]),
             current: new Map([["me", [held("a", "camera")]]]),
         });
         expect(result.setLayer).toEqual([
             { producerId: "a:camera", layer: "high" },
         ]);
+    });
+
+    it("asks for a layer change from high to mid", () => {
+        const spots = { me: at(0), a: at(10) };
+        const people = [person("me", []), person("a", ["camera"])];
+        const result = plan(spots, people, {
+            focus: new Map([["me", new Map([["a", "mid" as const]])]]),
+            current: new Map([["me", [held("a", "camera", { layer: "high" })]]]),
+        });
+        expect(result.setLayer).toEqual([
+            { producerId: "a:camera", layer: "mid" },
+        ]);
+    });
+
+    it("pauses a video consumer at or below the pause threshold", () => {
+        const atThreshold: MagnitudeRule = (_a, _b, mag) => ({
+            ...mag,
+            video: 0.05,
+        });
+        const spots = { me: at(0), a: at(10) };
+        const people = [person("me", []), person("a", ["camera"])];
+        const result = plan(spots, people, {
+            config: { rules: [atThreshold], videoPauseMagnitude: 0.05 },
+        });
+        expect(result.desired.map((d) => d.paused)).toEqual([true]);
+    });
+
+    it("does not pause a video consumer inside the default radius", () => {
+        const spots = { me: at(0), a: at(150) };
+        const people = [person("me", []), person("a", ["camera"])];
+        const result = plan(spots, people, {
+            current: new Map([["me", [held("a", "camera")]]]),
+        });
+        expect(result.desired.map((d) => d.paused)).toEqual([false]);
     });
 
     it("pauses and resumes on a near zero video magnitude", () => {
@@ -198,6 +304,77 @@ describe("planSubscriptions video", () => {
             ]),
         });
         expect(resumed.resume).toEqual(["a:camera"]);
+    });
+});
+
+describe("planSubscriptions pins", () => {
+    const pins = (...userIds: string[]) => new Map([["me", userIds]]);
+
+    it("gives a pinned person a slot before nearer people", () => {
+        const spots = { me: at(0), a: at(10), b: at(20), c: at(100) };
+        const people = [
+            person("me", []),
+            person("a", ["camera"]),
+            person("b", ["camera"]),
+            person("c", ["camera"]),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual([
+            "a:camera",
+            "b:camera",
+        ]);
+        expect(ids(plan(spots, people, { pins: pins("c") }).desired)).toEqual([
+            "a:camera",
+            "c:camera",
+        ]);
+    });
+
+    it("fills the slots with the two pins, ignoring distance", () => {
+        const spots = { me: at(0), a: at(10), b: at(20), c: at(100) };
+        const people = [
+            person("me", []),
+            person("a", ["camera"]),
+            person("b", ["camera"]),
+            person("c", ["camera", "screen"]),
+        ];
+        const result = plan(spots, people, { pins: pins("b", "a") });
+        expect(ids(result.desired)).toEqual(["a:camera", "b:camera"]);
+    });
+
+    it("gives nothing to a pinned person out of the video radius", () => {
+        const spots = { me: at(0), a: at(10), far: at(500) };
+        const people = [
+            person("me", []),
+            person("a", ["camera"]),
+            person("far", ["camera"]),
+        ];
+        const result = plan(spots, people, { pins: pins("far") });
+        expect(ids(result.desired)).toEqual(["a:camera"]);
+    });
+
+    it("gives nothing to a pinned person in another private room", () => {
+        const spots = { me: at(0), a: at(10), b: at(20) };
+        const people = [
+            person("me", []),
+            person("a", ["camera"]),
+            person("b", ["camera"], "room-x"),
+        ];
+        const result = plan(spots, people, { pins: pins("b") });
+        expect(ids(result.desired)).toEqual(["a:camera"]);
+    });
+
+    it("is unchanged when the receiver has no pins", () => {
+        const spots = { me: at(0), a: at(10), b: at(20), c: at(30) };
+        const people = [
+            person("me", []),
+            person("a", ["camera"]),
+            person("b", ["camera"]),
+            person("c", ["camera"]),
+        ];
+        const base = plan(spots, people);
+        expect(plan(spots, people, { pins: new Map() })).toEqual(base);
+        expect(
+            plan(spots, people, { pins: new Map([["other", ["c"]]]) })
+        ).toEqual(base);
     });
 });
 
@@ -333,5 +510,164 @@ describe("expandDirtySet", () => {
             150
         );
         expect([...dirty].sort()).toEqual(["left", "mover", "near"]);
+    });
+});
+
+describe("planSubscriptions muted people", () => {
+    it("gives no audio consumer to a muted person", () => {
+        const spots = { me: at(0), a: at(10), b: at(20) };
+        const people = [
+            person("me", []),
+            person("a", ["audio"], null, true),
+            person("b"),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual(["b:audio"]);
+    });
+
+    it("frees the audio slot of a muted person for the next one", () => {
+        const spots = {
+            me: at(0),
+            a: at(10),
+            b: at(20),
+            c: at(30),
+            d: at(40),
+            e: at(50),
+        };
+        const people = [
+            person("me", []),
+            person("a", ["audio"], null, true),
+            person("b"),
+            person("c"),
+            person("d"),
+            person("e"),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual([
+            "b:audio",
+            "c:audio",
+            "d:audio",
+            "e:audio",
+        ]);
+    });
+
+    it("ignores a muted person in the loudest speakers ranking", () => {
+        const spots = { me: at(0), a: at(10), b: at(20) };
+        const people = [
+            person("me", []),
+            person("a", ["audio"], null, true),
+            person("b"),
+        ];
+        const result = plan(spots, people, { speakers: ["a", "b"] });
+        expect(ids(result.desired)).toEqual(["b:audio"]);
+    });
+
+    it("keeps the screen audio of a muted person", () => {
+        const spots = { me: at(0), a: at(10) };
+        const people = [
+            person("me", []),
+            person("a", ["audio", "screen", "screen-audio"], null, true),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual([
+            "a:screen",
+            "a:screen-audio",
+        ]);
+    });
+
+    it("closes the audio consumer held when the person mutes", () => {
+        const spots = { me: at(0), a: at(10) };
+        const people = [person("me", []), person("a", ["audio"], null, true)];
+        const result = plan(spots, people, {
+            current: new Map([["me", [held("a", "audio")]]]),
+        });
+        expect(ids(result.close)).toEqual(["a:audio"]);
+    });
+});
+
+describe("planSubscriptions headphones and focus mode", () => {
+    const spots = { me: at(0), a: at(10), b: at(20) };
+
+    it("gives nothing to a person with headphones on", () => {
+        const people = [
+            person("me", [], null, false, { headphones: true }),
+            person("a", ["audio", "camera"]),
+            person("b"),
+        ];
+        expect(plan(spots, people).desired).toEqual([]);
+    });
+
+    it("hides a person with headphones from the others", () => {
+        const people = [
+            person("me", []),
+            person("a", ["audio", "camera"], null, false, { headphones: true }),
+            person("b"),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual(["b:audio"]);
+    });
+
+    it("keeps strong connections for a person in focus mode", () => {
+        const people = [
+            person("me", [], null, false, { focusMode: true }),
+            person("a", ["audio"], null, false, { focusMode: true }),
+            person("b"),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual([
+            "a:audio",
+            "b:audio",
+        ]);
+    });
+});
+
+describe("planSubscriptions proximity preset", () => {
+    const people = [person("me", []), person("ann")];
+    const held200 = { current: new Map([["me", [held("ann", "audio")]]]) };
+
+    it("does not let Short hear someone at 200 px", () => {
+        const spots = { me: at(0), ann: at(200) };
+        const result = plan(spots, people, { config: { preset: "Short" } });
+        expect(result.desired).toEqual([]);
+    });
+
+    it("lets Long hear someone at 200 px", () => {
+        const spots = { me: at(0), ann: at(200) };
+        const result = plan(spots, people, { config: { preset: "Long" } });
+        expect(ids(result.desired)).toEqual(["ann:audio"]);
+    });
+
+    it("uses Long when no preset is given", () => {
+        const spots = { me: at(0), ann: at(380) };
+        expect(ids(plan(spots, people).desired)).toEqual(["ann:audio"]);
+    });
+
+    it("cuts Short at 160 px, the curve is 0 there so the band does not hold", () => {
+        const config = { preset: "Short" as const };
+        const inside = { me: at(0), ann: at(159) };
+        expect(ids(plan(inside, people, { config }).create)).toEqual([
+            "ann:audio",
+        ]);
+        const band = { me: at(0), ann: at(175) };
+        expect(plan(band, people, { config }).create).toEqual([]);
+        expect(
+            ids(plan(band, people, { config, ...held200 }).close)
+        ).toEqual(["ann:audio"]);
+    });
+
+    it("applies the Long hysteresis band of 384 to 414 px", () => {
+        const config = { preset: "Long" as const };
+        const band = { me: at(0), ann: at(400) };
+        expect(plan(band, people, { config }).create).toEqual([]);
+        expect(
+            plan(band, people, { config, ...held200 }).changed
+        ).toBe(false);
+        const out = { me: at(0), ann: at(415) };
+        expect(
+            ids(plan(out, people, { config, ...held200 }).close)
+        ).toEqual(["ann:audio"]);
+    });
+
+    it("keeps an explicit radius over the preset", () => {
+        const spots = { me: at(0), ann: at(200) };
+        const result = plan(spots, people, {
+            config: { preset: "Long", ...SMALL_RADII },
+        });
+        expect(result.desired).toEqual([]);
     });
 });

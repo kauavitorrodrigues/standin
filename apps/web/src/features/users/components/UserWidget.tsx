@@ -1,63 +1,39 @@
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserAvatar } from "./UserAvatar";
-import { UserAvatarInfo } from "./UserAvatarInfo";
+import { PresenceDot } from "./PresenceDot";
 
-export function UserWidget() {
+type Props = {
+    // Whether the status card over the control bar is open.
+    isOpen: boolean;
+    onToggle: () => void;
+};
+
+/**
+ * The avatar of the person in the control bar. Clicking it opens and closes
+ * the status card that grows out of the bar.
+ */
+export function UserWidget({ isOpen, onToggle }: Props) {
     const { user } = useAuth();
-    const logout = useLogout();
+
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <Button
-                        variant="ghost"
-                        size="icon-lg"
-                        className="relative size-9 rounded-xl p-0"
-                        aria-label="Menu do usuário"
-                    >
-                        <UserAvatar
-                            id={user.id}
-                            name={user.name}
-                            avatar={user.profilePictureUrl}
-                            className="size-9 rounded-xl after:rounded-xl"
-                            fallbackClassName="rounded-xl text-sm"
-                        />
-                        <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-muted bg-emerald-500" />
-                    </Button>
-                }
+        <Button
+            type="button"
+            variant="ghost"
+            size="icon-lg"
+            className="relative size-9 rounded-xl p-0"
+            aria-label="Meu status"
+            aria-expanded={isOpen}
+            onClick={onToggle}
+        >
+            <UserAvatar
+                id={user.id}
+                name={user.name}
+                avatar={user.profilePictureUrl}
+                className="size-9 rounded-xl after:rounded-xl"
+                fallbackClassName="rounded-xl text-sm"
             />
-            <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel className="py-1.5">
-                        <UserAvatarInfo
-                            id={user.id}
-                            name={user.name}
-                            avatar={user.profilePictureUrl}
-                            size="default"
-                            nameClassName="max-w-40"
-                        />
-                    </DropdownMenuLabel>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <div className="flex items-center justify-between gap-2 px-1.5 py-1">
-                    <span className="max-w-32 truncate text-xs text-muted-foreground">
-                        {user.email}
-                    </span>
-                    <Button variant="ghost" size="sm" onClick={logout}>
-                        Sair
-                    </Button>
-                </div>
-            </DropdownMenuContent>
-        </DropdownMenu>
+            <PresenceDot />
+        </Button>
     );
 }

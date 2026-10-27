@@ -2,7 +2,7 @@ import {
     EMOTE_COMBO_MAX,
     EMOTE_COMBO_MIN,
     EMOTE_MAX_LENGTH,
-    type PeerEmotePayload,
+    type SpaceEmoteInput,
 } from "@standin/contracts";
 
 const PICTOGRAPHIC = /\p{Extended_Pictographic}/u;
@@ -26,7 +26,7 @@ export const isSingleEmoji = (text: unknown): text is string => {
 
 // The emote of a peer is not trusted: one emoji, and a count that is a whole
 // number from 1 to the combo limit. Returns null when it is not an emote.
-export const validateEmote = (data: unknown): PeerEmotePayload | null => {
+export const validateEmote = (data: unknown): SpaceEmoteInput | null => {
     if (typeof data !== "object" || data === null) return null;
 
     const candidate = data as Record<string, unknown>;

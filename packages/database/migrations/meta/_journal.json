@@ -99,6 +99,13 @@
       "when": 1792698703237,
       "tag": "0013_add_message_threads",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793124108651,
+      "tag": "0014_add_space_proximity_preset",
+      "breakpoints": true
     }
   ]
 }
