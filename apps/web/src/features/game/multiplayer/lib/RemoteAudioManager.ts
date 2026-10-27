@@ -1,3 +1,5 @@
+import { getAudibleCeiling, selectAudiblePeers } from "../utils/audio";
+
 type SinkableAudioElement = HTMLAudioElement & {
     setSinkId?: (deviceId: string) => Promise<void>;
 };
@@ -19,6 +21,14 @@ export class RemoteAudioManager {
     // is applied on top.
     private readonly proximityVolumes = new Map<string, number>();
     private masterVolume = 1;
+    private readonly speakingPeers = new Set<string>();
+    // Peers in range that lost the ceiling: paused, but kept attached.
+    private readonly suspendedPeers = new Set<string>();
+    private readonly ceiling = getAudibleCeiling(
+        typeof navigator === "undefined"
+            ? {}
+            : (navigator as Navigator & { deviceMemory?: number })
+    );
     // play() is async: its rejection can land after remove()/removeAll()
     // already ran (e.g. on unmount). Without this, that late rejection
     // would re-insert the (already torn down) element into
@@ -60,6 +70,8 @@ export class RemoteAudioManager {
         audio.srcObject = null;
         this.audioElements.delete(socketId);
         this.proximityVolumes.delete(socketId);
+        this.speakingPeers.delete(socketId);
+        this.suspendedPeers.delete(socketId);
         this.blockedAudioElements.delete(audio);
     }
 
@@ -86,6 +98,46 @@ export class RemoteAudioManager {
 
         this.proximityVolumes.set(socketId, volume);
         audio.volume = volume * this.masterVolume;
+        this.applyCeiling();
+    }
+
+    // Fed by the speaking detectors. Speakers win the audible slots.
+    setSpeaking(socketId: string, isSpeaking: boolean): void {
+        if (!this.audioElements.has(socketId)) return;
+
+        if (isSpeaking) this.speakingPeers.add(socketId);
+        else this.speakingPeers.delete(socketId);
+        this.applyCeiling();
+    }
+
+    // Pauses the in-range peers beyond the ceiling and resumes the ones that
+    // made it back in. Volume itself stays the local distance curve.
+    private applyCeiling(): void {
+        const audible = selectAudiblePeers(
+            Array.from(this.proximityVolumes, ([id, volume]) => ({
+                id,
+                volume,
+                isSpeaking: this.speakingPeers.has(id),
+            })),
+            this.ceiling
+        );
+
+        this.audioElements.forEach((audio, socketId) => {
+            const inRange = (this.proximityVolumes.get(socketId) ?? 0) > 0;
+            const suspended = this.suspendedPeers.has(socketId);
+
+            if (inRange && !audible.has(socketId)) {
+                if (suspended) return;
+                this.suspendedPeers.add(socketId);
+                this.blockedAudioElements.delete(audio);
+                audio.pause();
+                return;
+            }
+
+            if (!suspended) return;
+            this.suspendedPeers.delete(socketId);
+            this.attemptPlay(audio);
+        });
     }
 
     // The user's own output volume, applied on top of every peer's distance

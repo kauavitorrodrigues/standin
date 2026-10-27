@@ -2,12 +2,14 @@ import type { Response } from "express";
 import { UserService } from "@standin/core";
 import { sendError } from "@/utils/sendError";
 import type { ExtendedRequest } from "@/types/request";
+import { UserCache } from "@/features/auth/services/userCache";
 
 export const deleteUser = async (req: ExtendedRequest, res: Response) => {
     try {
         if (!req.user) return;
 
         await UserService.delete(req.user.id);
+        UserCache.invalidate(req.user.id);
 
         res.clearCookie("token");
         res.sendStatus(200);

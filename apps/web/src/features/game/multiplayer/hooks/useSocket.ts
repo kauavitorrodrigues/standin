@@ -4,6 +4,15 @@ import type { SocketStatus } from "../types/socket";
 
 type Transport = Socket["io"]["engine"]["transport"];
 
+// Report of the connection state of the socket.
+// Timestamps are epoch milliseconds, null until the event first happens.
+export type ConnectionReport = {
+    isConnected: boolean;
+    lastConnectedAt: number | null;
+    lastDisconnectedAt: number | null;
+    transport: Transport["name"];
+};
+
 export type SocketContextType = {
     isConnected: boolean;
     transport: Transport["name"];
@@ -14,6 +23,7 @@ export type SocketContextType = {
     // Distinct from lastError/status: this is terminal for the tab until the
     // user acts on it, not a transient connection error to retry silently.
     isDuplicateSession: boolean;
+    connectionReport: ConnectionReport;
 };
 
 export const SocketContext = createContext<SocketContextType | null>(null);

@@ -9,10 +9,10 @@ export const useCreateDirectConversation = () => {
     const organizationId = useOrganization().organization?.id ?? "";
 
     return useMutation({
-        mutationFn: async (recipientUserId: string): Promise<Conversation> => {
+        mutationFn: async (recipientUserIds: string[]): Promise<Conversation> => {
             const res = await api.post(
                 `/organizations/${organizationId}/conversations/direct`,
-                { recipientUserId }
+                { recipientUserIds }
             );
             return res.data.conversation;
         },

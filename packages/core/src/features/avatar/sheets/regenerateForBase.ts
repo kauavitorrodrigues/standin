@@ -9,6 +9,7 @@ import {
 } from "@standin/database";
 import { publishAvatarSheetChanged } from "../utils/sheetEvents";
 import { ensureSheetUpToDate } from "./ensureSheetUpToDate";
+import { markSheetStale } from "./staleSheets";
 
 // The people drawn on a base: the ones that chose it and, when it is the
 // default one, the ones with a sheet that never chose any base. A mannequin is
@@ -57,7 +58,8 @@ const hasAssembledSheet = async (userId: string): Promise<boolean> => {
  * (which tells the listeners when the sheet changes). A person with no parts is
  * drawn with the file of the base itself, so the listeners are told here. A
  * failure for one person is logged and does not stop the others, because the
- * lazy refresh will try again when that person joins a space. Call it before
+ * person is marked and the sheet is assembled again, in the background, when
+ * they join a space. Call it before
  * the old file of the base is deleted. People with no choice at all are not
  * listed, they get the new file when they join a space. Returns how many people
  * were visited.
@@ -73,6 +75,7 @@ export const regenerateForBase = async (baseId: string): Promise<number> => {
             }
         } catch (error) {
             console.error(error);
+            markSheetStale(userId);
         }
     }
     return userIds.length;

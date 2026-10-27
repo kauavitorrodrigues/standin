@@ -10,20 +10,25 @@ const FULL_ALPHA = 1;
 export const stepEmoteParticle = (
     particle: EmoteParticleState,
     delta: number
+): EmoteParticleState => advanceEmoteParticle({ ...particle }, delta);
+
+// The same frame, written into the particle itself, so the per-frame loop of
+// the emitter builds no state object. Returns the particle it was given.
+export const advanceEmoteParticle = (
+    particle: EmoteParticleState,
+    delta: number
 ): EmoteParticleState => {
     if (isEmoteParticleWaiting(particle)) {
-        return { ...particle, delayMs: particle.delayMs - delta };
+        particle.delayMs -= delta;
+        return particle;
     }
 
     const seconds = delta / MS_PER_SECOND;
-    const velocityY = particle.velocityY + EMOTE_PARTICLE.GRAVITY * seconds;
-    return {
-        ...particle,
-        ageMs: particle.ageMs + delta,
-        velocityY,
-        x: particle.x + particle.velocityX * seconds,
-        y: particle.y + velocityY * seconds,
-    };
+    particle.ageMs += delta;
+    particle.velocityY += EMOTE_PARTICLE.GRAVITY * seconds;
+    particle.x += particle.velocityX * seconds;
+    particle.y += particle.velocityY * seconds;
+    return particle;
 };
 
 export const isEmoteParticleWaiting = (particle: EmoteParticleState): boolean =>

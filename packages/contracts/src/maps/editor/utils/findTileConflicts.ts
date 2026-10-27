@@ -45,7 +45,7 @@ const paintsWallTile = (
 };
 
 /**
- * Cells of a paint or erase that conflict with a placed object (spec 4.4).
+ * Cells of a paint or erase that conflict with a placed object.
  * Only the walls layer conflicts: a WALL tile cannot go under a GROUND
  * object, and a WALL tile under a WALL object cannot be erased or replaced by
  * something that is not a wall. Floor, decoration and ceiling never conflict.

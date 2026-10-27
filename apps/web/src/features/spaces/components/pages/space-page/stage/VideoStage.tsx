@@ -1,13 +1,11 @@
-import {
-    MAX_VISIBLE_STAGE_TILES,
-    STAGE_VIEW_TRANSITION_MS,
-} from "@/features/spaces/consts/stage";
+import { useEffect } from "react";
+import { STAGE_VIEW_TRANSITION_MS } from "@/features/spaces/consts/stage";
+import { useStageCarousel } from "@/features/spaces/hooks/useStageCarousel";
 import { usePresence } from "@/hooks/usePresence";
 import type { StageTile } from "@/features/spaces/types/stage";
-import { splitVisibleTiles } from "@/features/spaces/utils/splitVisibleTiles";
 import { StageFrame } from "@/features/spaces/components/pages/space-page/stage/StageFrame";
 import { AllTilesView } from "@/features/spaces/components/pages/space-page/stage/AllTilesView";
-import { OverflowTile } from "@/features/spaces/components/pages/space-page/stage/OverflowTile";
+import { CarouselControls } from "@/features/spaces/components/pages/space-page/stage/CarouselControls";
 import { VideoTile } from "@/features/spaces/components/pages/space-page/stage/VideoTile";
 
 type VideoStageProps = {
@@ -18,6 +16,11 @@ type VideoStageProps = {
     gridTileId?: string;
     onOpenGrid: (tileId?: string) => void;
     onCloseGrid: () => void;
+    pinnedIds: readonly string[];
+    onTogglePin: (tileId: string) => void;
+    // Ids of the videos on screen, or `null` for all of them. Videos off the
+    // current page are not attached, so they are not decoded.
+    onActiveVideosChange: (ids: ReadonlySet<string> | null) => void;
 };
 
 export const VideoStage = ({
@@ -26,11 +29,17 @@ export const VideoStage = ({
     gridTileId,
     onOpenGrid,
     onCloseGrid,
+    pinnedIds,
+    onTogglePin,
+    onActiveVideosChange,
 }: VideoStageProps) => {
-    const { visible, hiddenCount } = splitVisibleTiles(
-        tiles,
-        MAX_VISIBLE_STAGE_TILES
-    );
+    const {
+        visible,
+        carouselIndex,
+        pageCount,
+        goToNextPage,
+        goToPreviousPage,
+    } = useStageCarousel(tiles, pinnedIds);
     // The full view stays mounted while it zooms out.
     const { isMounted: isGridMounted, isExiting } = usePresence(
         isGridOpen,
@@ -40,28 +49,47 @@ export const VideoStage = ({
     // unmounted, so no stream is rendered in two places at once.
     const isStripVisible = tiles.length > 0 && !isGridMounted;
 
+    const activeKey = isGridMounted
+        ? null
+        : visible.map((tile) => tile.id).join("|");
+    useEffect(() => {
+        onActiveVideosChange(
+            activeKey === null ? null : new Set(activeKey.split("|"))
+        );
+    }, [activeKey, onActiveVideosChange]);
+    useEffect(
+        () => () => onActiveVideosChange(null),
+        [onActiveVideosChange]
+    );
+
     return (
         <>
             {isStripVisible && (
                 <StageFrame>
                     <div className="pointer-events-auto flex min-w-0 max-w-full items-center gap-2 overflow-x-auto rounded-xl bg-neutral-900/50 p-2 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
+                        <CarouselControls
+                            direction="previous"
+                            carouselIndex={carouselIndex}
+                            pageCount={pageCount}
+                            onClick={goToPreviousPage}
+                        />
                         {visible.map((tile) => (
                             <div key={tile.id} className="shrink-0">
                                 <VideoTile
                                     tile={tile}
                                     showExpandHint
+                                    isPinned={pinnedIds.includes(tile.id)}
+                                    onTogglePin={() => onTogglePin(tile.id)}
                                     onSelect={() => onOpenGrid(tile.id)}
                                 />
                             </div>
                         ))}
-                        {hiddenCount > 0 && (
-                            <div className="shrink-0">
-                                <OverflowTile
-                                    hiddenCount={hiddenCount}
-                                    onOpen={() => onOpenGrid()}
-                                />
-                            </div>
-                        )}
+                        <CarouselControls
+                            direction="next"
+                            carouselIndex={carouselIndex}
+                            pageCount={pageCount}
+                            onClick={goToNextPage}
+                        />
                     </div>
                 </StageFrame>
             )}

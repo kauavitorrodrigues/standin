@@ -23,6 +23,33 @@ export const GameErrorMessages = {
             invalid: "The answer must be true or false.",
         },
     },
+    position: {
+        coordinate: {
+            invalid: "The coordinate must be a number inside the world.",
+        },
+        direction: {
+            invalid: "The direction is invalid.",
+        },
+        isSitting: {
+            invalid: "The sitting state must be true or false.",
+        },
+    },
+    emote: {
+        emoji: {
+            invalid: "The emote must be a single emoji.",
+        },
+        count: {
+            invalid: "The emote count is out of range.",
+        },
+    },
+    nearby: {
+        text: {
+            invalid: "The nearby message is invalid.",
+        },
+        isTyping: {
+            invalid: "The typing state must be true or false.",
+        },
+    },
     webrtcSignal: {
         targetSocketId: {
             required: "The target socket is required.",

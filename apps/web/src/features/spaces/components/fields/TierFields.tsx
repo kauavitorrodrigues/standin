@@ -8,7 +8,7 @@ type Props = {
     onSelect: (tier: SizeTier) => void;
 };
 
-// The size of the space, in people, like the office size of Gather.
+// The size of the space, in people.
 export const TierFields = ({ tier, disabled, onSelect }: Props) => (
     <div className="flex flex-col gap-2">
         <p className="text-sm font-medium">Tamanho do espaço</p>

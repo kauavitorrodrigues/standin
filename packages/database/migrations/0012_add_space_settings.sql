@@ -1,0 +1,1 @@
+ALTER TABLE "spaces" ADD COLUMN "enable_send_nearby_in_map_view" boolean DEFAULT true NOT NULL;

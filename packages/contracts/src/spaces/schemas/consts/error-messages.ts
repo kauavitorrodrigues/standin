@@ -14,6 +14,9 @@ export const SpaceErrorMessages = {
     organizationId: {
         invalid: "The space organization ID is invalid.",
     },
+    settings: {
+        invalid: "A space setting must be true or false.",
+    },
     mapId: {
         invalid: "The space map ID is invalid.",
     },

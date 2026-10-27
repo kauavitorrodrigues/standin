@@ -5,14 +5,21 @@ import { SettingSelect } from "./SettingSelect";
 
 type Option<T extends string> = { value: T; label: string };
 
-type Props<K extends keyof ScreenShareSettings> = {
+// The fields that are a choice from a list. The boolean ones have a switch.
+type SelectableField = {
+    [K in keyof ScreenShareSettings]: ScreenShareSettings[K] extends string
+        ? K
+        : never;
+}[keyof ScreenShareSettings];
+
+type Props<K extends SelectableField> = {
     field: K;
     ariaLabel: string;
     options: Option<ScreenShareSettings[K]>[];
 };
 
 // One field of the screen share settings, saved as soon as it changes.
-export const ScreenShareSettingsSelect = <K extends keyof ScreenShareSettings>({
+export const ScreenShareSettingsSelect = <K extends SelectableField>({
     field,
     ariaLabel,
     options,

@@ -12,3 +12,16 @@ export const getAvatarHitRect = (anchor: {
     width: AVATAR.hit.w,
     height: AVATAR.hit.h,
 });
+
+// Same rect written into `out`, for the per-frame hover feed that must not
+// allocate a rect for every avatar on every frame.
+export const writeAvatarHitRect = (
+    anchor: { x: number; y: number },
+    out: PlacedRect
+): PlacedRect => {
+    out.x = anchor.x - AVATAR.hit.w / 2;
+    out.y = anchor.y - AVATAR.hit.h;
+    out.width = AVATAR.hit.w;
+    out.height = AVATAR.hit.h;
+    return out;
+};

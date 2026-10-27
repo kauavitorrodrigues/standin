@@ -1,8 +1,7 @@
 // The look of the name tag over an avatar. It is a DOM element that follows
 // the avatar (see `NameTag`), so the sizes are CSS px. The values were measured
-// on the Gather tag at the same pixel density (the font is the 12px the game
-// asks for), so the tag is the same size and shape: a rounded box with a small
-// tail pointing down at the avatar.
+// at the pixel density of the game (the font is the 12px the game asks for):
+// a rounded box with a small tail pointing down at the avatar.
 export const NAME_TAG = {
     // The box without the tail, which has one line of text.
     HEIGHT: 24,
@@ -16,11 +15,11 @@ export const NAME_TAG = {
     FONT_SIZE: 12,
     LINE_HEIGHT: 16,
     FONT_WEIGHT: 400,
-    // Inter sits a pixel higher in the line here than in the Gather tag.
+    // Inter sits a pixel higher in the line here than in a plain font.
     TEXT_OFFSET_Y: 1,
     // The green dot that says the person is online.
     DOT_SIZE: 8,
-    // The Gather dot sits a pixel to the right of where the padding puts it,
+    // The dot sits a pixel to the right of where the padding puts it,
     // with the name staying where it is.
     DOT_OFFSET_X: 1,
     // The photo that takes the place of the dot when the tag is clicked.
@@ -38,13 +37,17 @@ export const NAME_TAG = {
     MAX_CHARACTERS: 20,
     ELLIPSIS: "...",
     // The tag keeps its size on the screen at every zoom and only its position
-    // follows the avatar, like the Gather tag. True makes it grow and shrink
+    // follows the avatar. True makes it grow and shrink
     // with the zoom, as a part of the map would.
     SCALES_WITH_ZOOM: false,
     // The tag of another person stays under the one of the local player, and
     // inside a layer the lower avatar of the map draws over the one behind it.
     // A layer is taller than any map, so the order by height never runs out.
     Z_INDEX_PER_LAYER: 100_000,
+    // The overlay draws the content of its tags at most this often (10 Hz).
+    // The positions are not held back: they only follow the camera and the
+    // avatars, and are written when one of them moved.
+    OVERLAY_RENDER_INTERVAL_MS: 100,
 } as const;
 
 // The box and its tail, which is what takes room over the avatar.

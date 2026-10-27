@@ -6,25 +6,26 @@ import {
     and,
     isNull,
     sql,
+    inArray,
 } from "@standin/database";
 import type { Transaction } from "@standin/database";
 import {
     CONVERSATION_TYPES,
-    SelfConversationNotAllowedError,
+    DirectConversationTooLargeError,
+    MAX_DIRECT_CONVERSATION_MEMBERS,
     ConversationRecipientAccessDeniedError,
 } from "@standin/contracts";
 import type { Conversation } from "@standin/contracts";
 import { OrganizationService } from "../organizations";
 
-// A DIRECT conversation matches this pair only when it has exactly these
-// two active participants and nobody else. Matching on "both are members"
-// alone would also match a group conversation that happens to include both.
-// Dedup is app-level, not a DB constraint.
+// A DIRECT conversation matches a member set only when its active
+// participants are exactly that set. Matching on "all are members" alone
+// would also match a bigger group that happens to include them. A set of one
+// is the conversation with yourself. Dedup is app-level, not a DB constraint.
 const findExistingDirectConversation = async (
     tx: Transaction,
     organizationId: string,
-    userAId: string,
-    userBId: string
+    memberIds: string[]
 ): Promise<{ id: string } | null> => {
     const [existing] = await tx
         .select({
@@ -48,7 +49,7 @@ const findExistingDirectConversation = async (
         )
         .groupBy(conversationParticipantsTable.conversationId)
         .having(
-            sql`count(*) = 2 and count(*) filter (where ${conversationParticipantsTable.userId} in (${userAId}, ${userBId})) = 2`
+            sql`count(*) = ${memberIds.length} and count(*) filter (where ${inArray(conversationParticipantsTable.userId, memberIds)}) = ${memberIds.length}`
         );
 
     return existing ? { id: existing.conversationId } : null;
@@ -56,36 +57,42 @@ const findExistingDirectConversation = async (
 
 export const findOrCreateDirectConversation = async (
     organizationId: string,
-    userAId: string,
-    userBId: string
+    creatorId: string,
+    recipientUserIds: string[]
 ): Promise<Conversation> => {
-    if (userAId === userBId) throw new SelfConversationNotAllowedError();
+    // The creator is always a member, and a repeated id is the same person.
+    const memberIds = [...new Set([creatorId, ...recipientUserIds])].sort();
 
-    const recipientIsActiveMember =
-        await OrganizationService.hasActiveMembership(userBId, organizationId);
+    // Same cap as the contract, since core can be called without it.
+    if (memberIds.length > MAX_DIRECT_CONVERSATION_MEMBERS) {
+        throw new DirectConversationTooLargeError();
+    }
 
-    if (!recipientIsActiveMember) {
-        throw new ConversationRecipientAccessDeniedError();
+    for (const memberId of memberIds) {
+        if (memberId === creatorId) continue;
+
+        const isActiveMember = await OrganizationService.hasActiveMembership(
+            memberId,
+            organizationId
+        );
+        if (!isActiveMember) throw new ConversationRecipientAccessDeniedError();
     }
 
     // Lookup and insert run inside the same transaction, serialized by a
-    // pg_advisory_xact_lock keyed on the ordered pair + organization. Two
-    // concurrent calls for the same pair now block on each other instead of
+    // pg_advisory_xact_lock keyed on the sorted member set + organization.
+    // Two concurrent calls for the same set block on each other instead of
     // racing: the second one only proceeds (and sees the first one's insert
     // via the lookup) after the first transaction commits and releases the
     // lock. No DB-level uniqueness needed (dedup stays app-level).
-    const [userLo, userHi] = [userAId, userBId].sort();
-
     const conversation = await db.transaction(async (tx) => {
         await tx.execute(
-            sql`select pg_advisory_xact_lock(hashtext(${`${organizationId}:${userLo}:${userHi}`}))`
+            sql`select pg_advisory_xact_lock(hashtext(${`${organizationId}:${memberIds.join(":")}`}))`
         );
 
         const existing = await findExistingDirectConversation(
             tx,
             organizationId,
-            userAId,
-            userBId
+            memberIds
         );
         if (existing) return existing;
 
@@ -94,10 +101,12 @@ export const findOrCreateDirectConversation = async (
             .values({ type: CONVERSATION_TYPES.DIRECT, organizationId })
             .returning({ id: conversationsTable.id });
 
-        await tx.insert(conversationParticipantsTable).values([
-            { conversationId: created.id, userId: userAId },
-            { conversationId: created.id, userId: userBId },
-        ]);
+        await tx.insert(conversationParticipantsTable).values(
+            memberIds.map((userId) => ({
+                conversationId: created.id,
+                userId,
+            }))
+        );
 
         return created;
     });

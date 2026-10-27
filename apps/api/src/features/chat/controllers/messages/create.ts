@@ -20,7 +20,11 @@ export const createMessage = async (req: ExtendedRequest, res: Response) => {
 
         const data = parseSchema(
             MessageDataSchema,
-            { content: req.body.content },
+            {
+                content: req.body.content,
+                threadParentId: req.body.threadParentId,
+                showThreadReplyInChannel: req.body.showThreadReplyInChannel,
+            },
             res
         );
         if (!data) return;
@@ -38,16 +42,31 @@ export const createMessage = async (req: ExtendedRequest, res: Response) => {
         const message = await MessageService.create(
             params.conversationId,
             req.user.id,
-            { content: data.content, attachmentFiles }
+            {
+                content: data.content,
+                attachmentFiles,
+                threadParentId: data.threadParentId,
+                showThreadReplyInChannel: data.showThreadReplyInChannel,
+            }
         );
+
+        const threadSummary = message.threadParentId
+            ? await MessageService.threadSummary(message.threadParentId)
+            : null;
 
         void notifyNewMessage(
             params.conversationId,
             params.organizationId,
-            req.user.id
+            {
+                id: req.user.id,
+                name: req.user.name,
+                profilePictureUrl: req.user.profilePictureUrl,
+            },
+            message,
+            threadSummary
         );
 
-        res.status(201).json({ message });
+        res.status(201).json({ message, threadSummary });
     } catch (error) {
         return sendError({
             res,

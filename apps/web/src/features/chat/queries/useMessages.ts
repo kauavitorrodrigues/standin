@@ -7,27 +7,37 @@ import type {
 } from "@standin/contracts";
 import { api } from "@/lib/axios/api";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
-import { messagesQueryKey } from "@/features/chat/queries/queryKey";
+import { messagesListQueryKey } from "@/features/chat/queries/queryKey";
 
 const fetchMessages = async (
     organizationId: string,
     conversationId: string,
-    cursor: string | undefined
+    cursor: string | undefined,
+    threadParentId: string | undefined
 ): Promise<ConversationMessagesListResponse> => {
     const res = await api.get(
         `/organizations/${organizationId}/conversations/${conversationId}/messages`,
-        { params: cursor ? { cursor } : undefined }
+        { params: cursor || threadParentId ? { cursor, threadParentId } : undefined }
     );
     return res.data;
 };
 
-export const useConversationMessages = (conversationId: string) => {
+export const useConversationMessages = (
+    conversationId: string,
+    // Lists the replies of that top-level message instead of the main list.
+    threadParentId?: string
+) => {
     const organizationId = useOrganization().organization?.id ?? "";
 
     const query = useInfiniteQuery({
-        queryKey: messagesQueryKey(conversationId),
+        queryKey: messagesListQueryKey(conversationId, threadParentId),
         queryFn: ({ pageParam }) =>
-            fetchMessages(organizationId, conversationId, pageParam),
+            fetchMessages(
+                organizationId,
+                conversationId,
+                pageParam,
+                threadParentId
+            ),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         enabled: !!organizationId && !!conversationId,

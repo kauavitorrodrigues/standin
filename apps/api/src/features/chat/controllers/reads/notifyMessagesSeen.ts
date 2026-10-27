@@ -21,7 +21,7 @@ export const notifyMessagesSeen = async (
         );
 
         for (const userId of recipientIds) {
-            SocketManager.emitToUser(userId, ChatEvents.MESSAGE_SEEN, {
+            SocketManager.emitToNotify(userId, ChatEvents.MESSAGE_SEEN, {
                 conversationId,
             });
         }

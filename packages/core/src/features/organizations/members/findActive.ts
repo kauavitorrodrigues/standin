@@ -1,9 +1,9 @@
-import { organizationMembersTable, eq, and, isNull } from "@standin/database";
+import { db, organizationMembersTable, eq, and, isNull } from "@standin/database";
 import type { Transaction } from "@standin/database";
 
 export const findActiveOrganizationMembers = async (
     organizationId: string,
-    tx: Transaction
+    tx: Transaction | typeof db = db
 ): Promise<{ userId: string }[]> => {
     return tx
         .select({ userId: organizationMembersTable.userId })

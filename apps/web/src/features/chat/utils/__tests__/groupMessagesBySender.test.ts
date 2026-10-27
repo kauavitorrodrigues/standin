@@ -7,6 +7,11 @@ const buildMessage = (
 ): MessageWithDetails => ({
     conversationId: "conversation-1",
     content: "hi",
+    threadParentId: null,
+    showThreadReplyInChannel: false,
+    replyCount: 0,
+    lastReplyAt: null,
+    lastReplyPreview: null,
     createdAt: "2026-01-01T00:00:00.000Z",
     editedAt: null,
     attachments: [],

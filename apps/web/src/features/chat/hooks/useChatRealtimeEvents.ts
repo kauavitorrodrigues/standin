@@ -1,5 +1,10 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { ChatEvents } from "@standin/contracts";
+import { useEffect } from "react";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import {
+    ChatEvents,
+    type ConversationsListResponse,
+    type UnreadCounts,
+} from "@standin/contracts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { fetchConversations } from "@/features/chat/queries/useConversations";
 import { getConversationNotificationTitle } from "@/features/chat/utils/getConversationNotificationTitle";
@@ -9,7 +14,17 @@ import {
     shouldNotifyChat,
     shouldPlayChatSound,
 } from "@/features/notifications/utils/shouldNotifyChat";
+import { realtimeSocket } from "@/features/realtime/socket";
+import { applyUnreadCount } from "@/features/chat/utils/applyUnreadCount";
+import { applyMessageToConversations } from "@/features/chat/utils/applyMessageToConversations";
 import { useSocketEvent } from "@/features/realtime/hooks/useSocketEvent";
+import { applyCreatedMessageToMessages } from "@/features/chat/utils/applyCreatedMessageToMessages";
+import {
+    removeMessage,
+    updateMessage,
+    type MessagesData,
+} from "@/features/chat/utils/messagesCache";
+import { applyRemoteReactionToggle } from "@/features/chat/utils/toggleReactionSummary";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
 import {
     conversationsQueryKey,
@@ -17,26 +32,44 @@ import {
     unreadCountsQueryKey,
 } from "@/features/chat/queries/queryKey";
 
-// Fires whenever someone else sends a message in a conversation this user
-// can see, including while this client isn't on the space page for it.
-// Only ever triggers a refetch, never applies the payload directly to the
-// cache: the socket event just says "something changed", the REST fetch
-// remains the source of truth for content.
+const isCachedReply = (
+    queryClient: QueryClient,
+    conversationId: string,
+    messageId: string
+): boolean =>
+    queryClient
+        .getQueriesData<MessagesData>({
+            queryKey: messagesQueryKey(conversationId),
+        })
+        .some(([, data]) =>
+            data?.pages.some((page) =>
+                page.messages.some(
+                    (message) =>
+                        message.id === messageId && message.threadParentId !== null
+                )
+            )
+        );
+
+// Listens to what other people do in the conversations this user can see,
+// including while this client isn't on the space page for them. A new message
+// is applied straight to the caches, with the unread count the server worked
+// out for this user. The REST fetch stays the source of truth after a
+// reconnect.
 export const useChatRealtimeEvents = () => {
     const queryClient = useQueryClient();
     const organizationId = useOrganization().organization?.id ?? "";
     const { user } = useAuth();
 
-    // The event carries no message, so the conversation list is fetched
-    // fresh to know what arrived, who sent it and what kind of conversation
-    // it is. Only matters to someone tabbed away (see notifyWhenAway).
+    // The cached conversation list, already patched with the new message,
+    // gives the kind of conversation and how to title it. Only matters to
+    // someone tabbed away (see notifyWhenAway).
     const notifyIncomingMessage = async (conversationId: string) => {
         if (!document.hidden) return;
 
         const { conversations } = await queryClient.fetchQuery({
             queryKey: conversationsQueryKey(organizationId),
             queryFn: () => fetchConversations(organizationId),
-            staleTime: 0,
+            staleTime: Infinity,
         });
         const conversation = conversations.find(
             ({ id }) => id === conversationId
@@ -61,21 +94,124 @@ export const useChatRealtimeEvents = () => {
         });
     };
 
-    useSocketEvent(ChatEvents.UNREAD_CHANGED, ({ conversationId }) => {
-        void notifyIncomingMessage(conversationId);
-        queryClient.invalidateQueries({
-            queryKey: unreadCountsQueryKey(organizationId),
-        });
-        // Per-conversation badges (space row, DM list items) read
-        // unreadCount off this query, not off unreadCountsQueryKey, so it
-        // needs its own invalidation too.
-        queryClient.invalidateQueries({
-            queryKey: conversationsQueryKey(organizationId),
-        });
-        queryClient.invalidateQueries({
-            queryKey: messagesQueryKey(conversationId),
-        });
-    });
+    // Events missed while the socket was down are not replayed, so the counts
+    // and the list are fetched again once it is back.
+    useEffect(() => {
+        const refetchAfterReconnect = () => {
+            queryClient.invalidateQueries({
+                queryKey: unreadCountsQueryKey(organizationId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: conversationsQueryKey(organizationId),
+            });
+        };
+
+        realtimeSocket.io.on("reconnect", refetchAfterReconnect);
+        return () => {
+            realtimeSocket.io.off("reconnect", refetchAfterReconnect);
+        };
+    }, [queryClient, organizationId]);
+
+    // The server sends what happened after it saved it. A conversation that was
+    // never opened has no cache to update: it is fetched when it is.
+    useSocketEvent(
+        ChatEvents.MESSAGE_CREATED,
+        (payload) => {
+            const { conversationId, unreadCount } = payload;
+            // The badge and the last message come in the event, so neither the
+            // counts nor the list are refetched for a new message.
+            queryClient.setQueryData<UnreadCounts>(
+                unreadCountsQueryKey(organizationId),
+                (data) => applyUnreadCount(data, conversationId, unreadCount)
+            );
+            // The key prefix also reaches the cached searches, so a visible
+            // search result keeps its badge and last message current.
+            queryClient.setQueriesData<ConversationsListResponse>(
+                { queryKey: conversationsQueryKey(organizationId) },
+                (data) => applyMessageToConversations(data, payload)
+            );
+            // Only a conversation the list does not have yet is fetched.
+            const listed = queryClient
+                .getQueryData<ConversationsListResponse>(
+                    conversationsQueryKey(organizationId)
+                )
+                ?.conversations.some(({ id }) => id === conversationId);
+            if (listed === false) {
+                queryClient.invalidateQueries({
+                    queryKey: conversationsQueryKey(organizationId),
+                });
+            }
+            void notifyIncomingMessage(conversationId);
+
+            applyCreatedMessageToMessages(queryClient, payload);
+        }
+    );
+
+    // The key prefix reaches the main list and every open thread of the
+    // conversation, since a reply can sit in both.
+    useSocketEvent(
+        ChatEvents.MESSAGE_UPDATED,
+        ({ conversationId, messageId, userId: editingUserId, content, editedAt }) => {
+            queryClient.setQueriesData<MessagesData>(
+                { queryKey: messagesQueryKey(conversationId) },
+                (data) =>
+                    data &&
+                    updateMessage(data, messageId, (message) =>
+                        // Only the sender may edit, the same rule the API holds.
+                        message.senderId === editingUserId
+                            ? { ...message, content, editedAt }
+                            : message
+                    )
+            );
+        }
+    );
+
+    useSocketEvent(
+        ChatEvents.MESSAGE_DELETED,
+        ({ conversationId, messageId, userId: deletingUserId }) => {
+            const wasReply = isCachedReply(
+                queryClient,
+                conversationId,
+                messageId
+            );
+            queryClient.setQueriesData<MessagesData>(
+                { queryKey: messagesQueryKey(conversationId) },
+                (data) =>
+                    data &&
+                    removeMessage(
+                        data,
+                        messageId,
+                        (message) => message.senderId === deletingUserId
+                    )
+            );
+            // The parent's count is worked out by the server, so the main
+            // list is fetched again when a reply went away.
+            if (!wasReply) return;
+            queryClient.invalidateQueries({
+                queryKey: messagesQueryKey(conversationId),
+                exact: true,
+            });
+        }
+    );
+
+    useSocketEvent(
+        ChatEvents.REACTION_TOGGLED,
+        ({ conversationId, messageId, emoji, added }) => {
+            queryClient.setQueriesData<MessagesData>(
+                { queryKey: messagesQueryKey(conversationId) },
+                (data) =>
+                    data &&
+                    updateMessage(data, messageId, (message) => ({
+                        ...message,
+                        reactions: applyRemoteReactionToggle(
+                            message.reactions,
+                            emoji,
+                            added
+                        ),
+                    }))
+            );
+        }
+    );
 
     // Fires whenever someone else marks this conversation as read, so the
     // sender sees an instant "seen at"/"seen by" update instead of waiting

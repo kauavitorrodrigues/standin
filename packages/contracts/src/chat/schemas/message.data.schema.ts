@@ -17,6 +17,17 @@ export const MessageDataSchema = z.object({
         })
         .optional()
         .transform((value) => (value ? value : undefined)),
+    // A reply names its top-level parent, and may
+    // also show in the main conversation list. Multipart bodies send strings.
+    threadParentId: z
+        .string({ error: MessageErrorMessages.threadParentId.invalid })
+        .min(1, { error: MessageErrorMessages.threadParentId.invalid })
+        .optional(),
+    showThreadReplyInChannel: z
+        .union([z.boolean(), z.stringbool()], {
+            error: MessageErrorMessages.showThreadReplyInChannel.invalid,
+        })
+        .optional(),
 });
 
 export const SendMessageFormSchema = MessageDataSchema.extend({

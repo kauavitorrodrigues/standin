@@ -4,11 +4,7 @@ import {
     NAME_TAG_LAYERS,
     type NameTagLayer,
 } from "@/features/game/consts/name-tag";
-import {
-    NameTagPill,
-    type NameTagPillProps,
-} from "@/features/game/components/NameTagPill";
-import { ReactDomElement } from "@/features/game/lib/ReactDomElement";
+import { NameTagOverlay } from "@/features/game/lib/NameTagOverlay";
 import { getNameTagPosition } from "@/features/game/utils/getNameTagPosition";
 
 type Params = {
@@ -27,35 +23,31 @@ type Profile = {
 // The name over an avatar. It is placed over the feet it follows, with its
 // bottom center on the point `getNameTagPosition` gives.
 export class NameTag {
-    private readonly element: ReactDomElement<NameTagPillProps>;
+    private readonly overlay: NameTagOverlay;
+    private readonly id: number;
     private readonly baseLayer: NameTagLayer;
     private layer: NameTagLayer;
     private lastFeetY = 0;
     private name = "";
     private isAllowed = true;
+    private isTyping = false;
 
     constructor({ scene, isLocal, target }: Params) {
         this.baseLayer = isLocal
             ? NAME_TAG_LAYERS.LOCAL
             : NAME_TAG_LAYERS.OTHER;
         this.layer = this.baseLayer;
-        this.element = new ReactDomElement<NameTagPillProps>(
-            scene,
-            0,
-            0,
-            NameTagPill,
-            {
+        this.overlay = NameTagOverlay.forScene(scene);
+        this.id = this.overlay.add({
+            props: {
                 name: "",
                 isLocal,
                 isDetailed: false,
                 userId: "",
                 profilePictureUrl: null,
             },
-            { scalesWithZoom: NAME_TAG.SCALES_WITH_ZOOM }
-        )
-            .setOrigin(0.5, 1)
-            .setShown(false)
-            .setPositionSource(() => this.locate(target));
+            source: () => this.locate(target),
+        });
     }
 
     get hasName(): boolean {
@@ -73,19 +65,24 @@ export class NameTag {
     }
 
     setProfile({ userId, profilePictureUrl }: Profile): void {
-        this.element.setProps({ userId, profilePictureUrl });
+        this.overlay.setProps(this.id, { userId, profilePictureUrl });
     }
 
     // The chat icon in place of the dot, while a nearby message is written.
     setTyping(isTyping: boolean): void {
-        this.element.setProps({ isTyping });
+        // Called for every avatar on every frame, so an unchanged value must
+        // not build a props object.
+        if (isTyping === this.isTyping) return;
+
+        this.isTyping = isTyping;
+        this.overlay.setProps(this.id, { isTyping });
     }
 
     // The tag was clicked: the photo shows, it glows, and it draws over the
     // other tags.
     setDetailed(isDetailed: boolean): void {
         this.layer = isDetailed ? NAME_TAG_LAYERS.SELECTED : this.baseLayer;
-        this.element.setProps({ isDetailed });
+        this.overlay.setProps(this.id, { isDetailed });
         this.applyZIndex(this.lastFeetY);
     }
 
@@ -98,7 +95,7 @@ export class NameTag {
     }
 
     destroy(): void {
-        this.element.destroy();
+        this.overlay.remove(this.id);
     }
 
     // Called when the tag is drawn, with the feet of the avatar as they are
@@ -111,7 +108,8 @@ export class NameTag {
 
     private applyZIndex(feetY: number): void {
         this.lastFeetY = feetY;
-        this.element.setZIndex(
+        this.overlay.setZIndex(
+            this.id,
             this.layer * NAME_TAG.Z_INDEX_PER_LAYER +
                 Math.min(
                     Math.max(Math.round(feetY), 0),
@@ -123,7 +121,9 @@ export class NameTag {
     // A tag that is not shown holds no name at all, so a name the rules hide is
     // not sitting in the page either.
     private refreshVisibility(): void {
-        this.element.setProps({ name: this.isShown ? this.name : "" });
-        this.element.setShown(this.isShown);
+        this.overlay.setProps(this.id, {
+            name: this.isShown ? this.name : "",
+        });
+        this.overlay.setShown(this.id, this.isShown);
     }
 }

@@ -5,6 +5,7 @@
     "main": "./src/index.ts",
     "types": "./src/index.ts",
     "scripts": {
+        "test": "vitest run",
         "db:seed": "pnpm env:load tsx seed.ts && pnpm --filter api seed:library",
         "db:generate": "read -p 'Migration name: ' name && drizzle-kit generate --name $name",
         "db:migrate": "pnpm env:load drizzle-kit migrate",
@@ -19,11 +20,13 @@
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",
+        "@standin/vitest-config": "workspace:*",
         "@types/node": "26.4.0",
         "@types/pg": "8.23.1",
         "bcryptjs": "3.0.3",
         "dotenv-cli": "11.0.0",
         "drizzle-kit": "0.31.10",
-        "tsx": "4.23.12"
+        "tsx": "4.23.12",
+        "vitest": "4.1.10"
     }
 }

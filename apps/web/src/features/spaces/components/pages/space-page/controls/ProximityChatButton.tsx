@@ -14,7 +14,9 @@ import type { NearbyChatButtonState } from "@/features/nearby-chat/types/nearby-
 type Props = NearbyChatButtonState;
 
 // The button of the control bar that opens and closes the nearby chat panel.
-export const ProximityChatButton = ({ isOpen, onToggle }: Props) => {
+// A space that turned the nearby chat off has no button.
+export const ProximityChatButton = ({ isEnabled, isOpen, onToggle }: Props) => {
+    if (!isEnabled) return null;
     return (
         <Tooltip>
             <TooltipTrigger

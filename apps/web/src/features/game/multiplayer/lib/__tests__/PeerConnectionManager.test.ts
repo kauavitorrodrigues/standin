@@ -21,6 +21,8 @@ class FakeLink implements PeerLinkHandle {
     readonly signals: unknown[] = [];
     readonly encodings: Record<string, unknown> = {};
     closed = false;
+    iceRestarts = 0;
+    transportFailures = 0;
 
     readonly options: PeerLinkOptions;
 
@@ -28,6 +30,13 @@ class FakeLink implements PeerLinkHandle {
         this.options = options;
     }
 
+    forceIceRestart = () => {
+        this.iceRestarts += 1;
+    };
+    simulateTransportFailure = () => {
+        this.transportFailures += 1;
+    };
+    getVideoSenders = () => [] as RTCRtpSender[];
     getStreamId = (slot: MediaSlot) => `${slot}-stream`;
     signal = (signal: unknown) => void this.signals.push(signal);
     send = (data: string) => {
@@ -180,56 +189,6 @@ describe("PeerConnectionManager connections", () => {
 
         expect(link.closed).toBe(false);
         expect(events.onPeerConnected).toHaveBeenCalledWith("a");
-    });
-
-    it("only sends app data to open links", () => {
-        const { manager, connect } = setup();
-        const open = connect("a");
-        const closed = connect("b");
-        open.open();
-        open.sent.length = 0;
-
-        manager.broadcastTyping({
-            conversationId: "c",
-            userId: "u",
-            userName: "n",
-            isTyping: true,
-        });
-
-        expect(open.sent).toHaveLength(1);
-        expect(closed.sent).toHaveLength(0);
-    });
-
-    it("broadcasts an emote as an EMOTE message to open links only", () => {
-        const { manager, connect } = setup();
-        const open = connect("a");
-        const closed = connect("b");
-        open.open();
-        open.sent.length = 0;
-
-        manager.broadcastEmote({ emoji: "👏", count: 2 });
-
-        expect(open.sent.map((raw) => JSON.parse(raw))).toEqual([
-            {
-                type: PEER_MESSAGE_TYPES.EMOTE,
-                payload: { emoji: "👏", count: 2 },
-            },
-        ]);
-        expect(closed.sent).toHaveLength(0);
-    });
-
-    it("throttles position broadcasts", () => {
-        const { manager, connect } = setup();
-        const link = connect("a");
-        link.open();
-        link.sent.length = 0;
-        const position = { x: 1, y: 2, direction: "down", isSitting: false };
-
-        vi.setSystemTime(10_000);
-        manager.broadcastPosition(position as never);
-        manager.broadcastPosition(position as never);
-
-        expect(link.sent).toHaveLength(1);
     });
 
     it("parses incoming data and drops malformed frames", () => {

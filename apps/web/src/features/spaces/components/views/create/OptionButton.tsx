@@ -9,7 +9,7 @@ type Props = {
     children: ReactNode;
 };
 
-// One choice of the list, in the way of the Gather office size picker.
+// One choice of the list.
 export const OptionButton = ({
     selected,
     disabled,

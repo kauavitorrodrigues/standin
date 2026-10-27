@@ -22,22 +22,58 @@ export const findHoveredTarget = (
     return null;
 };
 
+type HoverCamera = Pick<Phaser.Cameras.Scene2D.Camera, "worldView" | "zoom">;
+
 export const toHoverState = (
     target: HoverTarget,
-    camera: Pick<Phaser.Cameras.Scene2D.Camera, "worldView" | "zoom">
+    camera: HoverCamera
+): HoverState =>
+    writeHoverState(target, camera, {
+        id: target.id,
+        screen: { x: 0, y: 0, width: 0, height: 0 },
+    });
+
+// Writes the state of a target into one the caller keeps, so a frame that
+// finds nothing new builds nothing. The caller copies it (copyHoverState) only
+// when it is about to hand it out.
+export const writeHoverState = (
+    target: HoverTarget,
+    camera: HoverCamera,
+    out: HoverState
 ): HoverState => {
     const { x, y, width, height } = target.bounds;
 
-    return {
-        id: target.id,
-        ...(target.label === undefined ? {} : { label: target.label }),
-        screen: {
-            x: Math.round((x - camera.worldView.x) * camera.zoom),
-            y: Math.round((y - camera.worldView.y) * camera.zoom),
-            width: Math.round(width * camera.zoom),
-            height: Math.round(height * camera.zoom),
-        },
-    };
+    out.id = target.id;
+    if (target.label === undefined) {
+        delete out.label;
+    } else {
+        out.label = target.label;
+    }
+    out.screen.x = Math.round((x - camera.worldView.x) * camera.zoom);
+    out.screen.y = Math.round((y - camera.worldView.y) * camera.zoom);
+    out.screen.width = Math.round(width * camera.zoom);
+    out.screen.height = Math.round(height * camera.zoom);
+    return out;
+};
+
+export const copyHoverState = (state: HoverState): HoverState => ({
+    id: state.id,
+    ...(state.label === undefined ? {} : { label: state.label }),
+    screen: { ...state.screen },
+});
+
+// A plain loop, since the controllers look targets up by id every frame.
+export const findTargetById = (
+    targets: readonly HoverTarget[],
+    id: string | null
+): HoverTarget | null => {
+    if (id === null) return null;
+
+    for (let index = 0; index < targets.length; index += 1) {
+        const target = targets[index]!;
+        if (target.id === id) return target;
+    }
+    return null;
 };
 
 export const isSameHover = (

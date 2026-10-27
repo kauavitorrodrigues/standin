@@ -1,19 +1,11 @@
 import {
     PEER_MESSAGE_TYPES,
-    type PeerChatPayload,
-    type PeerConfirmPayload,
-    type PeerDeletePayload,
-    type PeerEditPayload,
-    type PeerEmotePayload,
     type PeerMediaStatePayload,
     type PeerMessage,
-    type PeerNearbyMessagePayload,
-    type PeerNearbyTypingPayload,
-    type PeerReactionPayload,
-    type PeerTypingPayload,
-    type PlayerPosition,
 } from "@standin/contracts";
-import { PEER_CONNECT_TIMEOUT_MS, SEND_INTERVAL_MS } from "../consts/sync";
+import { PEER_CONNECT_TIMEOUT_MS } from "../consts/sync";
+import { getWebrtcCpuSignal } from "../../../settings/performance/lib/degradation/WebrtcCpuSignal";
+import { CpuLimitationPoller } from "./CpuLimitationPoller";
 import { PeerLink, type PeerLinkOptions } from "./PeerLink";
 import {
     MEDIA_SLOTS,
@@ -21,6 +13,7 @@ import {
     type PeerSignal,
     type RemoteTrack,
 } from "../types/transport";
+import { performanceOverrideStore } from "@/features/settings/performance/lib/performanceOverride";
 import { isPolitePeer } from "../utils/negotiation";
 import {
     getReceivingVideoPeers,
@@ -47,7 +40,10 @@ export type PeerLinkHandle = Pick<
     | "send"
     | "setTrack"
     | "setEncoding"
+    | "getVideoSenders"
     | "close"
+    | "forceIceRestart"
+    | "simulateTransportFailure"
 >;
 
 export type PeerLinkFactory = (options: PeerLinkOptions) => PeerLinkHandle;
@@ -83,11 +79,17 @@ export class PeerConnectionManager {
     };
     private events: PeerConnectionEvents;
     private readonly createLink: PeerLinkFactory;
-    private lastPositionSentAt = 0;
     private iceServers: RTCIceServer[] = [];
     private localSocketId: string | null = null;
     private localUserId: string | null = null;
     private localMicMuted = false;
+    // Feeds the shared WebrtcCpuSignal from the video senders of every link.
+    private readonly cpuPoller = new CpuLimitationPoller({
+        getVideoSenders: () =>
+            [...this.peers.values()].flatMap((link) => link.getVideoSenders()),
+        onSample: (sample) =>
+            getWebrtcCpuSignal().handleQualityLimitation(sample),
+    });
 
     constructor(
         events: PeerConnectionEvents,
@@ -147,6 +149,7 @@ export class PeerConnectionManager {
             },
         });
         this.peers.set(targetSocketId, link);
+        this.cpuPoller.start();
 
         this.connectTimeouts.set(
             targetSocketId,
@@ -206,78 +209,6 @@ export class PeerConnectionManager {
         this.policies.delete(socketId);
         this.announcedMediaState.delete(socketId);
         this.events.onPeerClosed(socketId);
-    }
-
-    private dispatch(message: PeerMessage): void {
-        const serialized = JSON.stringify(message);
-        this.peers.forEach((link) => {
-            if (link.isOpen) link.send(serialized);
-        });
-    }
-
-    broadcastPosition(state: PlayerPosition): void {
-        const now = Date.now();
-        if (now - this.lastPositionSentAt < SEND_INTERVAL_MS) return;
-
-        this.lastPositionSentAt = now;
-        this.dispatch({ type: PEER_MESSAGE_TYPES.POSITION, payload: state });
-    }
-
-    // No throttling here on purpose: a chat message is a discrete, user-
-    // triggered event (unlike position, which is sampled continuously), so
-    // every send must go out immediately.
-    broadcastChatMessage(payload: PeerChatPayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.CHAT, payload });
-    }
-
-    // Debouncing/expiry is the caller's responsibility (see SendMessageForm),
-    // same reasoning as broadcastChatMessage.
-    broadcastTyping(payload: PeerTypingPayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.TYPING, payload });
-    }
-
-    // Same reasoning as broadcastChatMessage: a reaction toggle is a
-    // discrete, user-triggered event, so it goes out immediately.
-    broadcastReaction(payload: PeerReactionPayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.REACTION, payload });
-    }
-
-    // Same reasoning as broadcastChatMessage: an edit is a discrete, user-
-    // triggered event, so it goes out immediately.
-    broadcastEdit(payload: PeerEditPayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.EDIT, payload });
-    }
-
-    // Same reasoning as broadcastChatMessage: a delete is a discrete, user-
-    // triggered event, so it goes out immediately.
-    broadcastDelete(payload: PeerDeletePayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.DELETE, payload });
-    }
-
-    // Same reasoning as broadcastChatMessage: an emote is a discrete, user-
-    // triggered event, and the combo is already grouped by EmoteSender. It goes
-    // to every peer on purpose; each receiver drops it when it is out of range.
-    broadcastEmote(payload: PeerEmotePayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.EMOTE, payload });
-    }
-
-    // Same reasoning as broadcastEmote: a nearby message is a discrete, user-
-    // triggered event that goes to every peer on purpose, and each receiver
-    // drops it when it is out of range or in another room.
-    broadcastNearbyMessage(payload: PeerNearbyMessagePayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.NEARBY_MESSAGE, payload });
-    }
-
-    // Throttling and expiry are the caller's responsibility, same as
-    // broadcastTyping.
-    broadcastNearbyTyping(payload: PeerNearbyTypingPayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.NEARBY_TYPING, payload });
-    }
-
-    // Sent once the API call behind an earlier broadcastChatMessage
-    // resolves, so peers can swap the temporary id for the real one.
-    broadcastConfirm(payload: PeerConfirmPayload): void {
-        this.dispatch({ type: PEER_MESSAGE_TYPES.CONFIRM, payload });
     }
 
     // Called whenever a local source changes: the mic stream becoming
@@ -340,9 +271,15 @@ export class PeerConnectionManager {
         this.sendMediaState(socketId);
     }
 
+    // Re-applies the encodings, for when the degradation override changes.
+    refreshEncodings(): void {
+        this.applyEncodings();
+    }
+
     private applyEncodings(): void {
         const receiverCount = this.getReceivingVideoPeers().size;
-        const camera = getVideoEncoding("camera", receiverCount);
+        const lowCameraBitrate = performanceOverrideStore.get().lowCameraBitrate;
+        const camera = getVideoEncoding("camera", receiverCount, lowCameraBitrate);
         const screen = getVideoEncoding("screen", receiverCount);
 
         this.peers.forEach((link) => {
@@ -391,6 +328,17 @@ export class PeerConnectionManager {
         this.peers.delete(socketId);
         this.policies.delete(socketId);
         this.announcedMediaState.delete(socketId);
+        if (this.peers.size === 0) this.cpuPoller.stop();
+    }
+
+    // Dev only, see simulateScenario.
+    restartIceOnAllPeers(): void {
+        this.peers.forEach((link) => link.forceIceRestart());
+    }
+
+    // Dev only, see simulateScenario.
+    simulateTransportFailureOnAllPeers(): void {
+        this.peers.forEach((link) => link.simulateTransportFailure());
     }
 
     destroyAll(): void {

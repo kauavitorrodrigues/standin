@@ -10,13 +10,6 @@ export const MESSAGE_TIME_FORMAT = "HH:mm";
 // so the server response can replace exactly that entry afterwards.
 export const OPTIMISTIC_MESSAGE_ID_PREFIX = "optimistic-";
 
-// Marks a message that only exists locally because it arrived over the P2P
-// mesh, not yet the persisted row from the API. Reconciled to the real id
-// by a CONFIRM broadcast once the sender's own API call resolves, the same
-// way OPTIMISTIC_MESSAGE_ID_PREFIX is reconciled for the sender's own
-// message.
-export const PEER_MESSAGE_ID_PREFIX = "peer-";
-
 export const EMPTY_MESSAGES_PAGE: ConversationMessagesListResponse = {
     messages: [],
     users: {},

@@ -4,13 +4,14 @@ import { parseSchema } from "@/utils/parseSchema";
 import { paramsSchema } from "@/utils/paramsSchema";
 import { sendError } from "@/utils/sendError";
 import type { ExtendedRequest } from "@/types/request";
+import { notifyMessageDeleted } from "./notifyMessageDeleted";
 
 export const deleteMessage = async (req: ExtendedRequest, res: Response) => {
     try {
         if (!req.user) return;
 
         const params = parseSchema(
-            paramsSchema("conversationId", "messageId"),
+            paramsSchema("organizationId", "conversationId", "messageId"),
             req.params,
             res,
         );
@@ -20,6 +21,12 @@ export const deleteMessage = async (req: ExtendedRequest, res: Response) => {
             params.conversationId,
             params.messageId,
             req.user.id,
+        );
+        void notifyMessageDeleted(
+            params.conversationId,
+            params.organizationId,
+            params.messageId,
+            req.user.id
         );
         res.status(200).json({ message });
     } catch (error) {

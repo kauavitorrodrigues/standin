@@ -8,7 +8,7 @@ export type NearbyLine = {
 };
 
 // The messages as lines with the name of whoever wrote them. A sender that does
-// not resolve to a name is left out, like Gather does.
+// not resolve to a name is left out.
 export const buildNearbyLines = (
     messages: readonly NearbyMessage[],
     names: ReadonlyMap<string, string>

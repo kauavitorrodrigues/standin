@@ -12,6 +12,7 @@ type Params = {
     userId: string;
     sendMessage: (text: string) => void;
     sendTyping: (isTyping: boolean) => void;
+    isEnabled: boolean;
 };
 
 // Makes the store of the nearby messages for this space and person, and hands it
@@ -24,6 +25,7 @@ export const useNearbyChatConnection = ({
     userId,
     sendMessage,
     sendTyping,
+    isEnabled,
 }: Params): NearbyChatConnection => {
     const store = useMemo(
         () =>
@@ -53,7 +55,7 @@ export const useNearbyChatConnection = ({
     }, [game, store]);
 
     return useMemo(
-        () => ({ store, sendMessage, sendTyping }),
-        [store, sendMessage, sendTyping]
+        () => ({ store, sendMessage, sendTyping, isEnabled }),
+        [store, sendMessage, sendTyping, isEnabled]
     );
 };

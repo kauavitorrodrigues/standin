@@ -4,13 +4,14 @@ import { parseSchema } from "@/utils/parseSchema";
 import { paramsSchema } from "@/utils/paramsSchema";
 import { sendError } from "@/utils/sendError";
 import type { ExtendedRequest } from "@/types/request";
+import { notifyReactionToggled } from "./notifyReactionToggled";
 
 export const removeReaction = async (req: ExtendedRequest, res: Response) => {
     try {
         if (!req.user) return;
 
         const params = parseSchema(
-            paramsSchema("conversationId", "messageId", "emoji"),
+            paramsSchema("organizationId", "conversationId", "messageId", "emoji"),
             req.params,
             res
         );
@@ -23,6 +24,14 @@ export const removeReaction = async (req: ExtendedRequest, res: Response) => {
             params.emoji
         );
 
+        void notifyReactionToggled({
+            conversationId: params.conversationId,
+            organizationId: params.organizationId,
+            messageId: params.messageId,
+            emoji: params.emoji,
+            actorId: req.user.id,
+            added: false,
+        });
         res.status(204).send();
     } catch (error) {
         return sendError({

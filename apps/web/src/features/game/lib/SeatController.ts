@@ -3,8 +3,7 @@ import type { SeatArea, SeatSpot } from "@/features/game/utils/buildSeatAreas";
 import { findNearestSeat } from "@/features/game/utils/findNearestSeat";
 import { isWithinReach } from "@/features/game/utils/isWithinReach";
 
-// Sits the avatar that comes to rest on a seat of a piece, with no key, like
-// Gather does. The piece does not block the way, so walking across it keeps
+// Sits the avatar that comes to rest on a seat of a piece, with no key. The piece does not block the way, so walking across it keeps
 // the avatar on its feet: it only sits once no movement key is pressed while
 // it is over the footprint. After standing up the avatar has to leave the
 // footprint before it can sit again, or it would sit back at once. A seat

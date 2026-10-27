@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { AVATAR } from "@standin/contracts";
 import { EMOTE_DEPTH, EMOTE_PARTICLE } from "@/features/game/consts/emote";
+import { ParticleBudget } from "@/features/game/lib/ParticleBudget";
 import type { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import type {
     EmoteParticleMotion,
@@ -12,7 +13,7 @@ import {
     getEmoteParticleAlpha,
     isEmoteParticleDone,
     isEmoteParticleWaiting,
-    stepEmoteParticle,
+    advanceEmoteParticle,
 } from "@/features/game/utils/stepEmoteParticle";
 
 type Particle = {
@@ -36,15 +37,20 @@ export class EmoteParticles {
     private readonly random: () => number;
     private readonly active: Particle[] = [];
     private readonly pool: Phaser.GameObjects.Sprite[] = [];
+    // Shared with every other particle emitter of the scene, so the cap on
+    // live particles is global.
+    private readonly budget: ParticleBudget;
 
     constructor(
         scene: Phaser.Scene,
         textures: EmojiTextureCache,
-        random: () => number = Math.random
+        random: () => number = Math.random,
+        budget: ParticleBudget = new ParticleBudget()
     ) {
         this.scene = scene;
         this.textures = textures;
         this.random = random;
+        this.budget = budget;
     }
 
     // `feet` is the anchor of the avatar, in world px.
@@ -73,11 +79,15 @@ export class EmoteParticles {
     update(delta: number): void {
         for (let index = this.active.length - 1; index >= 0; index -= 1) {
             const particle = this.active[index];
-            particle.state = stepEmoteParticle(particle.state, delta);
+            advanceEmoteParticle(particle.state, delta);
 
             if (isEmoteParticleDone(particle.state)) {
                 this.release(particle.sprite);
-                this.active.splice(index, 1);
+                this.budget.give();
+                // Iterating backwards, so the last one fills the hole and
+                // nothing shifts.
+                const last = this.active.pop();
+                if (last && last !== particle) this.active[index] = last;
                 continue;
             }
 
@@ -86,7 +96,10 @@ export class EmoteParticles {
     }
 
     destroy(): void {
-        this.active.forEach((particle) => particle.sprite.destroy());
+        this.active.forEach((particle) => {
+            particle.sprite.destroy();
+            this.budget.give();
+        });
         this.active.length = 0;
         this.pool.forEach((sprite) => sprite.destroy());
         this.pool.length = 0;
@@ -97,7 +110,7 @@ export class EmoteParticles {
         key: string,
         motion: EmoteParticleMotion
     ): void {
-        if (this.active.length >= EMOTE_PARTICLE.MAX_ACTIVE) return;
+        if (!this.budget.tryTake()) return;
 
         const particle: Particle = {
             sprite: this.acquire(key),

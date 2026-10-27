@@ -10,9 +10,14 @@ import {
 type StageTilesOptions = {
     video: ReturnType<typeof useSpaceConnection>["video"];
     selfUserId: string;
+    speakingUserIds: ReadonlySet<string>;
 };
 
-export const useStageTiles = ({ video, selfUserId }: StageTilesOptions) => {
+export const useStageTiles = ({
+    video,
+    selfUserId,
+    speakingUserIds,
+}: StageTilesOptions) => {
     // Names come from the organization's members, not from the space
     // conversation's participants: that list is a snapshot from when the
     // space was created, so it would not know anyone who joined the
@@ -39,6 +44,7 @@ export const useStageTiles = ({ video, selfUserId }: StageTilesOptions) => {
                 selfUserId,
                 includeSelf: isOnStage,
                 mutedUserIds,
+                speakingUserIds,
                 localScreenStream: screenShare.stream,
                 names: buildNameLookup(members),
             }),
@@ -49,6 +55,7 @@ export const useStageTiles = ({ video, selfUserId }: StageTilesOptions) => {
             selfUserId,
             isOnStage,
             mutedUserIds,
+            speakingUserIds,
             screenShare.stream,
             members,
         ]

@@ -8,13 +8,15 @@ import { HOVER_OUTLINE } from "@/features/editor/consts/hover-outline";
 import { drawObjectOutline } from "@/features/editor/utils/drawObjectOutline";
 import type { HoverState, HoverTarget } from "@/features/game/types/hover";
 import {
+    copyHoverState,
     findHoveredTarget,
+    findTargetById,
     getHoverClickEvent,
     getHoverPinEvent,
     getHoverSelectEvent,
     getSelectedStateEvent,
     isSameHover,
-    toHoverState,
+    writeHoverState,
 } from "@/features/game/utils/hover";
 
 // Outlines the target under the mouse with the same box the editor draws
@@ -43,6 +45,17 @@ export class HoverTargetController {
     private selectedId: string | null = null;
     private last: HoverState | null = null;
     private lastSelected: HoverState | null = null;
+    // Reused by every frame, so a still mouse over a target builds nothing.
+    // `last` and `lastSelected` are copies, since they are handed to the page.
+    private readonly hoverScratch: HoverState = {
+        id: "",
+        screen: { x: 0, y: 0, width: 0, height: 0 },
+    };
+    private readonly selectedScratch: HoverState = {
+        id: "",
+        screen: { x: 0, y: 0, width: 0, height: 0 },
+    };
+    private readonly worldPoint = new Phaser.Math.Vector2();
 
     constructor(
         scene: Phaser.Scene,
@@ -117,13 +130,15 @@ export class HoverTargetController {
     }
 
     update(): void {
+        const { main: camera } = this.scene.cameras;
         const target = this.findTargetUnderPointer();
+        const selected = this.findSelectedTarget();
         const hover = target
-            ? toHoverState(target, this.scene.cameras.main)
+            ? writeHoverState(target, camera, this.hoverScratch)
             : null;
 
-        this.drawOutlines(target);
-        this.emitSelected();
+        this.drawOutlines(selected, target);
+        this.emitSelected(selected);
         this.syncCursor(hover);
         this.emit(hover);
     }
@@ -134,9 +149,7 @@ export class HoverTargetController {
     }
 
     private findPinnedTarget(): HoverTarget | null {
-        if (this.pinnedId === null) return null;
-
-        return this.targets.find(({ id }) => id === this.pinnedId) ?? null;
+        return findTargetById(this.targets, this.pinnedId);
     }
 
     private findPointedTarget(): HoverTarget | null {
@@ -145,7 +158,8 @@ export class HoverTargetController {
         const { activePointer } = this.scene.input;
         const world = this.scene.cameras.main.getWorldPoint(
             activePointer.x,
-            activePointer.y
+            activePointer.y,
+            this.worldPoint
         );
         return findHoveredTarget(this.targets, world);
     }
@@ -153,23 +167,20 @@ export class HoverTargetController {
     private findSelectedTarget(): HoverTarget | null {
         if (!this.enabled) return null;
 
-        return this.targets.find(({ id }) => id === this.selectedId) ?? null;
+        return findTargetById(this.targets, this.selectedId);
     }
 
     // The selected target and the hovered one, which can be the same.
-    private drawOutlines(hovered: HoverTarget | null): void {
-        const selected = this.findSelectedTarget();
+    private drawOutlines(
+        selected: HoverTarget | null,
+        hovered: HoverTarget | null
+    ): void {
         if (!this.drawsOutline) return;
 
-        const outlined = [selected, hovered].filter(
-            (target): target is HoverTarget => target !== null
-        );
-
         this.outline.clear();
-        this.outline.setVisible(outlined.length > 0);
-        outlined.forEach(({ bounds }) =>
-            drawObjectOutline(this.outline, bounds)
-        );
+        this.outline.setVisible(selected !== null || hovered !== null);
+        if (selected) drawObjectOutline(this.outline, selected.bounds);
+        if (hovered) drawObjectOutline(this.outline, hovered.bounds);
     }
 
     // Only on a change of target, so a drag in progress keeps its own cursor. The
@@ -187,22 +198,34 @@ export class HoverTargetController {
 
     // Where the selected target is on the canvas, or null with none. Only a
     // change is emitted, like the hover.
-    private emitSelected(): void {
-        const selected = this.findSelectedTarget();
-        const state = selected
-            ? toHoverState(selected, this.scene.cameras.main)
-            : null;
+    private emitSelected(selected: HoverTarget | null): void {
+        const state = this.writeSelectedState(selected);
         if (isSameHover(this.lastSelected, state)) return;
 
-        this.lastSelected = state;
-        this.scene.game.events.emit(getSelectedStateEvent(this.event), state);
+        this.lastSelected = state ? copyHoverState(state) : null;
+        this.scene.game.events.emit(
+            getSelectedStateEvent(this.event),
+            this.lastSelected
+        );
+    }
+
+    private writeSelectedState(
+        selected: HoverTarget | null
+    ): HoverState | null {
+        if (!selected) return null;
+
+        return writeHoverState(
+            selected,
+            this.scene.cameras.main,
+            this.selectedScratch
+        );
     }
 
     // Only a change is emitted, so a still camera over a still mouse is quiet.
     private emit(hover: HoverState | null): void {
         if (isSameHover(this.last, hover)) return;
 
-        this.last = hover;
-        this.scene.game.events.emit(this.event, hover);
+        this.last = hover ? copyHoverState(hover) : null;
+        this.scene.game.events.emit(this.event, this.last);
     }
 }

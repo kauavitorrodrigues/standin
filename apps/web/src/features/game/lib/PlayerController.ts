@@ -14,10 +14,7 @@ import { resolveSeatInput } from "@/features/game/utils/resolveSeatInput";
 import { MovementHoldGate } from "@/features/game/lib/MovementHoldGate";
 import type { Cell } from "@/features/game/types/cell";
 import type { PathWalker } from "@/features/game/lib/PathWalker";
-import type {
-    DirectionSource,
-    TileMover,
-} from "@/features/game/lib/TileMover";
+import type { DirectionSource, TileMover } from "@/features/game/lib/TileMover";
 import type { Player } from "@/features/game/lib/Player";
 
 // Turns the keys and the walk of a double click into steps of the mover, one

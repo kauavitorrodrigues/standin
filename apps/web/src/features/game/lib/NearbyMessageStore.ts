@@ -36,7 +36,7 @@ const isStoredMessage = (value: unknown): value is NearbyMessage => {
  * The messages sent to whoever is nearby, in the three places they live: over
  * the avatar (`MAP`), on the strip over the control bar (`STRIP`) and in the
  * list of the panel (`HISTORY`). Each place has its own timeout and its own
- * ceiling, as in Gather. It also knows who is typing. No React and no Phaser,
+ * ceiling. It also knows who is typing. No React and no Phaser,
  * so it runs with fake timers, and the views read it through `subscribe` and
  * `getSnapshot`.
  */

@@ -3,6 +3,7 @@ import {
     SocketNotInitializedError,
     type ServerToClientEvents,
 } from "@standin/contracts";
+import { buildNotifyRoom } from "@/lib/socket/utils/buildNotifyRoom";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
 
 export class SocketManager {
@@ -38,12 +39,32 @@ export class SocketManager {
         this.emitToRoom(buildUserRoom(userId), event, ...args);
     }
 
+    static emitToNotify<K extends keyof ServerToClientEvents>(
+        userId: string,
+        event: K,
+        ...args: Parameters<ServerToClientEvents[K]>
+    ) {
+        this.emitToRoom(buildNotifyRoom(userId), event, ...args);
+    }
+
     static emitToSocket<K extends keyof ServerToClientEvents>(
         socketId: string,
         event: K,
         ...args: Parameters<ServerToClientEvents[K]>
     ) {
         this.emitToRoom(socketId, event, ...args);
+    }
+
+    // For what a newer message replaces (positions): a client that is behind
+    // drops it instead of queueing it.
+    static emitVolatileToSocket<K extends keyof ServerToClientEvents>(
+        socketId: string,
+        event: K,
+        ...args: Parameters<ServerToClientEvents[K]>
+    ) {
+        this.get()
+            .to(socketId)
+            .volatile.emit(event, ...args);
     }
 
     // Closes the underlying httpServer as well, since it was handed to this

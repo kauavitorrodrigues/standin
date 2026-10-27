@@ -23,3 +23,9 @@ export const DirectMessagesEmptyState = () => (
         <span aria-hidden>✎</span> pra começar uma.
     </p>
 );
+
+export const DirectMessagesNoResultsState = () => (
+    <p className="px-2 py-3 text-sm text-muted-foreground">
+        Nenhuma conversa encontrada.
+    </p>
+);

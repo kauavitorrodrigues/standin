@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { AVATAR_GHOST_TEXTURE_KEY } from "@/features/avatar/consts/textures";
 import { AvatarSheetBinder } from "../AvatarSheetBinder";
 
 const setup = () => {
@@ -10,7 +11,7 @@ const setup = () => {
                 const key = fileId === null ? "ghost" : `sheet:${fileId}`;
                 if (fileId !== null) callbacks.set(fileId, onChange);
                 return {
-                    getKey: () => "ghost",
+                    getKey: () => AVATAR_GHOST_TEXTURE_KEY,
                     release: () => releases.push(key),
                 };
             }
@@ -31,7 +32,9 @@ describe("AvatarSheetBinder", () => {
 
         binder.bind("local", target, "file-1");
 
-        expect(target.setTexture).toHaveBeenCalledWith("ghost");
+        expect(target.setTexture).toHaveBeenCalledWith(
+            AVATAR_GHOST_TEXTURE_KEY
+        );
         expect(binder.getFileId("local")).toBe("file-1");
     });
 
@@ -55,15 +58,49 @@ describe("AvatarSheetBinder", () => {
         expect(source.acquire).toHaveBeenCalledTimes(1);
     });
 
-    it("acquires the new sheet before it releases the old one", () => {
-        const { binder, source, releases } = setup();
+    it("keeps the current sheet drawn and held while the new one loads", () => {
+        const { binder, source, releases, callbacks } = setup();
         const target = { setTexture: vi.fn() };
         binder.bind("local", target, "file-1");
+        callbacks.get("file-1")?.("sheet:file-1");
+        target.setTexture.mockClear();
 
         binder.bind("local", target, "file-2");
 
         expect(source.acquire).toHaveBeenCalledTimes(2);
+        expect(target.setTexture).not.toHaveBeenCalled();
+        expect(releases).toEqual([]);
+
+        callbacks.get("file-2")?.("sheet:file-2");
+
+        expect(target.setTexture).toHaveBeenCalledExactlyOnceWith(
+            "sheet:file-2"
+        );
         expect(releases).toEqual(["sheet:file-1"]);
+    });
+
+    it("releases a swap that never finished when another one replaces it", () => {
+        const { binder, releases, callbacks } = setup();
+        const target = { setTexture: vi.fn() };
+        binder.bind("local", target, "file-1");
+        binder.bind("local", target, "file-2");
+
+        binder.bind("local", target, "file-3");
+        expect(releases).toEqual(["sheet:file-2"]);
+
+        callbacks.get("file-3")?.("sheet:file-3");
+        expect(releases).toEqual(["sheet:file-2", "sheet:file-1"]);
+    });
+
+    it("releases the sheet on screen and the loading one with the avatar", () => {
+        const { binder, releases } = setup();
+        const target = { setTexture: vi.fn() };
+        binder.bind("local", target, "file-1");
+        binder.bind("local", target, "file-2");
+
+        binder.release("local");
+
+        expect(releases.sort()).toEqual(["sheet:file-1", "sheet:file-2"]);
     });
 
     it("goes back to the ghost when the avatar is cleared", () => {

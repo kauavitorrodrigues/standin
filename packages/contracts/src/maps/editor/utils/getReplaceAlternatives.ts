@@ -50,7 +50,7 @@ const nextRotationAsset = (
 };
 
 /**
- * What the contextual bar of an object offers (spec 7.2): the other colors of
+ * What the contextual bar of an object offers: the other colors of
  * the current rotation, the next rotation and the other models. Every entry
  * already passed canReplaceAsset.
  */

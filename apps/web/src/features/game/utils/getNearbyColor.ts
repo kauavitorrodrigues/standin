@@ -1,6 +1,6 @@
 import { NEARBY_PALETTE } from "@/features/game/consts/nearby";
 
-// The color of a person in the bubble and in the list: the hash of Gather
+// The color of a person in the bubble and in the list: the string hash
 // (`h = (h << 5) - h + code`) over the palette, so it is the same for the same
 // id everywhere.
 export const getNearbyColor = (userId: string): string => {

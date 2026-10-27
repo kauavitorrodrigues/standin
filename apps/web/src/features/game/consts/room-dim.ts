@@ -1,5 +1,5 @@
 export const ROOM_DIM = {
-    // Slightly bluish dark, like the veil in Gather.
+    // Slightly bluish dark, as a veil.
     COLOR: 0x0a1226,
     // Opacity of the dark layer once faded in.
     ALPHA: 0.35,

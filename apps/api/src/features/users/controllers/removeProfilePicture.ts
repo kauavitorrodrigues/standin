@@ -2,6 +2,7 @@ import type { Response } from "express";
 import { UserService } from "@standin/core";
 import { sendError } from "@/utils/sendError";
 import type { ExtendedRequest } from "@/types/request";
+import { UserCache } from "@/features/auth/services/userCache";
 
 export const removeProfilePicture = async (
     req: ExtendedRequest,
@@ -13,6 +14,7 @@ export const removeProfilePicture = async (
         const user = await UserService.updateProfilePicture(req.user.id, {
             action: "remove",
         });
+        UserCache.invalidate(req.user.id);
         res.status(200).json({ user });
     } catch (error) {
         return sendError({

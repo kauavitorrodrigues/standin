@@ -16,6 +16,22 @@ type Params = {
     hasPosition: boolean;
 };
 
+type RuleParams = Parameters<typeof shouldShowNameTag>[0];
+
+// Reused by every call, so asking the rule for each remote avatar every frame
+// builds no object. Safe because the rule reads it synchronously and keeps
+// nothing.
+const ruleParams: RuleParams = {
+    isLocal: false,
+    isDecorating: false,
+    hasName: false,
+    hasPosition: false,
+    roomKey: null,
+    roomState: ROOM_DOOR_STATES.OPEN,
+    localRoomKey: null,
+    entitlements: { all: false, roomKeys: new Set<string>() },
+};
+
 // Whether the tag over a remote avatar may show: finds the room the avatar
 // stands in and the state the server gave that room, and asks the rule.
 export const isRemoteNameTagAllowed = ({
@@ -30,15 +46,13 @@ export const isRemoteNameTagAllowed = ({
 }: Params): boolean => {
     const roomKey = getRoomAt(rooms, feet)?.key ?? null;
 
-    return shouldShowNameTag({
-        isLocal: false,
-        isDecorating,
-        hasName,
-        hasPosition,
-        roomKey,
-        roomState:
-            roomKey === null ? ROOM_DOOR_STATES.OPEN : getRoomState(roomKey),
-        localRoomKey,
-        entitlements,
-    });
+    ruleParams.isDecorating = isDecorating;
+    ruleParams.hasName = hasName;
+    ruleParams.hasPosition = hasPosition;
+    ruleParams.roomKey = roomKey;
+    ruleParams.roomState =
+        roomKey === null ? ROOM_DOOR_STATES.OPEN : getRoomState(roomKey);
+    ruleParams.localRoomKey = localRoomKey;
+    ruleParams.entitlements = entitlements;
+    return shouldShowNameTag(ruleParams);
 };

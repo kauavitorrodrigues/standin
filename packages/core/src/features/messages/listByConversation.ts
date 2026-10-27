@@ -4,6 +4,7 @@ import {
     and,
     eq,
     lt,
+    or,
     isNull,
     desc,
 } from "@standin/database";
@@ -18,15 +19,30 @@ import { FileService } from "../files";
 import { MessageAttachmentService } from "./attachments";
 import { MessageReactionService } from "./reactions";
 import { MessageReadService } from "./reads";
+import { listThreadSummaries } from "./threads";
+import { assertMessageInConversation } from "./utils";
 import { buildConversationMessagesListResponse } from "./builders";
 
 export const listMessagesByConversation = async (
     conversationId: string,
     currentUserId: string,
-    { cursor, limit = DEFAULT_MESSAGE_LIST_LIMIT }: MessageListQuerySchemaType
+    { cursor, limit = DEFAULT_MESSAGE_LIST_LIMIT, threadParentId }: MessageListQuerySchemaType
 ): Promise<ConversationMessagesListResponse> => {
     // Conversation existence + org scoping is enforced upstream by the
     // RequiresConversationAccess middleware, so it isn't re-checked here.
+
+    if (threadParentId) {
+        await assertMessageInConversation(threadParentId, conversationId);
+    }
+
+    // The main list holds top-level messages plus the replies that asked to
+    // show in the channel. A thread list holds every reply of that parent.
+    const threadScope = threadParentId
+        ? eq(messagesTable.threadParentId, threadParentId)
+        : or(
+              isNull(messagesTable.threadParentId),
+              eq(messagesTable.showThreadReplyInChannel, true)
+          );
 
     // Keyset on `id` alone: ids are uuidv7 (time-ordered), so this is exact and
     // tie-free, avoiding the millisecond-precision mismatch a `createdAt` cursor
@@ -38,6 +54,7 @@ export const listMessagesByConversation = async (
             and(
                 eq(messagesTable.conversationId, conversationId),
                 isNull(messagesTable.deletedAt),
+                threadScope,
                 cursor ? lt(messagesTable.id, cursor) : undefined
             )
         )
@@ -51,12 +68,19 @@ export const listMessagesByConversation = async (
     const messageIds = page.map((message) => message.id);
     const senderIds = [...new Set(page.map((message) => message.senderId))];
 
-    const [senders, attachmentRows, reactionRows, seenByMessage] =
+    const [
+        senders,
+        attachmentRows,
+        reactionRows,
+        seenByMessage,
+        threadSummaries,
+    ] =
         await Promise.all([
             UserService.findManyByIds(senderIds),
             MessageAttachmentService.listByMessageIds(messageIds),
             MessageReactionService.listByMessageIds(messageIds),
             MessageReadService.listSeenBy(messageIds),
+            listThreadSummaries(messageIds),
         ]);
 
     const files = await FileService.findManyByIds(
@@ -70,6 +94,7 @@ export const listMessagesByConversation = async (
         files,
         reactionRows,
         seenByMessage,
+        threadSummaries,
         currentUserId,
         nextCursor,
     });

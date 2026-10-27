@@ -12,6 +12,9 @@ const {
     registerEditorReleaseMock,
     registerWebrtcSignalMock,
     registerDisconnectMock,
+    registerSpacePositionMock,
+    registerSpaceEventsMock,
+    registerChatTypingMock,
     onSheetChangedMock,
     onNameChangedMock,
     onProfilePictureChangedMock,
@@ -41,6 +44,9 @@ const {
         registerEditorReleaseMock: vi.fn(),
         registerWebrtcSignalMock: vi.fn(),
         registerDisconnectMock: vi.fn(),
+        registerSpacePositionMock: vi.fn(),
+        registerSpaceEventsMock: vi.fn(),
+        registerChatTypingMock: vi.fn(),
         onSheetChangedMock: vi.fn(),
         onNameChangedMock: vi.fn(),
         onProfilePictureChangedMock: vi.fn(),
@@ -55,6 +61,7 @@ vi.mock("socket.io", () => ({
 vi.mock("@standin/core", () => ({
     AvatarService: { onSheetChanged: onSheetChangedMock },
     SpaceGuestService: { onEvent: onSpaceGuestEventMock },
+    OrganizationMemberService: { onRemoved: vi.fn() },
     UserService: {
         onNameChanged: onNameChangedMock,
         onProfilePictureChanged: onProfilePictureChangedMock,
@@ -108,6 +115,16 @@ vi.mock("../handlers/joinMap", () => ({
 
 vi.mock("../handlers/webrtcSignal", () => ({
     registerWebrtcSignal: registerWebrtcSignalMock,
+}));
+
+vi.mock("../handlers/spacePosition", () => ({
+    registerSpacePosition: registerSpacePositionMock,
+}));
+vi.mock("../handlers/spaceEvents", () => ({
+    registerSpaceEvents: registerSpaceEventsMock,
+}));
+vi.mock("../handlers/chatTyping", () => ({
+    registerChatTyping: registerChatTypingMock,
 }));
 
 vi.mock("../handlers/roomCrossed", () => ({ registerRoomCrossed: vi.fn() }));
@@ -172,7 +189,9 @@ describe("createSocketServer", () => {
         const fakeSocket = {
             id: "socket-1",
             data: { userId: "user-1" },
+            handshake: { auth: {} },
             join: joinMock,
+            use: vi.fn(),
         };
         connectionHandler(fakeSocket);
 
@@ -189,6 +208,31 @@ describe("createSocketServer", () => {
             fakeSocket
         );
         expect(registerDisconnectMock).toHaveBeenCalledWith(fakeSocket);
+        expect(registerSpacePositionMock).toHaveBeenCalledWith(fakeSocket);
+        expect(registerSpaceEventsMock).toHaveBeenCalledWith(
+            serverInstanceMock,
+            fakeSocket
+        );
+        expect(registerChatTypingMock).toHaveBeenCalledWith(fakeSocket);
+    });
+
+    it("puts the rate limit in front of every handler of the socket", () => {
+        createSocketServer({} as any);
+
+        const connectionHandler = serverInstanceMock.__onMock.mock.calls.find(
+            ([event]) => event === "connection"
+        )?.[1] as (socket: any) => void;
+
+        const fakeSocket = {
+            id: "socket-1",
+            data: { userId: "user-1" },
+            handshake: { auth: {} },
+            join: vi.fn(),
+            use: vi.fn(),
+        };
+        connectionHandler(fakeSocket);
+
+        expect(fakeSocket.use).toHaveBeenCalledTimes(1);
     });
 
     it("registers the avatar sheet listener once per server", async () => {
@@ -242,10 +286,39 @@ describe("createSocketServer", () => {
         const fakeSocket = {
             id: "socket-1",
             data: { userId: "user-1" },
+            handshake: { auth: {} },
             join: joinMock,
+            use: vi.fn(),
         };
         connectionHandler(fakeSocket);
 
         expect(joinMock).toHaveBeenCalledWith("user:user-1");
+    });
+
+    it("joins the notify room only for the connection of the app", () => {
+        createSocketServer({} as any);
+        const connectionHandler = serverInstanceMock.__onMock.mock.calls.find(
+            ([event]) => event === "connection"
+        )?.[1] as (socket: any) => void;
+
+        const appJoin = vi.fn();
+        connectionHandler({
+            id: "socket-app",
+            data: { userId: "user-1" },
+            handshake: { auth: { channel: "app" } },
+            join: appJoin,
+            use: vi.fn(),
+        });
+        const spaceJoin = vi.fn();
+        connectionHandler({
+            id: "socket-space",
+            data: { userId: "user-1" },
+            handshake: { auth: {} },
+            join: spaceJoin,
+            use: vi.fn(),
+        });
+
+        expect(appJoin).toHaveBeenCalledWith("notify:user-1");
+        expect(spaceJoin).not.toHaveBeenCalledWith("notify:user-1");
     });
 });

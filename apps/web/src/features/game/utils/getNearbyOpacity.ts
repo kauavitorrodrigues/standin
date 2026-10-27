@@ -5,5 +5,7 @@ import { NEARBY_OPACITY_MIN } from "@/features/game/consts/nearby";
 export const getNearbyOpacity = (index: number, count: number): number => {
     if (count <= 1) return 1;
 
-    return NEARBY_OPACITY_MIN + (index / (count - 1)) * (1 - NEARBY_OPACITY_MIN);
+    return (
+        NEARBY_OPACITY_MIN + (index / (count - 1)) * (1 - NEARBY_OPACITY_MIN)
+    );
 };

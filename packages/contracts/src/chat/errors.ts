@@ -28,11 +28,11 @@ export class AttachmentNotFoundError extends BaseError {
     }
 }
 
-export class SelfConversationNotAllowedError extends BaseError {
+export class DirectConversationTooLargeError extends BaseError {
     constructor() {
         super(
-            "You cannot start a conversation with yourself.",
-            "SELF_CONVERSATION_NOT_ALLOWED",
+            "A direct conversation has a limit on how many people it can include.",
+            "DIRECT_CONVERSATION_TOO_LARGE",
             400
         );
     }
@@ -44,6 +44,16 @@ export class ConversationRecipientAccessDeniedError extends BaseError {
             "The recipient is not an active member of this organization.",
             "CONVERSATION_RECIPIENT_ACCESS_DENIED",
             403
+        );
+    }
+}
+
+export class NestedThreadError extends BaseError {
+    constructor() {
+        super(
+            "A reply cannot be started on another reply.",
+            "NESTED_THREAD",
+            400
         );
     }
 }

@@ -834,18 +834,20 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             const watcher = await listen("member");
             const outsider = await listen("outsider");
 
-            for (const [socket, key] of [
-                [room, "owner"],
-                [watcher, "member"],
-            ] as const) {
+            // One after the other: the owner only hears the watcher arrive if
+            // the owner was already inside.
+            const join = (socket: typeof room, key: "owner" | "member") =>
                 socket.emit("space:join", {
                     organizationId,
                     spaceId: space.id,
                     userId: users[key].id,
                 });
-            }
-            // Joining is asynchronous, wait for the room to settle.
-            await nextEvent(room, "space:peer-joined");
+            const ownerJoined = nextEvent(room, "space:joined");
+            join(room, "owner");
+            await ownerJoined;
+            const peerJoined = nextEvent(room, "space:peer-joined");
+            join(watcher, "member");
+            await peerJoined;
 
             const received: string[] = [];
             const heardByOutsider: string[] = [];

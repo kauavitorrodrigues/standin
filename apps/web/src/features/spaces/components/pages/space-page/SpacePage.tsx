@@ -1,7 +1,6 @@
 import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
 import { useState } from "react";
 import type { SpaceDetails } from "@standin/contracts";
-import { useOrganizationId } from "@/features/organizations/hooks/useOrganizationId";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 import { SocketProvider } from "@/features/game/multiplayer/contexts/SocketContext";
@@ -40,6 +39,8 @@ import {
 import { OrganizationsQueries } from "@/features/organizations/queries";
 import { buildNameLookup } from "@/features/spaces/utils/buildStageTiles";
 import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
+import { usePinnedVideos } from "@/features/spaces/hooks/usePinnedVideos";
+import { useAutoPinScreen } from "@/features/spaces/hooks/useAutoPinScreen";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGameEngine } from "@/features/game/hooks/useGameEngine";
 import { useLocalAvatarSheet } from "@/features/game/hooks/useLocalAvatarSheet";
@@ -86,7 +87,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     } = useSpaceSearch();
 
     const { user } = useAuth();
-    const organizationId = useOrganizationId();
     const [isGuestsOpen, setIsGuestsOpen] = useState(false);
 
     const peoplePanel = usePeoplePanel({ view, selectView });
@@ -98,22 +98,22 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const decorateAvailability = useDecorateAvailability(space.map.id, mapLock);
     const { containerRef, handle } = useGameEngine(gameMap, -RAIL_WIDTH_PX / 2);
 
-    const { handlers: peerChatHandlers, typingByConversation } =
-        usePeerChatSync({ organizationId, userId: user.id });
+    const { typingByConversation } = usePeerChatSync({ userId: user.id });
 
     const {
         localAudioError,
         onlineUserIds,
+        speakingUserIds,
         video,
         sendEmote,
         sendNearbyMessage,
         sendNearbyTyping,
+        isSendNearbyEnabled,
         ...broadcasts
     } = useSpaceConnection({
         spaceId: space.id,
         userId: user.id,
         game: handle?.game ?? null,
-        ...peerChatHandlers,
     });
     const nearbyChat = useNearbyChatConnection({
         game: handle?.game ?? null,
@@ -121,13 +121,18 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         userId: user.id,
         sendMessage: sendNearbyMessage,
         sendTyping: sendNearbyTyping,
+        isEnabled: isSendNearbyEnabled,
     });
 
     const currentRoom = useCurrentRoom(handle?.game ?? null);
     const walk = useWalkState(handle?.game ?? null);
     const lockedDoor = useLockedDoorPrompt(handle?.game ?? null, currentRoom);
 
-    const stageTiles = useStageTiles({ video, selfUserId: user.id });
+    const stageTiles = useStageTiles({
+        video,
+        selfUserId: user.id,
+        speakingUserIds,
+    });
 
     const { members } = OrganizationsQueries.useMembers();
     const names = buildNameLookup(members);
@@ -148,6 +153,13 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         changeStageView,
     } = useVideoGrid(stageTiles.length);
 
+    const pinnedVideos = usePinnedVideos(stageTiles);
+    useAutoPinScreen({
+        tiles: stageTiles,
+        pin: pinnedVideos.pin,
+        openGrid: () => openGrid(),
+    });
+
     const layout = useSpacePageLayout({
         view,
         stageTileCount: stageTiles.length,
@@ -163,7 +175,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const { peerChat, peerTyping, chatPage } = usePeerChatContextValues({
         ...broadcasts,
-        user,
         typingByConversation,
         onlineUserIds,
         getConversationLink,
@@ -259,6 +270,9 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         gridTileId={gridTileId}
                         onOpenGrid={openGrid}
                         onCloseGrid={closeGrid}
+                        pinnedIds={pinnedVideos.pinnedIds}
+                        onTogglePin={pinnedVideos.togglePin}
+                        onActiveVideosChange={video.setActiveVideoIds}
                     />
                     <LayoutPrimitive.TopControls
                         visible={layout.isStageToggleVisible}

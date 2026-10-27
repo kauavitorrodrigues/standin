@@ -19,6 +19,9 @@ vi.mock("../utils/guestEvents", () => ({
 import { admitSpaceGuest } from "../admit";
 import { denySpaceGuest } from "../deny";
 
+// Relative to the clock: a fixed date turns into the past and the guest into an
+// expired one.
+const HOUR_MS = 60 * 60 * 1000;
 const row = {
     id: "g1",
     spaceId: "s1",
@@ -26,9 +29,9 @@ const row = {
     status: "ADMITTED",
     statusReason: "HOST_ADMITTED",
     respondedBy: "host",
-    respondedAt: new Date("2026-10-22T12:00:00Z"),
-    expiresAt: new Date("2026-10-23T12:00:00Z"),
-    requestedAt: new Date("2026-10-22T11:00:00Z"),
+    respondedAt: new Date(Date.now() - HOUR_MS),
+    expiresAt: new Date(Date.now() + 23 * HOUR_MS),
+    requestedAt: new Date(Date.now() - 2 * HOUR_MS),
 };
 
 describe("admitSpaceGuest", () => {

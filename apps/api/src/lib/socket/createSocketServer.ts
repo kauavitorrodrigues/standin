@@ -1,10 +1,16 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import { AvatarService, SpaceGuestService, UserService } from "@standin/core";
-import type {
-    ClientToServerEvents,
-    ServerToClientEvents,
-    SocketData,
+import {
+    AvatarService,
+    OrganizationMemberService,
+    SpaceGuestService,
+    UserService,
+} from "@standin/core";
+import {
+    SOCKET_APP_CHANNEL,
+    type ClientToServerEvents,
+    type ServerToClientEvents,
+    type SocketData,
 } from "@standin/contracts";
 import { SocketManager } from "./socketManager";
 import { corsSocketOptions } from "@/consts/server";
@@ -23,11 +29,17 @@ import { registerRoomUnlock } from "@/lib/socket/handlers/roomUnlock";
 import { registerRoomJoinRequest } from "@/lib/socket/handlers/roomJoinRequest";
 import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerWebrtcSignal } from "@/lib/socket/handlers/webrtcSignal";
+import { registerSpacePosition } from "@/lib/socket/handlers/spacePosition";
+import { registerSpaceEvents } from "@/lib/socket/handlers/spaceEvents";
+import { registerChatTyping } from "@/lib/socket/handlers/chatTyping";
 import { broadcastAvatarChange } from "@/lib/socket/services/broadcastAvatarChange";
+import { broadcastMemberRemoved } from "@/lib/socket/services/broadcastMemberRemoved";
 import { broadcastNameChange } from "@/lib/socket/services/broadcastNameChange";
 import { broadcastSpaceGuestEvent } from "@/lib/socket/services/broadcastSpaceGuestEvent";
 import { broadcastProfilePictureChange } from "@/lib/socket/services/broadcastProfilePictureChange";
+import { buildNotifyRoom } from "@/lib/socket/utils/buildNotifyRoom";
 import { buildUserRoom } from "@/lib/socket/utils/buildUserRoom";
+import { applyRateLimit } from "@/lib/socket/rateLimit/applyRateLimit";
 
 export function createSocketServer(
     httpServer: ReturnType<typeof createServer>
@@ -59,6 +71,10 @@ export function createSocketServer(
     // guest, so the hosts and the guest hear it as it happens.
     SpaceGuestService.onEvent(broadcastSpaceGuestEvent);
 
+    // Registered once per server. Runs after a membership ends, so the person
+    // loses the spaces of that organization at once.
+    OrganizationMemberService.onRemoved(broadcastMemberRemoved);
+
     io.on("connection", (socket) => {
         // Every authenticated connection joins its own user room, regardless
         // of whether it ever joins a space, so app-wide notifications (e.g.
@@ -66,12 +82,23 @@ export function createSocketServer(
         // currently on a space page.
         socket.join(buildUserRoom(socket.data.userId));
 
+        // Chat events go to the app connection only. The connection of a space
+        // would receive them a second time and throw them away.
+        if (socket.handshake.auth?.channel === SOCKET_APP_CHANNEL) {
+            socket.join(buildNotifyRoom(socket.data.userId));
+        }
+
+        applyRateLimit(socket);
+
         registerJoinSpace(io, socket);
         registerJoinMap(socket);
         registerEditorAcquire(socket);
         registerEditorHeartbeat(socket);
         registerEditorRelease(socket);
         registerWebrtcSignal(io, socket);
+        registerSpacePosition(socket);
+        registerSpaceEvents(io, socket);
+        registerChatTyping(socket);
         registerRoomCrossed(io, socket);
         registerRoomOpen(io, socket);
         registerRoomPresent(io, socket);

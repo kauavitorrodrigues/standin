@@ -18,6 +18,12 @@ export const MessageListQuerySchema = z.object({
         })
         .optional()
         .default(DEFAULT_MESSAGE_LIST_LIMIT),
+    // When set, lists the replies of that top-level message instead of the
+    // main conversation list.
+    threadParentId: z
+        .string({ error: MessageListQueryErrorMessages.threadParentId.invalid })
+        .min(1, { error: MessageListQueryErrorMessages.threadParentId.invalid })
+        .optional(),
 });
 
 export type MessageListQuerySchemaType = z.infer<typeof MessageListQuerySchema>;

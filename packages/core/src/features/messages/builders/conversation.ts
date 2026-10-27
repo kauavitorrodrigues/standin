@@ -4,6 +4,7 @@ import type {
     UserSummary,
     SeenByEntry,
 } from "@standin/contracts";
+import type { ThreadSummary } from "../threads";
 import { groupReactionsByMessage } from "../utils";
 import { buildMessageWithDetails, MessageRow } from "./message";
 import {
@@ -19,6 +20,7 @@ type BuildConversationMessagesListResponseInput = {
     files: File[];
     reactionRows: ReactionRow[];
     seenByMessage: Map<string, SeenByEntry[]>;
+    threadSummaries: Map<string, ThreadSummary>;
     currentUserId: string;
     nextCursor: string | null;
 };
@@ -44,6 +46,7 @@ export const buildConversationMessagesListResponse = ({
     files,
     reactionRows,
     seenByMessage,
+    threadSummaries,
     currentUserId,
     nextCursor,
 }: BuildConversationMessagesListResponseInput): ConversationMessagesListResponse => {
@@ -65,7 +68,8 @@ export const buildConversationMessagesListResponse = ({
                 files
             ),
             reactionsByMessage.get(row.id) ?? [],
-            seenByMessage.get(row.id) ?? []
+            seenByMessage.get(row.id) ?? [],
+            threadSummaries.get(row.id)
         )
     );
 

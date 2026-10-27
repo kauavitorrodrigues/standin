@@ -7,13 +7,24 @@ import { FileService } from "../files";
 import { messageSelect, MESSAGE_ATTACHMENTS_STORAGE_FOLDER } from "./consts";
 import { MessageAttachmentService } from "./attachments";
 import { buildMessageWithDetails } from "./builders";
+import { assertThreadParent } from "./threads";
 import { buildMessageAttachments } from "./attachments/builders";
 
 export const createMessage = async (
     conversationId: string,
     senderId: string,
-    { content, attachmentFiles }: CreateMessageInput
+    {
+        content,
+        attachmentFiles,
+        threadParentId,
+        showThreadReplyInChannel,
+    }: CreateMessageInput
 ): Promise<MessageWithDetails> => {
+    // Checked before any upload so a rejected reply leaves nothing in storage.
+    if (threadParentId) {
+        await assertThreadParent(threadParentId, conversationId);
+    }
+
     // Uploaded outside the transaction on purpose (external storage I/O
     // shouldn't hold a DB transaction open); the message + attachment rows
     // are then inserted together so a mid-loop failure can't leave a
@@ -30,7 +41,16 @@ export const createMessage = async (
         .transaction(async (tx) => {
             const [message] = await tx
                 .insert(messagesTable)
-                .values({ conversationId, senderId, content })
+                .values({
+                    conversationId,
+                    senderId,
+                    content,
+                    threadParentId: threadParentId ?? null,
+                    // Only a reply can show in the channel.
+                    showThreadReplyInChannel:
+                        threadParentId !== undefined &&
+                        showThreadReplyInChannel === true,
+                })
                 .returning(messageSelect);
 
             const attachmentRows = await MessageAttachmentService.createMany(

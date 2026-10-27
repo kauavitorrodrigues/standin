@@ -7,6 +7,7 @@ import { useOptimisticMessagesMutation } from "@/features/chat/mutations/useOpti
 type UpdateMessageInput = {
     conversationId: string;
     messageId: string;
+    threadParentId?: string;
     content: string;
 };
 
@@ -15,6 +16,7 @@ export const useUpdateMessage = () => {
 
     return useOptimisticMessagesMutation<UpdateMessageInput, Message>({
         conversationId: (input) => input.conversationId,
+        threadParentId: (input) => input.threadParentId,
         mutationFn: async ({ conversationId, messageId, content }) => {
             const res = await api.patch(
                 `/organizations/${organizationId}/conversations/${conversationId}/messages/${messageId}`,

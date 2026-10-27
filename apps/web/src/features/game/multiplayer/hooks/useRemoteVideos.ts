@@ -30,6 +30,9 @@ export function useRemoteVideos(
     // does not hand <video> a new srcObject (which restarts playback).
     const streamsRef = useRef(new Map<string, MediaStream>());
     const getUserIdRef = useRef(getUserId);
+    // Ids of the videos the stage is rendering. `null` means all of them
+    // (full grid open, or no stage yet).
+    const activeIdsRef = useRef<ReadonlySet<string> | null>(null);
 
     useEffect(() => {
         getUserIdRef.current = getUserId;
@@ -49,6 +52,21 @@ export function useRemoteVideos(
                 const track = resolved[slot];
                 if (!track) return;
 
+                const id = `${socketId}:${slot}`;
+                const isActive =
+                    activeIdsRef.current === null ||
+                    activeIdsRef.current.has(id);
+                if (!isActive) {
+                    next.push({
+                        id,
+                        socketId,
+                        userId: getUserIdRef.current(socketId) ?? null,
+                        slot,
+                        stream: null,
+                    });
+                    return;
+                }
+
                 usedTrackIds.add(track.id);
                 const stream =
                     streamsRef.current.get(track.id) ??
@@ -56,7 +74,7 @@ export function useRemoteVideos(
                 streamsRef.current.set(track.id, stream);
 
                 next.push({
-                    id: `${socketId}:${slot}`,
+                    id,
                     socketId,
                     userId: getUserIdRef.current(socketId) ?? null,
                     slot,
@@ -73,6 +91,14 @@ export function useRemoteVideos(
             areRemoteVideosEqual(previous, next) ? previous : next
         );
     }, []);
+
+    const setActiveVideoIds = useCallback(
+        (ids: ReadonlySet<string> | null) => {
+            activeIdsRef.current = ids;
+            sync();
+        },
+        [sync]
+    );
 
     const getPeer = useCallback((socketId: string): PeerMedia => {
         const existing = peersRef.current.get(socketId);
@@ -128,5 +154,12 @@ export function useRemoteVideos(
         sync();
     }, [sync]);
 
-    return { remoteVideos, addTrack, setState, removePeer, clear };
+    return {
+        remoteVideos,
+        addTrack,
+        setState,
+        removePeer,
+        clear,
+        setActiveVideoIds,
+    };
 }

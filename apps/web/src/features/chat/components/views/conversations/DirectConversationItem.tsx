@@ -1,5 +1,6 @@
 import type { ConversationSummary } from "@standin/contracts";
-import { UserAvatar } from "@/features/users/components/UserAvatar";
+import { ParticipantAvatarStack } from "@/features/chat/components/layout/ParticipantAvatarStack";
+import { getDirectConversationTitle } from "@/features/chat/utils/getDirectConversationTitle";
 import { CountBadge } from "@/components/ui/count-badge";
 
 type Props = {
@@ -13,9 +14,6 @@ export const DirectConversationItem = ({
     selected,
     onSelect,
 }: Props) => {
-    const other = conversation.participants[0];
-    if (!other) return null;
-
     return (
         <button
             type="button"
@@ -23,13 +21,13 @@ export const DirectConversationItem = ({
             aria-current={selected}
             className="flex items-center gap-2 rounded-lg px-2 py-1 text-left text-sm transition-colors hover:bg-muted aria-[current=true]:bg-muted"
         >
-            <UserAvatar
-                id={other.id}
-                name={other.name}
-                avatar={other.profilePictureUrl}
-                size="xs"
+            <ParticipantAvatarStack
+                participants={conversation.participants}
+                isNotes={conversation.participants.length === 0}
             />
-            <span className="flex-1 truncate">{other.name}</span>
+            <span className="flex-1 truncate">
+                {getDirectConversationTitle(conversation.participants)}
+            </span>
             <CountBadge count={conversation.unreadCount} />
         </button>
     );

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-// Docked to the top of the canvas, like the strip in Gather or SoWork. It
+// Docked to the top of the canvas. It
 // never captures pointer events itself (the tiles opt back in), so the map
 // underneath stays clickable and draggable around the videos.
 export const StageFrame = ({ children }: { children: ReactNode }) => (

@@ -9,6 +9,12 @@ export const TYPING_EXPIRY_MS = 4000;
 // "stopped typing" signal, not the fallback for a lost one.
 export const TYPING_STOP_DELAY_MS = 2000;
 
+// Asymmetric throttle on typing:true from the composer: the first event goes
+// out 1 s after
+// typing starts, later ones at most once every 2 s while typing continues.
+export const TYPING_THROTTLE_LEADING_MS = 1000;
+export const TYPING_THROTTLE_SUBSEQUENT_MS = 2000;
+
 // Beyond this, TypingIndicator's avatar group only shows the overflow count
 // instead of one more avatar, same idea as WhatsApp's typing indicator.
 export const MAX_VISIBLE_TYPING_AVATARS = 3;

@@ -4,8 +4,12 @@ import { MessageReactionPills } from "@/features/chat/components/views/messages/
 import { MessageAttachments } from "@/features/chat/components/views/messages/MessageAttachments";
 import { MessageSeenByLabel } from "@/features/chat/components/views/messages/MessageSeenByLabel";
 import { MessageLineToolbar } from "@/features/chat/components/views/messages/MessageLineToolbar";
+import { MessageThreadSummary } from "@/features/chat/components/views/messages/MessageThreadSummary";
+import { MessageChannelReplyTag } from "@/features/chat/components/views/messages/MessageChannelReplyTag";
 import { MessageEditedTag } from "@/features/chat/components/views/messages/MessageEditedTag";
 import { EditMessageForm } from "@/features/chat/components/forms/EditMessageForm";
+import { useMessageList } from "@/features/chat/contexts/MessageListContext";
+import { getReplyHandler } from "@/features/chat/utils/getReplyHandler";
 import { isPendingMessageId } from "@/features/chat/utils/pendingMessage";
 
 type Props = {
@@ -36,6 +40,8 @@ export const MessageLineContent = ({
 }: Props) => {
     const [isEditing, setIsEditing] = useState(false);
     const isPending = isPendingMessageId(message.id);
+    const { onOpenThread } = useMessageList();
+    const onReply = getReplyHandler(message, isPending, onOpenThread);
 
     if (isEditing) {
         return (
@@ -60,11 +66,13 @@ export const MessageLineContent = ({
                 conversationId={message.conversationId}
                 messageId={message.id}
             />
+            <MessageChannelReplyTag message={message} />
             <MessageReactionPills
                 reactions={message.reactions}
                 disabled={isPending}
                 onToggle={onToggleReaction}
             />
+            <MessageThreadSummary message={message} />
             {isOwn && isLastMessage && (
                 <MessageSeenByLabel seenBy={message.seenBy} hasSingleViewer={hasSingleViewer} />
             )}
@@ -73,6 +81,7 @@ export const MessageLineContent = ({
                 disabled={isPending}
                 reactions={message.reactions}
                 onToggleReaction={onToggleReaction}
+                onReply={onReply}
                 onEdit={() => setIsEditing(true)}
                 onDelete={() => onRequestDelete(message)}
             />

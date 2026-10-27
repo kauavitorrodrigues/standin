@@ -17,3 +17,14 @@ export const SPEAKING_THRESHOLD = 20;
 // an animation, so it doesn't need frame-rate cadence - 10Hz is already
 // well above what a human can perceive as a change in the ring's state.
 export const SPEAKING_POLL_INTERVAL_MS = 100;
+
+// How many remote streams may be audible at once. The rest stay attached but
+// paused, so a crowded Space does not decode and mix every peer. Weak
+// machines get the lower ceiling.
+export const MAX_AUDIBLE_STREAMS = 8;
+export const MAX_AUDIBLE_STREAMS_WEAK_DEVICE = 4;
+
+// A machine counts as weak at or below this many logical cores, or below
+// this much RAM in GB (navigator.deviceMemory is capped at 8 by browsers).
+export const WEAK_DEVICE_MAX_CORES = 4;
+export const WEAK_DEVICE_MIN_MEMORY_GB = 8;

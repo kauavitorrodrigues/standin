@@ -5,7 +5,7 @@ import {
 } from "@/features/spaces/consts/controls-view";
 
 // Which view is open over the control bar. Opening one closes the one that was
-// open, the same rule as the expanded view of the bar in Gather.
+// open, the same rule as the expanded view of the bar.
 export const useControlsView = () => {
     const [view, setView] = useState<ControlsView>(CONTROLS_VIEWS.NONE);
 

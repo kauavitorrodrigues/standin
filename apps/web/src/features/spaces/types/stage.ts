@@ -12,3 +12,13 @@ export type StageTile = {
     // Their mic is off. Always false for screens, which carry no audio.
     isMuted: boolean;
 };
+
+// One page of the stage carousel. `carouselIndex` is zero based and always
+// within `pageCount`.
+export type StageCarousel = {
+    carouselIndex: number;
+    pageCount: number;
+    visible: StageTile[];
+    // Tiles that are not on the current page.
+    hiddenCount: number;
+};

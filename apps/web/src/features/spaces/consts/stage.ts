@@ -1,4 +1,6 @@
-export const MAX_VISIBLE_STAGE_TILES = 4;
+// The stage renders at most 2 videos at a time and pages through the rest.
+// Change this one value to try 4 to 6.
+export const CAROUSEL_SIZE = 2;
 
 // Matches the duration of the zoom classes in AllTilesView.
 export const STAGE_VIEW_TRANSITION_MS = 200;
@@ -13,3 +15,7 @@ export const STAGE_VIEWS = {
 } as const;
 
 export type StageView = (typeof STAGE_VIEWS)[keyof typeof STAGE_VIEWS];
+
+// At most 2 pinned videos are kept, FIFO by pinnedAt. The cap of 1 with a pinned embedded
+// website waits for embeds.
+export const MAX_PINNED_VIDEOS = 2;

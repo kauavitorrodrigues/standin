@@ -5,13 +5,14 @@ import { parseSchema } from "@/utils/parseSchema";
 import { paramsSchema } from "@/utils/paramsSchema";
 import { sendError } from "@/utils/sendError";
 import type { ExtendedRequest } from "@/types/request";
+import { notifyMessageUpdated } from "./notifyMessageUpdated";
 
 export const updateMessage = async (req: ExtendedRequest, res: Response) => {
     try {
         if (!req.user) return;
 
         const params = parseSchema(
-            paramsSchema("conversationId", "messageId"),
+            paramsSchema("organizationId", "conversationId", "messageId"),
             req.params,
             res
         );
@@ -26,6 +27,7 @@ export const updateMessage = async (req: ExtendedRequest, res: Response) => {
             req.user.id,
             data
         );
+        void notifyMessageUpdated(params.organizationId, message, req.user.id);
         res.status(200).json({ message });
     } catch (error) {
         return sendError({

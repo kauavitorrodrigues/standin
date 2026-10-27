@@ -5,7 +5,11 @@ import { TypingIndicator } from "@/features/chat/components/layout/TypingIndicat
 import { ChatMutations } from "@/features/chat/mutations";
 import { ChatQueries } from "@/features/chat/queries";
 
-type Props = { conversationId: string; hasSingleViewer: boolean };
+type Props = {
+    conversationId: string;
+    hasSingleViewer: boolean;
+    onOpenThread: (messageId: string) => void;
+};
 
 // No gap on this flex column on purpose: a fixed gap around the typing
 // indicator would produce a visible snap when its height-collapse animation
@@ -14,6 +18,7 @@ type Props = { conversationId: string; hasSingleViewer: boolean };
 export const ConversationThread = ({
     conversationId,
     hasSingleViewer,
+    onOpenThread,
 }: Props) => {
     const { mutate: markAsRead } = ChatMutations.markAsRead();
     // Same queryKey as MessageList's own useMessages call, so this shares
@@ -30,6 +35,7 @@ export const ConversationThread = ({
             <MessageList
                 conversationId={conversationId}
                 hasSingleViewer={hasSingleViewer}
+                onOpenThread={onOpenThread}
             />
             <TypingIndicator conversationId={conversationId} />
             <SendMessageForm conversationId={conversationId} />

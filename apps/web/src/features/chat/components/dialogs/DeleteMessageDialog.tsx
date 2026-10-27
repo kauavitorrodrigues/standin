@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { FormDialogControls } from "@/components/FormDialogControls";
 import { toast } from "@/components/ui/toast";
+import { useMessageList } from "@/features/chat/contexts/MessageListContext";
 import { ChatMutations } from "@/features/chat/mutations";
 import { DeleteMessageMessages } from "@/features/chat/components/forms/Messages";
-import { usePeerChat } from "@/features/chat/contexts/PeerChatContext";
 
 type Props = {
     message: MessageWithDetails | null;
@@ -22,7 +22,7 @@ type Props = {
 export const DeleteMessageDialog = ({ message, open, onOpenChange }: Props) => {
     
     const deleteMessage = ChatMutations.delete();
-    const { broadcastDelete, broadcastChatMessage } = usePeerChat();
+    const { threadParentId } = useMessageList();
 
     // The dialog plays a closing transition after `open` goes false, during
     // which `message` may already have been cleared by the caller. Latching
@@ -36,27 +36,15 @@ export const DeleteMessageDialog = ({ message, open, onOpenChange }: Props) => {
     const handleDelete = async () => {
         if (!target) return;
 
-        // Fired alongside the API call, same reasoning as
-        // broadcastChatMessage: peers already connected see the deletion
-        // instantly over the mesh instead of waiting for a manual refresh.
-        broadcastDelete(target.conversationId, target.id);
-
         try {
             await deleteMessage.mutateAsync({
                 conversationId: target.conversationId,
                 messageId: target.id,
+                threadParentId,
+                isThreadReply: target.threadParentId !== null,
             });
             onOpenChange(false);
         } catch {
-            // The deletion never made it to the server, so tell peers who
-            // already removed the message over the mesh to bring it back.
-            // Reusing the CHAT frame means peers restore it via
-            // prependMessage, i.e. at the newest position rather than its
-            // original spot in history: an accepted gap in this rare
-            // failure path (the API call itself failing), not a P2P-only
-            // guarantee, since a reload always shows the true, persisted
-            // order anyway.
-            broadcastChatMessage(target.conversationId, target);
             toast.add({ title: DeleteMessageMessages.error, type: "error" });
         }
     };

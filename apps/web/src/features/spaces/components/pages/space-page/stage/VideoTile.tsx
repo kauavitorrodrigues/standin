@@ -2,6 +2,7 @@ import { MicOffIcon, Maximize2Icon, MonitorIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StageTile } from "@/features/spaces/types/stage";
 import { activateOnKey } from "@/features/spaces/utils/activateOnKey";
+import { PinButton } from "@/features/spaces/components/pages/space-page/stage/PinButton";
 import { TileSurface } from "@/features/spaces/components/pages/space-page/stage/TileSurface";
 
 type VideoTileProps = {
@@ -12,6 +13,9 @@ type VideoTileProps = {
     // Shows an expand icon on hover, telling that opening the tile leads to
     // the full view.
     showExpandHint?: boolean;
+    // Shows the pin button when given.
+    isPinned?: boolean;
+    onTogglePin?: () => void;
     className?: string;
 };
 
@@ -21,6 +25,8 @@ export const VideoTile = ({
     isSelected,
     isVideoPaused,
     showExpandHint = false,
+    isPinned = false,
+    onTogglePin,
     className,
 }: VideoTileProps) => (
     <figure
@@ -47,6 +53,7 @@ export const VideoTile = ({
                 <Maximize2Icon className="size-3.5" />
             </span>
         )}
+        <TilePin isPinned={isPinned} onTogglePin={onTogglePin} />
         <figcaption className="absolute bottom-1.5 left-1.5 flex max-w-[calc(100%-0.75rem)] items-center gap-1 rounded-md bg-neutral-900/70 px-1.5 py-0.5 text-xs text-white backdrop-blur-md">
             {tile.slot === "screen" && (
                 <MonitorIcon className="size-3 shrink-0" />
@@ -61,3 +68,14 @@ export const VideoTile = ({
         </figcaption>
     </figure>
 );
+
+type TilePinProps = {
+    isPinned: boolean;
+    onTogglePin?: () => void;
+};
+
+const TilePin = ({ isPinned, onTogglePin }: TilePinProps) => {
+    if (!onTogglePin) return null;
+
+    return <PinButton isPinned={isPinned} onToggle={onTogglePin} />;
+};

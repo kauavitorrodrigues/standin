@@ -1,10 +1,15 @@
 import {
     DATA_CHANNEL_ID,
     DATA_CHANNEL_LABEL,
-    ICE_DISCONNECTED_GRACE_MS,
-    ICE_RESTART_BASE_DELAY_MS,
     ICE_RESTART_MAX_ATTEMPTS,
 } from "../consts/connection";
+import { backoffDelay } from "../utils/backoffDelay";
+import { isIceRestartNeeded } from "../utils/isIceRestartNeeded";
+import {
+    TransportConnectionMonitor,
+    TransportErrorType,
+    type TransportConnectionMonitorOptions,
+} from "./TransportConnectionMonitor";
 import {
     MEDIA_SLOTS,
     type MediaSlot,
@@ -36,6 +41,8 @@ export type PeerLinkOptions = {
     // than the one it was created with.
     getIceServers?: () => RTCIceServer[];
     events: PeerLinkEvents;
+    // Receives the classified transport errors (see TransportErrorType).
+    onTransportError?: TransportConnectionMonitorOptions["onError"];
     deps?: PeerLinkDeps;
 };
 
@@ -97,6 +104,7 @@ export class PeerLink {
     private restartAttempts = 0;
     private closed = false;
     private readonly getIceServers: (() => RTCIceServer[]) | undefined;
+    private readonly monitor: TransportConnectionMonitor;
 
     constructor({
         initiator,
@@ -104,12 +112,18 @@ export class PeerLink {
         iceServers,
         getIceServers,
         events,
+        onTransportError,
         deps = defaultDeps,
     }: PeerLinkOptions) {
         this.getIceServers = getIceServers;
         this.initiator = initiator;
         this.polite = polite;
         this.events = events;
+        this.monitor = new TransportConnectionMonitor({
+            id: "peer",
+            onError: (type, payload) => onTransportError?.(type, payload),
+            onGraceExpired: () => this.restart(),
+        });
 
         this.slots = {
             [MEDIA_SLOTS.AUDIO]: this.createSlot(deps),
@@ -215,9 +229,39 @@ export class PeerLink {
         this.applyEncoding(slot);
     }
 
+    // Senders that currently carry a video track, for the CPU limitation
+    // poller. Empty while no camera or screen track is attached.
+    getVideoSenders(): RTCRtpSender[] {
+        if (this.closed) return [];
+
+        return (Object.keys(this.slots) as MediaSlot[])
+            .filter((slot) => SLOT_KINDS[slot] === "video")
+            .map((slot) => this.slots[slot])
+            .filter((state) => state.sender && state.track)
+            .map((state) => state.sender as RTCRtpSender);
+    }
+
     setEncoding(slot: MediaSlot, encoding: SlotEncoding): void {
         this.slots[slot].encoding = encoding;
         this.applyEncoding(slot);
+    }
+
+    // Dev only, used by the failure scenario harness ("ice-restart"): restarts ICE
+    // right away, without waiting for the connection to look broken.
+    forceIceRestart(): void {
+        if (this.closed) return;
+
+        this.monitor.setMonitorReason("iceRestart");
+        this.refreshIceServers();
+        this.pc.restartIce();
+    }
+
+    // Dev only ("transport-failure"): publishes FailedToConnect without
+    // touching the connection.
+    simulateTransportFailure(): void {
+        if (this.closed) return;
+
+        this.monitor.publishSimulated(TransportErrorType.FailedToConnect);
     }
 
     close(): void {
@@ -225,6 +269,7 @@ export class PeerLink {
         this.closed = true;
 
         this.clearRestartTimer();
+        this.monitor.dispose();
         this.channel.onopen = null;
         this.channel.onmessage = null;
         this.channel.onclose = null;
@@ -341,44 +386,51 @@ export class PeerLink {
     private onIceStateChange(): void {
         const state = this.pc.iceConnectionState;
 
+        // The monitor owns the disconnected grace period and error
+        // classification. A restart after "disconnected" is requested by
+        // it through onGraceExpired.
+        this.monitor.onConnectionStateChanged(
+            state === "completed" ? "connected" : state
+        );
+
         if (state === "connected" || state === "completed") {
             this.clearRestartTimer();
             this.restartAttempts = 0;
             return;
         }
 
-        if (state === "disconnected") {
-            this.scheduleRestart(ICE_DISCONNECTED_GRACE_MS);
-            return;
-        }
-
         if (state === "failed") {
-            this.scheduleRestart(
-                ICE_RESTART_BASE_DELAY_MS * 2 ** this.restartAttempts
-            );
+            this.scheduleRestart(backoffDelay(this.restartAttempts));
         }
     }
 
     private scheduleRestart(delayMs: number): void {
         if (this.closed || this.restartTimer) return;
-
-        if (this.restartAttempts >= ICE_RESTART_MAX_ATTEMPTS) {
-            console.warn("[multiplayer] giving up on peer after ICE restarts");
-            this.close();
-            return;
-        }
+        if (this.giveUpIfExhausted()) return;
 
         this.restartTimer = setTimeout(() => {
             this.restartTimer = null;
-            if (this.closed) return;
-
-            const state = this.pc.iceConnectionState;
-            if (state === "connected" || state === "completed") return;
-
-            this.restartAttempts += 1;
-            this.refreshIceServers();
-            this.pc.restartIce();
+            this.restart();
         }, delayMs);
+    }
+
+    private giveUpIfExhausted(): boolean {
+        if (this.restartAttempts < ICE_RESTART_MAX_ATTEMPTS) return false;
+
+        console.warn("[multiplayer] giving up on peer after ICE restarts");
+        this.close();
+        return true;
+    }
+
+    private restart(): void {
+        if (this.closed || this.restartTimer) return;
+        if (this.giveUpIfExhausted()) return;
+        if (!isIceRestartNeeded(this.pc)) return;
+
+        this.restartAttempts += 1;
+        this.monitor.setMonitorReason("iceRestart");
+        this.refreshIceServers();
+        this.pc.restartIce();
     }
 
     private refreshIceServers(): void {

@@ -1,8 +1,10 @@
 import { io, type Socket } from "socket.io-client";
 import { SOCKET_PATH_OPTIONS, SOCKET_URL } from "@/lib/api/url";
-import type {
-    ClientToServerEvents,
-    ServerToClientEvents,
+import { SOCKET_RECONNECTION_OPTIONS } from "@/features/game/multiplayer/consts/connection";
+import {
+    SOCKET_APP_CHANNEL,
+    type ClientToServerEvents,
+    type ServerToClientEvents,
 } from "@standin/contracts";
 
 // A second, independent connection from the per-space one in
@@ -15,6 +17,8 @@ export const realtimeSocket: Socket<ServerToClientEvents, ClientToServerEvents> 
     io(SOCKET_URL, {
         ...SOCKET_PATH_OPTIONS,
         withCredentials: true,
+        auth: { channel: SOCKET_APP_CHANNEL },
         autoConnect: false,
         transports: ["websocket"],
+        ...SOCKET_RECONNECTION_OPTIONS,
     });

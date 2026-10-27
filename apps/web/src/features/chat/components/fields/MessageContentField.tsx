@@ -19,6 +19,7 @@ type MessageContentFieldProps<
     disabled?: boolean;
     onSubmit: () => void;
     onTextareaRef?: (element: HTMLTextAreaElement | null) => void;
+    placeholder?: string;
 };
 
 // Enter sends and Shift+Enter breaks the line, so the keyboard behaviour and
@@ -39,6 +40,7 @@ export function MessageContentField<
     disabled,
     onSubmit,
     onTextareaRef,
+    placeholder = "Escreva uma mensagem...",
 }: MessageContentFieldProps<TFieldValues, TName>) {
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
     const value = useWatch({ control, name });
@@ -80,7 +82,7 @@ export function MessageContentField<
                     value={field.value ?? ""}
                     disabled={disabled}
                     onKeyDown={handleKeyDown}
-                    placeholder="Escreva uma mensagem..."
+                    placeholder={placeholder}
                     maxLength={MAX_MESSAGE_CONTENT_LENGTH}
                     rows={1}
                     className="field-sizing-fixed max-h-40 min-h-0 resize-none overflow-y-auto wrap-anywhere border-0 bg-transparent p-0 shadow-none outline-none focus-visible:ring-0 disabled:bg-transparent dark:bg-transparent dark:disabled:bg-transparent"

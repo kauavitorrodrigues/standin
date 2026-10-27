@@ -1,11 +1,10 @@
 import { TILE_SIZE } from "@standin/contracts";
 
-// How far a nearby message reaches, in tiles. 12 is the long preset of Gather.
+// How far a nearby message reaches, in tiles. 12 tiles is the long preset.
 // It is not the radius of the voice (MAX_AUDIBLE_RADIUS), which stays as it is.
 export const NEARBY_RADIUS_TILES = 12;
 
-// On a small map the radius shrinks, but never under the short preset of
-// Gather.
+// On a small map the radius shrinks, but never under the short preset.
 export const NEARBY_RADIUS_MIN_TILES = 5;
 
 // The radius never covers more than this share of the shorter side of the map.
@@ -20,7 +19,7 @@ export const NEARBY_TYPING_EXPIRY_MS = 3000;
 // The most often the typing event goes out while the text changes.
 export const NEARBY_TYPING_THROTTLE_MS = 1000;
 
-// Where each message lives and for how long, as in Gather. `MAP` is counted per
+// Where each message lives and for how long. `MAP` is counted per
 // person, `STRIP` holds only the messages of the others, and `HISTORY` is the
 // list of the panel, mine included.
 export const NEARBY_CONTEXTS = {
@@ -49,8 +48,8 @@ export const NEARBY_HISTORY_KEY_PREFIX = "nearby-history";
 // The opacity of the oldest bubble of a stack that has more than one.
 export const NEARBY_OPACITY_MIN = 0.4;
 
-// PROVISIONAL: the CSS of the Gather bubble was not measured yet (see section
-// 9 of the plan). Easy to swap when a print of the real one arrives.
+// PROVISIONAL: these bubble dimensions were not measured yet. Easy to swap
+// when the final design arrives.
 export const NEARBY_BUBBLE = {
     // The space between the bubble and the top of the name tag, in px.
     GAP: 4,

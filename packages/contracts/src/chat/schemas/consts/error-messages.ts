@@ -1,4 +1,5 @@
 import {
+    MAX_DIRECT_CONVERSATION_MEMBERS,
     MAX_MESSAGE_CONTENT_LENGTH,
     MAX_MESSAGE_LIST_LIMIT,
     MAX_REACTION_EMOJI_LENGTH,
@@ -13,6 +14,12 @@ export const MessageErrorMessages = {
     },
     senderId: {
         invalid: "The sender ID is invalid.",
+    },
+    threadParentId: {
+        invalid: "The thread parent ID is invalid.",
+    },
+    showThreadReplyInChannel: {
+        invalid: "The thread reply visibility must be true or false.",
     },
     content: {
         required: "The message content is required.",
@@ -39,12 +46,16 @@ export const ReactionErrorMessages = {
 };
 
 export const DirectConversationErrorMessages = {
-    recipientUserId: {
-        required: "Select who you want to chat with.",
+    recipientUserIds: {
+        invalid: "The recipients are invalid.",
+        max: `A conversation cannot have more than ${MAX_DIRECT_CONVERSATION_MEMBERS} people.`,
     },
 };
 
 export const MessageListQueryErrorMessages = {
+    threadParentId: {
+        invalid: "The thread parent ID is invalid.",
+    },
     cursor: {
         invalid: "The pagination cursor is invalid.",
     },

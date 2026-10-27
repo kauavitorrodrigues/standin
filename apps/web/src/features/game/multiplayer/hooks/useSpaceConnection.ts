@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     PEER_MESSAGE_TYPES,
-    type PeerChatPayload,
-    type PeerConfirmPayload,
-    type PeerDeletePayload,
-    type PeerEditPayload,
-    type PeerReactionPayload,
-    type PeerTypingPayload,
+    type SpaceSettings,
     type Space,
     type User,
 } from "@standin/contracts";
@@ -14,10 +9,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import type Phaser from "phaser";
 import { socket } from "../socket";
 import { useSocketEvent } from "./useSocketEvent";
-import { JOIN_TIMEOUT_MS } from "../consts/connection";
+import { DEFAULT_SPACE_SETTINGS, JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getMapScene } from "@/features/game/utils/map";
 import { EmoteSender } from "@/features/game/lib/EmoteSender";
+import { SpaceChannel, type SpaceChannelTransport } from "../lib/SpaceChannel";
 import { SCENE_EVENTS } from "@/features/game/consts/scene-keys";
+import { simulateScenario } from "../utils/simulateScenario";
+import {
+    applySpacePositions,
+    createSpacePositionsState,
+    drawInSight,
+} from "../utils/applySpacePositions";
 import { PeerConnectionManager } from "../lib/PeerConnectionManager";
 import { RemoteAudioManager } from "../lib/RemoteAudioManager";
 import { SpeakingDetector } from "../lib/SpeakingDetector";
@@ -42,7 +44,10 @@ import { useRemoteVideos } from "./useRemoteVideos";
 import { useSpeakingUsers } from "./useSpeakingUsers";
 import { MEDIA_SLOTS, type PeerSignal } from "../types/transport";
 import { getMaxVideoPeers } from "@/features/settings/performance/lib/performanceValues";
-import { performanceSettingsPreference } from "@/features/settings/performance/lib/performanceSettingsPreferences";
+import {
+    effectivePerformanceSettings,
+    performanceOverrideStore,
+} from "@/features/settings/performance/lib/performanceOverride";
 import { getPeerMediaPolicies } from "../utils/mediaPolicy";
 import {
     getPreferredDeviceId,
@@ -53,16 +58,10 @@ export type UseSpaceConnectionOptions = {
     spaceId: Space["id"];
     userId: User["id"];
     game: Phaser.Game | null;
-    onChatMessage?: (socketId: string, payload: PeerChatPayload) => void;
-    onTyping?: (socketId: string, payload: PeerTypingPayload) => void;
-    onReaction?: (socketId: string, payload: PeerReactionPayload) => void;
-    onEdit?: (socketId: string, payload: PeerEditPayload) => void;
-    onDelete?: (socketId: string, payload: PeerDeletePayload) => void;
-    onConfirm?: (socketId: string, payload: PeerConfirmPayload) => void;
 };
 
-// Orchestrates the join -> peer discovery -> WebRTC handshake cycle
-// described in the multiplayer spec, and drives the MapScene from it:
+// Orchestrates the join -> peer discovery -> WebRTC handshake cycle and
+// drives the MapScene from it:
 // connects the socket, joins the space, and, for every peer that's already
 // there vs. one that joins later, applies the initiator rule so both sides
 // don't race to start the same connection. Every peer discovered here also
@@ -73,14 +72,13 @@ export function useSpaceConnection({
     spaceId,
     userId,
     game,
-    onChatMessage,
-    onTyping,
-    onReaction,
-    onEdit,
-    onDelete,
-    onConfirm,
 }: UseSpaceConnectionOptions) {
     const queryClient = useQueryClient();
+    // The settings of the space, from the join and from each save of the owner.
+    // Until the join answers, the defaults apply.
+    const [settings, setSettings] = useState<SpaceSettings>(
+        DEFAULT_SPACE_SETTINGS
+    );
     const [connectedPeerIds, setConnectedPeerIds] = useState<string[]>([]);
 
     const {
@@ -91,8 +89,7 @@ export function useSpaceConnection({
     const { stream: localCameraStream, error: localCameraError } =
         useLocalCameraStream();
     const screenShare = useLocalScreenShare();
-    // Users currently close enough to receive the local video, sorted so the
-    // list is stable between ticks. Drives the stage (everyone nearby is
+    // Users currently close enough to receive the local video, nearest first. Drives the stage (everyone nearby is
     // shown there, with an avatar until they turn a camera on) and whether
     // the "share screen" button is offered at all.
     const [nearbyUserIds, setNearbyUserIds] = useState<string[]>([]);
@@ -163,6 +160,7 @@ export function useSpaceConnection({
         setState: setRemoteMediaState,
         removePeer: removeRemoteVideoPeer,
         clear: clearRemoteVideos,
+        setActiveVideoIds,
     } = useRemoteVideos(getPeerUserId);
 
     const [mutedUserIds, setMutedUserIds] = useState<ReadonlySet<string>>(
@@ -197,12 +195,53 @@ export function useSpaceConnection({
             })
     );
 
+    // A degradation override changes the camera bitrate of live links.
+    useEffect(
+        () =>
+            performanceOverrideStore.subscribe(() =>
+                manager.refreshEncodings()
+            ),
+        [manager]
+    );
+
     // Keeps the manager on the freshest credentials as the list is refetched:
     // links created later use them, and so do the ICE restarts of links that
     // already exist (see PeerLink's getIceServers).
     useEffect(() => {
         manager.setIceServers(iceServers ?? []);
     }, [manager, iceServers]);
+
+    // Dev only failure harness, not present in production builds:
+    // Vite replaces import.meta.env.DEV with false and drops the branch.
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+
+        window.__simulateScenario = (name) =>
+            simulateScenario(name, {
+                socket,
+                peers: manager,
+                reload: () => window.location.reload(),
+                setTimeout: (callback, delayMs) =>
+                    setTimeout(callback, delayMs),
+            });
+        return () => {
+            delete window.__simulateScenario;
+        };
+    }, [manager]);
+
+    // Everything but audio and video goes through the server: positions, emotes,
+    // nearby messages and typing. The media is still on the mesh for now.
+    const [channel] = useState(
+        () => new SpaceChannel(socket as unknown as SpaceChannelTransport)
+    );
+
+    // Who is in the space, by socket id, as the server told it. The avatar of a
+    // person is only drawn while they are in sight (see `space:positions`), so
+    // what is needed to draw one is kept here for when they come in.
+    // What this client knows about the people around it: the roster, the short
+    // ids of `space:positions` and who is in sight. It lives apart from the
+    // scene, so a message that arrives before the scene is ready is kept.
+    const positionsRef = useRef(createSpacePositionsState());
 
     // One RemoteAudioManager per Space session, mirroring `manager` above.
     const [remoteAudioManager] = useState(() => new RemoteAudioManager());
@@ -258,6 +297,7 @@ export function useSpaceConnection({
                 remoteSpeakingDetectorsRef.current.get(socketId)?.stop();
                 const detector = new SpeakingDetector({
                     onSpeakingChange: (isSpeaking) => {
+                        remoteAudioManager.setSpeaking(socketId, isSpeaking);
                         const peerUserId = peerUserIdsRef.current[socketId];
                         if (peerUserId) setUserSpeaking(peerUserId, isSpeaking);
                     },
@@ -293,47 +333,9 @@ export function useSpaceConnection({
                     return;
                 }
 
+                // Only the media state still travels on the mesh. The rest
+                // goes through the server.
                 switch (message.type) {
-                    case PEER_MESSAGE_TYPES.POSITION:
-                        (game ? getMapScene(game) : null)?.applyRemotePosition(
-                            socketId,
-                            message.payload
-                        );
-                        return;
-                    case PEER_MESSAGE_TYPES.CHAT:
-                        onChatMessage?.(socketId, message.payload);
-                        return;
-                    case PEER_MESSAGE_TYPES.TYPING:
-                        onTyping?.(socketId, message.payload);
-                        return;
-                    case PEER_MESSAGE_TYPES.REACTION:
-                        onReaction?.(socketId, message.payload);
-                        return;
-                    case PEER_MESSAGE_TYPES.EDIT:
-                        onEdit?.(socketId, message.payload);
-                        return;
-                    case PEER_MESSAGE_TYPES.DELETE:
-                        onDelete?.(socketId, message.payload);
-                        return;
-                    case PEER_MESSAGE_TYPES.CONFIRM:
-                        onConfirm?.(socketId, message.payload);
-                        return;
-                    case PEER_MESSAGE_TYPES.EMOTE:
-                        (game ? getMapScene(game) : null)?.applyRemoteEmote(
-                            socketId,
-                            message.payload
-                        );
-                        return;
-                    case PEER_MESSAGE_TYPES.NEARBY_MESSAGE:
-                        (
-                            game ? getMapScene(game) : null
-                        )?.applyRemoteNearbyMessage(socketId, message.payload);
-                        return;
-                    case PEER_MESSAGE_TYPES.NEARBY_TYPING:
-                        (
-                            game ? getMapScene(game) : null
-                        )?.applyRemoteNearbyTyping(socketId, message.payload);
-                        return;
                     case PEER_MESSAGE_TYPES.MEDIA_STATE:
                         setRemoteMicMuted(
                             message.payload.userId,
@@ -343,6 +345,8 @@ export function useSpaceConnection({
                             cameraStreamId: message.payload.cameraStreamId,
                             screenStreamId: message.payload.screenStreamId,
                         });
+                        return;
+                    default:
                         return;
                 }
             },
@@ -410,7 +414,12 @@ export function useSpaceConnection({
         return () => detector.stop();
     }, [localStream, syncLocalSpeaking]);
 
-    useSocketEvent("space:joined", ({ peers }) => {
+    useSocketEvent("space:settings-changed", ({ settings: changed }) => {
+        setSettings(changed);
+    });
+
+    useSocketEvent("space:joined", ({ peers, settings: joined }) => {
+        setSettings(joined);
         // A dropped-then-reconnected socket re-emits space:join (see the
         // "connect" handler below), so this can fire more than once per
         // mount. Treat every arrival as the start of a fresh session: the
@@ -425,31 +434,74 @@ export function useSpaceConnection({
         peerUserIdsRef.current = Object.fromEntries(
             peers.map((peer) => [peer.socketId, peer.userId])
         );
+        positionsRef.current = createSpacePositionsState();
+        positionsRef.current.roster = new Map(
+            peers.map((peer) => [peer.socketId, peer])
+        );
         syncOnlineUserIds();
+        channel.resetPosition();
 
-        const scene = game ? getMapScene(game) : null;
-        scene?.clearRemoteAvatars();
-        peers.forEach((peer) => {
-            manager.createConnection(peer.socketId, true);
-            scene?.spawnRemoteAvatar(
-                peer.socketId,
-                peer.userId,
-                peer.avatarSheetFileId,
-                { name: peer.name, profilePictureUrl: peer.profilePictureUrl }
-            );
-        });
+        // The avatars come with the positions, as each person gets in sight.
+        (game ? getMapScene(game) : null)?.clearRemoteAvatars();
+        peers.forEach((peer) => manager.createConnection(peer.socketId, true));
     });
+
+    // Draws the people already in sight once there is a scene to draw them in,
+    // and again when someone joins: a sighting can come before the scene is
+    // ready, or before the roster entry of the person.
+    const drawPeopleInSight = useCallback(() => {
+        const scene = game ? getMapScene(game) : null;
+        if (scene?.isReady()) drawInSight(positionsRef.current, scene);
+    }, [game]);
+
+    useEffect(() => {
+        if (!game) return;
+
+        drawPeopleInSight();
+        game.events.on(SCENE_EVENTS.MAP_READY, drawPeopleInSight);
+
+        return () => {
+            game.events.off(SCENE_EVENTS.MAP_READY, drawPeopleInSight);
+        };
+    }, [game, drawPeopleInSight]);
 
     useSocketEvent("space:peer-joined", (peer) => {
         peerUserIdsRef.current[peer.socketId] = peer.userId;
+        positionsRef.current.roster.set(peer.socketId, peer);
         syncOnlineUserIds();
         manager.createConnection(peer.socketId, false);
-        (game ? getMapScene(game) : null)?.spawnRemoteAvatar(
-            peer.socketId,
-            peer.userId,
-            peer.avatarSheetFileId,
-            { name: peer.name, profilePictureUrl: peer.profilePictureUrl }
+        drawPeopleInSight();
+    });
+
+    // What changed around the local avatar since the last tick. Someone who came
+    // into sight is drawn at the spot the server gave, someone already drawn
+    // glides to the new one, and someone who went out of sight is taken down.
+    useSocketEvent("space:positions", (payload) => {
+        const scene = game ? getMapScene(game) : null;
+        applySpacePositions(
+            payload,
+            positionsRef.current,
+            scene?.isReady() ? scene : null
         );
+    });
+
+    useSocketEvent("space:emote", ({ socketId, emoji, count }) => {
+        (game ? getMapScene(game) : null)?.applyRemoteEmote(socketId, {
+            emoji,
+            count,
+        });
+    });
+
+    useSocketEvent("space:nearby-message", ({ socketId, text }) => {
+        (game ? getMapScene(game) : null)?.applyRemoteNearbyMessage(socketId, {
+            text,
+        });
+    });
+
+    useSocketEvent("space:nearby-typing", ({ socketId, isTyping }) => {
+        (game ? getMapScene(game) : null)?.applyRemoteNearbyTyping(socketId, {
+            isTyping,
+        });
     });
 
     // Someone saved or cleared their avatar. The sprite is swapped in the
@@ -457,6 +509,13 @@ export function useSpaceConnection({
     // cached avatar (see useLocalAvatarSheet), so the cache is refreshed here
     // for a change made from another tab.
     useSocketEvent("space:avatar-changed", (change) => {
+        positionsRef.current.roster.forEach((peer, socketId) => {
+            if (peer.userId !== change.userId) return;
+            positionsRef.current.roster.set(socketId, {
+                ...peer,
+                avatarSheetFileId: change.avatarSheetFileId,
+            });
+        });
         if (change.userId === userId) {
             queryClient.invalidateQueries({ queryKey: [MY_AVATAR_QUERY_KEY] });
             return;
@@ -470,6 +529,10 @@ export function useSpaceConnection({
 
     // Someone saved a new name (see applyNameChange).
     useSocketEvent("space:name-changed", (change) => {
+        positionsRef.current.roster.forEach((peer, socketId) => {
+            if (peer.userId !== change.userId) return;
+            positionsRef.current.roster.set(socketId, { ...peer, name: change.name });
+        });
         applyNameChange({
             change,
             selfUserId: userId,
@@ -485,6 +548,13 @@ export function useSpaceConnection({
     // Someone saved or removed their profile picture (see
     // applyProfilePictureChange).
     useSocketEvent("space:profile-picture-changed", (change) => {
+        positionsRef.current.roster.forEach((peer, socketId) => {
+            if (peer.userId !== change.userId) return;
+            positionsRef.current.roster.set(socketId, {
+                ...peer,
+                profilePictureUrl: change.profilePictureUrl,
+            });
+        });
         applyProfilePictureChange({
             change,
             selfUserId: userId,
@@ -513,6 +583,8 @@ export function useSpaceConnection({
         (game ? getMapScene(game) : null)?.forgetPendingUserName(peerUserId);
         stopSpeakingOf(socketId);
         delete peerUserIdsRef.current[socketId];
+        positionsRef.current.roster.delete(socketId);
+        positionsRef.current.inSight.delete(socketId);
         syncOnlineUserIds();
         manager.destroy(socketId);
         setConnectedPeerIds((peerIds) => removePeerId(peerIds, socketId));
@@ -540,7 +612,7 @@ export function useSpaceConnection({
         const applyBroadcaster = () => {
             const scene = getMapScene(game);
             scene?.setPositionBroadcaster((state) =>
-                manager.broadcastPosition(state)
+                channel.sendPosition(state)
             );
             scene?.setLocalSocketIdProvider(() => socket.id ?? "");
             scene?.setVolumeUpdater((socketId, volume) =>
@@ -562,14 +634,19 @@ export function useSpaceConnection({
                 const policies = getPeerMediaPolicies(
                     distances,
                     manager.getReceivingVideoPeers(),
-                    getMaxVideoPeers(performanceSettingsPreference.get())
+                    getMaxVideoPeers(effectivePerformanceSettings.get())
                 );
                 manager.setMediaPolicies(policies);
 
+                // Nearest first: the stage orders people by this.
                 const nearby = [...manager.getReceivingVideoPeers()]
+                    .sort(
+                        (first, second) =>
+                            (distances.get(first) ?? Infinity) -
+                            (distances.get(second) ?? Infinity)
+                    )
                     .map(getPeerUserId)
-                    .filter((id): id is string => id !== undefined)
-                    .sort();
+                    .filter((id): id is string => id !== undefined);
                 setNearbyUserIds((previous) =>
                     previous.length === nearby.length &&
                     previous.every((id, index) => id === nearby[index])
@@ -594,6 +671,7 @@ export function useSpaceConnection({
     }, [
         game,
         manager,
+        channel,
         remoteAudioManager,
         getPeerUserId,
         setProximityGate,
@@ -662,29 +740,10 @@ export function useSpaceConnection({
         clearRemoteVideos,
     ]);
 
-    const broadcastChatMessage = useCallback(
-        (payload: PeerChatPayload) => manager.broadcastChatMessage(payload),
-        [manager]
-    );
-    const broadcastTyping = useCallback(
-        (payload: PeerTypingPayload) => manager.broadcastTyping(payload),
-        [manager]
-    );
-    const broadcastReaction = useCallback(
-        (payload: PeerReactionPayload) => manager.broadcastReaction(payload),
-        [manager]
-    );
-    const broadcastEdit = useCallback(
-        (payload: PeerEditPayload) => manager.broadcastEdit(payload),
-        [manager]
-    );
-    const broadcastDelete = useCallback(
-        (payload: PeerDeletePayload) => manager.broadcastDelete(payload),
-        [manager]
-    );
-    const broadcastConfirm = useCallback(
-        (payload: PeerConfirmPayload) => manager.broadcastConfirm(payload),
-        [manager]
+    const sendChatTyping = useCallback(
+        (conversationId: string, isTyping: boolean) =>
+            channel.sendChatTyping({ conversationId, isTyping }),
+        [channel]
     );
 
     // Clicks in the same emoji are grouped into one event, which is sent to
@@ -693,7 +752,7 @@ export function useSpaceConnection({
     const emoteSenderRef = useRef<EmoteSender | null>(null);
     useEffect(() => {
         const sender = new EmoteSender((payload) => {
-            manager.broadcastEmote(payload);
+            channel.sendEmote(payload);
             const scene = game ? getMapScene(game) : null;
             scene?.playLocalEmote(payload);
         });
@@ -703,30 +762,30 @@ export function useSpaceConnection({
             sender.destroy();
             emoteSenderRef.current = null;
         };
-    }, [manager, game]);
+    }, [channel, game]);
     const sendEmote = useCallback(
         (emoji: string) => emoteSenderRef.current?.send(emoji),
         []
     );
 
-    // A nearby message goes to the mesh and is shown at once on the local
-    // avatar and in the list, since the mesh never sends it back. The text was
+    // A nearby message goes to the server and is shown at once on the local
+    // avatar and in the list, since the server never sends it back. The text was
     // already validated by the form that sent it.
     const sendNearbyMessage = useCallback(
         (text: string) => {
-            manager.broadcastNearbyMessage({ text });
+            channel.sendNearbyMessage({ text });
             const scene = game ? getMapScene(game) : null;
             scene?.playLocalNearbyMessage(text);
         },
-        [manager, game]
+        [channel, game]
     );
     const sendNearbyTyping = useCallback(
         (isTyping: boolean) => {
-            manager.broadcastNearbyTyping({ isTyping });
+            channel.sendNearbyTyping({ isTyping });
             const scene = game ? getMapScene(game) : null;
             scene?.playLocalNearbyTyping(isTyping);
         },
-        [manager, game]
+        [channel, game]
     );
 
     return {
@@ -736,20 +795,17 @@ export function useSpaceConnection({
         localAudioError,
         video: {
             remoteVideos,
+            setActiveVideoIds,
             localCameraStream,
             localCameraError,
             nearbyUserIds,
             screenShare,
             mutedUserIds,
         },
-        broadcastChatMessage,
-        broadcastTyping,
-        broadcastReaction,
-        broadcastEdit,
-        broadcastDelete,
-        broadcastConfirm,
+        sendChatTyping,
         sendEmote,
         sendNearbyMessage,
         sendNearbyTyping,
+        isSendNearbyEnabled: settings.enableSendNearbyInMapView,
     };
 }

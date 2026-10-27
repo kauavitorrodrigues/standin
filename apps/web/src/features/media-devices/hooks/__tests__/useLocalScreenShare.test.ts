@@ -5,6 +5,7 @@ import { useLocalScreenShare } from "../useLocalScreenShare";
 type FakeTrack = {
     stop: ReturnType<typeof vi.fn>;
     addEventListener: ReturnType<typeof vi.fn>;
+    applyConstraints: ReturnType<typeof vi.fn>;
     contentHint: string;
 };
 
@@ -12,6 +13,7 @@ const createFakeStream = () => {
     const track: FakeTrack = {
         stop: vi.fn(),
         addEventListener: vi.fn(),
+        applyConstraints: vi.fn().mockResolvedValue(undefined),
         contentHint: "",
     };
     const stream = {
@@ -56,6 +58,112 @@ describe("useLocalScreenShare", () => {
         });
 
         expect(result.current.isSharing).toBe(true);
+    });
+
+    it("applies the tier box to the track after the capture", async () => {
+        const picker = createPicker();
+        navigator.mediaDevices.getDisplayMedia = picker.getDisplayMedia;
+        const { result, act } = renderHook(useLocalScreenShare);
+        const { stream, track } = createFakeStream();
+
+        await act(async () => {
+            const pending = result.current.start();
+            picker.resolve(stream);
+            await pending;
+        });
+
+        expect(track.applyConstraints).toHaveBeenCalledWith({
+            width: { max: 1920 },
+            height: { max: 1920 },
+            frameRate: { ideal: 30, max: 30 },
+        });
+    });
+
+    it("asks getDisplayMedia for the cursor and the highest box", async () => {
+        const picker = createPicker();
+        navigator.mediaDevices.getDisplayMedia = picker.getDisplayMedia;
+        const { result, act } = renderHook(useLocalScreenShare);
+        const { stream } = createFakeStream();
+
+        await act(async () => {
+            const pending = result.current.start();
+            picker.resolve(stream);
+            await pending;
+        });
+
+        expect(picker.getDisplayMedia).toHaveBeenCalledWith({
+            video: {
+                width: { max: 2880 },
+                height: { max: 2880 },
+                cursor: "always",
+            },
+            audio: false,
+        });
+    });
+
+    it("keeps sharing when applyConstraints rejects", async () => {
+        const picker = createPicker();
+        navigator.mediaDevices.getDisplayMedia = picker.getDisplayMedia;
+        const { result, act } = renderHook(useLocalScreenShare);
+        const { stream, track } = createFakeStream();
+        track.applyConstraints.mockRejectedValue(new Error("refused"));
+
+        await act(async () => {
+            const pending = result.current.start();
+            picker.resolve(stream);
+            await pending;
+        });
+
+        expect(result.current.isSharing).toBe(true);
+        expect(result.current.error).toBeNull();
+    });
+
+    it("stops the capture when the page unmounts during applyConstraints", async () => {
+        const picker = createPicker();
+        navigator.mediaDevices.getDisplayMedia = picker.getDisplayMedia;
+        const { result, unmount, act } = renderHook(useLocalScreenShare);
+        const { stream, track } = createFakeStream();
+        let finish!: () => void;
+        track.applyConstraints.mockReturnValue(
+            new Promise<void>((res) => {
+                finish = res;
+            })
+        );
+
+        await act(async () => {
+            void result.current.start();
+            picker.resolve(stream);
+        });
+        unmount();
+        await act(async () => {
+            finish();
+        });
+
+        expect(track.stop).toHaveBeenCalled();
+    });
+
+    it("does not share when the track ends during applyConstraints", async () => {
+        const picker = createPicker();
+        navigator.mediaDevices.getDisplayMedia = picker.getDisplayMedia;
+        const { result, act } = renderHook(useLocalScreenShare);
+        const { stream, track } = createFakeStream();
+        let finish!: () => void;
+        track.applyConstraints.mockReturnValue(
+            new Promise<void>((res) => {
+                finish = res;
+            })
+        );
+
+        await act(async () => {
+            void result.current.start();
+            picker.resolve(stream);
+        });
+        track.addEventListener.mock.calls[0][1]();
+        await act(async () => {
+            finish();
+        });
+
+        expect(result.current.isSharing).toBe(false);
     });
 
     it("does not open a second picker while one is pending", async () => {

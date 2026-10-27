@@ -1,62 +1,35 @@
 import type { Server, Socket } from "socket.io";
 import { RoomEvents, SpaceEvents, SpaceJoinSchema } from "@standin/contracts";
 import { SpaceGuestService } from "@standin/core";
+import { countQueries } from "@standin/database";
 import { buildSpaceRoom } from "../utils/buildSpaceRoom";
 import { RoomStates } from "../utils/roomStates";
 import {
     resolveJoinAccess,
     type JoinAccess,
 } from "../services/resolveJoinAccess";
+import { resolveCachedJoinAccess } from "../services/resolveCachedJoinAccess";
 import { buildHostRoom } from "../utils/buildHostRoom";
 import { resolveAvatarSheetFileId } from "../services/resolveAvatarSheetFileId";
-import {
-    resolveUserProfiles,
-    type UserProfile,
-} from "../services/resolveUserProfiles";
+import { resolveSpaceSettings } from "../services/resolveSpaceSettings";
+import { resolveUserProfile } from "../services/resolveUserProfile";
 import { applyJoinEffects, sendEntitlements } from "../utils/applyJoinEffects";
+import { PresenceStore } from "../presence/PresenceStore";
+import { SpaceInterests } from "../realtime/SpaceInterests";
+import type { PresenceEntry } from "../presence/PresenceStore";
 
-// The snapshot stays synchronous on purpose, see the comment where it is taken.
-const resolvePeersInRoom = (io: Server, room: string) => {
-    const roomSockets = io.sockets.adapter.rooms.get(room);
-    if (!roomSockets) return [];
-
-    return [...roomSockets]
-        .map((socketId) => io.sockets.sockets.get(socketId))
-        .filter((peerSocket): peerSocket is Socket => Boolean(peerSocket))
-        .map((peerSocket) => ({
-            socketId: peerSocket.id,
-            userId: peerSocket.data.userId as string,
-        }));
-};
-
-// What the tag shows when a profile could not be read: no name, so the client
-// keeps the tag hidden.
-const NO_PROFILE: UserProfile = { name: "", profilePictureUrl: null };
-
-// The sheet and the profile are read after the join, so the database never sits
-// between the snapshot and the join. The sheets are read one by one and the
-// profiles in a single query, all at once.
-const attachPresenceData = async (
-    peers: { socketId: string; userId: string }[],
+// What the person who joins needs to be drawn: the only thing read from the
+// database in a join, and the only thing read once per person. The ones already
+// inside come from the presence of the space.
+const resolveSelfEntry = async (
+    socketId: string,
     userId: string
-) => {
-    const [profiles, peerSheets, avatarSheetFileId] = await Promise.all([
-        resolveUserProfiles([userId, ...peers.map((peer) => peer.userId)]),
-        Promise.all(peers.map((peer) => resolveAvatarSheetFileId(peer.userId))),
+): Promise<PresenceEntry> => {
+    const [profile, avatarSheetFileId] = await Promise.all([
+        resolveUserProfile(userId),
         resolveAvatarSheetFileId(userId),
     ]);
-
-    return {
-        peers: peers.map((peer, index) => ({
-            ...peer,
-            avatarSheetFileId: peerSheets[index],
-            ...(profiles.get(peer.userId) ?? NO_PROFILE),
-        })),
-        self: {
-            avatarSheetFileId,
-            ...(profiles.get(userId) ?? NO_PROFILE),
-        },
-    };
+    return { socketId, userId, avatarSheetFileId, ...profile };
 };
 
 // A user is identified per-socket (one browser tab = one connection), not
@@ -70,16 +43,14 @@ const attachPresenceData = async (
 // disconnect, so this doesn't create a rejoin/kick loop between the tabs.
 const disconnectDuplicateSessions = (
     io: Server,
-    peers: ReturnType<typeof resolvePeersInRoom>,
+    spaceId: string,
     userId: string
 ) => {
-    peers
-        .filter((peer) => peer.userId === userId)
-        .forEach((peer) => {
-            const duplicateSocket = io.sockets.sockets.get(peer.socketId);
-            duplicateSocket?.emit(SpaceEvents.SPACE_DUPLICATE_SESSION);
-            duplicateSocket?.disconnect(true);
-        });
+    PresenceStore.findSocketIdsOfUser(spaceId, userId).forEach((socketId) => {
+        const duplicateSocket = io.sockets.sockets.get(socketId);
+        duplicateSocket?.emit(SpaceEvents.SPACE_DUPLICATE_SESSION);
+        duplicateSocket?.disconnect(true);
+    });
 };
 
 // A host hears the requests of guests from now on, and learns right away the
@@ -93,7 +64,8 @@ const joinAsHost = async (socket: Socket, spaceId: string) => {
 };
 
 // Hosts are members of the organization, which does not end by itself in a
-// join. A guest pass can, so a guest is checked again.
+// join. A guest pass can, so a guest is checked again. It reads the database
+// on purpose: the cache may hold an answer read before the pass ended.
 const stillHasAccess = async (
     userId: string,
     spaceId: string,
@@ -103,91 +75,141 @@ const stillHasAccess = async (
     return (await resolveJoinAccess(userId, spaceId)) !== null;
 };
 
+// What the others need to draw a person, with no field of the presence that
+// is only for the server.
+const toPeerPayload = ({
+    socketId,
+    userId,
+    avatarSheetFileId,
+    name,
+    profilePictureUrl,
+}: PresenceEntry) => ({
+    socketId,
+    userId,
+    avatarSheetFileId,
+    name,
+    profilePictureUrl,
+});
+
+const leavePreviousSpace = async (
+    io: Server,
+    socket: Socket,
+    previousSpaceId: string,
+    userId: string
+) => {
+    const previousRoom = buildSpaceRoom(previousSpaceId);
+    PresenceStore.remove(previousSpaceId, socket.id);
+    SpaceInterests.remove(previousSpaceId, socket.id);
+    socket.to(previousRoom).emit(SpaceEvents.SPACE_PEER_LEFT, {
+        socketId: socket.id,
+        userId,
+    });
+    await socket.leave(previousRoom);
+    await socket.leave(buildHostRoom(previousSpaceId));
+    const { changes, effects } = RoomStates.removeSocket(
+        previousSpaceId,
+        socket.id
+    );
+    changes.forEach((change) => {
+        socket.to(previousRoom).emit(RoomEvents.ROOM_STATE, change);
+    });
+    applyJoinEffects(() => io.sockets.sockets, previousSpaceId, effects);
+};
+
 export function registerJoinSpace(io: Server, socket: Socket) {
-    socket.on(SpaceEvents.SPACE_JOIN, async (payload) => {
-        try {
-            const parsed = SpaceJoinSchema.safeParse(payload);
-            if (!parsed.success) return;
+    socket.on(SpaceEvents.SPACE_JOIN, (payload) =>
+        countQueries("space:join", async () => {
+            try {
+                const parsed = SpaceJoinSchema.safeParse(payload);
+                if (!parsed.success) return;
 
-            // Only the space comes from the client. The person is the one the
-            // token authenticated, and the organization comes from the space.
-            const { spaceId } = parsed.data;
-            const userId = socket.data.userId as string;
+                // Only the space comes from the client. The person is the one the
+                // token authenticated, and the organization comes from the space.
+                const { spaceId } = parsed.data;
+                const userId = socket.data.userId as string;
 
-            // Already in that space: nothing to do, and re-broadcasting would
-            // duplicate peers/renegotiate connections on the client.
-            if (socket.data.spaceId === spaceId) return;
+                // Already in that space: nothing to do, and re-broadcasting would
+                // duplicate peers/renegotiate connections on the client.
+                if (socket.data.spaceId === spaceId) return;
 
-            const access = await resolveJoinAccess(userId, spaceId);
-            if (!access) return;
+                const access = await resolveCachedJoinAccess(userId, spaceId);
+                if (!access) return;
 
-            const previousSpaceId = socket.data.spaceId;
-            if (previousSpaceId) {
-                const previousRoom = buildSpaceRoom(previousSpaceId);
-                socket.to(previousRoom).emit(SpaceEvents.SPACE_PEER_LEFT, {
+                const previousSpaceId = socket.data.spaceId;
+                if (previousSpaceId) {
+                    await leavePreviousSpace(
+                        io,
+                        socket,
+                        previousSpaceId,
+                        userId
+                    );
+                }
+
+                const [self, settings] = await Promise.all([
+                    resolveSelfEntry(socket.id, userId),
+                    resolveSpaceSettings(spaceId),
+                ]);
+
+                // The socket may have dropped while the reads were in flight. The
+                // disconnect handler found no space to clean, so adding the person
+                // now would leave a presence nobody removes.
+                if (!socket.connected) return;
+
+                // Everything between reading the presence and adding the person is
+                // synchronous on purpose: two sockets joining in the same tick
+                // cannot both see (and be seen by) each other, which would make
+                // both sides think they are the one that starts the connection.
+                disconnectDuplicateSessions(io, spaceId, userId);
+                const peers = PresenceStore.list(spaceId).filter(
+                    (peer) => peer.userId !== userId
+                );
+                PresenceStore.add(spaceId, self);
+
+                const room = buildSpaceRoom(spaceId);
+                socket.data.spaceId = spaceId;
+                socket.data.isGuest = !access.isHost;
+                await socket.join(room);
+
+                // The disconnect handler already cleaned the space and told the room
+                // the person left, so announcing them now would bring a ghost back.
+                if (!socket.connected) return;
+
+                // The access can end while the join is in flight: a kick that landed
+                // before the socket was in the room had nobody to cut. Looking again
+                // once inside closes that gap.
+                if (!(await stillHasAccess(userId, spaceId, access))) {
+                    PresenceStore.remove(spaceId, socket.id);
+                    SpaceInterests.remove(spaceId, socket.id);
+                    await socket.leave(room);
+                    socket.data.spaceId = null;
+                    return;
+                }
+                if (!socket.connected) return;
+
+                socket.emit(SpaceEvents.SPACE_JOINED, {
+                    settings,
+                    peers: peers.map(toPeerPayload),
+                });
+                socket.to(room).emit(SpaceEvents.SPACE_PEER_JOINED, {
                     socketId: socket.id,
                     userId,
+                    avatarSheetFileId: self.avatarSheetFileId,
+                    name: self.name,
+                    profilePictureUrl: self.profilePictureUrl,
                 });
-                await socket.leave(previousRoom);
-                await socket.leave(buildHostRoom(previousSpaceId));
-                const { changes, effects } = RoomStates.removeSocket(
-                    previousSpaceId,
-                    socket.id
-                );
-                changes.forEach((change) => {
-                    socket.to(previousRoom).emit(RoomEvents.ROOM_STATE, change);
+                socket.emit(RoomEvents.ROOM_STATES, {
+                    rooms: RoomStates.listNotOpen(spaceId),
                 });
-                applyJoinEffects(
-                    () => io.sockets.sockets,
-                    previousSpaceId,
-                    effects
+                if (access.isOwner) RoomStates.setOwner(spaceId, socket.id);
+                if (access.isHost) await joinAsHost(socket, spaceId);
+                sendEntitlements(
+                    new Map([[socket.id, socket]]),
+                    spaceId,
+                    userId
                 );
+            } catch (error) {
+                console.error(error);
             }
-
-            const room = buildSpaceRoom(spaceId);
-            // Snapshotting before join() avoids a race where two sockets
-            // joining in the same tick could both see (and be seen by) each
-            // other, which would make both sides think they're the WebRTC
-            // initiator.
-            const peers = resolvePeersInRoom(io, room);
-
-            disconnectDuplicateSessions(io, peers, userId);
-            const remainingPeers = peers.filter(
-                (peer) => peer.userId !== userId
-            );
-
-            socket.data.spaceId = spaceId;
-            socket.data.isGuest = !access.isHost;
-            await socket.join(room);
-
-            // The access can end while the join is in flight: a kick that landed
-            // before the socket was in the room had nobody to cut. Looking again
-            // once inside closes that gap.
-            if (!(await stillHasAccess(userId, spaceId, access))) {
-                await socket.leave(room);
-                socket.data.spaceId = null;
-                return;
-            }
-
-            const { peers: peersWithAvatar, self } = await attachPresenceData(
-                remainingPeers,
-                userId
-            );
-
-            socket.emit(SpaceEvents.SPACE_JOINED, { peers: peersWithAvatar });
-            socket.to(room).emit(SpaceEvents.SPACE_PEER_JOINED, {
-                socketId: socket.id,
-                userId,
-                ...self,
-            });
-            socket.emit(RoomEvents.ROOM_STATES, {
-                rooms: RoomStates.listNotOpen(spaceId),
-            });
-            if (access.isOwner) RoomStates.setOwner(spaceId, socket.id);
-            if (access.isHost) await joinAsHost(socket, spaceId);
-            sendEntitlements(new Map([[socket.id, socket]]), spaceId, userId);
-        } catch (error) {
-            console.error(error);
-        }
-    });
+        })
+    );
 }

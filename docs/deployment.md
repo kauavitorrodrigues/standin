@@ -1,0 +1,16 @@
+# Deployment guide
+
+Standin is meant to be self-hosted: the only hard requirement is a server (VPS, bare metal, whatever you already run) and a PostgreSQL database — no proprietary platform lock-in.
+
+`web` and `api` are deployed separately: `api` never serves the frontend bundle, it only serves locally-stored uploads under `/public`. After the first migration, run `pnpm -C packages/database db:seed` (or at least `pnpm --filter api seed:library`) so the global library exists; blank maps need it.
+
+1. **Provision PostgreSQL.** Either the bundled `compose.yml` service on the same host, or any managed/self-hosted instance reachable from `api`. Point `DATABASE_URL` at it.
+2. **Build both apps** from the repo root: `pnpm install --frozen-lockfile && pnpm build`.
+3. **Apply migrations**: `pnpm -C packages/database db:migrate`.
+4. **Run the API** (`apps/api/dist/server.js`) as a single long-lived Node process (the presence and the caches live in its memory, so run one instance per deployment) behind a process manager (PM2, systemd, Docker — your choice) and a reverse proxy (nginx, Caddy) for TLS. Required env vars: `DATABASE_URL` (and optionally `DATABASE_POOL_MAX`, default 20), `SERVER_PORT`, `SERVER_URL` (the API's own public URL — used to build links to locally-stored files), `JWT_SECRET`, `FRONTEND_URL` (used for CORS), and `STORAGE_DRIVER` (see [storage guide](storage.md)).
+5. **Serve the web build** (`apps/web/dist`, a static bundle) from any static host or the same reverse proxy, with `VITE_BASE_API_URL` pointed at the API's public URL at build time.
+6. **Pick a storage strategy**: `local` works out of the box on a single server but ties uploads to that machine's disk; an S3-compatible provider (Cloudflare R2, etc.) is the better fit once you're running more than one API instance or want uploads decoupled from the app server.
+7. **(Recommended) Run your own STUN/TURN relay.** Peers behind a strict NAT or a corporate firewall cannot reach each other directly and need a relay, and video makes that traffic noticeable. `compose.yml` ships a `coturn` service behind the `turn` profile: set `TURN_HOST` (your domain or public IP), `TURN_SECRET` (`openssl rand -hex 32`) and optionally `TURN_PORT`/`TURN_TTL_SECONDS` in `.env`, then `docker compose --profile turn up -d coturn`. The API reads the same variables and hands each signed-in user short-lived credentials from `GET /ice-servers`, so there is no fixed username or password. The secret is handed to coturn through a private file inside the container, never on its command line, and the container refuses to start if `TURN_SECRET` is empty. Open `3478` (UDP and TCP) and the relay range `49160-49200/udp` in the host firewall and, on most VPS providers, in the provider's own firewall as well. Without `TURN_HOST` and `TURN_SECRET` the API returns no ICE servers and peers connect only over direct paths, which is enough on a local network.
+8. **Use HTTPS.** Browsers only allow microphone, camera and screen capture in a secure context, and the reverse proxy in front of the API must forward WebSocket upgrades for Socket.IO.
+
+None of this requires a paid third-party service. A single small VPS running Postgres, the API process, and the static web build is enough to start. To size a server for more people, see [docs/performance.md](docs/performance.md).

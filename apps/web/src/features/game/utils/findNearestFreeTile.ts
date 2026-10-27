@@ -14,8 +14,7 @@ export type NearestFreeTileSearch = {
 };
 
 /**
- * The tile to walk to when the one that was asked for is closed, the same way
- * the Gather finds it. First the tiles along the direction the avatar faces,
+ * The tile to walk to when the one that was asked for is closed. First the tiles along the direction the avatar faces,
  * starting next to the goal, and the first open one wins, but the search ends
  * at the first closed tile. Then the square of tiles around the goal: the open
  * ones sorted by their distance in tiles to the goal, with a little noise so

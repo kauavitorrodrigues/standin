@@ -4,6 +4,8 @@ import { EditorSessions } from "../utils/editorSessions";
 import { RoomStates } from "../utils/roomStates";
 import { buildSpaceRoom } from "../utils/buildSpaceRoom";
 import { applyJoinEffects } from "../utils/applyJoinEffects";
+import { PresenceStore } from "../presence/PresenceStore";
+import { SpaceInterests } from "../realtime/SpaceInterests";
 
 export function registerDisconnect(socket: Socket) {
     // "disconnect" (not "disconnecting") works here because the room is
@@ -15,7 +17,14 @@ export function registerDisconnect(socket: Socket) {
         EditorSessions.deleteBySocket(socket.id);
 
         const { spaceId, userId } = socket.data;
-        if (!spaceId) return;
+        if (!spaceId) {
+            // A join still in flight may have added the socket already.
+            PresenceStore.removeSocketEverywhere(socket.id);
+            return;
+        }
+
+        PresenceStore.remove(spaceId, socket.id);
+        SpaceInterests.remove(spaceId, socket.id);
 
         const room = buildSpaceRoom(spaceId);
         socket.to(room).emit(SpaceEvents.SPACE_PEER_LEFT, {

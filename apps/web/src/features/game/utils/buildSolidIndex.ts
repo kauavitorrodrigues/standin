@@ -50,13 +50,15 @@ export const buildSolidIndex = (
 
         for (let column = first; column <= last; column++) {
             for (let row = top; row <= bottom; row++) {
-                const hit = tiles.get(toKey(column, row))?.some(
-                    (solid) =>
-                        rect.x < solid.x + solid.width &&
-                        rect.x + rect.width > solid.x &&
-                        y < solid.y + solid.height &&
-                        y + rect.height > solid.y
-                );
+                const hit = tiles
+                    .get(toKey(column, row))
+                    ?.some(
+                        (solid) =>
+                            rect.x < solid.x + solid.width &&
+                            rect.x + rect.width > solid.x &&
+                            y < solid.y + solid.height &&
+                            y + rect.height > solid.y
+                    );
                 if (hit) return true;
             }
         }

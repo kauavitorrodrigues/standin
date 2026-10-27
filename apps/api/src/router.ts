@@ -15,6 +15,7 @@ import {
     invitesAccessRouter,
     spaceAccessRouter,
 } from "./features/spaces/guests/routes";
+import { spaceSettingsRouter } from "./features/spaces/settings/routes";
 import { filesRouter } from "./features/files/routes";
 import {
     avatarBasesRouter,
@@ -79,6 +80,7 @@ router.use("/maps", RequiresAuth, mapsRouter);
 router.use("/spaces/:spaceId/desks", RequiresAuth, desksRouter);
 // A space by its id alone, for members and guests, and the invites to it.
 router.use("/spaces", RequiresAuth, spaceAccessRouter);
+router.use("/spaces", RequiresAuth, spaceSettingsRouter);
 router.use("/invites", RequiresAuth, invitesAccessRouter);
 
 export default router;

@@ -6,5 +6,7 @@ export type RemoteVideo = {
     socketId: string;
     userId: string | null;
     slot: RemoteVideoSlot;
-    stream: MediaStream;
+    // `null` while the video is off the stage page: the track is kept but
+    // nothing is attached to it, so nothing gets decoded.
+    stream: MediaStream | null;
 };

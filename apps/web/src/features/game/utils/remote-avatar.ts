@@ -1,16 +1,20 @@
 import { REMOTE_AVATAR_APPEARANCE } from "@/features/game/consts/remote-avatar";
 
-const MS_PER_SECOND = 1000;
-
-// Exponential smoothing factor for one frame of `delta` milliseconds -
-// see REMOTE_AVATAR_APPEARANCE.POSITION_LERP_RATE for why the rate is
-// tied to SEND_INTERVAL_MS. Frame-rate independent: composing this over
-// two frames of d1 and d2 yields the same result as one frame of d1+d2.
-export const resolveSmoothingFactor = (delta: number): number =>
-    1 -
-    Math.exp(
-        (-REMOTE_AVATAR_APPEARANCE.POSITION_LERP_RATE * delta) / MS_PER_SECOND
+// How long the avatar takes to glide to the snapshot that just arrived: the
+// time since the previous one, kept inside a sane range.
+export const resolveSnapshotInterval = (elapsedMs: number): number =>
+    Math.min(
+        REMOTE_AVATAR_APPEARANCE.MAX_SNAPSHOT_INTERVAL_MS,
+        Math.max(REMOTE_AVATAR_APPEARANCE.MIN_SNAPSHOT_INTERVAL_MS, elapsedMs)
     );
+
+// Progress (0 to 1) of the glide after `deltaMs` more milliseconds. Linear, so
+// the speed is constant between two snapshots and frame-rate independent.
+export const advanceInterpolation = (
+    progress: number,
+    deltaMs: number,
+    durationMs: number
+): number => Math.min(1, progress + deltaMs / durationMs);
 
 // Whether a remote avatar is walking: it is still some distance from the
 // position its peer last sent. Standing still, the smoothing settles under

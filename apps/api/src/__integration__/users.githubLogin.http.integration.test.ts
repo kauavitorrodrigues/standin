@@ -568,6 +568,11 @@ describe.skipIf(!enabled)("sign in with GitHub (real stack)", () => {
         const first = await signIn(octo);
         const oldId = (await userIdOfSession(first.token!))!;
         await core.UserService.delete(oldId);
+        // The controller empties the cache of the person on delete, and this
+        // test goes through the core, so it does the same.
+        (await import("@/features/auth/services/userCache")).UserCache.invalidate(
+            oldId
+        );
 
         const second = await signIn(octo);
 

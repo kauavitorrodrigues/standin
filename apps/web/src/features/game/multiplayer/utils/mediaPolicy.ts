@@ -78,7 +78,9 @@ export const getReceivingVideoPeers = (
 // below which the picture stops being useful.
 export const getVideoEncoding = (
     kind: "camera" | "screen",
-    receiverCount: number
+    receiverCount: number,
+    // Degraded machines send the camera at its floor bitrate.
+    lowCameraBitrate = false
 ): VideoEncoding => {
     const isCamera = kind === "camera";
     const base = isCamera ? CAMERA_ENCODING_BASE : SCREEN_ENCODING_BASE;
@@ -89,7 +91,10 @@ export const getVideoEncoding = (
 
     return {
         ...base,
-        maxBitrate: Math.max(floor, Math.floor(base.maxBitrate / receivers)),
+        maxBitrate:
+            isCamera && lowCameraBitrate
+                ? CAMERA_ENCODING_FLOOR_BITRATE
+                : Math.max(floor, Math.floor(base.maxBitrate / receivers)),
         scaleResolutionDownBy:
             isCamera && receivers >= 3 ? 1.5 : base.scaleResolutionDownBy,
     };

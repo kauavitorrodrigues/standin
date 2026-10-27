@@ -11,4 +11,5 @@ export * from "./conversation-summary";
 export * from "./conversations-list-response";
 export * from "./conversation";
 export * from "./direct-conversation-response";
+export * from "./thread-summary";
 export * from "./events";

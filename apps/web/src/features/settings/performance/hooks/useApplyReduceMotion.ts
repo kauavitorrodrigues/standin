@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { usePerformanceSettingsPreference } from "@/features/settings/performance/hooks/usePerformanceSettingsPreference";
+import { useEffectivePerformanceSettings } from "@/features/settings/performance/hooks/useEffectivePerformanceSettings";
 
 // Flags the page for the stylesheet (see index.css), which turns animations
 // and transitions off while it is set.
 export const useApplyReduceMotion = () => {
-    const { reduceMotion } = usePerformanceSettingsPreference();
+    const { reduceMotion } = useEffectivePerformanceSettings();
 
     useEffect(() => {
         const root = document.documentElement;

@@ -7,6 +7,8 @@ import { updateSpace } from "./update";
 import { deleteSpace } from "./delete";
 import { deleteSpacesByOrganizationId } from "./deleteByOrganizationId";
 import { findSpaceView } from "./findView";
+import { getSpaceSettings } from "./getSettings";
+import { updateSpaceSettings } from "./updateSettings";
 
 export const SpaceService = {
     create: createSpace,
@@ -17,6 +19,8 @@ export const SpaceService = {
     findRefById: findSpaceRefById,
     update: updateSpace,
     delete: deleteSpace,
+    getSettings: getSpaceSettings,
+    updateSettings: updateSpaceSettings,
     deleteByOrganizationId: deleteSpacesByOrganizationId,
 };
 

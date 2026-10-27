@@ -191,4 +191,75 @@ describe("buildStageTiles", () => {
 
         expect(tiles).toEqual([]);
     });
+
+    describe("relevance order", () => {
+        const base = {
+            localCameraStream: null,
+            localScreenStream: null,
+            names,
+        };
+
+        it("puts people nearest first, using the nearby order", () => {
+            const tiles = buildStageTiles({
+                ...base,
+                remoteVideos: [],
+                nearbyUserIds: ["far", "near", "mid"].reverse(),
+            });
+
+            expect(tiles.map((tile) => tile.userId)).toEqual([
+                "mid",
+                "near",
+                "far",
+            ]);
+        });
+
+        it("puts the person speaking now before nearer people", () => {
+            const tiles = buildStageTiles({
+                ...base,
+                remoteVideos: [],
+                nearbyUserIds: ["near", "far"],
+                speakingUserIds: new Set(["far"]),
+            });
+
+            expect(tiles.map((tile) => tile.userId)).toEqual(["far", "near"]);
+        });
+
+        it("keeps screens first and ourselves last, even when speaking", () => {
+            const tiles = buildStageTiles({
+                ...base,
+                localScreenStream: stream("mine"),
+                remoteVideos: [
+                    remote("s1", "u1", "camera"),
+                    remote("s2", "u2", "screen"),
+                ],
+                nearbyUserIds: ["u1", "u2"],
+                includeSelf: true,
+                speakingUserIds: new Set(["me", "u1"]),
+            });
+
+            expect(tiles.map((tile) => tile.id)).toEqual([
+                "s2:screen",
+                "self:screen",
+                "s1:camera",
+                "u2:avatar",
+                "self:camera",
+            ]);
+        });
+
+        it("keeps a person's camera and screen as separate entries", () => {
+            const tiles = buildStageTiles({
+                ...base,
+                remoteVideos: [
+                    remote("s1", "u1", "camera"),
+                    remote("s1", "u1", "screen"),
+                ],
+                nearbyUserIds: ["u1"],
+            });
+
+            expect(tiles.map((tile) => tile.id)).toEqual([
+                "s1:screen",
+                "s1:camera",
+            ]);
+        });
+    });
 });

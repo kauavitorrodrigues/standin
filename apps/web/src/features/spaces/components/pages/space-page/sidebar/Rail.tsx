@@ -16,6 +16,8 @@ import { ChatQueries } from "@/features/chat/queries";
 import { SettingsDialog } from "@/features/settings/components/dialogs/SettingsDialog";
 import { RailButton } from "@/features/spaces/components/pages/space-page/sidebar/RailButton";
 import { GuestsMenuItem } from "@/features/spaces/guests/components/instances/GuestsMenuItem";
+import { SpaceSettingsDialog } from "@/features/spaces/settings/components/instances/SpaceSettingsDialog";
+import { SpaceSettingsMenuItem } from "@/features/spaces/settings/components/instances/SpaceSettingsMenuItem";
 import { SpaceMenu } from "@/features/spaces/components/pages/space-page/sidebar/SpaceMenu";
 import { SPACE_VIEWS, type SpaceView } from "@/features/spaces/consts/view";
 
@@ -54,6 +56,7 @@ export const Rail = ({
 }: Props) => {
     const { total: unreadTotal } = ChatQueries.useUnreadCounts();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isSpaceSettingsOpen, setIsSpaceSettingsOpen] = useState(false);
 
     return (
         <RailFrame>
@@ -64,6 +67,9 @@ export const Rail = ({
                 />
                 <EditMapMenuItem spaceId={space.id} mapId={space.map.id} />
                 <GuestsMenuItem onOpen={onOpenGuests} />
+                <SpaceSettingsMenuItem
+                    onOpen={() => setIsSpaceSettingsOpen(true)}
+                />
             </SpaceMenu>
             <RailButton icon={SearchIcon} label="Buscar" disabled />
             <RailButton
@@ -95,6 +101,11 @@ export const Rail = ({
                 label="Configurações"
                 onClick={() => setIsSettingsOpen(true)}
                 className="mt-auto"
+            />
+            <SpaceSettingsDialog
+                spaceId={space.id}
+                open={isSpaceSettingsOpen}
+                onOpenChange={setIsSpaceSettingsOpen}
             />
             <SettingsDialog
                 open={isSettingsOpen}

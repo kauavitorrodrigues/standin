@@ -34,9 +34,9 @@ describe("shouldAcceptNearbyMessage", () => {
     it("drops a text that is not valid", () => {
         expect(shouldAcceptNearbyMessage({ ...base, text: 3 })).toBe(false);
         expect(shouldAcceptNearbyMessage({ ...base, text: " " })).toBe(false);
-        expect(shouldAcceptNearbyMessage({ ...base, text: "a".repeat(51) })).toBe(
-            false
-        );
+        expect(
+            shouldAcceptNearbyMessage({ ...base, text: "a".repeat(51) })
+        ).toBe(false);
     });
 
     it("drops what is over the rate limit", () => {

@@ -58,7 +58,10 @@ export class AvatarOutline {
     }
 
     destroy(): void {
-        this.scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.syncTransform);
+        this.scene.events.off(
+            Phaser.Scenes.Events.POST_UPDATE,
+            this.syncTransform
+        );
         this.sprite.setVisible(true);
         this.image.destroy();
     }

@@ -8,7 +8,9 @@ import {
     type PeerNearbyMessagePayload,
     type PeerNearbyTypingPayload,
     type PlacedAsset,
+    PLAYER_DIRECTIONS,
     type PlayerPosition,
+    type RoomDoorState,
 } from "@standin/contracts";
 import {
     GAME_SCENE_KEYS,
@@ -137,6 +139,7 @@ import {
     getHoverClickEvent,
     getSelectedStateEvent,
 } from "@/features/game/utils/hover";
+import { ParticleBudget } from "@/features/game/lib/ParticleBudget";
 import { HoverTargetController } from "@/features/game/lib/HoverTargetController";
 import { DESK_EVENTS } from "@/features/game/consts/desk";
 import {
@@ -154,7 +157,10 @@ import {
     type UserTagProfile,
 } from "@/features/game/types/name-tag";
 import { getRoomAt } from "@/features/game/utils/getRoomAt";
-import { getAvatarHitRect } from "@/features/game/utils/getAvatarHitRect";
+import {
+    getAvatarHitRect,
+    writeAvatarHitRect,
+} from "@/features/game/utils/getAvatarHitRect";
 import { REMOTE_AVATAR_EVENTS } from "@/features/game/consts/avatar-hover";
 import { isRemoteNameTagAllowed } from "@/features/game/utils/isRemoteNameTagAllowed";
 import { PendingProfilePictures } from "@/features/game/lib/PendingProfilePictures";
@@ -194,6 +200,32 @@ export class MapScene extends Phaser.Scene {
     private isPlayerHovered = false;
     private isPlayerSelected = false;
     private remoteAvatars = new Map<string, RemoteAvatar>();
+    // The delta of the frame in progress, read by `updateRemoteAvatar` so the
+    // per-frame loop over the remote avatars builds no closure.
+    private frameDelta = 0;
+    // The cap on live particles, shared by every particle emitter of the scene.
+    private readonly particleBudget = new ParticleBudget();
+    private readonly remoteHoverTargets: HoverTarget[] = [];
+    // The one target of the local avatar. Only its position moves, so the
+    // frame builds no array, target or bounds.
+    private readonly playerHoverBounds = {
+        x: 0,
+        y: 0,
+        width: AVATAR.hit.w,
+        height: AVATAR.hit.h,
+    };
+    private readonly playerHoverTargets: HoverTarget[] = [
+        { id: PLAYER_HOVER_ID, bounds: this.playerHoverBounds },
+    ];
+    // Handed to the broadcaster every frame and rewritten in place. The
+    // channel copies what it keeps and the socket encodes on emit.
+    private readonly localPositionScratch: PlayerPosition = {
+        x: 0,
+        y: 0,
+        direction: PLAYER_DIRECTIONS.DOWN,
+        isSitting: false,
+    };
+    private readonly remoteHoverPool = new Map<string, HoverTarget>();
     private emoteParticles: EmoteParticles | null = null;
     private emoteTextures: EmojiTextureCache | null = null;
     private readonly emoteRateLimiter = new EmoteRateLimiter();
@@ -433,7 +465,12 @@ export class MapScene extends Phaser.Scene {
             host: this,
             filterMode: Phaser.Textures.FilterMode.LINEAR,
         });
-        this.emoteParticles = new EmoteParticles(this, this.emoteTextures);
+        this.emoteParticles = new EmoteParticles(
+            this,
+            this.emoteTextures,
+            Math.random,
+            this.particleBudget
+        );
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             this.emoteParticles?.destroy();
@@ -594,7 +631,8 @@ export class MapScene extends Phaser.Scene {
         this.deskHoverController?.update();
         this.updatePlayerHover();
         this.updateTileCursor();
-        this.remoteAvatars.forEach((avatar) => avatar.update(delta));
+        this.frameDelta = delta;
+        this.remoteAvatars.forEach(this.updateRemoteAvatar);
         this.updateNameTags();
         this.nearbyBubbles?.update();
         this.updateTypingMarks();
@@ -743,17 +781,10 @@ export class MapScene extends Phaser.Scene {
         const { player, playerHoverController } = this;
         if (!player || !playerHoverController) return;
 
-        playerHoverController.setTargets([
-            {
-                id: PLAYER_HOVER_ID,
-                bounds: {
-                    x: player.x - AVATAR.hit.w / 2,
-                    y: player.y - AVATAR.hit.h,
-                    width: AVATAR.hit.w,
-                    height: AVATAR.hit.h,
-                },
-            },
-        ]);
+        const { playerHoverTargets, playerHoverBounds } = this;
+        playerHoverBounds.x = player.x - AVATAR.hit.w / 2;
+        playerHoverBounds.y = player.y - AVATAR.hit.h;
+        playerHoverController.setTargets(playerHoverTargets);
         playerHoverController.update();
         this.playerOutline?.update(
             this.isPlayerHovered || this.isPlayerSelected
@@ -1041,17 +1072,41 @@ export class MapScene extends Phaser.Scene {
         const { remoteHoverController } = this;
         if (!remoteHoverController) return;
 
-        const targets: HoverTarget[] = [];
-        this.remoteAvatars.forEach((avatar, socketId) => {
-            if (!avatar.isNameTagShown) return;
+        // The targets array, its objects and the callback are reused, so a
+        // frame allocates nothing however many avatars are in the room.
+        this.remoteHoverTargets.length = 0;
+        this.remoteAvatars.forEach(this.collectRemoteHoverTarget);
+        if (this.remoteHoverPool.size > this.remoteAvatars.size) {
+            this.pruneRemoteHoverPool();
+        }
+        remoteHoverController.setTargets(this.remoteHoverTargets);
+        remoteHoverController.update();
+    }
 
-            targets.push({
+    private readonly collectRemoteHoverTarget = (
+        avatar: RemoteAvatar,
+        socketId: string
+    ): void => {
+        if (!avatar.isNameTagShown) return;
+
+        let target = this.remoteHoverPool.get(socketId);
+        if (!target) {
+            target = {
                 id: socketId,
                 bounds: getAvatarHitRect(avatar.gameObject),
-            });
+            };
+            this.remoteHoverPool.set(socketId, target);
+        }
+        writeAvatarHitRect(avatar.gameObject, target.bounds);
+        this.remoteHoverTargets.push(target);
+    };
+
+    private pruneRemoteHoverPool(): void {
+        this.remoteHoverPool.forEach((_target, socketId) => {
+            if (!this.remoteAvatars.has(socketId)) {
+                this.remoteHoverPool.delete(socketId);
+            }
         });
-        remoteHoverController.setTargets(targets);
-        remoteHoverController.update();
     }
 
     // The avatar of a peer was clicked, or none. Its tag shows the photo and
@@ -1106,23 +1161,45 @@ export class MapScene extends Phaser.Scene {
     // The tag of a remote avatar hides while it would give away a name that the
     // dark layer of a room is there to keep (see shouldShowNameTag).
     private updateNameTags(): void {
-        this.remoteAvatars.forEach((avatar) => {
-            avatar.setNameTagAllowed(this.isRemoteTagAllowed(avatar));
-        });
+        this.remoteAvatars.forEach(this.applyNameTagAllowed);
     }
 
+    // Fields so the per-frame loops build no closure.
+    private readonly updateRemoteAvatar = (avatar: RemoteAvatar): void => {
+        avatar.update(this.frameDelta);
+    };
+
+    private readonly applyNameTagAllowed = (avatar: RemoteAvatar): void => {
+        avatar.setNameTagAllowed(this.isRemoteTagAllowed(avatar));
+    };
+
+    private readonly getRoomDoorState = (key: string): RoomDoorState =>
+        this.roomSync?.getState(key) ?? ROOM_DOOR_STATES.OPEN;
+
+    // The params object is reused for every avatar of every frame, so the
+    // check builds nothing. The room of each avatar is found by a loop over
+    // the rooms, which are few.
+    private readonly nameTagParams = {
+        feet: { x: 0, y: 0 },
+        rooms: [] as readonly GameRoom[],
+        getRoomState: this.getRoomDoorState,
+        localRoomKey: null as string | null,
+        entitlements: this.roomEntitlements,
+        isDecorating: false,
+        hasName: false,
+        hasPosition: false,
+    };
+
     private isRemoteTagAllowed(avatar: RemoteAvatar): boolean {
-        return isRemoteNameTagAllowed({
-            feet: avatar.gameObject,
-            rooms: this.rooms,
-            getRoomState: (key) =>
-                this.roomSync?.getState(key) ?? ROOM_DOOR_STATES.OPEN,
-            localRoomKey: this.currentRoomKey,
-            entitlements: this.roomEntitlements,
-            isDecorating: this.isDecorating,
-            hasName: avatar.hasName,
-            hasPosition: avatar.hasPosition,
-        });
+        const params = this.nameTagParams;
+        params.feet = avatar.gameObject;
+        params.rooms = this.rooms;
+        params.localRoomKey = this.currentRoomKey;
+        params.entitlements = this.roomEntitlements;
+        params.isDecorating = this.isDecorating;
+        params.hasName = avatar.hasName;
+        params.hasPosition = avatar.hasPosition;
+        return isRemoteNameTagAllowed(params);
     }
 
     // Draws the local player with the sheet of the avatar the person has now.
@@ -1319,12 +1396,18 @@ export class MapScene extends Phaser.Scene {
         this.player?.setTyping(
             localUserId !== undefined && nearbyStore.isTyping(localUserId)
         );
-        this.remoteUserIds.forEach((userId, socketId) => {
-            this.remoteAvatars
-                .get(socketId)
-                ?.setTyping(nearbyStore.isTyping(userId));
-        });
+        this.remoteUserIds.forEach(this.markRemoteTyping);
     }
+
+    // A field so the per-frame loop does not build a closure.
+    private readonly markRemoteTyping = (
+        userId: string,
+        socketId: string
+    ): void => {
+        this.remoteAvatars
+            .get(socketId)
+            ?.setTyping(this.nearbyStore?.isTyping(userId) ?? false);
+    };
 
     // The avatar of a person for the bubble: the local one, or the first remote
     // avatar of that user (the same person can have more than one tab).
@@ -1369,12 +1452,12 @@ export class MapScene extends Phaser.Scene {
     private emitLocalPosition(): void {
         if (!this.broadcastLocalPosition || !this.player) return;
 
-        this.broadcastLocalPosition({
-            x: this.player.x,
-            y: this.player.y,
-            direction: this.player.direction,
-            isSitting: this.player.isSitting,
-        });
+        const position = this.localPositionScratch;
+        position.x = this.player.x;
+        position.y = this.player.y;
+        position.direction = this.player.direction;
+        position.isSitting = this.player.isSitting;
+        this.broadcastLocalPosition(position);
     }
 
     // Same throttle as position broadcasting: proximity volume doesn't need

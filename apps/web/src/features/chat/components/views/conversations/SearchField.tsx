@@ -1,13 +1,19 @@
 import { SearchIcon } from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
+import type { ConversationSearchFormValues } from "@/features/chat/types/searchForm";
 
-// Not wired up yet: it is rendered disabled until conversation search exists.
-export const SearchField = () => (
+type Props = {
+    form: UseFormReturn<ConversationSearchFormValues>;
+};
+
+export const SearchField = ({ form }: Props) => (
     <div className="relative">
         <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
-            disabled
+            {...form.register("search")}
+            autoComplete="off"
             placeholder="Buscar conversas"
             aria-label="Buscar conversas"
             className="h-8 pr-14 pl-8 text-sm"

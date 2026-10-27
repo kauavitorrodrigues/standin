@@ -11,6 +11,9 @@ export const MessageSchema = z.object({
     }),
     senderId: z.string({ error: MessageErrorMessages.senderId.invalid }),
     content: z.string().nullable(),
+    // Null parent means a top-level message.
+    threadParentId: z.string().nullable(),
+    showThreadReplyInChannel: z.boolean(),
     createdAt: z.iso.datetime({
         error: MessageErrorMessages.createdAt.invalid,
     }),

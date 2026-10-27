@@ -3,6 +3,7 @@ import type { SpaceGuestEvent } from "@standin/core";
 import { SocketManager } from "../socketManager";
 import { buildHostRoom } from "../utils/buildHostRoom";
 import { buildUserRoom } from "../utils/buildUserRoom";
+import { JoinAccessCache } from "./joinAccessCache";
 
 /**
  * Carries the steps of the approval to the right sockets: the requests to the
@@ -14,6 +15,7 @@ export const broadcastSpaceGuestEvent = async (
 ): Promise<void> => {
     switch (event.type) {
         case "requested":
+            JoinAccessCache.invalidate(event.guest.userId, event.guest.spaceId);
             SocketManager.emitToRoom(
                 buildHostRoom(event.guest.spaceId),
                 SpaceEvents.SPACE_GUEST_REQUESTED,
@@ -21,6 +23,7 @@ export const broadcastSpaceGuestEvent = async (
             );
             return;
         case "updated":
+            JoinAccessCache.invalidateSpace(event.spaceId);
             SocketManager.emitToRoom(
                 buildHostRoom(event.spaceId),
                 SpaceEvents.SPACE_GUEST_UPDATED,
@@ -28,6 +31,7 @@ export const broadcastSpaceGuestEvent = async (
             );
             return;
         case "status":
+            JoinAccessCache.invalidateUser(event.userId);
             SocketManager.emitToUser(
                 event.userId,
                 SpaceEvents.SPACE_GUEST_STATUS,
@@ -35,6 +39,7 @@ export const broadcastSpaceGuestEvent = async (
             );
             return;
         case "removed": {
+            JoinAccessCache.invalidate(event.userId, event.spaceId);
             const sockets = await SocketManager.get()
                 .in(buildUserRoom(event.userId))
                 .fetchSockets();

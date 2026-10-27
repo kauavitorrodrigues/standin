@@ -79,6 +79,15 @@ export class FakePeerConnection {
     readonly transceiverInits: (RTCRtpTransceiverInit | undefined)[] = [];
     closed = false;
 
+    // Mirrors the aggregate state a real connection derives from ICE, which
+    // is all the specs here need.
+    get connectionState(): RTCPeerConnectionState {
+        if (this.closed) return "closed";
+        if (this.iceConnectionState === "completed") return "connected";
+        if (this.iceConnectionState === "checking") return "connecting";
+        return this.iceConnectionState;
+    }
+
     // True while something changed that the remote side has not been told
     // about yet. Mirrors the browser's negotiation-needed flag.
     private dirty = false;

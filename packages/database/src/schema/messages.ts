@@ -5,7 +5,7 @@ import {
     editedAtColumn,
     uuidPrimaryKeyColumn,
 } from "./common";
-import { text, pgTable, index } from "drizzle-orm/pg-core";
+import { text, pgTable, index, boolean, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { conversationsTable } from "./conversations";
 import { usersTable } from "./users";
 import { messageAttachmentsTable } from "./message-attachments";
@@ -27,6 +27,17 @@ export const messagesTable = pgTable(
         // Nullable. A message can be attachment-only, with no text at all.
         content: text("content"),
 
+        // Null for a top-level message. A reply points at a top-level parent, and
+        // the service rejects a parent that is itself a reply (no nested
+        // threads).
+        threadParentId: text("thread_parent_id").references(
+            (): AnyPgColumn => messagesTable.id
+        ),
+        // A reply may also show in the main conversation list.
+        showThreadReplyInChannel: boolean("show_thread_reply_in_channel")
+            .notNull()
+            .default(false),
+
         createdAt: createdAtColumn(),
         // Set by the service only on a real edit of `content`, not updatedAtColumn().
         editedAt: editedAtColumn(),
@@ -38,6 +49,7 @@ export const messagesTable = pgTable(
             table.createdAt
         ),
         index("messages_sender_id_index").on(table.senderId),
+        index("messages_thread_parent_id_index").on(table.threadParentId),
     ]
 );
 

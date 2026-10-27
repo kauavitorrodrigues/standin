@@ -10,10 +10,7 @@ import { NameTag } from "@/features/game/lib/NameTag";
 import { EmoteState } from "@/features/game/lib/EmoteState";
 import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 import { playAvatarAnimation } from "@/features/game/utils/playAvatarAnimation";
-import {
-    isRemoteAvatarMoving,
-    resolveSmoothingFactor,
-} from "@/features/game/utils/remote-avatar";
+import { RemoteAvatarGlide } from "@/features/game/lib/RemoteAvatarGlide";
 import { resolveAvatarAnimation } from "@/features/game/utils/resolveAvatarAnimation";
 
 // Visual counterpart to a peer's PlayerPosition, driven entirely by network
@@ -26,8 +23,7 @@ export class RemoteAvatar {
     private readonly blink = new AvatarBlink();
     private readonly nameTag: NameTag;
     private readonly emote = new EmoteState();
-    private targetX: number;
-    private targetY: number;
+    private readonly glide: RemoteAvatarGlide;
     // The avatar is constructed at the local spawn point (its peer's real
     // position isn't known yet), so the first move() must snap instead of
     // gliding there from an arbitrary, unrelated spot on the map.
@@ -50,8 +46,7 @@ export class RemoteAvatar {
         this.gameObject = scene.add
             .sprite(x, y, textureKey, AVATAR_FIRST_FRAME)
             .setOrigin(AVATAR_SPRITE_ORIGIN.x, AVATAR_SPRITE_ORIGIN.y);
-        this.targetX = x;
-        this.targetY = y;
+        this.glide = new RemoteAvatarGlide(x, y);
         this.nameTag = new NameTag({
             scene,
             isLocal: false,
@@ -60,29 +55,26 @@ export class RemoteAvatar {
         this.refresh();
     }
 
-    // Position updates arrive throttled (every SEND_INTERVAL_MS) and jump
-    // straight to wherever the peer currently is, so applying them directly
-    // would make the avatar visibly teleport in discrete steps instead of
-    // walking. move() only records where it's headed; update() (called every
-    // frame from MapScene) glides the actual game object towards that target.
+    // Position updates arrive on the server tick (10 Hz) and jump straight to
+    // wherever the peer currently is, so applying them directly would make the
+    // avatar visibly teleport in discrete steps instead of walking. move() only
+    // records the snapshot; update() (called every frame from MapScene)
+    // interpolates the game object linearly from where it is drawn to it, over
+    // the time the snapshots are apart.
     move(x: number, y: number): void {
         if (!this.hasReceivedPosition) {
             this.hasReceivedPosition = true;
+            this.glide.snapTo(x, y);
             this.gameObject.setPosition(x, y);
         }
 
-        this.targetX = x;
-        this.targetY = y;
+        this.glide.push(x, y, this.gameObject.scene.time.now);
     }
 
     // delta is Phaser's per-frame delta in milliseconds.
     update(delta: number): void {
-        const t = resolveSmoothingFactor(delta);
-
-        this.gameObject.setPosition(
-            Phaser.Math.Linear(this.gameObject.x, this.targetX, t),
-            Phaser.Math.Linear(this.gameObject.y, this.targetY, t)
-        );
+        this.glide.advance(delta);
+        this.gameObject.setPosition(this.glide.x, this.glide.y);
         this.refresh();
     }
 
@@ -200,9 +192,6 @@ export class RemoteAvatar {
     }
 
     private isMoving(): boolean {
-        return isRemoteAvatarMoving(this.gameObject, {
-            x: this.targetX,
-            y: this.targetY,
-        });
+        return this.glide.isMoving(this.gameObject.scene.time.now);
     }
 }

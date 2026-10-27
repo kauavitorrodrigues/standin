@@ -3,6 +3,7 @@ import type {
     ConversationMessagesListResponse,
     MessageSender,
     MessageWithDetails,
+    ThreadSummary,
 } from "@standin/contracts";
 import { EMPTY_MESSAGES_PAGE } from "@/features/chat/consts/messages";
 
@@ -64,6 +65,18 @@ export const removeMessage = (
         };
     }),
 });
+
+// The parent's reply count and last reply, as the server worked them out.
+export const applyThreadSummary = (
+    data: MessagesData,
+    { parentId, replyCount, lastReplyAt, lastReplyPreview }: ThreadSummary
+): MessagesData =>
+    updateMessage(data, parentId, (message) => ({
+        ...message,
+        replyCount,
+        lastReplyAt,
+        lastReplyPreview,
+    }));
 
 const withMissingSender = (
     users: Record<string, MessageSender>,

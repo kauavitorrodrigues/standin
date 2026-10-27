@@ -1,5 +1,6 @@
 import type { MessageReactionSummary } from "@standin/contracts";
 import { MessageReactionPicker } from "@/features/chat/components/views/messages/MessageReactionPicker";
+import { MessageReplyAction } from "@/features/chat/components/views/messages/MessageReplyAction";
 import { OwnMessageActions } from "@/features/chat/components/views/messages/OwnMessageActions";
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
     disabled?: boolean;
     reactions: MessageReactionSummary[];
     onToggleReaction: (emoji: string, reactedByMe: boolean) => void;
+    onReply: (() => void) | undefined;
     onEdit: () => void;
     onDelete: () => void;
 };
@@ -19,6 +21,7 @@ export const MessageLineToolbar = ({
     disabled = false,
     reactions,
     onToggleReaction,
+    onReply,
     onEdit,
     onDelete,
 }: Props) => (
@@ -28,6 +31,7 @@ export const MessageLineToolbar = ({
             disabled={disabled}
             onToggleReaction={onToggleReaction}
         />
+        <MessageReplyAction onReply={onReply} />
         <OwnMessageActions
             isOwn={isOwn}
             disabled={disabled}

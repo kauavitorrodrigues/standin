@@ -9,6 +9,8 @@ export const messageSelect = {
     conversationId: messagesTable.conversationId,
     senderId: messagesTable.senderId,
     content: messagesTable.content,
+    threadParentId: messagesTable.threadParentId,
+    showThreadReplyInChannel: messagesTable.showThreadReplyInChannel,
     createdAt: messagesTable.createdAt,
     editedAt: messagesTable.editedAt,
 };

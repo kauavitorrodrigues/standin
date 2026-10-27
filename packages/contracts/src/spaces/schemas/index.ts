@@ -3,3 +3,4 @@ export * from "./space.data.schema";
 export * from "./space.schema";
 export * from "./space.update.schema";
 export * from "./space-details.schema";
+export * from "./space-settings.schema";

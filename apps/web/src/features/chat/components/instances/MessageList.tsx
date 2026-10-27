@@ -1,21 +1,32 @@
-import { useCallback, useState, type UIEvent } from "react";
+import { useCallback, useMemo, useState, type UIEvent } from "react";
 import type { MessageWithDetails } from "@standin/contracts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ChatQueries } from "@/features/chat/queries";
 import { ChatMutations } from "@/features/chat/mutations";
 import { Content } from "@/features/chat/components/views/messages/Content";
 import { DeleteMessageDialog } from "@/features/chat/components/dialogs/DeleteMessageDialog";
+import { MessageListContext } from "@/features/chat/contexts/MessageListContext";
 import { useMessageGroups } from "@/features/chat/utils/useMessageGroups";
 import { useMessageAnimationFlags } from "@/features/chat/utils/useMessageAnimationFlags";
-import { usePeerChat } from "@/features/chat/contexts/PeerChatContext";
 import { LOAD_MORE_SCROLL_THRESHOLD_PX } from "@/features/chat/consts/messages";
 
-type Props = { conversationId: string; hasSingleViewer: boolean };
+type Props = {
+    conversationId: string;
+    hasSingleViewer: boolean;
+    // Lists the replies of that message instead of the conversation.
+    threadParentId?: string;
+    // Absent when this list has no thread panel to open.
+    onOpenThread?: (messageId: string) => void;
+};
 
-export const MessageList = ({ conversationId, hasSingleViewer }: Props) => {
+export const MessageList = ({
+    conversationId,
+    hasSingleViewer,
+    threadParentId,
+    onOpenThread,
+}: Props) => {
     const { user } = useAuth();
     const toggleReaction = ChatMutations.toggleReaction();
-    const { broadcastReaction } = usePeerChat();
 
     const {
         messages,
@@ -25,7 +36,7 @@ export const MessageList = ({ conversationId, hasSingleViewer }: Props) => {
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-    } = ChatQueries.useMessages(conversationId);
+    } = ChatQueries.useMessages(conversationId, threadParentId);
 
     const groups = useMessageGroups(messages);
     const { newMessageIds, editedMessageIds } =
@@ -53,24 +64,25 @@ export const MessageList = ({ conversationId, hasSingleViewer }: Props) => {
             toggleReaction.mutate({
                 conversationId,
                 messageId,
+                threadParentId,
                 emoji,
                 reactedByMe,
             });
-            // Fired alongside the API call, same reasoning as
-            // broadcastChatMessage: peers already connected see the
-            // toggle instantly over the mesh instead of waiting for a
-            // manual refresh.
-            broadcastReaction(conversationId, messageId, emoji, !reactedByMe);
         },
-        [conversationId, toggleReaction, broadcastReaction]
+        [conversationId, threadParentId, toggleReaction]
     );
 
     const handleRequestDelete = useCallback((message: MessageWithDetails) => {
         setDeletingMessage(message);
     }, []);
 
+    const listContext = useMemo(
+        () => ({ threadParentId, onOpenThread }),
+        [threadParentId, onOpenThread]
+    );
+
     return (
-        <>
+        <MessageListContext.Provider value={listContext}>
             <Content
                 groups={groups}
                 users={users}
@@ -91,6 +103,6 @@ export const MessageList = ({ conversationId, hasSingleViewer }: Props) => {
                     if (!open) setDeletingMessage(null);
                 }}
             />
-        </>
+        </MessageListContext.Provider>
     );
 };

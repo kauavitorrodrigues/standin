@@ -32,6 +32,10 @@ const parseScreenShareSettings = (stored: unknown): ScreenShareSettings => {
             SCREEN_CONTENT_HINTS,
             defaults.contentHint
         ),
+        highQuality:
+            typeof record.highQuality === "boolean"
+                ? record.highQuality
+                : defaults.highQuality,
         idleGrace: pickAllowed(
             record.idleGrace,
             SCREEN_IDLE_GRACE_IDS,

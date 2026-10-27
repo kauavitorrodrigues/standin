@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ScreenShareError } from "@/features/media-devices/consts/videoError";
-import { getScreenConstraints } from "@/features/media-devices/lib/screenConstraints";
+import {
+    getScreenCaptureConstraints,
+    getScreenContentHint,
+    getScreenTrackConstraints,
+} from "@/features/media-devices/lib/screenConstraints";
 import { screenShareSettingsPreference } from "@/features/media-devices/lib/streamingSettingsPreferences";
 import { classifyScreenShareError } from "@/features/media-devices/lib/classifyScreenShareError";
 
@@ -35,7 +39,7 @@ export function useLocalScreenShare() {
 
         try {
             const displayStream = await navigator.mediaDevices.getDisplayMedia({
-                video: getScreenConstraints(settings),
+                video: getScreenCaptureConstraints(),
                 audio: false,
             });
 
@@ -50,15 +54,35 @@ export function useLocalScreenShare() {
             const track = displayStream.getVideoTracks()[0];
             if (!track) return;
 
-            // "detail" tells the browser to keep resolution and let the frame
-            // rate collapse under load. "motion" does the opposite: it holds
-            // the frame rate and lowers resolution first when the machine or
-            // the network is short. The default is "motion", because the
-            // detail hint is what made the share crawl.
-            track.contentHint = settings.contentHint;
             // The browser's own "Stop sharing" bar ends the track without
-            // going through stop(), so the app state has to follow it.
-            track.addEventListener("ended", stop, { once: true });
+            // going through stop(), so the app state has to follow it. It is
+            // attached before the await below so an end during it is seen.
+            let endedEarly = false;
+            track.addEventListener(
+                "ended",
+                () => {
+                    endedEarly = true;
+                    stop();
+                },
+                { once: true }
+            );
+
+            // The tier box and the frame rate are applied after the capture,
+            // too. A browser that refuses them keeps the share
+            // running at what it captured.
+            await track
+                .applyConstraints(getScreenTrackConstraints(settings))
+                .catch(() => undefined);
+
+            // The page may have unmounted, or the person may have stopped
+            // sharing, while the constraints were applying.
+            if (!isMountedRef.current || endedEarly) {
+                displayStream.getTracks().forEach((t) => t.stop());
+                return;
+            }
+
+            // See getScreenContentHint for what each hint trades away.
+            track.contentHint = getScreenContentHint(settings);
 
             streamRef.current = displayStream;
             setStream(displayStream);

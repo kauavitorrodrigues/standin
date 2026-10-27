@@ -45,7 +45,7 @@ const checkKind = (
 };
 
 /**
- * Whether a placed object can be swapped for another asset (spec 4.5): a color,
+ * Whether a placed object can be swapped for another asset: a color,
  * a rotation or a model, with the new footprint fitting around the same
  * anchor (the bottom left cell) and the SURFACE children staying inside it.
  * The desk link is not checked here, the model does not know claimed desks.

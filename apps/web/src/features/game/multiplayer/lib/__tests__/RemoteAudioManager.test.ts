@@ -65,4 +65,38 @@ describe("RemoteAudioManager", () => {
         expect(volumeSetter).toHaveBeenCalledWith(0.25);
         manager.remove("peer-1");
     });
+
+    it("pauses the in-range peers beyond the ceiling, speakers first", () => {
+        vi.stubGlobal("navigator", {
+            hardwareConcurrency: 16,
+            deviceMemory: 8,
+        });
+        const pause = vi.spyOn(HTMLMediaElement.prototype, "pause");
+        pause.mockClear();
+
+        const manager = new RemoteAudioManager();
+        for (let i = 0; i < 12; i++) manager.attach(`p${i}`, buildStream());
+        // p11 is the farthest but speaking, so it keeps a slot.
+        manager.setSpeaking("p11", true);
+        for (let i = 0; i < 12; i++) {
+            manager.setVolume(`p${i}`, 0.9 - i * 0.05);
+        }
+
+        // 12 in range, 8 audible: 4 paused.
+        expect(pause).toHaveBeenCalledTimes(4);
+        manager.removeAll();
+    });
+
+    it("uses a ceiling of 4 on a weak machine", () => {
+        vi.stubGlobal("navigator", { hardwareConcurrency: 2 });
+        const pause = vi.spyOn(HTMLMediaElement.prototype, "pause");
+        pause.mockClear();
+
+        const manager = new RemoteAudioManager();
+        for (let i = 0; i < 6; i++) manager.attach(`p${i}`, buildStream());
+        for (let i = 0; i < 6; i++) manager.setVolume(`p${i}`, 0.5);
+
+        expect(pause).toHaveBeenCalledTimes(2);
+        manager.removeAll();
+    });
 });

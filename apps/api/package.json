@@ -8,6 +8,7 @@
         "start": "pnpm env:load node dist/server.js",
         "dev": "pnpm env:load tsx watch src/server.ts",
         "dev:lan": "pnpm dev",
+        "backfill:avatar-sheets": "pnpm env:load tsx src/scripts/backfillAvatarSheets.ts",
         "seed:library": "pnpm env:load tsx src/scripts/seedLibrary.ts",
         "env:load": "dotenv -e ../../.env --",
         "check-types": "tsc --noEmit",

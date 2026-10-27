@@ -1,5 +1,5 @@
-// The text of the nearby chat. The title, the placeholder and the footer follow
-// Gather. The footer with text typed is PROVISIONAL (section 9 of the plan),
+// The text of the nearby chat. The footer with text typed is PROVISIONAL (not
+// validated yet),
 // kept here to be swapped in one place.
 export const NEARBY_CHAT_TEXTS = {
     TITLE: "Enviar por perto",

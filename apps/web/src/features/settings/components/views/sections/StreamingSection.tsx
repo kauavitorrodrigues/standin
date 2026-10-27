@@ -1,4 +1,5 @@
 import { ScreenShareSettingsSelect } from "../../instances/ScreenShareSettingsSelect";
+import { ScreenShareHighQualitySwitch } from "../../instances/ScreenShareHighQualitySwitch";
 import { SettingsGroup } from "../../layout/SettingsGroup";
 import { SettingsRow } from "../../layout/SettingsRow";
 
@@ -41,8 +42,15 @@ export const StreamingSection = () => (
                     options={[
                         { value: "motion", label: "Fluidez" },
                         { value: "detail", label: "Nitidez" },
+                        { value: "text", label: "Texto" },
                     ]}
                 />
+            </SettingsRow>
+            <SettingsRow
+                title="Otimizar para vídeo"
+                description="Usa 24 quadros por segundo e dá prioridade à nitidez em 1080p ou mais. Vale para o próximo compartilhamento"
+            >
+                <ScreenShareHighQualitySwitch />
             </SettingsRow>
         </SettingsGroup>
         <SettingsGroup label="Comportamento">

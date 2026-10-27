@@ -38,7 +38,7 @@ type SheetStatus = (typeof SHEET_STATUS)[keyof typeof SHEET_STATUS];
 type SheetEntry = {
     status: SheetStatus;
     refs: number;
-    listeners: Set<() => void>;
+    listeners: Set<(textureKey: string) => void>;
 };
 
 /**
@@ -68,7 +68,7 @@ export class AvatarTextureRegistry {
 
     // Asks for the sheet of a file. `null` is an avatar without sheet, which
     // draws the ghost and holds nothing. `onChange` runs with the new texture
-    // key when the sheet becomes ready.
+    // key when the sheet becomes ready, or with the ghost when it fails.
     acquire(
         fileId: string | null,
         onChange: (textureKey: string) => void = () => {}
@@ -77,7 +77,7 @@ export class AvatarTextureRegistry {
 
         const entry = this.ensureEntry(fileId);
         const textureKey = buildAvatarTextureKey(fileId);
-        const listener = (): void => onChange(textureKey);
+        const listener = (key: string): void => onChange(key);
         entry.refs += 1;
         entry.listeners.add(listener);
 
@@ -139,7 +139,7 @@ export class AvatarTextureRegistry {
 
         registerAvatarAnimations(this.host, key);
         entry.status = SHEET_STATUS.READY;
-        [...entry.listeners].forEach((listener) => listener());
+        [...entry.listeners].forEach((listener) => listener(key));
     }
 
     private handleError(fileId: string, entry: SheetEntry): void {
@@ -147,6 +147,11 @@ export class AvatarTextureRegistry {
 
         entry.status = SHEET_STATUS.FAILED;
         console.error(AVATAR_DIAGNOSTIC_MESSAGES.sheetLoadFailed(fileId));
+        // Tells the avatars still holding the previous sheet of a swap to
+        // settle on the ghost and let that sheet go.
+        [...entry.listeners].forEach((listener) =>
+            listener(AVATAR_GHOST_TEXTURE_KEY)
+        );
     }
 
     // Last avatar let go: the sheet leaves the scene.

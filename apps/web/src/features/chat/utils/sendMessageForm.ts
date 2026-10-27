@@ -16,3 +16,11 @@ export const canSendMessage = ({
     attachmentCount,
 }: CanSendMessageParams): boolean =>
     !isSubmitting && (hasTypedContent(content) || attachmentCount > 0);
+
+// The composer of a thread asks for a reply, the one of the list for a message.
+export const getComposerPlaceholder = (
+    threadParentId: string | undefined
+): string =>
+    threadParentId === undefined
+        ? "Escreva uma mensagem..."
+        : "Responder na conversa...";

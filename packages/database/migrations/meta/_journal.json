@@ -85,6 +85,20 @@
       "when": 1792667130610,
       "tag": "0011_add_space_guests",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792691159932,
+      "tag": "0012_add_space_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792698703237,
+      "tag": "0013_add_message_threads",
+      "breakpoints": true
     }
   ]
 }

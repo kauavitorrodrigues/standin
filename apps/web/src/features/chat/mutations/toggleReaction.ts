@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { api } from "@/lib/axios/api";
 import { useOrganization } from "@/features/organizations/hooks/useOrganization";
 import { updateMessage } from "@/features/chat/utils/messagesCache";
@@ -7,6 +8,7 @@ import { useOptimisticMessagesMutation } from "@/features/chat/mutations/useOpti
 type ToggleReactionInput = {
     conversationId: string;
     messageId: string;
+    threadParentId?: string;
     emoji: string;
     reactedByMe: boolean;
 };
@@ -22,11 +24,16 @@ const reactionRequestByIntent: Record<"add" | "remove", ReactionRequest> = {
         api.delete(`${url}/${encodeURIComponent(emoji)}`),
 };
 
+// In-flight set keyed by message and emoji: a second react while the first is
+// pending returns immediately.
+const reactionsInFlight = new Set<string>();
+
 export const useToggleReaction = () => {
     const organizationId = useOrganization().organization?.id ?? "";
 
-    return useOptimisticMessagesMutation<ToggleReactionInput, void>({
+    const mutation = useOptimisticMessagesMutation<ToggleReactionInput, void>({
         conversationId: (input) => input.conversationId,
+        threadParentId: (input) => input.threadParentId,
         mutationFn: async ({
             conversationId,
             messageId,
@@ -51,4 +58,19 @@ export const useToggleReaction = () => {
             meta: undefined,
         }),
     });
+
+    const { mutateAsync } = mutation;
+    const mutate = useCallback(
+        (input: ToggleReactionInput) => {
+            const key = `${input.messageId}_${input.emoji}`;
+            if (reactionsInFlight.has(key)) return;
+            reactionsInFlight.add(key);
+            mutateAsync(input)
+                .catch(() => undefined)
+                .finally(() => reactionsInFlight.delete(key));
+        },
+        [mutateAsync]
+    );
+
+    return { ...mutation, mutate };
 };

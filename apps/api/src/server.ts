@@ -4,6 +4,7 @@ import { validateEnv } from "@/utils/validateEnv";
 import { createSocketServer } from "@/lib/socket/createSocketServer";
 import { startLockSweeper } from "@/lib/socket/startLockSweeper";
 import { startGuestSweeper } from "@/lib/socket/startGuestSweeper";
+import { startPositionTicker } from "@/lib/socket/realtime/startPositionTicker";
 import { SocketManager } from "@/lib/socket/socketManager";
 import { ShutdownError, ShutdownTimeoutError } from "@/errors/ShutdownError";
 
@@ -15,6 +16,7 @@ createSocketServer(server);
 
 const stopLockSweeper = startLockSweeper();
 const stopGuestSweeper = startGuestSweeper();
+const stopPositionTicker = startPositionTicker();
 
 const PORT = process.env.SERVER_PORT || 3001;
 
@@ -38,6 +40,7 @@ async function gracefulShutdown(signal: string) {
 
     stopLockSweeper();
     stopGuestSweeper();
+    stopPositionTicker();
 
     try {
         // Closes the underlying httpServer too (it was handed to socket.io

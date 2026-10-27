@@ -38,6 +38,14 @@ describe("useNearbyChat", () => {
         expect(result.current.nearby.isOpen).toBe(false);
     });
 
+    it("leaves the slash key alone when the space turned the chat off", () => {
+        const { result, act } = renderHook(() => useSubject(false));
+
+        act(() => void press("/"));
+
+        expect(result.current.nearby.isOpen).toBe(false);
+    });
+
     it("does not open while the person types somewhere", () => {
         const input = document.createElement("input");
         document.body.append(input);

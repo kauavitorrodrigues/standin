@@ -38,7 +38,15 @@ export const isInsideRoom = (room: GameRoom, point: Point): boolean => {
 };
 
 // The room whose shape holds the point, or null when it is outside all of them.
+// A plain loop, since this runs for every remote avatar every frame and a
+// `find` would build a closure each time.
 export const getRoomAt = (
     rooms: readonly GameRoom[],
     point: Point
-): GameRoom | null => rooms.find((room) => isInsideRoom(room, point)) ?? null;
+): GameRoom | null => {
+    for (let index = 0; index < rooms.length; index += 1) {
+        const room = rooms[index]!;
+        if (isInsideRoom(room, point)) return room;
+    }
+    return null;
+};

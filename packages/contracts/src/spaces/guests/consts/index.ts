@@ -36,7 +36,7 @@ export type SpaceViewerKind =
     (typeof SPACE_VIEWER_KINDS)[keyof typeof SPACE_VIEWER_KINDS];
 
 // A pending request waits this long for a host, and an admitted guest keeps
-// the access this long after being admitted (the Gather guest pass window).
+// the access this long after being admitted (the guest pass window).
 export const SPACE_GUEST_WINDOW_HOURS = 24;
 
 export const DEFAULT_INVITE_LINK_EXPIRES_IN_HOURS = 24 * 7;

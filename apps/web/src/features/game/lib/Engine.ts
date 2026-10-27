@@ -4,8 +4,9 @@ import {
     GAME_RENDER_CONFIG,
 } from "@/features/game/consts/game-config";
 import { getFpsLimit } from "@/features/settings/performance/lib/performanceValues";
-import { performanceSettingsPreference } from "@/features/settings/performance/lib/performanceSettingsPreferences";
+import { effectivePerformanceSettings } from "@/features/settings/performance/lib/performanceOverride";
 import { GAME_SCENE_KEYS } from "@/features/game/consts/scene-keys";
+import { RenderOnDemand } from "@/features/game/lib/RenderOnDemand";
 import { MapScene } from "@/features/game/scenes/MapScene";
 import {
     bindGameResize,
@@ -44,7 +45,7 @@ export const createGameEngine = ({
         backgroundColor: GAME_RENDER_CONFIG.BACKGROUND_COLOR,
         disableContextMenu: GAME_RENDER_CONFIG.DISABLE_CONTEXT_MENU,
         fps: {
-            limit: getFpsLimit(performanceSettingsPreference.get()),
+            limit: getFpsLimit(effectivePerformanceSettings.get()),
         },
         scale: {
             mode: Phaser.Scale.RESIZE,
@@ -69,6 +70,12 @@ export const createGameEngine = ({
         initialCameraOffsetX,
     });
 
+    // Draws only when something changed, at most at the walking cadence.
+    const renderOnDemand = new RenderOnDemand(
+        game as unknown as ConstructorParameters<typeof RenderOnDemand>[0]
+    );
+    renderOnDemand.install();
+
     const unbindResize = bindGameResize(game, container);
 
     // While someone decorates, what the scene shows is their draft. The server
@@ -80,6 +87,7 @@ export const createGameEngine = ({
         game,
         destroy: () => {
             unbindResize();
+            renderOnDemand.uninstall();
             destroyGameWhenReady(game);
         },
         zoomIn: () => getMapCameraController(game)?.zoomIn(),

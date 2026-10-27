@@ -34,6 +34,8 @@ import { SPACE_VIEWS } from "@/features/spaces/consts/view";
 import { useSpaceMediaControls } from "@/features/spaces/hooks/useSpaceMediaControls";
 import { useSpacePageLayout } from "@/features/spaces/hooks/useSpacePageLayout";
 import { useStageTiles } from "@/features/spaces/hooks/useStageTiles";
+import { usePinnedVideos } from "@/features/spaces/hooks/usePinnedVideos";
+import { useAutoPinScreen } from "@/features/spaces/hooks/useAutoPinScreen";
 import { useVideoGrid } from "@/features/spaces/hooks/useVideoGrid";
 import { useGuestRemoved } from "../../hooks/useGuestRemoved";
 import { GuestProfileCard } from "../instances/GuestProfileCard";
@@ -79,10 +81,12 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
 
     const {
         localAudioError,
+        speakingUserIds,
         video,
         sendEmote,
         sendNearbyMessage,
         sendNearbyTyping,
+        isSendNearbyEnabled,
     } = useSpaceConnection({ spaceId: space.id, userId: user.id, game });
 
     const nearbyChat = useNearbyChatConnection({
@@ -91,12 +95,17 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
         userId: user.id,
         sendMessage: sendNearbyMessage,
         sendTyping: sendNearbyTyping,
+        isEnabled: isSendNearbyEnabled,
     });
 
     const currentRoom = useCurrentRoom(game);
     const walk = useWalkState(game);
     const lockedDoor = useLockedDoorPrompt(game, currentRoom);
-    const stageTiles = useStageTiles({ video, selfUserId: user.id });
+    const stageTiles = useStageTiles({
+        video,
+        selfUserId: user.id,
+        speakingUserIds,
+    });
 
     useLocalAvatarSheet(game);
     useLocalUserProfile(game, {
@@ -113,6 +122,13 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
         stageView,
         changeStageView,
     } = useVideoGrid(stageTiles.length);
+
+    const pinnedVideos = usePinnedVideos(stageTiles);
+    useAutoPinScreen({
+        tiles: stageTiles,
+        pin: pinnedVideos.pin,
+        openGrid: () => openGrid(),
+    });
 
     const layout = useSpacePageLayout({
         view: SPACE_VIEWS.SPACE,
@@ -166,6 +182,9 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
                         gridTileId={gridTileId}
                         onOpenGrid={openGrid}
                         onCloseGrid={closeGrid}
+                        pinnedIds={pinnedVideos.pinnedIds}
+                        onTogglePin={pinnedVideos.togglePin}
+                        onActiveVideosChange={video.setActiveVideoIds}
                     />
                     <LayoutPrimitive.TopControls
                         visible={layout.isStageToggleVisible}

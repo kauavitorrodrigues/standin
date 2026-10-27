@@ -1,5 +1,6 @@
 import { GithubProvider } from "@standin/infra";
 import { UserService } from "@standin/core";
+import { UserCache } from "@/features/auth/services/userCache";
 import { buildProfilePictureAction } from "@/features/users/utils/buildProfilePictureAction";
 
 /**
@@ -21,6 +22,7 @@ export const importGithubProfilePicture = async (
 
         const action = await buildProfilePictureAction(bytes);
         await UserService.updateProfilePicture(userId, action);
+        UserCache.invalidate(userId);
 
         return true;
     } catch (error) {

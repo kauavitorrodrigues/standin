@@ -19,7 +19,7 @@ export type Patch = Partial<Omit<typeof assetsTable.$inferInsert, "id">>;
 
 const differs = (a: unknown, b: unknown) => stableJson(a) !== stableJson(b);
 
-// What the body changes, split by who it reaches (spec, section 4.1).
+// What the body changes, split by who it reaches.
 export type Plan = {
     // Body fields that really change a value, for the in-use check.
     fields: string[];

@@ -5,13 +5,14 @@ import { parseSchema } from "@/utils/parseSchema";
 import { paramsSchema } from "@/utils/paramsSchema";
 import { sendError } from "@/utils/sendError";
 import type { ExtendedRequest } from "@/types/request";
+import { notifyReactionToggled } from "./notifyReactionToggled";
 
 export const addReaction = async (req: ExtendedRequest, res: Response) => {
     try {
         if (!req.user) return;
 
         const params = parseSchema(
-            paramsSchema("conversationId", "messageId"),
+            paramsSchema("organizationId", "conversationId", "messageId"),
             req.params,
             res,
         );
@@ -27,6 +28,14 @@ export const addReaction = async (req: ExtendedRequest, res: Response) => {
             data.emoji,
         );
 
+        void notifyReactionToggled({
+            conversationId: params.conversationId,
+            organizationId: params.organizationId,
+            messageId: params.messageId,
+            emoji: data.emoji,
+            actorId: req.user.id,
+            added: true,
+        });
         res.status(201).json({ reaction });
     } catch (error) {
         return sendError({

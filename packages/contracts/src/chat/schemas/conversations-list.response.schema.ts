@@ -3,4 +3,5 @@ import { ConversationSummarySchema } from "./conversation-summary.schema";
 
 export const ConversationsListResponseSchema = z.object({
     conversations: z.array(ConversationSummarySchema),
+    hasMore: z.boolean(),
 });

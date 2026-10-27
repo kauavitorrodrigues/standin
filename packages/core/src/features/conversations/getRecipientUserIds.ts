@@ -1,4 +1,3 @@
-import { db, type Transaction } from "@standin/database";
 import { CONVERSATION_TYPES } from "@standin/contracts";
 import type { ConversationRow } from "./utils/assertAccessible";
 import { OrganizationMemberService } from "../organizations";
@@ -14,11 +13,9 @@ export const getConversationRecipientUserIds = async (
     excludeUserId: string
 ): Promise<string[]> => {
     if (conversation.type === CONVERSATION_TYPES.SPACE) {
-        const members = await db.transaction((tx: Transaction) =>
-            OrganizationMemberService.findActive(
-                conversation.organizationId,
-                tx
-            )
+        // One select, so it needs no transaction around it.
+        const members = await OrganizationMemberService.findActive(
+            conversation.organizationId
         );
 
         return members

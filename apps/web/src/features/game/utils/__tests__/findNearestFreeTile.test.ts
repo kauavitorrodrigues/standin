@@ -40,9 +40,7 @@ describe("findNearestFreeTile", () => {
         });
 
         expect(found).not.toEqual(cell(6, 5));
-        expect(
-            Math.abs(found!.column - 5) + Math.abs(found!.row - 5)
-        ).toBe(1);
+        expect(Math.abs(found!.column - 5) + Math.abs(found!.row - 5)).toBe(1);
     });
 
     it("prefers the closest open tile, by tiles walked", () => {
@@ -62,9 +60,7 @@ describe("findNearestFreeTile", () => {
             random: NO_NOISE,
         });
 
-        expect(
-            Math.abs(found!.column - 5) + Math.abs(found!.row - 5)
-        ).toBe(2);
+        expect(Math.abs(found!.column - 5) + Math.abs(found!.row - 5)).toBe(2);
     });
 
     it("lets noise pick between tiles at the same distance", () => {

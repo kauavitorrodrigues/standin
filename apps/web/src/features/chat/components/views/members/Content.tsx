@@ -11,10 +11,17 @@ type Props = {
     members: UserSummary[];
     isLoading: boolean;
     isError: boolean;
-    onSelect: (member: UserSummary) => void;
+    selectedIds: string[];
+    onToggle: (member: UserSummary) => void;
 };
 
-export const Content = ({ members, isLoading, isError, onSelect }: Props) => {
+export const Content = ({
+    members,
+    isLoading,
+    isError,
+    selectedIds,
+    onToggle,
+}: Props) => {
     if (isLoading) return <MembersLoadingState />;
     if (isError) return <MembersErrorState />;
     if (members.length === 0) return <MembersEmptyState />;
@@ -26,7 +33,8 @@ export const Content = ({ members, isLoading, isError, onSelect }: Props) => {
                     <MemberItem
                         key={member.id}
                         member={member}
-                        onSelect={onSelect}
+                        selected={selectedIds.includes(member.id)}
+                        onToggle={onToggle}
                     />
                 ))}
             </div>

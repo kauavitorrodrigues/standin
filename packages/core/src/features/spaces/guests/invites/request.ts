@@ -229,7 +229,7 @@ const requestInTransaction = async (
  * A person opens an invite and asks to enter. Never lets anyone in: it leaves
  * a pending request for a host. Asking again while the request is alive or the
  * person is inside changes nothing and spends no use. A denied, kicked or
- * lapsed guest asks again with the same row, as the Gather's reset does.
+ * lapsed guest asks again with the same row.
  */
 export const requestInvite = async (
     userId: string,

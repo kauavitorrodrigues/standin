@@ -6,10 +6,14 @@ export type NearbyChatConnection = {
     store: NearbyMessageStore;
     sendMessage: (text: string) => void;
     sendTyping: (isTyping: boolean) => void;
+    // False when the space turned the nearby chat off, which hides the button
+    // and frees the slash key. It mirrors enableSendNearbyInMapView.
+    isEnabled: boolean;
 };
 
 // What the button of the bar needs from the panel.
 export type NearbyChatButtonState = {
+    isEnabled: boolean;
     isOpen: boolean;
     onToggle: () => void;
 };

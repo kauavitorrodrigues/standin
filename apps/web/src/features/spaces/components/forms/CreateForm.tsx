@@ -22,7 +22,7 @@ import { SpaceMutations } from "../../mutations";
 import { SpacesQueries } from "../../queries";
 import { CreateMessages } from "./Messages";
 
-// Two halves in the way of the Gather office setup: the choices on the left,
+// Two halves: the choices on the left,
 // the map the space will start from on the right.
 export const CreateSpaceForm = () => {
     const navigate = useNavigate();

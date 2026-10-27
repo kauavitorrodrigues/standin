@@ -15,7 +15,7 @@ import { serializeGuestState } from "./utils/serializeGuest";
 
 /**
  * A host sends an admitted guest out. The only thing that acts on an admitted
- * guest: like the Gather, a kick is a denial with its own reason. The row
+ * guest: a kick is a denial with its own reason. The row
  * stays, so the guest can ask again.
  */
 export const removeSpaceGuest = async (

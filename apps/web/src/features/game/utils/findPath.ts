@@ -116,7 +116,10 @@ export const findPath = ({
         const state = heap.pop()!;
         const tile = Math.floor(state / STATES_PER_TILE);
         const direction = state % STATES_PER_TILE;
-        const cell = { column: tile % columns, row: Math.floor(tile / columns) };
+        const cell = {
+            column: tile % columns,
+            row: Math.floor(tile / columns),
+        };
 
         if (cell.column === goal.column && cell.row === goal.row) {
             return rebuild(state, cameFrom, columns);

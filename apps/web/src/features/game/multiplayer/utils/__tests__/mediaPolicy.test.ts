@@ -120,6 +120,15 @@ describe("getPeerMediaPolicies", () => {
 });
 
 describe("getVideoEncoding", () => {
+    it("sends the camera at the floor bitrate when degraded", () => {
+        expect(getVideoEncoding("camera", 1, true).maxBitrate).toBe(
+            CAMERA_ENCODING_FLOOR_BITRATE
+        );
+        expect(getVideoEncoding("screen", 1, true)).toEqual(
+            getVideoEncoding("screen", 1)
+        );
+    });
+
     it("never drops below the floor", () => {
         expect(getVideoEncoding("camera", 1000).maxBitrate).toBe(
             CAMERA_ENCODING_FLOOR_BITRATE

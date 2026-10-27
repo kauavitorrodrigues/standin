@@ -41,7 +41,7 @@ export const resolveVideoTracks = (
 
 export type RemoteVideoIdentity = {
     id: string;
-    stream: MediaStream;
+    stream: MediaStream | null;
 };
 
 // Used to skip a React state update when a proximity tick or a repeated

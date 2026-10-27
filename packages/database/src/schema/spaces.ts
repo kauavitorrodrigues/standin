@@ -7,6 +7,7 @@ import {
 } from "./common";
 import {
     text,
+    boolean,
     varchar,
     pgEnum,
     pgTable,
@@ -35,6 +36,12 @@ export const spacesTable = pgTable(
         guestAccess: spaceGuestAccessEnum("guest_access")
             .notNull()
             .default(SPACE_GUEST_ACCESS.ALLOWED),
+
+        // Per-space toggles, one typed column each. A new setting is a new
+        // column with its default, which fills the existing spaces.
+        enableSendNearbyInMapView: boolean("enable_send_nearby_in_map_view")
+            .notNull()
+            .default(true),
 
         // Relations columns
         organizationId: text("organization_id")

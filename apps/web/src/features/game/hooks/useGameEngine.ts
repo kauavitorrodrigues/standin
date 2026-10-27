@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePerformanceSettingsPreference } from "@/features/settings/performance/hooks/usePerformanceSettingsPreference";
+import { useEffectivePerformanceSettings } from "@/features/settings/performance/hooks/useEffectivePerformanceSettings";
 import { getFpsLimit } from "@/features/settings/performance/lib/performanceValues";
 import { applyFpsLimit } from "@/features/game/utils/fpsLimit";
 import { createGameEngine } from "@/features/game/lib/Engine";
@@ -19,7 +19,7 @@ export const useGameEngine = (
     }, [initialCameraOffsetX]);
 
     // A new limit in the settings applies to the running game.
-    const fpsLimit = getFpsLimit(usePerformanceSettingsPreference());
+    const fpsLimit = getFpsLimit(useEffectivePerformanceSettings());
     useEffect(() => {
         if (handle) applyFpsLimit(handle.game, fpsLimit);
     }, [handle, fpsLimit]);

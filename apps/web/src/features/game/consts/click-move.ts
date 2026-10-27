@@ -58,7 +58,7 @@ export const STAND_OFFSETS: readonly { x: number; y: number }[] = [
 // How many tiles of a clicked area are tried before giving up, best first.
 export const AREA_GOALS_TRIED = 10;
 
-// Looking for the tile next to a goal that is closed, like the Gather does.
+// Looking for the tile next to a goal that is closed.
 export const NEAREST_TILE = {
     // Tiles tried along the direction the avatar faces.
     LINE_MAX: 100,

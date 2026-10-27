@@ -93,7 +93,7 @@ describe("AvatarTextureRegistry", () => {
         fake.failLoad(KEY);
 
         expect(lease.getKey()).toBe(AVATAR_GHOST_TEXTURE_KEY);
-        expect(onChange).not.toHaveBeenCalled();
+        expect(onChange).toHaveBeenCalledWith(AVATAR_GHOST_TEXTURE_KEY);
         expect(() => lease.release()).not.toThrow();
         expect(fake.mocks.textures.remove).not.toHaveBeenCalled();
         error.mockRestore();
@@ -134,5 +134,26 @@ describe("AvatarTextureRegistry", () => {
 
         expect(fake.mocks.load.spritesheet).toHaveBeenCalledTimes(2);
         expect(second.getKey()).toBe(KEY);
+    });
+
+    it("returns to the baseline texture count after 50 avatars leave", () => {
+        const { fake, registry } = setup();
+        const baseline = fake.textures.size;
+        const leases = Array.from({ length: 50 }, (_, index) => {
+            const fileId = `file-${index % 10}`;
+            return registry.acquire(fileId);
+        });
+        for (let index = 0; index < 10; index += 1) {
+            fake.finishLoad(`avatar-sheet:file-${index}`);
+        }
+        expect(fake.textures.size).toBe(baseline + 10);
+
+        leases.forEach((lease) => lease.release());
+
+        expect(fake.textures.size).toBe(baseline);
+        expect(fake.animations.size).toBe(0);
+        for (let index = 0; index < 10; index += 1) {
+            expect(registry.getReferenceCount(`file-${index}`)).toBe(0);
+        }
     });
 });

@@ -26,6 +26,8 @@ type BuildStageTilesInput = {
     includeSelf: boolean;
     // Users whose mic is off, ourselves included.
     mutedUserIds?: ReadonlySet<string>;
+    // Users speaking right now. They sort ahead of the other people.
+    speakingUserIds?: ReadonlySet<string>;
 };
 
 const nameOf = (
@@ -49,6 +51,7 @@ export const buildStageTiles = ({
     selfUserId,
     includeSelf,
     mutedUserIds = new Set(),
+    speakingUserIds = new Set(),
 }: BuildStageTilesInput): StageTile[] => {
     const tiles: StageTile[] = [];
 
@@ -112,8 +115,50 @@ export const buildStageTiles = ({
         });
     }
 
-    return tiles.sort(
-        (first, second) =>
-            Number(second.slot === "screen") - Number(first.slot === "screen")
+    // `nearbyUserIds` arrives nearest first, so the position in it is the
+    // distance rank. Anyone not in it (a screen from further away) goes last
+    // within their group.
+    const distanceRank = new Map<string, number>();
+    nearbyUserIds.forEach((userId, index) => {
+        if (!distanceRank.has(userId)) distanceRank.set(userId, index);
+    });
+
+    return tiles.sort((first, second) =>
+        compareByRelevance(first, second, distanceRank, speakingUserIds)
     );
+};
+
+// The carousel is ordered by relevance:
+// screens first, then people speaking now, then the nearest, and ourselves
+// last. A person's camera and screen are separate tiles. Ties keep their
+// order because Array.sort is stable.
+const compareByRelevance = (
+    first: StageTile,
+    second: StageTile,
+    distanceRank: ReadonlyMap<string, number>,
+    speakingUserIds: ReadonlySet<string>
+): number => {
+    const groupDifference = groupOf(first) - groupOf(second);
+    if (groupDifference !== 0) return groupDifference;
+
+    const isSpeaking = (tile: StageTile): number =>
+        Number(tile.userId !== null && speakingUserIds.has(tile.userId));
+    // Screens carry no audio, so speaking only orders people.
+    const speakingDifference =
+        first.slot === "screen" ? 0 : isSpeaking(second) - isSpeaking(first);
+    if (speakingDifference !== 0) return speakingDifference;
+
+    const rankOf = (tile: StageTile): number =>
+        (tile.userId ? distanceRank.get(tile.userId) : undefined) ??
+        Number.POSITIVE_INFINITY;
+    const firstRank = rankOf(first);
+    const secondRank = rankOf(second);
+    if (firstRank === secondRank) return 0;
+    return firstRank < secondRank ? -1 : 1;
+};
+
+// 0 screens, 1 other people, 2 ourselves.
+const groupOf = (tile: StageTile): number => {
+    if (tile.slot === "screen") return 0;
+    return tile.isSelf ? 2 : 1;
 };

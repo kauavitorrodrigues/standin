@@ -20,5 +20,9 @@ export const useConversations = () => {
         enabled: !!organizationId,
     });
 
-    return { ...query, conversations: query.data?.conversations ?? [] };
+    return {
+        ...query,
+        conversations: query.data?.conversations ?? [],
+        hasMore: query.data?.hasMore ?? false,
+    };
 };

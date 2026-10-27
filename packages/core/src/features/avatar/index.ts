@@ -21,6 +21,8 @@ import { replacePartPreview } from "./previews/replacePartPreview";
 import { ensureSheetUpToDate } from "./sheets/ensureSheetUpToDate";
 import { regenerateForBase } from "./sheets/regenerateForBase";
 import { regenerateForPart } from "./sheets/regenerateForPart";
+import { consumeStaleSheet } from "./sheets/staleSheets";
+import { resolveUserSheetFileId } from "./sheets/resolveSheetFileId";
 import { assignRandomAvatar } from "./user/assignRandomAvatar";
 import { clearUserAvatar } from "./user/clearUserAvatar";
 import { getUserAvatar } from "./user/getUserAvatar";
@@ -53,6 +55,10 @@ export const AvatarService = {
     clearUserAvatar,
     assignRandom: assignRandomAvatar,
     ensureSheetUpToDate,
+    // Reads the file a person is drawn with and never assembles anything.
+    resolveSheetFileId: resolveUserSheetFileId,
+    // True once for a person whose sheet failed to be assembled again.
+    consumeStaleSheet,
     regenerateForPart,
     regenerateForBase,
     // Hook for the socket: runs when the sheet of a person is replaced or

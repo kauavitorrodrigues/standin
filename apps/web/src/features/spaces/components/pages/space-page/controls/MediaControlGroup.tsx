@@ -27,13 +27,19 @@ export const MediaControlGroup = ({
     sendEmote,
     nearbyChat,
 }: Props) => {
+    
     const controls = useControlsView();
+    
     const reactions = useReactions({
         enabled: isMeetingContext,
         onSendEmote: sendEmote,
         controls,
     });
-    const nearby = useNearbyChat({ enabled: true, controls });
+    
+    const nearby = useNearbyChat({
+        enabled: nearbyChat.isEnabled,
+        controls,
+    });
 
     return (
         <LayoutPrimitive.ControlGroup
@@ -69,6 +75,7 @@ export const MediaControlGroup = ({
                         onStopScreenShare={screenShare.stop}
                         reactions={reactions}
                         nearbyChat={{
+                            isEnabled: nearbyChat.isEnabled,
                             isOpen: nearby.isOpen,
                             onToggle: nearby.toggle,
                         }}

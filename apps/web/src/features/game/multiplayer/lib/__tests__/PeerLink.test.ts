@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PeerLink, type PeerLinkDeps } from "../PeerLink";
 import {
+    BACKOFF_BASE_DELAY_MS,
     ICE_DISCONNECTED_GRACE_MS,
-    ICE_RESTART_BASE_DELAY_MS,
+    MAX_DELAY_MS,
     ICE_RESTART_MAX_ATTEMPTS,
 } from "../../consts/connection";
 import { MEDIA_SLOTS, type PeerLinkEvents } from "../../types/transport";
+import { TransportErrorType } from "../TransportConnectionMonitor";
 import {
     FakeMediaStream,
     FakePeerConnection,
@@ -286,6 +288,8 @@ describe("PeerLink data channel", () => {
 describe("PeerLink ICE recovery", () => {
     beforeEach(() => {
         vi.useFakeTimers();
+        // 0.5 makes the backoff jitter exactly zero.
+        vi.spyOn(Math, "random").mockReturnValue(0.5);
         vi.spyOn(console, "warn").mockImplementation(() => {});
     });
 
@@ -297,6 +301,7 @@ describe("PeerLink ICE recovery", () => {
     it("restarts ICE after the disconnected grace period", () => {
         const { pc } = createLink(true, false);
 
+        pc.setIceState("connected");
         pc.setIceState("disconnected");
         vi.advanceTimersByTime(ICE_DISCONNECTED_GRACE_MS - 1);
         expect(pc.restartIce).not.toHaveBeenCalled();
@@ -322,6 +327,7 @@ describe("PeerLink ICE recovery", () => {
         });
 
         servers = [{ urls: "turn:new" }];
+        pc.setIceState("connected");
         pc.setIceState("disconnected");
         vi.advanceTimersByTime(ICE_DISCONNECTED_GRACE_MS);
 
@@ -345,6 +351,7 @@ describe("PeerLink ICE recovery", () => {
         const firstOffer = signals.mock.calls[0][0];
         const signalsBefore = signals.mock.calls.length;
 
+        initiator.pc.setIceState("connected");
         initiator.pc.setIceState("disconnected");
         vi.advanceTimersByTime(ICE_DISCONNECTED_GRACE_MS);
         await flush();
@@ -367,6 +374,7 @@ describe("PeerLink ICE recovery", () => {
     it("does not restart when the connection heals inside the grace period", () => {
         const { pc } = createLink(true, false);
 
+        pc.setIceState("connected");
         pc.setIceState("disconnected");
         pc.setIceState("connected");
         vi.advanceTimersByTime(ICE_DISCONNECTED_GRACE_MS * 2);
@@ -378,11 +386,11 @@ describe("PeerLink ICE recovery", () => {
         const { pc } = createLink(true, false);
 
         pc.setIceState("failed");
-        vi.advanceTimersByTime(ICE_RESTART_BASE_DELAY_MS);
+        vi.advanceTimersByTime(BACKOFF_BASE_DELAY_MS);
         expect(pc.restartIce).toHaveBeenCalledTimes(1);
 
         pc.setIceState("failed");
-        vi.advanceTimersByTime(ICE_RESTART_BASE_DELAY_MS * 2 - 1);
+        vi.advanceTimersByTime(BACKOFF_BASE_DELAY_MS * 2 - 1);
         expect(pc.restartIce).toHaveBeenCalledTimes(1);
         vi.advanceTimersByTime(1);
         expect(pc.restartIce).toHaveBeenCalledTimes(2);
@@ -393,7 +401,7 @@ describe("PeerLink ICE recovery", () => {
 
         for (let attempt = 0; attempt < ICE_RESTART_MAX_ATTEMPTS; attempt++) {
             pc.setIceState("failed");
-            vi.advanceTimersByTime(ICE_RESTART_BASE_DELAY_MS * 2 ** attempt);
+            vi.advanceTimersByTime(Math.min(BACKOFF_BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS));
         }
         expect(pc.restartIce).toHaveBeenCalledTimes(ICE_RESTART_MAX_ATTEMPTS);
         expect(events.onClose).not.toHaveBeenCalled();
@@ -407,7 +415,7 @@ describe("PeerLink ICE recovery", () => {
 
         for (let attempt = 0; attempt < ICE_RESTART_MAX_ATTEMPTS; attempt++) {
             pc.setIceState("failed");
-            vi.advanceTimersByTime(ICE_RESTART_BASE_DELAY_MS * 2 ** attempt);
+            vi.advanceTimersByTime(Math.min(BACKOFF_BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS));
         }
         pc.setIceState("connected");
         pc.setIceState("failed");
@@ -442,5 +450,50 @@ describe("PeerLink initial video limits", () => {
         link.setTrack(MEDIA_SLOTS.AUDIO, fakeTrack("mic-audio"));
 
         expect(pc.transceiverInits[0]?.sendEncodings).toBeUndefined();
+    });
+});
+
+describe("PeerLink transport monitor", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.spyOn(Math, "random").mockReturnValue(0.5);
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it("does not restart on a disconnected that never followed a connect", () => {
+        const { pc } = createLink(true, false);
+
+        pc.setIceState("disconnected");
+        vi.advanceTimersByTime(ICE_DISCONNECTED_GRACE_MS * 2);
+
+        expect(pc.restartIce).not.toHaveBeenCalled();
+    });
+
+    it("reports FailedState then Disconnected-class errors through onTransportError", () => {
+        const pc = new FakePeerConnection();
+        const onTransportError = vi.fn();
+        new PeerLink({
+            initiator: true,
+            polite: false,
+            iceServers: [],
+            events: createEvents(),
+            onTransportError,
+            deps: {
+                createPeerConnection: () => pc as unknown as RTCPeerConnection,
+                createMediaStream: () =>
+                    new FakeMediaStream() as unknown as MediaStream,
+            },
+        });
+
+        pc.setIceState("failed");
+        expect(onTransportError).toHaveBeenCalledWith(
+            TransportErrorType.FailedState,
+            expect.objectContaining({ connectionState: "failed" })
+        );
     });
 });

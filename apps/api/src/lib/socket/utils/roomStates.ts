@@ -242,6 +242,17 @@ export const RoomStates = {
         return removal;
     },
 
+    // Whether two sockets are in the same private rooms, which is also the case
+    // when neither is in one. What is said in a room stays in it.
+    sameRooms(spaceId: string, socketA: string, socketB: string): boolean {
+        const rooms = spaces.get(spaceId);
+        if (!rooms) return true;
+
+        return [...rooms.values()].every(
+            (room) => room.inside.has(socketA) === room.inside.has(socketB)
+        );
+    },
+
     // Marks the socket as the owner of the space, who enters any locked room.
     setOwner(spaceId: string, socketId: string): void {
         const sockets = owners.get(spaceId) ?? new Set<string>();

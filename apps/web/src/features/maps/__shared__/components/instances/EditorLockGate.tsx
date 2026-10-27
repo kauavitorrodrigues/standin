@@ -20,7 +20,7 @@ type EditorLockGateProps = {
     children: ReactNode;
 };
 
-// The editor opens only after the lock is granted (spec 8.1): the map and the
+// The editor opens only after the lock is granted: the map and the
 // palette load below this gate. A lost lock keeps the editor mounted, blocked,
 // so the draft is not thrown away while it is got back.
 export const EditorLockGate = ({

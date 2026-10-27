@@ -18,6 +18,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socket.io.engine?.transport?.name ?? "N/A"
     );
     const [lastError, setLastError] = useState<string | null>(null);
+    const [lastConnectedAt, setLastConnectedAt] = useState<number | null>(null);
+    const [lastDisconnectedAt, setLastDisconnectedAt] = useState<
+        number | null
+    >(null);
     const [isDuplicateSession, setIsDuplicateSession] = useState(false);
 
     // True once this tab has actually connected at least once - lets
@@ -35,6 +39,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         function onConnect() {
             setIsConnected(true);
+            setLastConnectedAt(Date.now());
             setLastError(null);
             setIsDuplicateSession(false);
             setTransport(socket.io.engine?.transport?.name ?? "N/A");
@@ -51,6 +56,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         function onDisconnect(reason: string) {
             setIsConnected(false);
+            setLastDisconnectedAt(Date.now());
             setTransport("N/A");
 
             // "io client disconnect": we called socket.disconnect() ourselves
@@ -118,8 +124,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             lastError,
             status: resolveSocketStatus(isConnected, lastError),
             isDuplicateSession,
+            connectionReport: {
+                isConnected,
+                lastConnectedAt,
+                lastDisconnectedAt,
+                transport,
+            },
         };
-    }, [isConnected, transport, lastError, isDuplicateSession]);
+    }, [
+        isConnected,
+        transport,
+        lastError,
+        isDuplicateSession,
+        lastConnectedAt,
+        lastDisconnectedAt,
+    ]);
 
     return (
         <SocketContext.Provider value={value}>

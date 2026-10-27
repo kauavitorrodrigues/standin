@@ -26,7 +26,7 @@ export const createDirectConversation = async (
         const conversation = await ConversationService.findOrCreateDirect(
             params.organizationId,
             req.user.id,
-            body.recipientUserId
+            body.recipientUserIds
         );
         res.status(200).json({ conversation });
     } catch (error) {

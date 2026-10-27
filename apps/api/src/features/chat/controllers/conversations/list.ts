@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { ConversationService } from "@standin/core";
+import { ConversationsListQuerySchema } from "@standin/contracts";
 import { parseSchema } from "@/utils/parseSchema";
 import { paramsSchema } from "@/utils/paramsSchema";
 import { sendError } from "@/utils/sendError";
@@ -19,9 +20,13 @@ export const listConversations = async (
         );
         if (!params) return;
 
+        const query = parseSchema(ConversationsListQuerySchema, req.query, res);
+        if (!query) return;
+
         const result = await ConversationService.listForUser(
             req.user.id,
-            params.organizationId
+            params.organizationId,
+            query
         );
         res.status(200).json(result);
     } catch (error) {

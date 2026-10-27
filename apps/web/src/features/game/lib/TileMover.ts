@@ -23,7 +23,12 @@ export type TileMoveResult = {
 
 const STILL: TileDirection = { x: 0, y: 0 };
 
-type Step = { from: Point; to: Point; direction: TileDirection; length: number };
+type Step = {
+    from: Point;
+    to: Point;
+    direction: TileDirection;
+    length: number;
+};
 
 // Moves the avatar one tile at a time, from the center of a tile to the center
 // of the next, at a steady speed and with no physics: a tile is open or it is
@@ -129,7 +134,10 @@ export class TileMover {
         const standing = getStandingPoint(cell, this.isFree) ?? from;
         const target = findStep({
             from: standing,
-            to: { column: cell.column + direction.x, row: cell.row + direction.y },
+            to: {
+                column: cell.column + direction.x,
+                row: cell.row + direction.y,
+            },
             columns: this.size.columns,
             rows: this.size.rows,
             isFree: this.isFree,

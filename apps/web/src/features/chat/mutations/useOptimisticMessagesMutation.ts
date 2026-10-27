@@ -1,6 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-    messagesQueryKey,
+    useMutation,
+    useQueryClient,
+    type QueryClient,
+} from "@tanstack/react-query";
+import {
+    messagesListQueryKey,
     type MessagesQueryKey,
 } from "@/features/chat/queries";
 import type { MessagesData } from "@/features/chat/utils/messagesCache";
@@ -13,11 +17,20 @@ type Context<TMeta> = {
 
 type Config<TInput, TOutput, TMeta> = {
     conversationId: (input: TInput) => string;
+    // Set when the message lives in a thread list instead of the main one.
+    threadParentId?: (input: TInput) => string | undefined;
     mutationFn: (input: TInput) => Promise<TOutput>;
     apply: (
         data: MessagesData | undefined,
         input: TInput
     ) => { data: MessagesData; meta: TMeta };
+    // Runs once the request succeeded, for a change to a cache other than the
+    // list this mutation edited.
+    onSuccess?: (
+        queryClient: QueryClient,
+        output: TOutput,
+        input: TInput
+    ) => void;
     reconcile?: (
         data: MessagesData,
         output: TOutput,
@@ -42,6 +55,7 @@ export function useOptimisticMessagesMutation<
         context: Context<TMeta> | undefined
     ) => {
         const { reconcile } = config;
+        config.onSuccess?.(queryClient, output, input);
         if (!reconcile || !context) return;
 
         queryClient.setQueryData<MessagesData>(context.queryKey, (data) => {
@@ -53,7 +67,10 @@ export function useOptimisticMessagesMutation<
     return useMutation<TOutput, unknown, TInput, Context<TMeta>>({
         mutationFn: config.mutationFn,
         onMutate: async (input) => {
-            const queryKey = messagesQueryKey(config.conversationId(input));
+            const queryKey = messagesListQueryKey(
+                config.conversationId(input),
+                config.threadParentId?.(input)
+            );
             await queryClient.cancelQueries({ queryKey });
 
             const previous = queryClient.getQueryData<MessagesData>(queryKey);

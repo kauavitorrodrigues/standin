@@ -1,19 +1,37 @@
 import { SCREEN_SHARE_IDLE_GRACE_MS } from "@/features/media-devices/consts/videoConstraints";
 
-// Capture is capped at 1080p: a 1440p or 4K monitor would otherwise hand the
-// encoder several times more pixels per frame than it can keep up with on a
-// modest machine, which stutters the share and the rest of the page with it.
-// The encoder limits (see getVideoEncoding) then only have to tune bitrate.
-export const SCREEN_RESOLUTIONS = {
-    "720p": { width: 1280, height: 720 },
-    "1080p": { width: 1920, height: 1080 },
+// The resolution tiers applied with applyConstraints after the capture. The box is square, not 16:9: the
+// browser fits the screen inside it keeping its aspect ratio.
+export const SCREEN_RESOLUTION_TIERS = {
+    LOW: { width: { max: 1280 }, height: { max: 1280 } },
+    MED: { width: { max: 1920 }, height: { max: 1920 } },
+    HIGH: { width: { max: 2880 }, height: { max: 2880 } },
 } as const;
+
+export type ScreenResolutionTier = keyof typeof SCREEN_RESOLUTION_TIERS;
+
+// getDisplayMedia is asked for the highest tier, which is narrowed afterwards.
+export const SCREEN_CAPTURE_REQUEST_MAX = 2880;
+
+// A capture is narrowed to 1080p by default: a 1440p or 4K monitor would
+// otherwise hand the encoder several times more pixels per frame than it can
+// keep up with on a modest machine, which stutters the share and the rest of
+// the page with it. The encoder limits (see getVideoEncoding) then only have
+// to tune bitrate. The two choices map to the LOW and MED tiers.
+export const SCREEN_RESOLUTIONS = {
+    "720p": "LOW",
+    "1080p": "MED",
+} as const satisfies Record<string, ScreenResolutionTier>;
 
 export type ScreenResolution = keyof typeof SCREEN_RESOLUTIONS;
 
 export const SCREEN_RESOLUTION_IDS = Object.keys(
     SCREEN_RESOLUTIONS
 ) as ScreenResolution[];
+
+// Frame rate asked for when optimizing for video, against a normal 10. The normal rate stays the user's
+// choice here, default 30.
+export const SCREEN_HIGH_QUALITY_FRAME_RATE = 24;
 
 // 30 is the most the encoder is asked to produce (see SCREEN_ENCODING_BASE).
 export const SCREEN_FRAME_RATES = { "15": 15, "30": 30 } as const;
@@ -25,9 +43,9 @@ export const SCREEN_FRAME_RATE_IDS = Object.keys(
 ) as ScreenFrameRate[];
 
 // What the browser gives up first when the machine or the network is short.
-// "motion" holds the frame rate and lowers resolution, "detail" does the
-// opposite and keeps text sharp.
-export const SCREEN_CONTENT_HINTS = ["motion", "detail"] as const;
+// "motion" holds the frame rate and lowers resolution, "detail" and "text" do
+// the opposite and keep text sharp.
+export const SCREEN_CONTENT_HINTS = ["motion", "detail", "text"] as const;
 
 export type ScreenContentHint = (typeof SCREEN_CONTENT_HINTS)[number];
 
@@ -49,6 +67,8 @@ export type ScreenShareSettings = {
     resolution: ScreenResolution;
     frameRate: ScreenFrameRate;
     contentHint: ScreenContentHint;
+    // "Optimize for video": 24 fps, and a hint that follows the tier.
+    highQuality: boolean;
     idleGrace: ScreenIdleGrace;
 };
 
@@ -56,6 +76,7 @@ export const DEFAULT_SCREEN_SHARE_SETTINGS: ScreenShareSettings = {
     resolution: "1080p",
     frameRate: "30",
     contentHint: "motion",
+    highQuality: false,
     idleGrace: "1m",
 };
 

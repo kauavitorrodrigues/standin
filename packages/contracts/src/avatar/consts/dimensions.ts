@@ -1,8 +1,7 @@
 import { PLAYER_DIRECTIONS } from "../../game/enums/player";
 
 // The only place with the size of the avatar. Everything else imports it.
-// The sheet has the layout of the Gather avatar sheets, so sheets made for
-// one work in the other: a single row of 72 frames of 32 x 64 px, the body in
+// The sheet is a single row of 72 frames of 32 x 64 px, the body in
 // the lower half and the upper half free for hair and hats. The art is ours.
 // The rest is provisional until it is measured in the lab.
 // Raise it on every change of the grid or of the size, because every part and
@@ -24,7 +23,7 @@ export const AVATAR = {
     // Click and hover area, from the anchor.
     hit: { w: 24, h: 36 },
     // Distance in px between the visible top and the tip of the tail of the
-    // name tag. Measured on the Gather tag over a bare avatar.
+    // name tag. Measured over a bare avatar.
     nameTagGap: 7,
     // How many px of the avatar, from the feet up, the front of a seat piece
     // hides while it is sat.
@@ -70,7 +69,7 @@ export const AVATAR_ANIMATIONS = {
 export type AvatarAnimation = keyof typeof AVATAR_ANIMATIONS;
 
 // The column of the sheet of each frame of each animation, in the order they
-// play. Read from the Gather sheet of 72 frames: the standing poses start each
+// play. Read from the sheet of 72 frames: the standing poses start each
 // direction (down 0, left 9, up 18, right 23), the walks are four frames per
 // direction (down 32, left 40, up 48, right 56), and the sitting frames are
 // down 68, left 14, up 21 and right 28. The emote is the arms up pose, which
@@ -118,7 +117,7 @@ export const AVATAR_FRAMES = {
 // What each frame of the sheet shows. IDLE is standing, WALK and RUN are four
 // frames each, SIT_LEGS is sitting with the legs out in front and SIT_CROSSED
 // is sitting with the legs folded under, and EMOTE is the poses with the arms
-// up. These come from reading the Gather sheet of 72 frames, so the frames
+// up. These come from reading the sheet of 72 frames, so the frames
 // without a game animation yet (run and the second emote) are still in their place
 // for whoever edits the sheet in a drawing tool.
 export const AVATAR_FRAME_KINDS = {

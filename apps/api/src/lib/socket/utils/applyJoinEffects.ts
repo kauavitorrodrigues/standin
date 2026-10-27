@@ -2,18 +2,20 @@ import type { Socket } from "socket.io";
 import { RoomEvents } from "@standin/contracts";
 import { RoomStates } from "./roomStates";
 import type { JoinEffects } from "./roomStates";
+import { PresenceStore } from "../presence/PresenceStore";
 
 export type SocketsById = Map<string, Socket>;
 
-// Sends the entitlements of a user to each of their sockets in the space.
+// Sends the entitlements of a user to each of their sockets in the space. The
+// sockets come from the presence of the space, so nobody else is visited.
 export const sendEntitlements = (
     sockets: SocketsById,
     spaceId: string,
     userId: string
 ) => {
-    for (const target of sockets.values()) {
-        if (target.data.userId !== userId) continue;
-        if (target.data.spaceId !== spaceId) continue;
+    for (const socketId of PresenceStore.findSocketIdsOfUser(spaceId, userId)) {
+        const target = sockets.get(socketId);
+        if (!target) continue;
         target.emit(
             RoomEvents.ROOM_ENTITLEMENTS,
             RoomStates.entitlements(spaceId, target.id, userId)

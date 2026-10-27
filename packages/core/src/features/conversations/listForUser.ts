@@ -6,13 +6,28 @@ import {
     and,
     isNull,
     ne,
+    or,
+    eq,
     desc,
+    spacesTable,
 } from "@standin/database";
 import { CONVERSATION_TYPES } from "@standin/contracts";
-import type { ConversationsListResponse, ConversationSummary } from "@standin/contracts";
+import type {
+    ConversationsListQuery,
+    ConversationsListResponse,
+    ConversationSummary,
+} from "@standin/contracts";
 import { findAccessibleConversations } from "./findAccessible";
 import { computeUnreadCounts } from "./reads/computeUnreadCounts";
 import { UserService } from "../users";
+import { sortConversationSummaries } from "./utils/sortSummaries";
+import { filterSummariesBySearch } from "./utils/filterSummariesBySearch";
+
+export const CONVERSATIONS_LIST_LIMIT = 10;
+
+// A search lists every match, since it is how the conversations beyond the
+// default limit are reached. The cap only keeps the response bounded.
+export const CONVERSATIONS_SEARCH_LIMIT = 50;
 
 type LastMessageRow = {
     conversationId: string;
@@ -37,7 +52,12 @@ const findLastMessageByConversation = async (
         .where(
             and(
                 inArray(messagesTable.conversationId, conversationIds),
-                isNull(messagesTable.deletedAt)
+                isNull(messagesTable.deletedAt),
+                // A reply hidden from the channel is not its last message.
+                or(
+                    isNull(messagesTable.threadParentId),
+                    eq(messagesTable.showThreadReplyInChannel, true)
+                )
             )
         )
         // ids are uuidv7 (time-ordered), so ordering by id matches ordering
@@ -83,15 +103,29 @@ const findDirectParticipantsByConversation = async (
     return byConversation;
 };
 
+const findSpaceNamesById = async (
+    spaceIds: string[]
+): Promise<Map<string, string>> => {
+    if (spaceIds.length === 0) return new Map();
+
+    const rows = await db
+        .select({ id: spacesTable.id, name: spacesTable.name })
+        .from(spacesTable)
+        .where(inArray(spacesTable.id, spaceIds));
+
+    return new Map(rows.map((row) => [row.id, row.name]));
+};
+
 export const listConversationsForUser = async (
     userId: string,
-    organizationId: string
+    organizationId: string,
+    { search }: Partial<ConversationsListQuery> = {}
 ): Promise<ConversationsListResponse> => {
     const conversations = await findAccessibleConversations(
         userId,
         organizationId
     );
-    if (conversations.length === 0) return { conversations: [] };
+    if (conversations.length === 0) return { conversations: [], hasMore: false };
 
     const conversationIds = conversations.map((conversation) => conversation.id);
     const directConversationIds = conversations
@@ -137,13 +171,30 @@ export const listConversationsForUser = async (
         };
     });
 
-    // Most recent activity first, so the sidebar surfaces busy
-    // conversations without the client having to sort.
-    summaries.sort((a, b) => {
-        const aTime = a.lastMessage?.createdAt ?? "";
-        const bTime = b.lastMessage?.createdAt ?? "";
-        return bTime.localeCompare(aTime);
-    });
+    // Unread first, then most recent activity, so the sidebar surfaces
+    // what needs attention without the client sorting. The rest of the
+    // conversations is reachable by search.
+    const sorted = sortConversationSummaries(summaries);
 
-    return { conversations: summaries };
+    const term = search?.trim() ?? "";
+    if (term !== "") {
+        const spaceIds = conversations.flatMap((conversation) =>
+            conversation.spaceId ? [conversation.spaceId] : []
+        );
+        const matches = filterSummariesBySearch(
+            sorted,
+            await findSpaceNamesById(spaceIds),
+            term
+        );
+
+        return {
+            conversations: matches.slice(0, CONVERSATIONS_SEARCH_LIMIT),
+            hasMore: matches.length > CONVERSATIONS_SEARCH_LIMIT,
+        };
+    }
+
+    return {
+        conversations: sorted.slice(0, CONVERSATIONS_LIST_LIMIT),
+        hasMore: sorted.length > CONVERSATIONS_LIST_LIMIT,
+    };
 };

@@ -19,7 +19,7 @@ const isInside = ({ x, y, width, height }: PlacedRect, point: Point) =>
     point.x >= x && point.x < x + width && point.y >= y && point.y < y + height;
 
 /**
- * The tiles of an area to walk to, best first, like the Gather does when an
+ * The tiles of an area to walk to, best first, when an
  * area is clicked: the open tiles of the area closest to the click, with the
  * ones that have a free seat ahead of all the others. The first is the goal
  * and the rest are the ones to try when it cannot be reached.

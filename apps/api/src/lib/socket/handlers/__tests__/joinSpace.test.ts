@@ -2,26 +2,38 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
     resolveJoinAccessMock,
+    recheckAccessMock,
     resolveAvatarSheetFileIdMock,
-    resolveUserProfilesMock,
+    resolveUserProfileMock,
     listPendingMock,
+    resolveSpaceSettingsMock,
 } = vi.hoisted(() => ({
+    resolveSpaceSettingsMock: vi.fn(),
     resolveJoinAccessMock: vi.fn(),
+    recheckAccessMock: vi.fn(),
     listPendingMock: vi.fn(),
     resolveAvatarSheetFileIdMock: vi.fn(),
-    resolveUserProfilesMock: vi.fn(),
+    resolveUserProfileMock: vi.fn(),
 }));
 
-vi.mock("../../services/resolveUserProfiles", () => ({
-    resolveUserProfiles: resolveUserProfilesMock,
+vi.mock("../../services/resolveUserProfile", () => ({
+    resolveUserProfile: resolveUserProfileMock,
+}));
+
+vi.mock("../../services/resolveSpaceSettings", () => ({
+    resolveSpaceSettings: resolveSpaceSettingsMock,
 }));
 
 vi.mock("../../services/resolveAvatarSheetFileId", () => ({
     resolveAvatarSheetFileId: resolveAvatarSheetFileIdMock,
 }));
 
+vi.mock("../../services/resolveCachedJoinAccess", () => ({
+    resolveCachedJoinAccess: resolveJoinAccessMock,
+}));
+
 vi.mock("../../services/resolveJoinAccess", () => ({
-    resolveJoinAccess: resolveJoinAccessMock,
+    resolveJoinAccess: recheckAccessMock,
 }));
 
 vi.mock("@standin/core", () => ({
@@ -30,6 +42,7 @@ vi.mock("@standin/core", () => ({
 }));
 
 import { registerJoinSpace } from "../joinSpace";
+import { PresenceStore } from "../../presence/PresenceStore";
 
 function createFakeSocket(id: string, userId: string) {
     return {
@@ -39,6 +52,7 @@ function createFakeSocket(id: string, userId: string) {
             spaceId: null as string | null,
             isGuest: undefined as boolean | undefined,
         },
+        connected: true,
         join: vi.fn(),
         leave: vi.fn(),
         emit: vi.fn(),
@@ -48,10 +62,32 @@ function createFakeSocket(id: string, userId: string) {
     };
 }
 
+const PROFILES: Record<
+    string,
+    { name: string; profilePictureUrl: string | null }
+> = {
+    "user-a": { name: "Ana", profilePictureUrl: "/files/ana" },
+    "user-b": { name: "Bruno", profilePictureUrl: null },
+};
+
+// The sockets are in the space already: they sit in the room and in the
+// presence, which is where a join reads who is inside.
 function createFakeIo(
     peers: ReturnType<typeof createFakeSocket>[],
-    room: string
+    room: string,
+    sheets: Record<string, string | null> = {}
 ) {
+    peers.forEach((peer) => {
+        PresenceStore.add(room.replace("space:", ""), {
+            socketId: peer.id,
+            userId: peer.data.userId,
+            avatarSheetFileId: sheets[peer.data.userId] ?? null,
+            ...(PROFILES[peer.data.userId] ?? {
+                name: "",
+                profilePictureUrl: null,
+            }),
+        });
+    });
     return {
         sockets: {
             adapter: {
@@ -74,14 +110,17 @@ const GUEST = { isHost: false, isOwner: false };
 describe("registerJoinSpace", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        PresenceStore.clear();
         resolveJoinAccessMock.mockResolvedValue(GUEST);
+        recheckAccessMock.mockResolvedValue(GUEST);
         listPendingMock.mockResolvedValue([]);
+        resolveSpaceSettingsMock.mockResolvedValue({
+            enableSendNearbyInMapView: true,
+        });
         resolveAvatarSheetFileIdMock.mockResolvedValue(null);
-        resolveUserProfilesMock.mockResolvedValue(
-            new Map([
-                ["user-a", { name: "Ana", profilePictureUrl: "/files/ana" }],
-                ["user-b", { name: "Bruno", profilePictureUrl: null }],
-            ])
+        resolveUserProfileMock.mockImplementation(
+            async (userId: string) =>
+                PROFILES[userId] ?? { name: "", profilePictureUrl: null }
         );
     });
 
@@ -97,6 +136,7 @@ describe("registerJoinSpace", () => {
         expect(socketB.join).toHaveBeenCalledWith("space:space-1");
         expect(socketB.data.spaceId).toBe("space-1");
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
+            settings: { enableSendNearbyInMapView: true },
             peers: [
                 {
                     socketId: "socket-a",
@@ -109,19 +149,21 @@ describe("registerJoinSpace", () => {
         });
     });
 
-    it("sends the avatar sheet of each peer already present", async () => {
-        resolveAvatarSheetFileIdMock.mockImplementation(
-            async (userId: string) => (userId === "user-a" ? "file-a" : null)
-        );
+    it("sends the avatar sheet of each peer already present, without reading it again", async () => {
         const peerA = createFakeSocket("socket-a", "user-a");
         const socketB = createFakeSocket("socket-b", "user-b");
-        const io = createFakeIo([peerA], "space:space-1");
+        const io = createFakeIo([peerA], "space:space-1", {
+            "user-a": "file-a",
+        });
 
         registerJoinSpace(io as any, socketB as any);
         await getJoinHandler(socketB)?.(validPayload);
 
-        expect(resolveAvatarSheetFileIdMock).toHaveBeenCalledWith("user-a");
+        expect(resolveAvatarSheetFileIdMock).not.toHaveBeenCalledWith(
+            "user-a"
+        );
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
+            settings: { enableSendNearbyInMapView: true },
             peers: [
                 {
                     socketId: "socket-a",
@@ -173,7 +215,7 @@ describe("registerJoinSpace", () => {
         });
     });
 
-    it("reads the profiles of the peers and of the joiner in one query", async () => {
+    it("reads only the profile and the sheet of the person who joins", async () => {
         const peerA = createFakeSocket("socket-a", "user-a");
         const socketB = createFakeSocket("socket-b", "user-b");
         const io = createFakeIo([peerA], "space:space-1");
@@ -181,33 +223,50 @@ describe("registerJoinSpace", () => {
         registerJoinSpace(io as any, socketB as any);
         await getJoinHandler(socketB)?.(validPayload);
 
-        expect(resolveUserProfilesMock).toHaveBeenCalledTimes(1);
-        expect(resolveUserProfilesMock).toHaveBeenCalledWith([
-            "user-b",
-            "user-a",
-        ]);
+        expect(resolveUserProfileMock).toHaveBeenCalledTimes(1);
+        expect(resolveUserProfileMock).toHaveBeenCalledWith("user-b");
+        expect(resolveAvatarSheetFileIdMock).toHaveBeenCalledTimes(1);
+        expect(resolveAvatarSheetFileIdMock).toHaveBeenCalledWith("user-b");
     });
 
-    it("sends an empty name and no photo when the profile could not be read", async () => {
-        resolveUserProfilesMock.mockResolvedValue(new Map());
-        const peerA = createFakeSocket("socket-a", "user-a");
+    it("announces an empty name and no photo when the profile could not be read", async () => {
+        resolveUserProfileMock.mockResolvedValue({
+            name: "",
+            profilePictureUrl: null,
+        });
         const socketB = createFakeSocket("socket-b", "user-b");
-        const io = createFakeIo([peerA], "space:space-1");
+        const io = createFakeIo([], "space:space-1");
+        const toEmitMock = vi.fn();
+        socketB.to.mockReturnValue({ emit: toEmitMock });
 
         registerJoinSpace(io as any, socketB as any);
         await getJoinHandler(socketB)?.(validPayload);
 
-        expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
-            peers: [
-                {
-                    socketId: "socket-a",
-                    userId: "user-a",
-                    avatarSheetFileId: null,
-                    name: "",
-                    profilePictureUrl: null,
-                },
-            ],
+        expect(toEmitMock).toHaveBeenCalledWith(
+            "space:peer-joined",
+            expect.objectContaining({ name: "", profilePictureUrl: null })
+        );
+    });
+
+    it("puts the joiner in the presence and takes the socket out when it leaves", async () => {
+        const socket = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([], "space:space-1");
+
+        registerJoinSpace(io as any, socket as any);
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(PresenceStore.get("space-1", "socket-b")).toEqual({
+            socketId: "socket-b",
+            userId: "user-b",
+            avatarSheetFileId: null,
+            name: "Bruno",
+            profilePictureUrl: null,
         });
+
+        socket.data.spaceId = "space-1";
+        await getJoinHandler(socket)?.({ spaceId: "space-2" });
+        expect(PresenceStore.get("space-1", "socket-b")).toBeUndefined();
+        expect(PresenceStore.get("space-2", "socket-b")).toBeDefined();
     });
 
     it("trusts the token and the database, never an organization or user sent by the client", async () => {
@@ -294,6 +353,7 @@ describe("registerJoinSpace", () => {
         );
         expect(staleSocket.disconnect).toHaveBeenCalledWith(true);
         expect(newSocket.emit).toHaveBeenCalledWith("space:joined", {
+            settings: { enableSendNearbyInMapView: true },
             peers: [],
         });
     });
@@ -375,10 +435,9 @@ describe("registerJoinSpace", () => {
         expect(memberSocket.data.isGuest).toBe(false);
     });
 
-    it("looks again at a guest once inside, and puts out one whose pass ended meanwhile", async () => {
-        resolveJoinAccessMock
-            .mockResolvedValueOnce(GUEST)
-            .mockResolvedValueOnce(null);
+    it("looks again at a guest once inside, in the database, and puts out one whose pass ended meanwhile", async () => {
+        resolveJoinAccessMock.mockResolvedValue(GUEST);
+        recheckAccessMock.mockResolvedValue(null);
         const socket = createFakeSocket("socket-g", "user-g");
         registerJoinSpace(
             createFakeIo([], "space:space-1") as any,
@@ -387,9 +446,11 @@ describe("registerJoinSpace", () => {
 
         await getJoinHandler(socket)?.(validPayload);
 
-        expect(resolveJoinAccessMock).toHaveBeenCalledTimes(2);
+        expect(resolveJoinAccessMock).toHaveBeenCalledTimes(1);
+        expect(recheckAccessMock).toHaveBeenCalledWith("user-g", "space-1");
         expect(socket.leave).toHaveBeenCalledWith("space:space-1");
         expect(socket.data.spaceId).toBeNull();
+        expect(PresenceStore.get("space-1", "socket-g")).toBeUndefined();
         expect(socket.emit).not.toHaveBeenCalledWith(
             "space:joined",
             expect.anything()
@@ -407,5 +468,45 @@ describe("registerJoinSpace", () => {
         await getJoinHandler(socket)?.(validPayload);
 
         expect(resolveJoinAccessMock).toHaveBeenCalledTimes(1);
+        expect(recheckAccessMock).not.toHaveBeenCalled();
+    });
+
+    it("leaves no presence behind when the socket drops while the profile is being read", async () => {
+        const socket = createFakeSocket("socket-b", "user-b");
+        resolveUserProfileMock.mockImplementation(async () => {
+            socket.connected = false;
+            return { name: "Bruno", profilePictureUrl: null };
+        });
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            socket as any
+        );
+
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(PresenceStore.get("space-1", "socket-b")).toBeUndefined();
+        expect(socket.join).not.toHaveBeenCalled();
+        expect(socket.data.spaceId).toBeNull();
+    });
+
+    it("announces nobody when the socket drops while entering the room", async () => {
+        const socket = createFakeSocket("socket-b", "user-b");
+        const toEmit = vi.fn();
+        socket.to.mockReturnValue({ emit: toEmit });
+        socket.join.mockImplementation(async () => {
+            socket.connected = false;
+        });
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            socket as any
+        );
+
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(toEmit).not.toHaveBeenCalled();
+        expect(socket.emit).not.toHaveBeenCalledWith(
+            "space:joined",
+            expect.anything()
+        );
     });
 });

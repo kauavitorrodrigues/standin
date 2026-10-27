@@ -6,7 +6,7 @@ export const IN_USE_EDITABLE_ASSET_FIELDS = [
     "category",
 ] as const;
 
-// The three classes of field of a family (see the spec, section 4.1).
+// The three classes of field of a family.
 // Family fields are equal across the whole family, `animation` through its
 // `frameDurationMs` and `repeat`.
 export const FAMILY_ASSET_FIELDS = [

@@ -32,6 +32,6 @@ export const PREVIEW_COLORS = {
 // Size of one tile of the checker pattern of the floor, in art px.
 export const PREVIEW_FLOOR_TILE = 8;
 
-// Zoom of the downloaded image, as decided in `plan.md` section 15.1.
+// Zoom of the downloaded image.
 export const AVATAR_DOWNLOAD_SCALE = 8;
 export const AVATAR_DOWNLOAD_FILE_NAME = "avatar.png";
