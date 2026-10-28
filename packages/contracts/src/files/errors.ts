@@ -56,12 +56,12 @@ export class UnknownStorageDriverError extends BaseError {
     }
 }
 
-export class StorageDriverNotImplementedError extends BaseError {
-    constructor() {
+export class InvalidEnvironmentVariableError extends BaseError {
+    constructor(name: string, reason: string) {
         super(
-            "This storage driver is not implemented yet.",
-            "STORAGE_DRIVER_NOT_IMPLEMENTED",
-            501
+            `The environment variable "${name}" ${reason}.`,
+            "INVALID_ENVIRONMENT_VARIABLE",
+            500
         );
     }
 }

@@ -4,7 +4,7 @@ import { AVATAR_EDITOR_MESSAGES } from "../consts/editor/messages";
 // Downloads a PNG sheet and returns its RGBA. The browser decodes it, which
 // matches the server for sheets with only opaque or transparent pixels.
 export const decodeSheet = async (url: string): Promise<Uint8Array> => {
-    const response = await fetch(url, { credentials: "include" });
+    const response = await fetch(url);
     if (!response.ok) throw new Error(AVATAR_EDITOR_MESSAGES.SHEET_LOAD_FAILED);
 
     const bitmap = await createImageBitmap(await response.blob(), {

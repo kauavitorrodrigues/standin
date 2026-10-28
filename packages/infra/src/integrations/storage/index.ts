@@ -7,6 +7,8 @@ import {
 import { STORAGE_DRIVERS } from "./consts/storage";
 
 export * from "./types";
+export { getStorageDriver } from "./factory";
+export { STORAGE_DRIVERS } from "./consts/storage";
 export const StorageProvider = createStorageProvider();
 
 export type FileDelivery =

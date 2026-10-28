@@ -45,6 +45,9 @@ export const downloadAttachment = async (
             res.destroy(error);
         });
 
+        // `pipe` leaves the source open when the client goes away, which holds
+        // an S3 socket (or a file descriptor) until the pool runs dry.
+        res.on("close", () => stream.destroy());
         stream.pipe(res);
     } catch (error) {
         return sendError({

@@ -2,6 +2,7 @@ import path from "node:path";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { getStorageDriver, STORAGE_DRIVERS } from "@standin/infra";
 import router from "./router";
 import { httpCorsOptions } from "@/consts/server";
 import { isPublishRequest } from "@/utils/isPublishRequest";
@@ -20,7 +21,11 @@ export const createApp = () => {
         })
     );
     app.use(cookieParser());
-    app.use("/public", express.static(path.join(process.cwd(), "public")));
+    // With an external bucket nothing is read from disk, and mounting it would
+    // keep serving any copy left there without the access checks.
+    if (getStorageDriver() === STORAGE_DRIVERS.LOCAL) {
+        app.use("/public", express.static(path.join(process.cwd(), "public")));
+    }
     app.use(router);
 
     return app;

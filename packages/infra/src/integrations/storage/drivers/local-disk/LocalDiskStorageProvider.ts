@@ -47,6 +47,7 @@ export class LocalDiskStorageProvider implements StorageProvider {
         try {
             await fs.unlink(path.join(this.basePath, fileName));
         } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
             throw new FileDeleteError();
         }
     }

@@ -28,7 +28,7 @@ export const uploadFile = async (
         file.originalname
     );
 
-    await StorageProvider.upload(file.buffer, storageKey);
+    await StorageProvider.upload(file.buffer, storageKey, file.mimetype);
 
     const [record] = await db
         .insert(filesTable)

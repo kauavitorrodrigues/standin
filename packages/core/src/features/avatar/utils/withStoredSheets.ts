@@ -36,7 +36,11 @@ export const withStoredSheets = async <T>(
                 id,
                 `${id}${AVATAR_IMAGE_EXTENSION}`
             );
-            await StorageProvider.upload(upload.buffer, storageKey);
+            await StorageProvider.upload(
+                upload.buffer,
+                storageKey,
+                AVATAR_IMAGE_MIME_TYPE
+            );
             stored.push({ id, storageKey, upload });
         }
 

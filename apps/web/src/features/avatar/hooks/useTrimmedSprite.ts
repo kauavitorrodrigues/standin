@@ -4,9 +4,11 @@ import { AVATAR_EDITOR_MESSAGES } from "../consts/editor/messages";
 import { getOpaqueBounds } from "../utils/getOpaqueBounds";
 
 // Fetched and decoded as a bitmap, like the sheets, so an API on another
-// origin does not taint the canvas that is read back for the trim.
+// origin does not taint the canvas that is read back for the trim. Files are
+// public, so the request carries no credentials: a bucket on another origin
+// then only needs a plain CORS rule.
 const loadImage = async (url: string): Promise<ImageBitmap> => {
-    const response = await fetch(url, { credentials: "include" });
+    const response = await fetch(url);
     if (!response.ok) throw new Error(AVATAR_EDITOR_MESSAGES.SHEET_LOAD_FAILED);
     return createImageBitmap(await response.blob());
 };

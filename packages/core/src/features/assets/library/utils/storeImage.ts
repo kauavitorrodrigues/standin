@@ -32,7 +32,7 @@ export const storeImage = async (
         `${id}${LIBRARY_IMAGE_EXTENSION}`
     );
 
-    await StorageProvider.upload(buffer, storageKey);
+    await StorageProvider.upload(buffer, storageKey, LIBRARY_IMAGE_MIME_TYPE);
 
     return {
         id,

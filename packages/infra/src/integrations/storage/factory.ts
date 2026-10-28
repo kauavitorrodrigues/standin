@@ -1,10 +1,13 @@
 import {
     UnknownStorageDriverError,
-    StorageDriverNotImplementedError,
     MissingEnvironmentVariableError,
 } from "@standin/contracts";
+import { requireEnv } from "./utils/requireEnv";
+import { requireUrlEnv } from "./utils/requireUrlEnv";
 import { LocalDiskStorageProvider } from "./drivers/local-disk/LocalDiskStorageProvider";
+import { S3CompatibleStorageProvider } from "./drivers/s3-compatible/S3CompatibleStorageProvider";
 import {
+    DEFAULT_S3_REGION,
     DEFAULT_STORAGE_DRIVER,
     LOCAL_STORAGE_DIR,
     STORAGE_DRIVERS,
@@ -39,6 +42,16 @@ export function createStorageProvider(): StorageProvider {
                 getServerUrl()
             );
         case STORAGE_DRIVERS.S3:
-            throw new StorageDriverNotImplementedError();
+            // Read when the provider is built, which happens on import, so a
+            // missing variable stops the API at boot instead of on the first
+            // upload.
+            return new S3CompatibleStorageProvider({
+                endpoint: requireUrlEnv("S3_ENDPOINT", { rootOnly: true }),
+                region: process.env.S3_REGION?.trim() || DEFAULT_S3_REGION,
+                bucket: requireEnv("S3_BUCKET"),
+                accessKeyId: requireEnv("S3_ACCESS_KEY_ID"),
+                secretAccessKey: requireEnv("S3_SECRET_ACCESS_KEY"),
+                publicUrl: requireUrlEnv("S3_PUBLIC_URL"),
+            });
     }
 }
