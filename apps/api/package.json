@@ -10,6 +10,8 @@
         "dev:lan": "pnpm dev",
         "backfill:avatar-sheets": "pnpm env:load tsx src/scripts/backfillAvatarSheets.ts",
         "seed:library": "pnpm env:load tsx src/scripts/seedLibrary.ts",
+        "loadtest": "pnpm env:load tsx src/scripts/loadtest/loadtest.ts",
+        "loadtest:media": "tsx src/scripts/medialoadtest/mediaLoadTest.ts",
         "env:load": "dotenv -e ../../.env --",
         "check-types": "tsc --noEmit",
         "test": "vitest run"
