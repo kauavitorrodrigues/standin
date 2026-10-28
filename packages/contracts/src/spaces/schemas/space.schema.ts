@@ -10,5 +10,8 @@ export const SpaceSchema = SpaceUpdateSchema.extend({
     }),
     mapId: z.string({ error: SpaceErrorMessages.mapId.invalid }),
     guestAccess: z.enum(SPACE_GUEST_ACCESS),
+    thumbnailUrl: z
+        .string({ error: SpaceErrorMessages.thumbnailUrl.invalid })
+        .nullable(),
     createdAt: z.iso.datetime({ error: SpaceErrorMessages.createdAt.invalid }),
 });

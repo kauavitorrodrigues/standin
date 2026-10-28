@@ -16,7 +16,7 @@ import {
 } from "@standin/contracts";
 import type { Space, SpaceGuestAccess } from "@standin/contracts";
 import { spaceSelect } from "../consts/select";
-import { serializeSpace } from "../utils/serializeSpace";
+import { serializeReturnedSpace } from "../utils/serializeReturnedSpace";
 import { guestRowSelect } from "./consts/select";
 import {
     publishGuestListChanged,
@@ -131,5 +131,5 @@ export const setSpaceGuestAccess = async (
     }
     await publishGuestListChanged(spaceId);
 
-    return serializeSpace(space);
+    return serializeReturnedSpace(space);
 };

@@ -18,6 +18,7 @@ import { useCreateSpaceStep } from "../../hooks/useCreateSpaceStep";
 import { shouldChooseMap } from "../../utils/shouldChooseMap";
 import { getSubmitLabel } from "../../utils/getSubmitLabel";
 import { useSpaceSourceSelection } from "../../hooks/useSpaceSourceSelection";
+import { useCaptureSpaceThumbnail } from "../../hooks/useCaptureSpaceThumbnail";
 import { SpaceMutations } from "../../mutations";
 import { SpacesQueries } from "../../queries";
 import { CreateMessages } from "./Messages";
@@ -28,6 +29,7 @@ export const CreateSpaceForm = () => {
     const navigate = useNavigate();
     const createMutation = SpaceMutations.create();
     const spacesQueryUtils = SpacesQueries.useByOrganizationUtils();
+    const captureThumbnail = useCaptureSpaceThumbnail();
     const { templates, isLoading } = TemplatesQueries.useAll();
     const { step, goToSize, goToMap } = useCreateSpaceStep();
 
@@ -48,6 +50,14 @@ export const CreateSpaceForm = () => {
             const space = await createMutation.mutateAsync(toSpaceData(values));
             toast.add({ title: CreateMessages.success, type: "success" });
             spacesQueryUtils.invalidate();
+            // Left running as the page changes: the photo is a bonus, and the
+            // card takes it when it lands. It never fails, and without one the
+            // editor makes it on the first visit.
+            void captureThumbnail({
+                spaceId: space.id,
+                templateId: values.templateId,
+                tier: values.tier,
+            });
             navigate({ to: "/spaces/$spaceId", params: { spaceId: space.id } });
         } catch {
             toast.add({ title: CreateMessages.error, type: "error" });

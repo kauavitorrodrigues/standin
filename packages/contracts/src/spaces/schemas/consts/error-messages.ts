@@ -26,6 +26,9 @@ export const SpaceErrorMessages = {
     templateId: {
         invalid: "The space template ID is invalid.",
     },
+    thumbnailUrl: {
+        invalid: "The space thumbnail URL is invalid.",
+    },
     createdAt: {
         invalid: "The space creation date is invalid.",
     },

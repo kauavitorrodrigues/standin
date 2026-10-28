@@ -16,6 +16,7 @@ export const findSpaceDetailsById = async (
         id: space.id,
         conversationId: conversation.id,
         name: space.name,
+        thumbnailUrl: space.thumbnailUrl,
         map,
     };
 };

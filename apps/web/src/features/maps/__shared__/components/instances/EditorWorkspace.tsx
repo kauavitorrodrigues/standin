@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { PublishResult } from "@standin/contracts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { GameMapData } from "@/features/game/types/tilemap";
@@ -26,6 +26,7 @@ import { useEditorHotkeys } from "@/features/editor/hooks/useEditorHotkeys";
 import { useEditorSelector } from "@/features/editor/hooks/useEditorSelector";
 import { useMissingThumbnail } from "@/features/maps/__shared__/hooks/useMissingThumbnail";
 import { usePublishedThumbnail } from "@/features/maps/__shared__/hooks/usePublishedThumbnail";
+import { createThumbnailMemory } from "@/features/maps/__shared__/utils/createThumbnailMemory";
 import { MAP_TOOL_META } from "@/features/editor/consts/toolMeta";
 import { EDITOR_STATUS } from "@/features/editor/consts/status";
 import type { EditorThumbnailTarget } from "@/features/editor/types/thumbnail";
@@ -76,10 +77,19 @@ export const EditorWorkspace = ({
     useDraftPersistence(draftStore, user.id, mapId, resumeDraft.settled);
     useLockRecovery();
     useEditorHotkeys(fitCamera);
-    useMissingThumbnail({ thumbnail, ready, capture: captureThumbnail });
+    // Shared by the first photo and the ones after each publish, so a photo
+    // equal to the last one sent is not sent again.
+    const [lastSavedThumbnail] = useState(createThumbnailMemory);
+    useMissingThumbnail({
+        thumbnail,
+        ready,
+        capture: captureThumbnail,
+        lastSaved: lastSavedThumbnail,
+    });
     const handlePublished = usePublishedThumbnail({
         thumbnail,
         capture: captureThumbnail,
+        lastSaved: lastSavedThumbnail,
         onPublished,
     });
 

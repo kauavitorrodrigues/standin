@@ -44,7 +44,7 @@ When a `Space` loads, the app asks the API for the map render payload: the layou
 | `Organization`       | Platform tenant; has an `owner_id` and a unique `slug`                                                                                                  |
 | `OrganizationMember` | N:N link between `User` and `Organization`, with `OWNER`/`MEMBER` role                                                                                  |
 | `OrganizationInvite` | Pending invite for a user to join an organization                                                                                                       |
-| `Space`              | Navigable space; belongs to an `Organization` and owns exactly one `Map`                                                                                |
+| `Space`              | Navigable space; belongs to an `Organization` and owns exactly one `Map`, and has an optional photo of it (see [spaces.md](spaces.md))                  |
 | `Map`                | The world of a space or template: `layout` (tile layers and zones), dimension, `tileSize`, `sizeTier`, and a `layoutVersion` for optimistic concurrency |
 | `MapAsset`           | One object placed on a map: anchor tile, pixel offset, property overrides, and an optional parent (an item on a desk, or a piece of a bundle)           |
 | `MapTemplate`        | Catalog entry for a complete map, built by the admin, with a `DRAFT`/`PUBLISHED`/`RETIRED` status and a thumbnail                                       |

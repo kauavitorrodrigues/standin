@@ -3,6 +3,7 @@ import type { Space } from "@standin/contracts";
 import { getSpaceGradient } from "@/features/spaces/utils/gradient";
 import { formatCreatedAgo } from "@/features/spaces/utils/formatCreatedAgo";
 import { SpaceActions } from "@/features/spaces/components/SpaceActions";
+import { Thumbnail } from "./Thumbnail";
 
 export function SpaceCard({ space }: { space: Space }) {
     return (
@@ -13,6 +14,7 @@ export function SpaceCard({ space }: { space: Space }) {
                 className="relative aspect-video w-full cursor-pointer rounded-xl transition-opacity hover:opacity-90"
                 style={{ backgroundImage: getSpaceGradient(space.id) }}
             >
+                <Thumbnail url={space.thumbnailUrl} />
                 <div
                     onClick={(e) => {
                         e.preventDefault();

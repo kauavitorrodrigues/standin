@@ -12,5 +12,8 @@ export const SpaceDetailsSchema = z.object({
         .string({ error: SpaceErrorMessages.name.required })
         .min(2, { error: SpaceErrorMessages.name.required })
         .max(MAX_SPACE_NAME_LENGTH, { error: SpaceErrorMessages.name.max }),
+    thumbnailUrl: z
+        .string({ error: SpaceErrorMessages.thumbnailUrl.invalid })
+        .nullable(),
     map: MapWithUrlsSchema,
 });

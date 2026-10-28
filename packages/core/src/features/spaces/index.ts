@@ -4,6 +4,7 @@ import { findSpaceById } from "./findById";
 import { findSpaceDetailsById } from "./findDetailsById";
 import { findSpaceRefById } from "./findRefById";
 import { updateSpace } from "./update";
+import { setSpaceThumbnail } from "./setThumbnail";
 import { deleteSpace } from "./delete";
 import { deleteSpacesByOrganizationId } from "./deleteByOrganizationId";
 import { findSpaceView } from "./findView";
@@ -18,6 +19,7 @@ export const SpaceService = {
     findView: findSpaceView,
     findRefById: findSpaceRefById,
     update: updateSpace,
+    setThumbnail: setSpaceThumbnail,
     delete: deleteSpace,
     getSettings: getSpaceSettings,
     updateSettings: updateSpaceSettings,

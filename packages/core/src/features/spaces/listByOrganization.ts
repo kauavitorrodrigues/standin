@@ -1,14 +1,12 @@
 import { serializeSpace } from "./utils/serializeSpace";
-import { spaceSelect } from "./consts/select";
-import { db, spacesTable, eq, and, isNull } from "@standin/database";
+import { selectSpaces } from "./utils/querySpaces";
+import { spacesTable, eq, and, isNull } from "@standin/database";
 import type { Space } from "@standin/contracts";
 
 export const listSpacesByOrganization = async (
     organizationId: string
 ): Promise<Space[]> => {
-    const spaces = await db
-        .select(spaceSelect)
-        .from(spacesTable)
+    const spaces = await selectSpaces()
         .where(
             and(
                 eq(spacesTable.organizationId, organizationId),
@@ -17,5 +15,5 @@ export const listSpacesByOrganization = async (
         )
         .orderBy(spacesTable.createdAt);
 
-    return spaces.map(serializeSpace);
+    return Promise.all(spaces.map(serializeSpace));
 };

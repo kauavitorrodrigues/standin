@@ -1,4 +1,4 @@
-import { serializeSpace } from "./utils/serializeSpace";
+import { serializeReturnedSpace } from "./utils/serializeReturnedSpace";
 import { spaceSelect } from "./consts/select";
 import { db, spacesTable, eq, and, isNull } from "@standin/database";
 import { SpaceNotFoundError } from "@standin/contracts";
@@ -23,5 +23,5 @@ export const updateSpace = async (
 
     if (!space) throw new SpaceNotFoundError();
 
-    return serializeSpace(space);
+    return serializeReturnedSpace(space);
 };

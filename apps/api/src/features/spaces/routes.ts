@@ -2,7 +2,9 @@ import { Router } from "express";
 import { MAP_ID_SOURCES } from "@/consts/mapIdSources";
 import { RequiresMapNotLocked } from "@/middlewares/requiresMapNotLocked";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
+import { handleUploadError } from "../files/middleware/handleUploadError";
 import { SpaceController } from "./controllers";
+import { uploadSpaceThumbnail } from "./middleware/createThumbnailUploadMiddleware";
 
 const router = Router({ mergeParams: true });
 
@@ -20,6 +22,14 @@ router.put(
     "/:spaceId",
     RequiresPermission("update", "space"),
     SpaceController.update
+);
+
+router.put(
+    "/:spaceId/thumbnail",
+    RequiresPermission("update", "space"),
+    uploadSpaceThumbnail,
+    handleUploadError,
+    SpaceController.setThumbnail
 );
 
 router.delete(

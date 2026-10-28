@@ -10,7 +10,7 @@ import { templateDeletedSelect, templateStatusSelect } from "./consts/select";
 import { FileService } from "../../files";
 
 export const deleteTemplate = async (id: string): Promise<void> => {
-    await db.transaction(async (tx) => {
+    const storageKeys = await db.transaction(async (tx) => {
         const [current] = await tx
             .select(templateStatusSelect)
             .from(mapTemplatesTable)
@@ -38,8 +38,13 @@ export const deleteTemplate = async (id: string): Promise<void> => {
 
         await deleteMapsByIds([template.mapId], tx);
 
-        if (template.thumbnailFileId) {
-            await FileService.deleteManyByIds([template.thumbnailFileId], tx);
-        }
+        // The object leaves storage only after the commit, so a rollback
+        // never loses a photo a live template still shows.
+        return FileService.softDeleteManyByIds(
+            template.thumbnailFileId ? [template.thumbnailFileId] : [],
+            tx
+        );
     });
+
+    await FileService.purge(storageKeys);
 };

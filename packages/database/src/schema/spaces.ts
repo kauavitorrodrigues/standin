@@ -23,6 +23,7 @@ import { organizationsTable } from "./organizations";
 import { mapsTable } from "./maps";
 import { usersTable } from "./users";
 import { conversationsTable } from "./conversations";
+import { filesTable } from "./files";
 
 export const spaceGuestAccessEnum = pgEnum(
     "space_guest_access",
@@ -63,6 +64,11 @@ export const spacesTable = pgTable(
             .notNull()
             .references(() => mapsTable.id),
         createdBy: text("created_by").references(() => usersTable.id),
+        // Null until the first photo of the map is captured, which is also the
+        // case of every space made before the photo existed.
+        thumbnailFileId: text("thumbnail_file_id").references(
+            () => filesTable.id
+        ),
 
         // Date columns
         createdAt: createdAtColumn(),
@@ -76,6 +82,7 @@ export const spacesTable = pgTable(
             .on(table.mapId)
             .where(sql`${table.deletedAt} IS NULL`),
         index("spaces_created_by_index").on(table.createdBy),
+        index("spaces_thumbnail_file_id_index").on(table.thumbnailFileId),
     ]
 );
 
@@ -87,6 +94,10 @@ export const spacesRelations = relations(spacesTable, ({ one, many }) => ({
     map: one(mapsTable, {
         fields: [spacesTable.mapId],
         references: [mapsTable.id],
+    }),
+    thumbnail: one(filesTable, {
+        fields: [spacesTable.thumbnailFileId],
+        references: [filesTable.id],
     }),
     conversations: many(conversationsTable),
 }));

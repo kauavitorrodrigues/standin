@@ -50,6 +50,7 @@ Longer guides live in [`docs/`](docs). Each one is for the people who use or mai
 
 | Guide                                           | What it covers                                                        |
 | ----------------------------------------------- | --------------------------------------------------------------------- |
+| [Spaces](docs/spaces.md)                        | The photo of a space on its card, when it is made and who changes it  |
 | [Map editor](docs/map-editor.md)                | Building the library, maps, rooms and templates, and the edit scopes  |
 | [Avatar](docs/avatar.md)                        | How people build their avatar and how admins manage the parts library |
 | [Profile picture](docs/profile-picture.md)      | The photo shown in lists, chat and the name tag                       |

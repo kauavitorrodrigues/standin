@@ -106,6 +106,13 @@
       "when": 1793124108651,
       "tag": "0014_add_space_proximity_preset",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793224667208,
+      "tag": "0015_add_space_thumbnail",
+      "breakpoints": true
     }
   ]
 }

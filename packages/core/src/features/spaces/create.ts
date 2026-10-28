@@ -4,7 +4,7 @@ import type { Space, SpaceDataSchemaType } from "@standin/contracts";
 import { OrganizationMemberService } from "../organizations/members";
 import { ConversationService } from "../conversations";
 import { createSpaceMap } from "./utils/createSpaceMap";
-import { serializeSpace } from "./utils/serializeSpace";
+import { serializeSpaceWithoutThumbnail } from "./utils/serializeReturnedSpace";
 
 export const createSpace = async (
     organizationId: string,
@@ -36,6 +36,8 @@ export const createSpace = async (
             tx
         );
 
-        return serializeSpace(space);
+        // A new space has no photo yet, the editor or the creation form
+        // captures it.
+        return serializeSpaceWithoutThumbnail(space);
     });
 };
