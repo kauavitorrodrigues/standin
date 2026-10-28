@@ -1,7 +1,3 @@
-The load test is in `apps/api/src/scripts/loadtest/`. It has no script in
-`package.json`, so it is started directly. Start the API in development and
-open the space in a browser. Then, from `apps/api`:
-
 # Performance and capacity guide
 
 How the realtime side of a space works, how much it costs, and where the
@@ -20,7 +16,9 @@ where it comes from:
 
 ## 1. Where we are
 
-The server side is ready for 50 people. The **audio and video are not**.
+The data path (movement, chat) and the media server (audio and video) are both
+built. Both are measured on one machine. The media numbers come from synthetic
+senders, not from real browsers yet.
 
 ```mermaid
 flowchart LR
@@ -30,9 +28,9 @@ flowchart LR
         C[Chat, emote, nearby]
         D[Caches and rate limit]
     end
-    subgraph todo["Not built"]
+    subgraph todo["Built, measured with synthetic senders"]
         E[SFU for audio and video]
-        F[Spaces bigger than 10 people]
+        F[Spaces up to 80 people]
     end
     done --> todo
 ```
@@ -42,13 +40,13 @@ flowchart LR
 | Joining a space                         | Done and measured                       | 50 people join together in under 60 ms (p99)                              |
 | Position, emote, nearby message, typing | Done and measured                       | Goes through the server, not between browsers                             |
 | Chat, edits, deletes, reactions         | Done                                    | The server sends them after they are saved                                |
-| Audio and video                         | **Through a media server (SFU)**, built | Measured with synthetic senders, not yet with real browsers (section 4.7) |
+| Audio and video                         | **Through a media server (SFU)**, built | Measured with synthetic senders, not yet with real browsers (section 4.6) |
 | Space size                              | **`MAX_SPACE_CAPACITY = 80`** (Code)    | The M, L and XL space sizes are enabled                                   |
 
-**In one sentence:** a space can hold 50 people moving, chatting and emoting
-today, and the media server forwards the audio and video of that many people.
+**In one sentence:** a space holds 50 people moving, chatting and emoting,
+and the media server forwards the audio and video of that many people.
 The numbers for the media server come from synthetic senders on one machine
-(section 4.7). They still have to be confirmed with real browsers on a real
+(section 4.6). They still have to be confirmed with real browsers on a real
 server (section 6.6).
 
 ## 2. How it works
@@ -73,7 +71,7 @@ flowchart TB
     G -- "one batch per receiver, every 100 ms" --> W
     S --> C
     C -. "only on a miss" .-> DB
-    W <-. "audio and video, P2P mesh (today)" .-> W
+    W <-. "audio and video, once to the media server (SFU)" .-> S
 ```
 
 1. **Data path (done).** Position, emotes, nearby messages, typing and chat go
@@ -83,13 +81,12 @@ flowchart TB
    when a cache expires. Walking around costs **zero queries**.
 3. **Media path (built).** Each browser sends its audio and video once to the
    media server inside the API, and the server forwards them to the people
-   the planner chose (section 4.7).
+   the planner chose (section 4.6).
 
 ### 2.2 Joining a space
 
-Before, every join read the profile and avatar of every person already inside
-(about 150 queries each, 7,500 when 50 joined together). Now the server keeps
-who is inside in memory and reads only the person who is joining.
+A join reads only the person who is joining. The server keeps who is inside in
+memory.
 
 ```mermaid
 sequenceDiagram
@@ -108,12 +105,12 @@ sequenceDiagram
     S-->>M: tell the room: peer joined
 ```
 
-|                             | Before                     | Now                                                 |
-| --------------------------- | -------------------------- | --------------------------------------------------- |
-| Queries per join            | about 150 (Estimate)       | **7** (Measured, 6 in the join and 1 for the token) |
-| 50 people joining together  | about 7,500 (Estimate)     | **350** (Measured)                                  |
-| Queries while people walk   | n/a                        | **0** (Measured)                                    |
-| Avatar images built at join | yes, can use 100 to 300 MB | **never**. They are built when the avatar is edited |
+| Measure                     | Value                                               |
+| --------------------------- | --------------------------------------------------- |
+| Queries per join            | **7** (Measured, 6 in the join and 1 for the token) |
+| 50 people joining together  | **350** queries (Measured)                          |
+| Queries while people walk   | **0** (Measured)                                    |
+| Avatar images built at join | **never**. They are built when the avatar is edited |
 
 ### 2.3 Moving around
 
@@ -185,18 +182,22 @@ A connection that goes over a limit has the extra events dropped. Events that
 wait for an answer get a refusal, so the browser does not hang. Every event
 without its own limit shares one bucket (30 per second, burst 60).
 
-| Event                                              | Per second | Burst    |
-| -------------------------------------------------- | ---------- | -------- |
-| `space:join`                                       | 1          | 5        |
-| `space:position`                                   | 20         | 40       |
-| `space:emote`                                      | 8          | 16       |
-| `space:nearby-message`                             | 3          | 6        |
-| `space:nearby-typing`                              | 4          | 8        |
-| `chat:typing`                                      | 4          | 8        |
-| `webrtc:signal`                                    | 100        | 300      |
-| Door events (crossed, open, present, lock, unlock) | 2 to 5     | 10 to 20 |
-| Door join request and answer                       | 1 and 5    | 5 and 20 |
-| Map editor lock (acquire, release, heartbeat)      | 1 to 2     | 5        |
+| Event                                                                                                           | Per second | Burst    |
+| --------------------------------------------------------------------------------------------------------------- | ---------- | -------- |
+| `space:join`                                                                                                    | 1          | 5        |
+| `space:position`                                                                                                | 20         | 40       |
+| `space:emote`                                                                                                   | 8          | 16       |
+| `space:nearby-message`                                                                                          | 3          | 6        |
+| `space:nearby-typing`                                                                                           | 4          | 8        |
+| `chat:typing`                                                                                                   | 4          | 8        |
+| Media negotiation (`media:get-capabilities`, `create-transport`, `connect-transport`, `restart`, `restart-ice`) | 1 to 2     | 4 to 8   |
+| Media streams (`media:produce`, `close-producer`)                                                               | 4          | 12       |
+| `media:consumer-ready`                                                                                          | 20         | 40       |
+| Media choices (`set-focus`, `set-pins`, `set-muted`, `set-privacy`)                                             | 4          | 8        |
+| `media:set-low-quality`                                                                                         | 1          | 4        |
+| Door events (crossed, open, present, lock, unlock)                                                              | 2 to 5     | 10 to 20 |
+| Door join request and answer                                                                                    | 1 and 5    | 5 and 20 |
+| Map editor lock (acquire, release, heartbeat)                                                                   | 1 to 2     | 5        |
 
 ### 3.2 Other constants (Code)
 
@@ -263,30 +264,14 @@ Positions are exactly **50 receivers x 10 ticks per second = 500 messages per
 second**. That is the ceiling of the design for 50 people, however much they
 move.
 
-### 4.3 How it grows with the number of people (70% walking, earlier run)
-
-This run is from before the short ids and before the bots walked on the real
-map, so its KB/s and message counts are not comparable with section 4.1. Use it
-for the shape of the growth, not for the absolute values.
-
-| People | Join p50 / p99 | Messages per s | KB/s  | Queries for everyone to join |
-| ------ | -------------- | -------------- | ----- | ---------------------------- |
-| 10     | 14.4 / 16.8 ms | 105            | 17.3  | 70                           |
-| 25     | 26.4 / 32.0 ms | 289            | 113.7 | 175                          |
-| 50     | 54.5 / 68.7 ms | 637            | 385.4 | 350                          |
-
-The join time grows about in line with the number of people because they all
-arrive in the same second and the 20 database connections take turns. It stays
-far below the 500 ms goal.
-
-### 4.4 Per person
+### 4.3 Per person
 
 Divide the totals by 50 (100% walking run): about **4.6 KB/s (37 kbps)**
 received per person, of which positions are about 3.8 KB/s (30 kbps). Real use
 should be lower, because people stand still, talk less and see fewer people on
 a bigger map.
 
-### 4.5 Limits of these numbers
+### 4.4 Limits of these numbers
 
 - One run per setting. There is no variance yet. Two runs with the same
   settings differed by about 8% in total traffic.
@@ -295,7 +280,7 @@ a bigger map.
 - Nothing was measured in a real browser yet (memory, frame time, audio
   contexts).
 
-### 4.6 200 people (100% walking, 20 s, one run)
+### 4.5 200 people (100% walking, 20 s, one run)
 
 Same setup as 4.1 with 200 bots. 200 of 200 joined, 0 errors.
 
@@ -320,7 +305,7 @@ Per person that is about 15.8 KB/s (126 kbps) received, of which positions are
 people was the relay of emotes and nearby messages: each one reaches all 199
 others, so their count grows with the square of the people.
 
-### 4.7 The media server, with synthetic senders
+### 4.6 The media server, with synthetic senders
 
 Measured with `apps/api/src/scripts/medialoadtest/mediaLoadTest.ts` on one
 development machine, over the loopback, one run each, 20 s after a mass join.
@@ -388,7 +373,7 @@ What they do **not** say:
 - "First stream" is only meaningful when people are in range at the start. In
   the spread layout it measures how long until somebody walks near.
 
-### 4.8 Bandwidth by video quality
+### 4.7 Bandwidth by video quality
 
 Measured with the same tool and setup as 4.7, one run each, 10 to 15 s, over the
 loopback. Every receiver gets 2 videos, all in the same quality, which is the
@@ -423,7 +408,7 @@ What the numbers say:
   HD videos, uses 20% of a core.
 - The limit that moves is the network. The same worst case needs 383 Mbps out
   of the server, and each person downloads 7.7 Mbps. A port of 1 Gbps holds it,
-  a smaller plan does not.
+  a smaller port does not.
 - Going from 20 to 50 people multiplies the output by about 2.4, in step with
   the number of consumers.
 - The tick of the planner is the number that grows with the headcount: 35 ms at
@@ -433,7 +418,7 @@ What the numbers say:
 How to run it:
 
 ```
-pnpm exec tsx src/scripts/medialoadtest/mediaLoadTest.ts --people 50 --speakers 15 --cameras 8 --quality high --duration 15
+pnpm loadtest:media --people 50 --speakers 15 --cameras 8 --quality high --duration 15
 ```
 
 `--quality low|mid|high` picks the picture every camera sends, `--full-hd`
@@ -454,7 +439,7 @@ Not proven by these runs:
 
 ## 5. What you need to run it
 
-### 5.1 The server today (no audio or video through it)
+### 5.1 The data path alone (without the media server)
 
 | Resource                  | Needed                                                              | Basis                |
 | ------------------------- | ------------------------------------------------------------------- | -------------------- |
@@ -469,33 +454,18 @@ One small server is enough for the data path. The limit is not CPU.
 ### 5.2 With audio and video through a server
 
 The server is built. The sizing below is still an **Estimate** from the design
-and public benchmarks, except what section 4.7 measured with synthetic senders.
+and public benchmarks, except what section 4.6 measured with synthetic senders.
 It assumes one SFU worker (mediasoup), a carousel of 2 videos per person and
 the 4 loudest speakers in audio.
 
-```mermaid
-flowchart LR
-    subgraph Today["Today: mesh"]
-        direction TB
-        T1["Each person sends to<br/>every other person"]
-        T2["49 connections per browser<br/>at 50 people"]
-    end
-    subgraph Plan["Planned: SFU"]
-        direction TB
-        P1["Each person sends once"]
-        P2["Server sends each person<br/>only what they need"]
-    end
-    Today --> Plan
-```
-
-|                                  | Without a limit | With the plan                                       |
-| -------------------------------- | --------------- | --------------------------------------------------- |
-| Video streams sent by the server | 80 to 100+      | **100 or fewer** (50 x 2)                           |
-| Audio streams sent by the server | 2,450           | **about 200** (50 x 4 speakers)                     |
-| Total streams                    | about 2,550     | **about 300**                                       |
-| Media workers                    | 5+, overloaded  | **1** (about 500 streams per worker)                |
-| Network out                      | 90 to 200 Mbps  | **12 to 58 Mbps** worst case, **5 to 20** typical   |
-| Network in                       |                 | 10 to 15 Mbps from cameras, 3 to 8 per screen share |
+| Measure                          | With the caps                                       |
+| -------------------------------- | --------------------------------------------------- |
+| Video streams sent by the server | **100 or fewer** (50 x 2)                           |
+| Audio streams sent by the server | **about 200** (50 x 4 speakers)                     |
+| Total streams                    | **about 300**                                       |
+| Media workers                    | **1** (about 500 streams per worker)                |
+| Network out                      | **12 to 58 Mbps** worst case, **5 to 20** typical   |
+| Network in                       | 10 to 15 Mbps from cameras, 3 to 8 per screen share |
 
 Machine for the whole system (API, database, media, web server):
 
@@ -516,7 +486,7 @@ Machine for the whole system (API, database, media, web server):
 | Memory             | 4 GB               | 8 GB                     |
 | Disk               | 100 GB NVMe        | 250 GB (uploads grow it) |
 | Network            | 1 Gbps             | 1 Gbps                   |
-| Transfer per month | 1 to 2 TB          | unlimited                |
+| Transfer per month | 1 to 2 TB          | 2 TB                     |
 
 Monthly transfer is expected at **0.3 to 0.6 TB**, and up to **2 TB** in the
 worst case (8 hours a day, 22 days).
@@ -526,16 +496,11 @@ Keeping it near that limit is why the plan caps speakers and videos.
 
 ### 5.3 Hosting
 
-The media server needs a public **UDP** port. Whether the chosen host (Guara
-Cloud) offers one is **not confirmed**. A probe script exists to find out.
-
-| If the host offers UDP or raw TCP                                                         | If it only offers HTTP                                                                                         |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Run everything there. The Business plan is needed because one service is capped at 1 vCPU | Run everything but media there (Max plan), and put the media server on a small VPS in Sao Paulo (4 vCPU, 8 GB) |
-
-The code is the same in both cases. Only addresses and ports change. Prefer a
-host in Sao Paulo: 100 to 200 ms of extra latency from other continents is
-noticeable in voice.
+The media server needs a public **UDP** port (`MEDIA_LISTEN_PORT`, default
+44444), and the host must allow UDP with no filtering. The API, the database and
+the media server run on one machine, started by the Docker compose profile
+described in `docs/deployment.md`. Keep it near the users: 100 to 200 ms of
+extra latency is noticeable in voice.
 
 Each deploy restarts the service and drops every socket (one replica). Deploy
 outside working hours.
@@ -557,19 +522,19 @@ outside working hours.
 | Videos shown at once  | 4 to 6 on a mid machine, 2 to 3 on a weak one. The plan shows 2 |
 | Audio streams mixed   | 8 to 10 on a mid machine, 4 to 6 on a weak one                  |
 
-### 5.5 Spec sheet for a VPS
+### 5.5 Server requirements
 
-The numbers to hand to a provider. Memory, CPU and traffic for the data-only
+What the machine needs. Memory, CPU and traffic for the data-only
 column come from the measured runs. The media column is an **Estimate**, from
 5.2.
 
-|                    | Today: data only (up to 200 people)                                  | With the planned media server (up to about 80 people)        |
+|                    | Data only (up to 200 people)                                         | With the media server (up to about 80 people)                |
 | ------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------ |
 | vCPU               | **2** minimum, 4 comfortable                                         | **4** minimum, 8 comfortable                                 |
 | Memory             | **2 GB** minimum, 4 GB comfortable                                   | **4 GB** minimum, 8 GB comfortable                           |
 | Disk               | 25 GB minimum, 50 GB comfortable, plus room for uploads              | 100 GB NVMe minimum, 250 GB comfortable                      |
 | Network port       | 100 Mbps is enough (200 people in the worst case use about 25 Mbps)  | 1 Gbps                                                       |
-| Transfer per month | Up to about 150 GB for 50 people and 2 TB for 200, in the worst case | 1 to 2 TB minimum, unlimited preferred                       |
+| Transfer per month | Up to about 150 GB for 50 people and 2 TB for 200, in the worst case | 1 to 2 TB minimum                                            |
 | Public UDP         | Not needed                                                           | **Required** (one port for the media server, plus the relay) |
 
 How the data-only column was reached: the API needs about 450 MB at 200 people
@@ -582,38 +547,26 @@ How the transfer was reached: the worst-case test sent 232 KB/s to 50 people
 and 3,158 KB/s to 200. Over 8 hours a day for 22 days (633,600 seconds) that is
 about 150 GB and 2 TB. Real use should be well below it, because the bots chat
 and emote far more than people do. Media adds 0.3 to 0.6 TB a month in typical
-use and up to 2 TB in the worst case, once it exists.
+use and up to 2 TB in the worst case.
 
-What the provider must give you, whatever the size:
+What the server needs, whatever the size:
 
 | Requirement                                                        | Why                                                                                                  |
 | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
 | A public IPv4 address                                              | Browsers connect straight to the server                                                              |
 | Not shared CPU, or steal under about 5%                            | The API and the media worker each need a steady core. Check with `vmstat 1` (column `st`) under load |
-| A region near the users (Sao Paulo for Brazil)                     | Voice and video notice 100 ms or more of extra delay                                                 |
+| Located near the users                                             | Voice and video notice 100 ms or more of extra delay                                                 |
 | Ports 80 and 443 (TCP) open                                        | The web app and the WebSocket                                                                        |
-| UDP open on arbitrary ports, with no filtering                     | Only for the media server. Test with `iperf3 -u` before paying for a long contract                   |
+| UDP open on arbitrary ports, with no filtering                     | Only for the media server. Test it with `iperf3 -u`                                                  |
 | HTTPS                                                              | Browsers allow camera, microphone and screen capture only on a secure page                           |
 | One server only                                                    | The presence and the caches live in the API process, so a second copy would not see the same people  |
 | Backups of the database and of the uploads folder, off the machine | A single server is a single point of failure                                                         |
-
-References read on 2026-10-22, **prices not confirmed at checkout**, for the
-media-capable box:
-
-- Vultr High Performance 4 vCPU, 8 GB in Sao Paulo, about US$48 a month, billed
-  monthly or hourly with no contract. Its CPU is shared, so check the steal.
-- Locaweb VPS 8 GB, about R$63.90 a month, but only on a 24-month contract, and
-  its UDP policy is not documented.
-
-No provider was researched for the smaller data-only box. Any VPS that meets
-the first column and the requirements above should do. The decision about where
-the media server runs is still open (section 5.3).
 
 ## 6. How many people can one space hold
 
 Short answer: **50 and 200 people were tested for movement and chat, with no
 errors. The data path should keep going well past that, and the real ceiling is
-set by the server and, once it exists, by the media server.** This section gives the
+set by the server and, for audio and video, by the media server.** This section gives the
 model behind those words, so you can size a server and then check it.
 
 **50 and 200 people were measured**, one run each. The numbers in between, and
@@ -630,7 +583,7 @@ flowchart LR
     N[People in one space] --> D[Data path<br/>movement, emotes, chat]
     N --> M[Media path<br/>camera, microphone, screen]
     D --> L1["Limit: the API process<br/>(one CPU core, its network)"]
-    M --> L2["Limit today: browsers, about 10<br/>Limit planned: one media worker, about 80"]
+    M --> L2["Limit: one media worker, about 80"]
 ```
 
 | Path                                          | What limits it                                       | Where it stops                                                        |
@@ -656,12 +609,12 @@ batches a second:
 
 > bytes per second received by one person = 10 x 7.9 x (people - 1)
 
-| People  | Position messages per s | Received per person     | Server sends in total    | Status                                                        |
-| ------- | ----------------------- | ----------------------- | ------------------------ | ------------------------------------------------------------- |
-| 25      | 250                     | 1.9 KB/s (15 kbps)      | 46 KB/s                  | Projection (a run at 25 and 70% walking exists, older format) |
-| **50**  | **500**                 | **3.8 KB/s (30 kbps)**  | **188 KB/s (1.5 Mbps)**  | **Measured**                                                  |
-| 100     | 1,000                   | 7.7 KB/s (61 kbps)      | 766 KB/s (6.1 Mbps)      | Projection                                                    |
-| **200** | **1,990**               | **12.4 KB/s (99 kbps)** | **2.4 MB/s (19.4 Mbps)** | **Measured** (the formula gave 15.4 KB/s, 19% too high)       |
+| People  | Position messages per s | Received per person     | Server sends in total    | Status                                                  |
+| ------- | ----------------------- | ----------------------- | ------------------------ | ------------------------------------------------------- |
+| 25      | 250                     | 1.9 KB/s (15 kbps)      | 46 KB/s                  | Estimate                                                |
+| **50**  | **500**                 | **3.8 KB/s (30 kbps)**  | **188 KB/s (1.5 Mbps)**  | **Measured**                                            |
+| 100     | 1,000                   | 7.7 KB/s (61 kbps)      | 766 KB/s (6.1 Mbps)      | Projection                                              |
+| **200** | **1,990**               | **12.4 KB/s (99 kbps)** | **2.4 MB/s (19.4 Mbps)** | **Measured** (the formula gave 15.4 KB/s, 19% too high) |
 
 Emotes and nearby messages are a second cost. In the load test every bot sends
 about one of them every 5 seconds, and each one reaches every person in range.
@@ -670,25 +623,16 @@ With the same bot behaviour:
 | People  | Emote and nearby messages received per s | API CPU                        | API memory                                 |
 | ------- | ---------------------------------------- | ------------------------------ | ------------------------------------------ |
 | **50**  | **526 (measured)**                       | **2.9% of a core (measured)**  | **190 MB (measured)**                      |
-| 100     | about 2,100 (projection)                 | about 5 to 9% (projection)     | between 190 and 400 MB (not projected)     |
+| 100     | about 2,100 (estimate)                   | about 5 to 9% (estimate)       | between 190 and 400 MB (not estimated)     |
 | **200** | **8,190 (measured)**                     | **16.0% of a core (measured)** | **400 MB at the end, from 215 (measured)** |
 
-**What the 200 run showed against the projection made from the 50 run:**
+The cost per message falls as the batches get bigger (one encode serves many
+receivers): 2.9% of a core for 1,027 messages a second at 50 people, 16% for
+10,197 at 200. The join time grows with the number of people because they all
+arrive in the same second and share the 20 database connections (p99 265.8 ms
+at 200 people).
 
-|                     | Projected    | Measured             |
-| ------------------- | ------------ | -------------------- |
-| Messages per second | about 10,500 | 10,197               |
-| API CPU             | about 30%    | 16.0% (half)         |
-| Join time p99       | about 230 ms | 265.8 ms (p50 167.5) |
-| API memory          | under 300 MB | **400 MB**           |
-
-The message count was right. The CPU was better than projected, because the
-cost per message falls as the batches get bigger (one encode serves many
-receivers): 2.9% for 1,027 messages a second at 50 people, 16% for 10,197 at 200. The join time was a little worse, and it grows with the number of people
-because they all arrive in the same second and share the 20 database
-connections.
-
-**The memory was worse than projected, and it is not explained yet.** It grew
+**The memory growth at 200 people is not explained yet.** It grew
 185 MB during the 20 seconds, against 3 MB for 50 people, then stayed flat
 (400 MB at 10 seconds, 399 MB at the end) and did not fall. A plateau suggests
 buffers and a larger heap under about 10,000 messages a second, not a leak, but
@@ -718,12 +662,12 @@ copies.
 
 ### 6.3 The media path: how many people one media worker holds
 
-Not built, so everything here is an **Estimate**. The plan caps what each
+The server is built, but the sizing here is an **Estimate** except where 4.6 and 4.7 measured it with synthetic senders. The caps (`LOUDEST_SPEAKERS`, `CAROUSEL_SIZE` in `packages/media`) limit what each
 person receives:
 
 > streams sent by the media server = people x (loudest speakers + videos in the carousel)
 
-With the planned caps of **4 speakers** and **2 videos**, each person costs 6
+With the caps of **4 speakers** and **2 videos**, each person costs 6
 streams, and one media worker handles about **500 streams**. A space is served
 by a single worker, so:
 
@@ -738,34 +682,30 @@ is why audio and video have a hard ceiling of roughly 80 to 120 people per
 space even with a big server: a second worker cannot take half of the same
 space. Raising it means lowering the caps, or splitting the space.
 
-The caps are product numbers (decision D6) and can be changed in one constant
-each. The ones above are the defaults.
+The caps are product numbers and can be changed in one constant each. The ones
+above are the defaults.
 
 ### 6.4 Capacity by server size
 
 All rows are an **Estimate** from sections 5.2 and 6.2. They show the order of
-magnitude, not a guarantee. "Data only" is today's code. "With media" needs
-the SFU, which is not built.
+magnitude, not a guarantee. "Data only" is the movement and chat alone. "With
+media" includes the media server, which section 4.6 measured with synthetic senders.
 
-| Server           | Data only (movement, chat)                                                                 | With media (planned SFU)                                                       |
+| Server           | Data only (movement, chat)                                                                 | With media (SFU)                                                               |
 | ---------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | 1 vCPU, 1 GB     | Measured to 200 in the worst case: 16% of the core and 400 MB of memory, so 1 GB is enough | Not enough. The media worker alone uses about a core                           |
 | 2 vCPU, 4 GB     | 200 or more                                                                                | Tight at 50: the worker takes one core and the rest share the other            |
 | 4 vCPU, 8 GB     | 200 or more                                                                                | 50 comfortable, up to about 80 before the worker is full. The recommended box  |
 | Bigger than that | No gain for one space: the API uses one core                                               | No gain for one space: one worker per space. Useful for several spaces at once |
 
-If a host caps a single service at 1 vCPU (as the Guara Cloud plans do), the
-media worker alone fills it, which is the argument for putting the media server
-on its own small VPS (section 5.3).
-
 ### 6.5 What this means for a team
 
-| Team in one space | Movement and chat                                                                    | Camera and microphone                                          |
-| ----------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
-| Up to 10          | Fine                                                                                 | Fine (works today)                                             |
-| 10 to 50          | Fine, measured                                                                       | Wait for the SFU. Today most people should keep the camera off |
-| 50 to 200         | Fine in the worst-case test (measured)                                               | With the SFU and the default caps, up to about 80              |
-| Above 200         | Not measured. Depends on the map being big enough for the area of interest to filter | Needs smaller caps or several spaces                           |
+| Team in one space | Movement and chat                                                                    | Camera and microphone                  |
+| ----------------- | ------------------------------------------------------------------------------------ | -------------------------------------- |
+| Up to 10          | Fine                                                                                 | Fine                                   |
+| 10 to 50          | Fine, measured                                                                       | Fine with the SFU and the default caps |
+| 50 to 200         | Fine in the worst-case test (measured)                                               | Up to about 80 with the default caps   |
+| Above 200         | Not measured. Depends on the map being big enough for the area of interest to filter | Needs smaller caps or several spaces   |
 
 For an all-hands meeting of hundreds, a single space is not the plan. The
 design does not include a stage mode or a broadcast to a large audience.
@@ -777,7 +717,7 @@ rising numbers of bots in one go, on a machine like the one you intend to use,
 with 100% of the bots walking (the worst case):
 
 ```bash
-pnpm exec dotenv -e ../../.env -- tsx src/scripts/loadtest/loadtest.ts <spaceId> 50,100,150,200 --duration 60 --walking 100
+pnpm loadtest <spaceId> 50,100,150,200 --duration 60 --walking 100
 ```
 
 Each round ends with one row in a table. Compare it with these limits:
@@ -794,7 +734,7 @@ To settle whether the memory growth seen at 200 people is a plateau or a leak,
 run a longer round and look at the memory after the bots leave:
 
 ```bash
-pnpm exec dotenv -e ../../.env -- tsx src/scripts/loadtest/loadtest.ts <spaceId> 200 --duration 300 --walking 100
+pnpm loadtest <spaceId> 200 --duration 300 --walking 100
 ```
 
 The memory should rise during the first seconds and then stay flat. After the
@@ -805,8 +745,8 @@ found.
 
 Two cautions. The bots run on the same machine as the API, so a very large run
 also takes CPU from the thing you are measuring. And the test says nothing
-about audio and video, because the bots send none. For media, a separate test
-with synthetic streams is planned.
+about audio and video, because the bots send none. For media, use the synthetic
+test of section 4.7.
 
 If you run it, write the result next to the projections above. A measured
 number replaces a projection, and that is how this guide should grow.
@@ -815,14 +755,14 @@ number replaces a projection, and that is how this guide should grow.
 
 How the cost grows when people are added, with N people and k neighbors.
 
-| Work                                | Before                   | Now                                |
-| ----------------------------------- | ------------------------ | ---------------------------------- |
-| Queries when N people join together | N x 150                  | N x 7                              |
-| Messages for position               | N x N x 12.5 per second  | N x 10 per second                  |
-| Bytes per position message          | 20-character ids         | short numeric ids (54% less)       |
-| Who is told about a move            | everyone                 | only those in the area of interest |
-| Chat event fan-out                  | 2 connections per person | 1                                  |
-| Cost of walking in the database     | per event                | none                               |
+| Work                                | Cost                                       |
+| ----------------------------------- | ------------------------------------------ |
+| Queries when N people join together | N x 7                                      |
+| Messages for position               | N x 10 per second (one batch per receiver) |
+| Bytes per position message          | short numeric ids                          |
+| Who is told about a move            | only those in the area of interest         |
+| Chat event fan-out                  | 1 connection per person                    |
+| Cost of walking in the database     | none                                       |
 
 ```
 Messages per second for positions (50 people, all moving)
@@ -831,10 +771,8 @@ forward each update to the other 49   ██████████████
 batch per receiver, 10 ticks a second █                                 500
 ```
 
-The first row is what a server would send if it simply forwarded every update
-(50 x 49 x 12.5, an Estimate). The second is Measured. A mesh between browsers
-has the same 30,625 messages, but spread over the browsers instead of the
-server.
+The first row is what a server would send if it forwarded every update as it
+arrives (50 x 49 x 12.5, an Estimate). The second is Measured.
 
 ## 8. What is not done or not proven
 
@@ -842,13 +780,13 @@ server.
    215 to 400 MB in 20 seconds and stayed there. A longer run is needed
    (section 6.6).
 1. **The SFU is measured mostly with synthetic senders.** The server numbers
-   (4.7 and 4.8) come from them. The browser side was checked by hand in
+   (4.6 and 4.7) come from them. The browser side was checked by hand in
    Chrome and Firefox, with two people, but with no recorded numbers: no one
    hour browser soak was run, the
    deploy-with-50-connected scenario (e) and the weak client scenario (f) were
-   not run, and the provider checks (`iperf3 -u`, CPU steal) need the real
+   not run, and the network checks (`iperf3 -u`, CPU steal) need the real
    machine.
-2. **The hosting question is open.** UDP on the host is unconfirmed.
+2. **UDP on the host must be checked** with `iperf3 -u` and the CPU steal on the real machine before a deploy.
 3. **No real-browser numbers.** Memory, frame time, name tag cost and audio
    contexts were only measured in tests, not in a tab.
 4. **The area of interest does little on small maps.** At 3,000 px it covers a
@@ -865,13 +803,19 @@ server.
 
 ## 9. Try it yourself
 
-The load test is a local tool and is not part of the repository: its folder,
-`apps/api/src/scripts/loadtest/`, is ignored by git and has no script in
-`package.json`. If you have it, start the API in development and open the space
-in a browser. Then, from `apps/api`:
+There are two load tests, both in `apps/api/src/scripts/`, with a script each in
+`apps/api/package.json`:
+
+| Script                | Tests                                                    |
+| --------------------- | -------------------------------------------------------- |
+| `pnpm loadtest`       | The data path, with bots that join, walk, chat and emote |
+| `pnpm loadtest:media` | The media server, with synthetic senders (section 4.6)   |
+
+For the data path, start the API in development and open the space in a
+browser. Then, from `apps/api`:
 
 ```bash
-pnpm exec dotenv -e ../../.env -- tsx src/scripts/loadtest/loadtest.ts <spaceId> 50 --duration 60 --walking 70
+pnpm loadtest <spaceId> 50 --duration 60 --walking 70
 ```
 
 | Option          | Meaning                                                                     |
