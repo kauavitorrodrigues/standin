@@ -30,17 +30,16 @@ describe("findNearestFreeTile", () => {
         expect(found).toEqual(cell(6, 5));
     });
 
-    it("looks around the goal when the tile in front is closed too", () => {
+    it("looks around the goal when nothing along the line is open", () => {
         const found = findNearestFreeTile({
-            goal: cell(5, 5),
+            goal: cell(8, 5),
             direction: RIGHT,
             radius: 4,
-            isOpen: openExcept(cell(5, 5), cell(6, 5)),
+            isOpen: openExcept(cell(8, 5), cell(9, 5)),
             random: NO_NOISE,
         });
 
-        expect(found).not.toEqual(cell(6, 5));
-        expect(Math.abs(found!.column - 5) + Math.abs(found!.row - 5)).toBe(1);
+        expect(Math.abs(found!.column - 8) + Math.abs(found!.row - 5)).toBe(1);
     });
 
     it("prefers the closest open tile, by tiles walked", () => {
@@ -99,6 +98,67 @@ describe("findNearestFreeTile", () => {
                 direction: RIGHT,
                 radius: 4,
                 isOpen: () => false,
+            })
+        ).toBeNull();
+    });
+
+    it("does not stop the line at the first closed tile", () => {
+        const found = findNearestFreeTile({
+            goal: cell(2, 5),
+            direction: RIGHT,
+            radius: 1,
+            isOpen: openExcept(cell(2, 5), cell(3, 5), cell(4, 5)),
+            random: NO_NOISE,
+        });
+
+        expect(found).toEqual(cell(5, 5));
+    });
+
+    it("skips the tiles that are excluded, in the line and around the goal", () => {
+        const isExcluded = (tile: Cell) =>
+            tile.column === 6 || (tile.column === 5 && tile.row === 4);
+
+        const found = findNearestFreeTile({
+            goal: cell(5, 5),
+            direction: RIGHT,
+            radius: 1,
+            isOpen: openExcept(cell(5, 5)),
+            isExcluded,
+            random: NO_NOISE,
+        });
+
+        expect(found).toEqual(cell(7, 5));
+
+        const around = findNearestFreeTile({
+            goal: cell(5, 5),
+            direction: null,
+            radius: 1,
+            isOpen: openExcept(cell(5, 5)),
+            isExcluded,
+            random: NO_NOISE,
+        });
+
+        expect(isExcluded(around!)).toBe(false);
+    });
+
+    it("reaches the default radius and no farther when none is given", () => {
+        const only = (target: Cell) => (tile: Cell) =>
+            tile.column === target.column && tile.row === target.row;
+
+        expect(
+            findNearestFreeTile({
+                goal: cell(5, 5),
+                direction: null,
+                isOpen: only(cell(7, 5)),
+                random: NO_NOISE,
+            })
+        ).toEqual(cell(7, 5));
+        expect(
+            findNearestFreeTile({
+                goal: cell(5, 5),
+                direction: null,
+                isOpen: only(cell(8, 5)),
+                random: NO_NOISE,
             })
         ).toBeNull();
     });

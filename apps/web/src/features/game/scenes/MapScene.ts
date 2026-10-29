@@ -49,7 +49,8 @@ import { findAreaGoals } from "@/features/game/utils/findAreaGoals";
 import type { HoverTarget } from "@/features/game/types/hover";
 import { TileCursor } from "@/features/game/lib/TileCursor";
 import { findPath, getStandingPoint } from "@/features/game/utils/findPath";
-import { getCellAt } from "@/features/game/utils/cell";
+import { getCellAt, getCellCenter } from "@/features/game/utils/cell";
+import { isRoomEntitled } from "@/features/game/utils/isRoomEntitled";
 import type { Cell } from "@/features/game/types/cell";
 import { buildSolidIndex } from "@/features/game/utils/buildSolidIndex";
 import {
@@ -57,7 +58,7 @@ import {
     NEAREST_TILE,
     PATH_SEARCH,
 } from "@/features/game/consts/click-move";
-import { findNearestFreeTile } from "@/features/game/utils/findNearestFreeTile";
+import { planWalk } from "@/features/game/utils/planWalk";
 import { getDirectionVector } from "@/features/game/utils/getDirectionVector";
 import { InteractionController } from "@/features/game/lib/InteractionController";
 import { RemoteAvatar } from "@/features/game/lib/RemoteAvatar";
@@ -184,6 +185,9 @@ export class MapScene extends Phaser.Scene {
     private tileMover: TileMover | null = null;
     // How many more times a blocked walk is planned again.
     private replansLeft = 0;
+    // The goals of the click that were not tried, for a walk that has to be
+    // planned again.
+    private walkAlternates: Cell[] = [];
     private solidIndex: {
         at: number;
         isBlocked: (feet: { x: number; y: number }) => boolean;
@@ -905,6 +909,7 @@ export class MapScene extends Phaser.Scene {
         if (!this.isInsideMap(goal)) return;
 
         this.replansLeft = PATH_SEARCH.MAX_REPLANS;
+        this.walkAlternates = [];
         const area = this.findAreaAt(world);
         const isStarted =
             (area !== null && this.startWalkToArea(area, world)) ||
@@ -928,7 +933,12 @@ export class MapScene extends Phaser.Scene {
 
     private startWalkAgain(destination: Cell): boolean {
         this.replansLeft--;
-        return this.startWalk(destination);
+        // Narrow, since the avatar is already close to where it was going.
+        return this.startWalk(
+            destination,
+            this.walkAlternates,
+            NEAREST_TILE.DEFAULT_RADIUS
+        );
     }
 
     private isInsideMap({ column, row }: Cell): boolean {
@@ -963,44 +973,69 @@ export class MapScene extends Phaser.Scene {
                 .filter((seat) => !this.seatOccupancy.isTaken(seat)),
             isOpen: (cell) => this.isCellWalkable(cell, 0),
         });
-        return goals
-            .slice(0, AREA_GOALS_TRIED)
-            .some((goal) => this.startWalk(goal));
+        const [first, ...others] = goals.slice(0, AREA_GOALS_TRIED);
+        return first !== undefined && this.startWalk(first, others);
     }
 
     // Plans the walk to the tile, or to the open tile closest to it when it is
-    // closed. False when there is no tile to go to or no way to it.
-    private startWalk(goal: Cell): boolean {
+    // closed or has no way. The other goals of the click
+    // come next, and the ones left over are kept for when the walk is blocked
+    // and has to be planned again. False when there is no tile to go to or no
+    // way to it.
+    private startWalk(
+        goal: Cell,
+        alternates: readonly Cell[] = [],
+        radius: number = NEAREST_TILE.GOAL_RADIUS
+    ): boolean {
         const { player } = this;
         if (!player) return false;
 
         // A walk changed in the middle of a step goes on from the tile that
         // step ends on, so the avatar never stops to turn around.
         const origin = this.tileMover?.getStepTarget() ?? player;
+        const start = getCellAt(origin);
 
         const isBlocked = this.getSolidIndex(0);
-        const isOpen = (cell: Cell) => this.isCellWalkable(cell, 0);
-        const target = isOpen(goal)
-            ? goal
-            : findNearestFreeTile({
-                goal,
-                direction: getDirectionVector(player.direction),
-                radius: NEAREST_TILE.GOAL_RADIUS,
-                isOpen,
-            });
-        if (!target) return false;
-
-        const route = findPath({
-            start: getCellAt(origin),
-            goal: target,
-            columns: this.mapColumns,
-            rows: this.mapRows,
-            isFree: (point) => !isBlocked(point),
+        const plan = planWalk({
+            goal,
+            alternates,
+            direction: getDirectionVector(player.direction),
+            radius,
+            isOpen: (cell) => this.isCellWalkable(cell, 0),
+            isForbidden: (cell) => this.isLockedRoomTile(cell),
+            findRoute: (target) =>
+                findPath({
+                    start,
+                    goal: target,
+                    columns: this.mapColumns,
+                    rows: this.mapRows,
+                    isFree: (point) => !isBlocked(point),
+                    onLimitReached: () => this.reportPathLimit(start, target),
+                }),
         });
-        if (!route) return false;
+        if (!plan) return false;
 
-        this.pathWalker.start(route);
+        this.walkAlternates = plan.alternates;
+        this.pathWalker.start(plan.route);
         return true;
+    }
+
+    // The tile is inside a locked room that the avatar is not in and may not
+    // enter, where a walk would end at a door.
+    private isLockedRoomTile(cell: Cell): boolean {
+        const room = getRoomAt(this.rooms, getCellCenter(cell));
+        if (!room || room.key === this.currentRoomKey) return false;
+        if (isRoomEntitled(this.roomEntitlements, room.key)) return false;
+
+        return this.roomSync?.getState(room.key) === ROOM_DOOR_STATES.LOCKED;
+    }
+
+    // There is no sink for events yet, so the page hears it on the game events
+    // and the console has the same facts.
+    private reportPathLimit(start: Cell, goal: Cell): void {
+        const report = { mapId: this.mapData.id, start, goal };
+        console.warn("[game] pathfinding-depth-limit-reached", report);
+        this.game.events.emit(WALK_EVENTS.LIMIT_REACHED, report);
     }
 
     // The mark follows the mouse, and stays on the tile of a walk until it ends.

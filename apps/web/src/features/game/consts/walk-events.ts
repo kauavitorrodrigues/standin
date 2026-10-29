@@ -9,4 +9,7 @@ export const WALK_EVENTS = {
     // There is no way to the tile that was chosen, or the way closed on the
     // avatar and it could not be planned again.
     FAILED: "walk:failed",
+    // A search for a way stopped at its limit and not because every way was
+    // tried. The payload has the id of the map and the two tiles.
+    LIMIT_REACHED: "walk:limit-reached",
 } as const;

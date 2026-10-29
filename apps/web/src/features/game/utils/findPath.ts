@@ -13,6 +13,12 @@ export type PathSearch = {
     rows: number;
     // Whether an avatar with its feet on the point fits there, in px.
     isFree: (point: Point) => boolean;
+    // Called when the search gave up on reaching `PATH_SEARCH.MAX_EXPANSIONS`
+    // and not because every way was tried, so a goal that is out of reach can
+    // be told from one that was too far to be found.
+    onLimitReached?: (limit: { expanded: number }) => void;
+    // The most states to look at. Defaults to `PATH_SEARCH.MAX_EXPANSIONS`.
+    maxExpansions?: number;
 };
 
 // The four cardinal directions, the same ones the keys walk. The fifth state
@@ -86,6 +92,8 @@ export const findPath = ({
     columns,
     rows,
     isFree,
+    onLimitReached,
+    maxExpansions = PATH_SEARCH.MAX_EXPANSIONS,
 }: PathSearch): Cell[] | null => {
     if (goal.column < 0 || goal.column >= columns) return null;
     if (goal.row < 0 || goal.row >= rows) return null;
@@ -108,11 +116,8 @@ export const findPath = ({
     cost[startState] = 0;
     heap.push(startState, estimate(startCell));
 
-    for (
-        let expanded = 0;
-        heap.size > 0 && expanded < PATH_SEARCH.MAX_EXPANSIONS;
-        expanded++
-    ) {
+    let expanded = 0;
+    for (; heap.size > 0 && expanded < maxExpansions; expanded++) {
         const state = heap.pop()!;
         const tile = Math.floor(state / STATES_PER_TILE);
         const direction = state % STATES_PER_TILE;
@@ -146,6 +151,7 @@ export const findPath = ({
         });
     }
 
+    if (heap.size > 0) onLimitReached?.({ expanded });
     return null;
 };
 
