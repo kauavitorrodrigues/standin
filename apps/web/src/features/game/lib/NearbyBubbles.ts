@@ -14,7 +14,8 @@ import { getNameTagPosition } from "@/features/game/utils/getNameTagPosition";
 import { getNearbyColor } from "@/features/game/utils/getNearbyColor";
 
 // Where a person is for the bubble: the feet of the avatar and whether the
-// rules let the name tag show.
+// rules let the name tag show. The resolver may hand back the same object
+// every time, so it is read at once and never kept.
 export type NearbyAnchor = {
     feet: { x: number; y: number };
     isAllowed: boolean;

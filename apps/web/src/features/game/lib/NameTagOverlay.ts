@@ -20,6 +20,28 @@ type CameraWithMatrix = Phaser.Cameras.Scene2D.Camera & {
 
 type WorldPoint = { x: number; y: number };
 
+type PlacedState = {
+    isPlaced: boolean;
+    x: number;
+    y: number;
+    scrollX: number;
+    scrollY: number;
+    zoom: number;
+    matrixE: number;
+    matrixF: number;
+};
+
+const buildPlacedState = (): PlacedState => ({
+    isPlaced: false,
+    x: 0,
+    y: 0,
+    scrollX: 0,
+    scrollY: 0,
+    zoom: 0,
+    matrixE: 0,
+    matrixF: 0,
+});
+
 // One tag of the overlay. The wrapper is the node the overlay moves.
 type Entry = {
     id: number;
@@ -31,8 +53,9 @@ type Entry = {
     zIndex: string;
     transform: string;
     // What the transform was last written from, to skip the work when neither
-    // the camera nor the avatar moved.
-    placedKey: string;
+    // the camera nor the avatar moved. Numbers kept in place, since a key built
+    // as a string would allocate for every tag in every frame.
+    placed: PlacedState;
     width: number;
     height: number;
     observer: ResizeObserver | null;
@@ -146,7 +169,7 @@ export class NameTagOverlay {
             isHidden: true,
             zIndex: "",
             transform: "",
-            placedKey: "",
+            placed: buildPlacedState(),
             width: 0,
             height: 0,
             observer: this.createObserver(id),
@@ -240,7 +263,7 @@ export class NameTagOverlay {
 
         entry.width = entry.node.clientWidth;
         entry.height = entry.node.clientHeight;
-        entry.placedKey = "";
+        entry.placed.isPlaced = false;
     }
 
     // Draws the list at once if the last draw is old enough, and otherwise
@@ -282,8 +305,20 @@ export class NameTagOverlay {
 
         const { x, y } = entry.source();
         const { matrix, scrollX, scrollY, zoom, worldView } = camera;
-        const key = `${x},${y},${scrollX},${scrollY},${zoom},${matrix.e},${matrix.f}`;
-        if (key === entry.placedKey && !entry.isHidden) return;
+        const { placed } = entry;
+        if (
+            placed.isPlaced &&
+            !entry.isHidden &&
+            placed.x === x &&
+            placed.y === y &&
+            placed.scrollX === scrollX &&
+            placed.scrollY === scrollY &&
+            placed.zoom === zoom &&
+            placed.matrixE === matrix.e &&
+            placed.matrixF === matrix.f
+        ) {
+            return;
+        }
 
         // Out of view even with the largest size the zoom can give it. The size
         // is the last one measured, which is enough to tell.
@@ -295,7 +330,7 @@ export class NameTagOverlay {
             y - reach > worldView.bottom + entry.height;
         if (isOutOfView) {
             this.hide(entry);
-            entry.placedKey = "";
+            placed.isPlaced = false;
             return;
         }
 
@@ -306,7 +341,14 @@ export class NameTagOverlay {
             this.measure(entry);
         }
 
-        entry.placedKey = key;
+        placed.isPlaced = true;
+        placed.x = x;
+        placed.y = y;
+        placed.scrollX = scrollX;
+        placed.scrollY = scrollY;
+        placed.zoom = zoom;
+        placed.matrixE = matrix.e;
+        placed.matrixF = matrix.f;
         const transform = computeDomTransform({
             camera: matrix,
             scroll: { x: scrollX, y: scrollY },
