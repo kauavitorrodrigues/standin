@@ -35,3 +35,4 @@ export * from "./edit-scope";
 export * from "./edit-actor";
 export * from "./scope-issue";
 export * from "./object-change-summary";
+export * from "./validate-editor-ops-result";

@@ -48,3 +48,5 @@ export * from "./assertOpsInScope";
 export * from "./summarizeObjectChanges";
 export * from "./assertDiffInScope";
 export * from "./validateDoors";
+export * from "./toPublishIssues";
+export * from "./validateEditorOps";
