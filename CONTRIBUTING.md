@@ -9,13 +9,16 @@ third-party media to the repository. Assets are uploaded by each instance's own
 users through the app, never contributed to this repo. A PR that adds media
 files will be closed.
 
-The only exceptions are files the maintainers already ship (the default
-avatar, the logo) and tiny fixtures for tests that you created yourself.
+The exceptions are files the maintainers already ship (the default avatar, the
+logo), tiny fixtures for tests that you created yourself, and the first-party
+content pack in [`content/`](content), which only the maintainers add and which
+is licensed under [CC BY 4.0](content/LICENSE).
 
 ## Licensing of contributions
 
 The repository is licensed under the [AGPL-3.0](LICENSE), except the `ee/`
-directory, which has its own [license](ee/LICENSE).
+directory, which has its own [license](ee/LICENSE), and the `content/`
+directory, which is licensed under [CC BY 4.0](content/LICENSE).
 
 By opening a pull request you confirm that you wrote the code (or have the right
 to submit it) and you grant the project owner a perpetual, worldwide,
