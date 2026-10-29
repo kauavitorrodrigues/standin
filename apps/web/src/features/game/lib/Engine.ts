@@ -27,6 +27,7 @@ import {
     pinHover,
     selectHover,
 } from "@/features/game/utils/hover";
+import { getNameTagOverlayStats } from "@/features/game/lib/NameTagOverlay";
 import { getMapScene } from "@/features/game/utils/map";
 import { startDecorator } from "@/features/game/utils/startDecorator";
 import { focusOnPlayer } from "@/features/game/utils/player";
@@ -81,8 +82,10 @@ export const createGameEngine = ({
     renderOnDemand.install();
 
     // Dev only, and dropped from production builds: counts the GL calls of the
-    // game to see what a pass costs (see utils/glCallProfiler.ts).
+    // game to see what a pass costs (see utils/glCallProfiler.ts), and the
+    // React roots of the name tags.
     if (import.meta.env.DEV) {
+        window.__nameTagStats = getNameTagOverlayStats;
         window.__glProfile = async (seconds = 5) => {
             const gl = (game.renderer as { gl?: object }).gl;
             if (!gl) throw new Error("The game has no GL context to profile");
@@ -109,7 +112,10 @@ export const createGameEngine = ({
         destroy: () => {
             unbindResize();
             renderOnDemand.uninstall();
-            if (import.meta.env.DEV) delete window.__glProfile;
+            if (import.meta.env.DEV) {
+                delete window.__glProfile;
+                delete window.__nameTagStats;
+            }
             destroyGameWhenReady(game);
         },
         zoomIn: () => getMapCameraController(game)?.zoomIn(),

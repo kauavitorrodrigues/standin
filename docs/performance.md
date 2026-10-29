@@ -506,6 +506,37 @@ joining again within 30 s, costs 6.
 The last column is the process memory of the API during the round. Join times
 here are higher than in section 4.1 for N = 50 because every cache is cold.
 
+### 4.10 Name tags in a real browser
+
+The name tags of a scene share one React root (`NameTagOverlay`), instead of one
+root per avatar. In a development build, `window.__nameTagStats()` returns the
+roots and tags alive.
+
+Measured in headless Chrome with 50 bots plus the signed-in person, 70% walking,
+at commit `4ac669b` with the overlay, and with `NameTag.ts` swapped for the
+version that gave each avatar its own root (the rest of the code unchanged).
+The heap is `JSHeapUsedSize` after two forced garbage collections, three
+samples 4 s apart, one run per variant, on the Vite dev server (not a
+production build).
+
+|                           | One root per avatar | One shared root |
+| ------------------------- | ------------------- | --------------- |
+| Roots, alone in the space | 1                   | 1               |
+| Roots, with 50 bots       | 51                  | 1               |
+| Tags, with 50 bots        | 51                  | 51              |
+| Heap, alone               | 66.7 MB             | 66.8 MB         |
+| Heap, with 50 bots        | 72.6 to 73.2 MB     | 72.0 to 72.3 MB |
+
+The roots go from 51 to 1. The heap is about 0.5 to 0.9 MB lower with 50 tags,
+which is within what one run can show, so it is not a result to build on. The
+measure also includes every avatar, not only the tags.
+
+The content of a tag (dot, name, tail, colors) was compared as DOM: it is the
+same in both variants, and only the wrapper that places it differs. The tag
+with a photo (clicked) and the typing icon were not seen in this run: the bots
+do not click or type, and they are members, so there was no guest tag either
+(the tag has none).
+
 ## 5. What you need to run it
 
 ### 5.1 The data path alone (without the media server)
