@@ -1,0 +1,101 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+        },
+        "name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "margin": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+        },
+        "spacing": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+        },
+        "tileMeta": {
+            "type": "object",
+            "propertyNames": {
+                "type": "string",
+                "pattern": "^\\d+$"
+            },
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "FLOOR",
+                            "WALL",
+                            "CEILING",
+                            "DECORATION",
+                            "EMPTY"
+                        ]
+                    },
+                    "solid": {
+                        "type": "boolean"
+                    },
+                    "blankDefault": {
+                        "type": "boolean"
+                    },
+                    "top": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                    },
+                    "edges": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "N",
+                                "E",
+                                "S",
+                                "W"
+                            ]
+                        }
+                    },
+                    "style": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                    },
+                    "overlap": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 32
+                    },
+                    "solidMask": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "category"
+                ]
+            }
+        },
+        "organizationId": {
+            "type": "string",
+            "minLength": 1
+        }
+    },
+    "required": [
+        "name"
+    ]
+}

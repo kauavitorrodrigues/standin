@@ -3,7 +3,7 @@ import {
     CreateAssetDataSchema,
     CreateTilesetDataSchema,
     CreateVariantDataSchema,
-} from "@standin/contracts";
+} from "./library-data.schema";
 
 const file = z.string().min(1);
 

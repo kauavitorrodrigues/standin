@@ -36,3 +36,4 @@ export * from "./edit-actor";
 export * from "./scope-issue";
 export * from "./object-change-summary";
 export * from "./validate-editor-ops-result";
+export * from "./door-size-by-side";

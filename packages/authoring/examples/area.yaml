@@ -1,0 +1,16 @@
+# An area is built on a blank grid of its own size.
+kind: area
+name: Work corner
+size: { width: 8, height: 6 }
+floors:
+  - { tileset: floor, tileIndex: 0, from: { x: 0, y: 0 }, to: { x: 7, y: 5 } }
+desks:
+  - asset: desk
+    x: 2
+    y: 3
+    items:
+      - { asset: monitor, x: 2, y: 3 }
+    chairs:
+      - { asset: chair, x: 2, y: 4 }
+objects:
+  - { asset: crate, x: 6, y: 1 }

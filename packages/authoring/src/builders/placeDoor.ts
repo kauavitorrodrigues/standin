@@ -2,7 +2,8 @@ import {
     ASSET_TYPES,
     LAYOUT_LAYER_NAMES,
     LAYOUT_ZONE_KINDS,
-    getFamilyId,
+    getDoorFamily,
+    getDoorSizeBySide,
     getLayoutZones,
     pickDoorVariantForSide,
     replayOps,
@@ -15,7 +16,6 @@ import { AUTHORING_ISSUE_CODES, createIssue } from "../issues";
 import { createLibraryIndex } from "../library/createLibraryIndex";
 import type { BuildOptions, BuildResult, PlaceDoorParams } from "../types";
 import { findDoorSlot } from "./door/findDoorSlot";
-import { getSizeBySide } from "./door/getSizeBySide";
 import { planDoorGap } from "./door/planDoorGap";
 
 /**
@@ -54,11 +54,8 @@ export const placeDoor = (
         );
     }
 
-    const familyId = getFamilyId(resolved.value);
-    const family = model.library.assets.filter(
-        (asset) => getFamilyId(asset) === familyId
-    );
-    const sizeBySide = getSizeBySide(family);
+    const family = getDoorFamily(model.library.assets, resolved.value.id);
+    const sizeBySide = getDoorSizeBySide(family);
     const pick = pickDoorVariantForSide(family, side);
     if (!sizeBySide || !pick) {
         return fail(

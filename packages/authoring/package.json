@@ -9,15 +9,19 @@
     },
     "scripts": {
         "check-types": "tsc --noEmit",
+        "generate:schemas": "tsx scripts/generateSchemas.ts",
         "test": "vitest run"
     },
     "dependencies": {
-        "@standin/contracts": "workspace:*"
+        "@standin/contracts": "workspace:*",
+        "yaml": "2.9.1",
+        "zod": "4.5.1"
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",
         "@standin/vitest-config": "workspace:*",
         "@types/node": "26.4.0",
+        "tsx": "4.23.12",
         "typescript": "6.0.2",
         "vitest": "4.1.10"
     }

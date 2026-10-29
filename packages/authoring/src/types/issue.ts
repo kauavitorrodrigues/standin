@@ -26,6 +26,19 @@ export type AuthoringIssueParams = {
     [AUTHORING_ISSUE_CODES.WALL_STYLE_NOT_FOUND]: { style: string };
     [AUTHORING_ISSUE_CODES.INVALID_MASK]: { field: "mask" | "solidMask" };
     [AUTHORING_ISSUE_CODES.WALL_STYLE_INCOMPLETE]: { style: string };
+    [AUTHORING_ISSUE_CODES.SPEC_PARSE_ERROR]: { reason: string };
+    [AUTHORING_ISSUE_CODES.SPEC_EMPTY]: Record<string, never>;
+    [AUTHORING_ISSUE_CODES.SPEC_UNKNOWN_FIELD]: { field: string };
+    [AUTHORING_ISSUE_CODES.SPEC_INVALID_TYPE]: { detail: string };
+    [AUTHORING_ISSUE_CODES.SPEC_INVALID_VALUE]: { detail: string };
+    [AUTHORING_ISSUE_CODES.SPEC_OUT_OF_RANGE]: { detail: string };
+    [AUTHORING_ISSUE_CODES.SPEC_DUPLICATE_ROOM_KEY]: { key: string };
+    [AUTHORING_ISSUE_CODES.SPEC_BASE_MISSING]: { kind: string };
+    [AUTHORING_ISSUE_CODES.SPEC_SIZE_TIER_MISMATCH]: {
+        tier: string;
+        width: number;
+        height: number;
+    };
     [AUTHORING_ISSUE_CODES.CELL_OUT_OF_BOUNDS]: {
         area: string;
         width: number;

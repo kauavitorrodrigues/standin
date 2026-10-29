@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { LibrarySeedFileSchema } from "@standin/contracts";
 import type { LibrarySeed } from "@standin/core";
-import { LibrarySeedFileSchema } from "./librarySeedFileSchema";
 
 const LIBRARY_FILE = "library.json";
 

@@ -1,13 +1,17 @@
-import { findDoorSlots, readWallCells } from "@standin/contracts";
+import {
+    findDoorSlots,
+    getOccupiedKeys,
+    readWallCells,
+} from "@standin/contracts";
 import type {
     DoorSide,
+    DoorSizeBySide,
     DoorSlot,
     EditorModel,
     LooseLayout,
     Zone,
 } from "@standin/contracts";
-import type { DoorGap, TileSize } from "../../types";
-import { getOccupiedKeys } from "./getOccupiedKeys";
+import type { DoorGap } from "../../types";
 
 const distance = (slot: DoorSlot, gap: DoorGap) =>
     Math.abs(slot.tileX - gap.tileX) + Math.abs(slot.tileY - gap.tileY);
@@ -21,7 +25,7 @@ export const findDoorSlot = (
     model: EditorModel,
     zone: Zone,
     side: DoorSide,
-    sizeBySide: Record<DoorSide, TileSize>,
+    sizeBySide: DoorSizeBySide,
     gap: DoorGap
 ): DoorSlot | undefined =>
     findDoorSlots({
