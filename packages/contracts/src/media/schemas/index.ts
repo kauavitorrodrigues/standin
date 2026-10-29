@@ -109,6 +109,29 @@ export const MediaSetPinsSchema = z.object({
         .max(MAX_MEDIA_PINS, { error: MediaErrorMessages.pins.invalid }),
 });
 
+// The people whose video the receiver hid, as the full list. Their audio is not
+// touched. A person drops out of the list by itself when they leave the reach
+// of the video, and the server tells the client.
+export const MAX_MEDIA_HIDDEN_VIDEOS = 16;
+
+export const MediaSetHiddenVideoSchema = z.object({
+    userIds: z
+        .array(
+            z
+                .string({
+                    error: MediaErrorMessages.hiddenVideo.userId.invalid,
+                })
+                .min(1, { error: MediaErrorMessages.hiddenVideo.userId.invalid })
+                .max(64, {
+                    error: MediaErrorMessages.hiddenVideo.userId.invalid,
+                }),
+            { error: MediaErrorMessages.hiddenVideo.invalid }
+        )
+        .max(MAX_MEDIA_HIDDEN_VIDEOS, {
+            error: MediaErrorMessages.hiddenVideo.invalid,
+        }),
+});
+
 // A weak machine asks for the low layer and fewer streams.
 export const MediaSetLowQualitySchema = z.object({
     enabled: z.boolean({
