@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import type { UserSummary } from "@standin/contracts";
 import { PeoplePanel } from "@/features/spaces/components/pages/space-page/people/PeoplePanel";
 
 type Props = {
@@ -6,6 +8,10 @@ type Props = {
     spaceName: string;
     onlineUserIds: readonly string[];
     onClose: () => void;
+    renderActions?: (
+        person: UserSummary,
+        hold: (isHeld: boolean) => void
+    ) => ReactNode;
 };
 
 // Renders nothing until the panel is mounted, and keeps it mounted while it
@@ -16,6 +22,7 @@ export const SpacePeoplePanel = ({
     spaceName,
     onlineUserIds,
     onClose,
+    renderActions,
 }: Props) => {
     if (!isMounted) return null;
     return (
@@ -24,6 +31,7 @@ export const SpacePeoplePanel = ({
             spaceName={spaceName}
             onlineUserIds={onlineUserIds}
             onClose={onClose}
+            renderActions={renderActions}
         />
     );
 };
