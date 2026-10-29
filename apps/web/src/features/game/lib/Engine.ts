@@ -7,6 +7,10 @@ import { getFpsLimit } from "@/features/settings/performance/lib/performanceValu
 import { effectivePerformanceSettings } from "@/features/settings/performance/lib/performanceOverride";
 import { GAME_SCENE_KEYS } from "@/features/game/consts/scene-keys";
 import { RenderOnDemand } from "@/features/game/lib/RenderOnDemand";
+import {
+    formatGlProfile,
+    profileGl,
+} from "@/features/game/utils/glCallProfiler";
 import { MapScene } from "@/features/game/scenes/MapScene";
 import {
     bindGameResize,
@@ -76,6 +80,23 @@ export const createGameEngine = ({
     );
     renderOnDemand.install();
 
+    // Dev only, and dropped from production builds: counts the GL calls of the
+    // game to see what a pass costs (see utils/glCallProfiler.ts).
+    if (import.meta.env.DEV) {
+        window.__glProfile = async (seconds = 5) => {
+            const gl = (game.renderer as { gl?: object }).gl;
+            if (!gl) throw new Error("The game has no GL context to profile");
+
+            const profile = await profileGl({
+                gl,
+                getPasses: () => renderOnDemand.renderPasses,
+                seconds,
+            });
+            console.info(formatGlProfile(profile));
+            return profile;
+        };
+    }
+
     const unbindResize = bindGameResize(game, container);
 
     // While someone decorates, what the scene shows is their draft. The server
@@ -88,6 +109,7 @@ export const createGameEngine = ({
         destroy: () => {
             unbindResize();
             renderOnDemand.uninstall();
+            if (import.meta.env.DEV) delete window.__glProfile;
             destroyGameWhenReady(game);
         },
         zoomIn: () => getMapCameraController(game)?.zoomIn(),
