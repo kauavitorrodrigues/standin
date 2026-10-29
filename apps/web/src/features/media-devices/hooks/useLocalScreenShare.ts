@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ScreenShareError } from "@/features/media-devices/consts/videoError";
 import {
+    getScreenAudioConstraints,
     getScreenCaptureConstraints,
     getScreenContentHint,
     getScreenTrackConstraints,
@@ -42,7 +43,10 @@ export function useLocalScreenShare() {
         try {
             const displayStream = await navigator.mediaDevices.getDisplayMedia({
                 video: getScreenCaptureConstraints(),
-                audio: false,
+                // The sound is only asked for when the setting is on. The
+                // browser still lets the person leave it out in its picker,
+                // so the stream may come without an audio track.
+                audio: settings.shareAudio ? getScreenAudioConstraints() : false,
             });
 
             // Left the page while the picker was open: nobody is going to
