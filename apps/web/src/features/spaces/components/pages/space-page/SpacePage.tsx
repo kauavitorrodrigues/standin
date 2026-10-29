@@ -13,6 +13,10 @@ import { RoomHeader } from "@/features/game/components/RoomHeader";
 import { WalkChip } from "@/features/game/components/WalkChip";
 import { ZoneLabel } from "@/features/game/components/ZoneLabel";
 import { useWalkState } from "@/features/game/hooks/useWalkState";
+import { useSelectedPerson } from "@/features/game/hooks/useSelectedPerson";
+import { WalkToPersonChip } from "@/features/game/components/WalkToPersonChip";
+import { describeWalk } from "@/features/game/utils/describeWalk";
+import { useSceneDesks } from "@/features/desks/hooks/useSceneDesks";
 import { LockedDoorDialog } from "@/features/game/components/dialogs/LockedDoorDialog";
 import { RoomJoinRequests } from "@/features/game/components/RoomJoinRequests";
 import { useLockedDoorPrompt } from "@/features/game/multiplayer/hooks/useLockedDoorPrompt";
@@ -127,6 +131,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const currentRoom = useCurrentRoom(handle?.game ?? null);
     const walk = useWalkState(handle?.game ?? null);
+    const selectedPersonId = useSelectedPerson(handle?.game ?? null);
+    const { isAtOwnDesk } = useSceneDesks(handle, space.id, user.id);
     const lockedDoor = useLockedDoorPrompt(handle?.game ?? null, currentRoom);
 
     const stageTiles = useStageTiles({
@@ -137,6 +143,12 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const { members } = OrganizationsQueries.useMembers();
     const names = buildNameLookup(members);
+    const walkText = describeWalk(walk.purpose, (id) => names.get(id));
+    // Walking to oneself, with another tab of the same account, is no action.
+    const personToWalkTo =
+        selectedPersonId !== null && selectedPersonId !== user.id
+            ? selectedPersonId
+            : null;
     useLocalAvatarSheet(handle?.game ?? null);
     const avatars = new Map(members.map((m) => [m.id, m.profilePictureUrl]));
     useLocalUserProfile(handle?.game ?? null, {
@@ -223,7 +235,23 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         onLock={currentRoom.onLock}
                         onUnlock={currentRoom.onUnlock}
                     />
-                    <WalkChip isWalking={walk.isWalking} onCancel={walk.cancel} />
+                    <WalkChip
+                        isWalking={walk.isWalking}
+                        text={walkText}
+                        onCancel={walk.cancel}
+                    />
+                    <WalkToPersonChip
+                        name={
+                            walk.isWalking || personToWalkTo === null
+                                ? null
+                                : (names.get(personToWalkTo) ?? null)
+                        }
+                        onWalk={() => {
+                            if (personToWalkTo !== null) {
+                                handle?.walkToPerson(personToWalkTo);
+                            }
+                        }}
+                    />
                     <LockedDoorDialog {...lockedDoor} />
                     <ZoneLabel handle={handle} />
                     <DeskHoverCard
@@ -245,6 +273,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                             spaceId={space.id}
                             isMapLocked={mapLock.isLocked}
                             decorateAvailability={decorateAvailability}
+                            isAtOwnDesk={isAtOwnDesk}
+                            onWalkToDesk={() => handle?.walkToOwnDesk()}
                             onDecorate={(focus) => {
                                 profileCard.close();
                                 decorator.open(focus);
@@ -313,6 +343,8 @@ type ProfileCardSlotProps = {
     isMapLocked: boolean;
     decorateAvailability: DecorateAvailability;
     onDecorate: (focus: DecoratorFocus) => void;
+    isAtOwnDesk: boolean;
+    onWalkToDesk: () => void;
     onClose: () => void;
 };
 

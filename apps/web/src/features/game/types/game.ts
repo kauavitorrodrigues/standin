@@ -57,4 +57,13 @@ export type GameEngineHandle = {
     selectHover: (event: string, id: string | null) => void;
     // Keeps the outline of a target while the mouse is on its card.
     pinHover: (event: string, id: string | null) => void;
+    // Tells the scene who holds which desk, and who the local person is.
+    setDeskClaims: (
+        claims: readonly { mapAssetId: string; userId: string }[],
+        userId: string
+    ) => void;
+    // Walks to the own desk, or to the tile next to a person. False when the
+    // walk could not be planned (the page is told as well).
+    walkToOwnDesk: () => boolean;
+    walkToPerson: (userId: string) => boolean;
 };

@@ -17,6 +17,9 @@ type OwnDeskProfileCardProps = {
     // What the Decorar button does right now, and what it opens.
     decorateAvailability: DecorateAvailability;
     onDecorate: (focus: DecoratorFocus) => void;
+    // The avatar is at its desk, so there is nowhere to walk to.
+    isAtOwnDesk: boolean;
+    onWalkToDesk: () => void;
 };
 
 // The profile of the person with the action to give their desk back.
@@ -26,6 +29,8 @@ export const OwnDeskProfileCard = ({
     isMapLocked,
     decorateAvailability,
     onDecorate,
+    isAtOwnDesk,
+    onWalkToDesk,
 }: OwnDeskProfileCardProps) => {
     const { user } = useAuth();
     const { desks } = useSpaceDesks(spaceId);
@@ -56,6 +61,8 @@ export const OwnDeskProfileCard = ({
                 <DeskActions
                     disabled={!ownDesk || isPending || isMapLocked}
                     onRelease={handleRelease}
+                    isWalkDisabled={!ownDesk || isAtOwnDesk}
+                    onWalkToDesk={onWalkToDesk}
                 />
             }
         />

@@ -17,6 +17,7 @@ import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 import { useLocalAvatarSheet } from "@/features/game/hooks/useLocalAvatarSheet";
 import { useLocalUserProfile } from "@/features/game/hooks/useLocalUserProfile";
 import { useWalkState } from "@/features/game/hooks/useWalkState";
+import { describeWalk } from "@/features/game/utils/describeWalk";
 import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
 import { SpacePageRoot } from "@/features/spaces/components/pages/space-page/Root";
 import { SpaceUnavailable } from "@/features/spaces/components/pages/space-page/Unavailable";
@@ -178,6 +179,7 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
                     </LayoutPrimitive.RightStack>
                     <WalkChip
                         isWalking={walk.isWalking}
+                        text={describeWalk(walk.purpose, () => undefined)}
                         onCancel={walk.cancel}
                     />
                     <LockedDoorDialog {...lockedDoor} />
