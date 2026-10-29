@@ -9,6 +9,7 @@ import { templatesRouter } from "./features/maps/templates/routes";
 import { TemplateController } from "./features/maps/templates/controllers";
 import { libraryRouter } from "./features/library/routes";
 import { RequiresLibraryAdmin } from "./features/library/middleware/requiresLibraryAdmin";
+import { serviceTokensRouter } from "./features/service-tokens/routes";
 import { mapsRouter } from "./features/maps/routes";
 import { desksRouter } from "./features/desks/routes";
 import {
@@ -74,6 +75,9 @@ router.use(
     avatarBasesRouter
 );
 router.use("/library", RequiresAuth, RequiresLibraryAdmin, libraryRouter);
+
+// Admin session only: the tokens of tools and agents.
+router.use("/service-tokens", RequiresAuth, serviceTokensRouter);
 
 // Catalog of avatar pieces for the editor.
 router.use("/avatar", avatarCatalogRouter);

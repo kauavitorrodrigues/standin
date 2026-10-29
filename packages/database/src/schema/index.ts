@@ -29,3 +29,4 @@ export * from "./user-avatar-bases";
 export * from "./user-avatar-sheets";
 export * from "./user-profile-pictures";
 export * from "./user-identities";
+export * from "./service-tokens";
