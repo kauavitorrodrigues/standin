@@ -216,9 +216,9 @@ Standin is meant to be self-hosted: a server and a PostgreSQL database are the o
 
 ## License and responsibility
 
-Standin is open source under the [GNU AGPL-3.0](LICENSE). Anyone can run, study, modify and redistribute it, and anyone who offers a modified version as a service over a network must publish their changes under the same license. The `ee/` directory is the exception: it is source-visible but proprietary, see [ee/LICENSE](ee/LICENSE). To use it commercially, or to use Standin without the AGPL obligations, contact the maintainer for a commercial license.
+Standin is open source under the [GNU AGPL-3.0](LICENSE). Anyone can run, study, modify and redistribute it, and anyone who offers a modified version as a service over a network must publish their changes under the same license. The `ee/` directory is the exception: it is source-visible but proprietary, see [ee/LICENSE](ee/LICENSE). To use it commercially, or to use Standin without the AGPL obligations, contact the maintainer for a commercial license. The first-party media in the `content/` directory is not covered by the AGPL: it is licensed under [CC BY 4.0](content/LICENSE), free to use, including on a self-hosted instance, with credit.
 
-Whoever runs an instance is the **operator** of that instance and is solely responsible for it: the content its users upload, the terms they accept, the personal data it stores and compliance with the laws that apply where it is hosted. The authors only publish the code, provide it "as is", and have no control over, access to or liability for any third-party instance or what is hosted on it. This repository ships no assets from users and does not accept them in pull requests (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+Whoever runs an instance is the **operator** of that instance and is solely responsible for it: the content its users upload, the terms they accept, the personal data it stores and compliance with the laws that apply where it is hosted. The authors only publish the code, provide it "as is", and have no control over, access to or liability for any third-party instance or what is hosted on it. This repository ships no assets from users and does not accept third-party media in pull requests (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Maintenance Notes
 
