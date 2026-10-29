@@ -23,6 +23,8 @@ export type SeatRules = {
     isTaken: (seat: SeatSpot) => boolean;
     // Another avatar sat on the same seat at the same time and wins the tie.
     mustYield: (seat: SeatSpot) => boolean;
+    // The seat is inside something solid, so nobody can sit there.
+    isBlocked?: (seat: SeatSpot) => boolean;
 };
 
 const NO_RULES: SeatRules = {
@@ -65,6 +67,20 @@ export class SeatController {
         );
     }
 
+    // A seat nobody holds and nothing blocks.
+    private isFree = (spot: SeatSpot): boolean =>
+        !this.rules.isTaken(spot) && !this.rules.isBlocked?.(spot);
+
+    // Whether the avatar would sit as soon as it rests: on its feet over a
+    // piece, with the way in still armed and a free seat. The movement code
+    // asks it, so a tap does not turn the avatar for a frame before it sits.
+    canSitHere(): boolean {
+        if (this.player.isSitting || !this.armed) return false;
+
+        const area = this.findAreaUnderPlayer();
+        return area !== null && area.seats.some(this.isFree);
+    }
+
     private findAreaUnderPlayer(): SeatArea | null {
         return (
             this.areas.find((area) =>
@@ -82,7 +98,7 @@ export class SeatController {
         if (!seat || !area || !this.rules.mustYield(seat)) return;
 
         const free = area.seats.filter(
-            (spot) => spot !== seat && !this.rules.isTaken(spot)
+            (spot) => spot !== seat && this.isFree(spot)
         );
         const other = findNearestSeat(free, this.player);
         if (other) {
@@ -114,9 +130,7 @@ export class SeatController {
         const isResting = x === 0 && y === 0;
         if (!this.armed || !isResting) return;
 
-        const freeSeats = area.seats.filter(
-            (spot) => !this.rules.isTaken(spot)
-        );
+        const freeSeats = area.seats.filter(this.isFree);
         const seat = findNearestSeat(freeSeats, this.player);
         // Every seat of the piece is taken: the avatar has to leave and come
         // back, so it does not sit by surprise when someone gets up.

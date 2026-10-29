@@ -377,10 +377,11 @@ export class MapScene extends Phaser.Scene {
         this.setLocalAvatarSheet(this.localAvatarSheetFileId);
         this.applyLocalUserProfile();
 
-        this.seatController = new SeatController(
-            this.player,
-            this.seatOccupancy
-        );
+        this.seatController = new SeatController(this.player, {
+            isTaken: this.seatOccupancy.isTaken,
+            mustYield: this.seatOccupancy.mustYield,
+            isBlocked: (seat) => this.isSeatBlocked(seat),
+        });
         this.tileMover = new TileMover(
             PLAYER_PHYSICS.SPEED,
             { columns: this.mapColumns, rows: this.mapRows },
@@ -392,7 +393,8 @@ export class MapScene extends Phaser.Scene {
             this.player,
             this.pathWalker,
             this.tileMover,
-            (destination) => this.replanWalk(destination)
+            (destination) => this.replanWalk(destination),
+            () => this.seatController?.canSitHere() ?? false
         );
         this.tileCursor = new TileCursor({
             scene: this,
@@ -844,6 +846,19 @@ export class MapScene extends Phaser.Scene {
     ): boolean {
         const { column, row } = cell;
         if (column < 0 || column >= this.mapColumns) return false;
+    // The point of a seat lies inside a solid, like a wall or a closed door.
+    // The body of the avatar is not counted: a sofa against a wall is still a
+    // sofa, only a seat in the wall itself is out.
+    private isSeatBlocked(seat: { x: number; y: number }): boolean {
+        return this.getSolidRects().some(
+            (solid) =>
+                seat.x >= solid.x &&
+                seat.x < solid.x + solid.width &&
+                seat.y >= solid.y &&
+                seat.y < solid.y + solid.height
+        );
+    }
+
         if (row < 0 || row >= this.mapRows) return false;
 
         const isBlocked = this.getSolidIndex(maxAgeMs);

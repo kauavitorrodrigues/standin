@@ -246,6 +246,24 @@ describe.each(LATENCIES)("seat simulation, latency %i ticks", (latency) => {
         expect(b.isSitting).toBe(true);
     });
 
+    it("does not sit on a seat while a peer with a lower id stands on it", () => {
+        const piece = makePiece(1);
+        const room = new Room([piece], latency);
+        const a = room.join("a", 16, 16);
+        const b = room.join("b", 16, 16);
+        // Neither knows the piece yet, so both just stand and tell where.
+        a.controller.setAreas([]);
+        b.controller.setAreas([]);
+        room.step(latency + 3);
+
+        // The piece only reaches "b": "a" keeps standing on the seat.
+        b.controller.setAreas([piece]);
+        room.step(latency + 10);
+
+        expect(a.isSitting).toBe(false);
+        expect(b.isSitting).toBe(false);
+    });
+
     it("frees the seat when its holder disconnects", () => {
         const room = new Room([makePiece(1)], latency);
         const a = room.join("a", 16, 16);

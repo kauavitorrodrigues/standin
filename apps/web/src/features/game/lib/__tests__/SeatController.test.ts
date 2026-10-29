@@ -176,3 +176,65 @@ describe("SeatController with other avatars", () => {
         expect(player.x).toBe(132);
     });
 });
+
+describe("SeatController free seat rules", () => {
+    it("does not sit on a seat that something blocks", () => {
+        const player = makePlayer(100, 100);
+        const seats = new SeatController(player, {
+            isTaken: () => false,
+            mustYield: () => false,
+            isBlocked: () => true,
+        });
+        seats.setAreas([makeArea(100, 100)]);
+
+        seats.update();
+
+        expect(player.isSitting).toBe(false);
+    });
+
+    it("sits on the other seat of the piece when the nearest is blocked", () => {
+        const player = makePlayer(100, 100);
+        const area: SeatArea = {
+            footprint: { x: 84, y: 84, width: 64, height: 32 },
+            seats: [
+                { x: 100, y: 100, direction: PLAYER_DIRECTIONS.DOWN, depth: 0 },
+                { x: 132, y: 100, direction: PLAYER_DIRECTIONS.DOWN, depth: 0 },
+            ],
+        };
+        const seats = new SeatController(player, {
+            isTaken: () => false,
+            mustYield: () => false,
+            isBlocked: (seat) => seat.x === 100,
+        });
+        seats.setAreas([area]);
+
+        seats.update();
+
+        expect(player.isSitting).toBe(true);
+        expect(player.x).toBe(132);
+    });
+
+    it("tells that the avatar is about to sit only over a free armed seat", () => {
+        const player = makePlayer(100, 100);
+        let taken = false;
+        const seats = new SeatController(player, {
+            isTaken: () => taken,
+            mustYield: () => false,
+        });
+        const outside = makePlayer(500, 500);
+        const far = new SeatController(outside);
+        far.setAreas([makeArea(100, 100)]);
+        expect(far.canSitHere()).toBe(false);
+
+        seats.setAreas([makeArea(100, 100)]);
+        expect(seats.canSitHere()).toBe(true);
+
+        taken = true;
+        expect(seats.canSitHere()).toBe(false);
+
+        taken = false;
+        seats.update();
+        expect(player.isSitting).toBe(true);
+        expect(seats.canSitHere()).toBe(false);
+    });
+});
