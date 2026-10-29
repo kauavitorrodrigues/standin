@@ -100,6 +100,52 @@ describe("findPath", () => {
     });
 });
 
+describe("findPath limit", () => {
+    it("tells when it gave up at the limit, and not when there is no way", () => {
+        const reached: number[] = [];
+        const far = findPath({
+            start: cell(0, 0),
+            goal: cell(5, 5),
+            columns: 6,
+            rows: 6,
+            isFree: () => true,
+            maxExpansions: 3,
+            onLimitReached: ({ expanded }) => reached.push(expanded),
+        });
+
+        expect(far).toBeNull();
+        expect(reached).toEqual([3]);
+
+        const walled = findPath({
+            start: cell(0, 0),
+            goal: cell(5, 5),
+            columns: 6,
+            rows: 6,
+            isFree: outsideBlocks(cell(5, 4), cell(4, 5)),
+            onLimitReached: ({ expanded }) => reached.push(expanded),
+        });
+
+        expect(walled).toBeNull();
+        expect(reached).toEqual([3]);
+    });
+
+    it("still finds the way with room to spare", () => {
+        const reached: number[] = [];
+
+        expect(
+            findPath({
+                start: cell(0, 0),
+                goal: cell(2, 0),
+                columns: 6,
+                rows: 6,
+                isFree: () => true,
+                onLimitReached: ({ expanded }) => reached.push(expanded),
+            })
+        ).not.toBeNull();
+        expect(reached).toEqual([]);
+    });
+});
+
 describe("getStandingPoint", () => {
     it("is the center of a free tile", () => {
         expect(getStandingPoint(cell(1, 1), () => true)).toEqual({

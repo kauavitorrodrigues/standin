@@ -25,8 +25,12 @@ export const PATH_SEARCH = {
     TURN_COST: 4,
     // Tiles looked at before giving up, so a goal out of reach cannot freeze.
     MAX_EXPANSIONS: 200000,
-    // Times a blocked walk is planned again before it is dropped.
-    MAX_REPLANS: 3,
+    // Times a blocked walk is planned again before it is dropped. Each plan may
+    // also try the other goals of the click and the open tiles around them.
+    MAX_REPLANS: 6,
+    // Times in a row the avatar may stand off the way before the walk is
+    // given up, so a nudge by another avatar does not end it.
+    OFF_ROUTE_TICKS: 6,
     // Age after which the solids are read again for the mark under the mouse,
     // and for each move of a walk.
     HOVER_INDEX_MAX_AGE_MS: 250,
@@ -62,6 +66,9 @@ export const AREA_GOALS_TRIED = 10;
 export const NEAREST_TILE = {
     // Tiles tried along the direction the avatar faces.
     LINE_MAX: 100,
-    // Tiles around the goal, in every direction, tried after that.
+    // Tiles around the goal, in every direction, tried after that, when the
+    // caller does not ask for another radius.
+    DEFAULT_RADIUS: 2,
+    // The wider search of a click on a closed tile.
     GOAL_RADIUS: 4,
 } as const;
