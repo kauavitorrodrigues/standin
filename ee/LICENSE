@@ -1,0 +1,30 @@
+Standin Enterprise License (DRAFT, to be reviewed by a lawyer before use)
+
+Copyright (c) 2026 kauavitorrodrigues. All rights reserved.
+
+This license applies only to the files inside the `ee/` directory and its
+subdirectories. Everything else in this repository is licensed under the
+GNU Affero General Public License v3.0, see the LICENSE file at the root.
+
+1. You may read, copy and modify the code in this directory for development,
+   testing and evaluation purposes.
+
+2. You may NOT use the code in this directory in production, nor offer it to
+   third parties as part of a hosted or managed service, unless you hold a
+   valid commercial subscription or license agreement with the copyright
+   holder.
+
+3. You may NOT remove or circumvent license-key checks, usage limits or
+   copyright notices in this directory.
+
+4. The copyright holder retains all rights, title and interest in this code.
+   Contributions to this directory are accepted only under the terms in
+   CONTRIBUTING.md.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
