@@ -10,6 +10,8 @@ export type LocalMedia = {
     localAudioTrack: MediaStreamTrack | null;
     localCameraTrack: MediaStreamTrack | null;
     localScreenTrack: MediaStreamTrack | null;
+    // The sound shared with the screen, null when the share has none.
+    localScreenAudioTrack: MediaStreamTrack | null;
     isMicEnabled: boolean;
     isHeadphonesOn: boolean;
     isFocusModeOn: boolean;

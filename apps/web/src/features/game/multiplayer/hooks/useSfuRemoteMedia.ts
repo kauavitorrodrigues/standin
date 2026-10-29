@@ -27,9 +27,11 @@ export function useSfuRemoteMedia({
         clear: clearVideos,
     } = videos;
 
-    // The socket each audio consumer plays under, to take it down when the
-    // server closes the consumer.
-    const audioConsumersRef = useRef(new Map<string, string>());
+    // The socket each audio consumer plays under, and whether it is a voice or
+    // the sound of a screen, to take it down when the server closes it.
+    const audioConsumersRef = useRef(
+        new Map<string, { socketId: string; isScreen: boolean }>()
+    );
     const speakingRef = useRef<ReadonlySet<string>>(new Set());
 
     /** Starts playing a stream the server created. */
@@ -39,16 +41,19 @@ export function useSfuRemoteMedia({
                 addVideoTrack(remote);
                 return;
             }
-            if (remote.source !== "mic") return;
+            const isScreen = remote.source === "screen-audio";
+            if (remote.source !== "mic" && !isScreen) return;
 
             const socketId = getSocketIdOfUser(remote.userId);
             if (!socketId) return;
 
-            audioConsumersRef.current.set(remote.consumerId, socketId);
-            remoteAudioManager.attach(
+            audioConsumersRef.current.set(remote.consumerId, {
                 socketId,
-                new MediaStream([remote.track])
-            );
+                isScreen,
+            });
+            const stream = new MediaStream([remote.track]);
+            if (isScreen) remoteAudioManager.attachScreen(socketId, stream);
+            else remoteAudioManager.attach(socketId, stream);
         },
         [addVideoTrack, getSocketIdOfUser, remoteAudioManager]
     );
@@ -57,11 +62,15 @@ export function useSfuRemoteMedia({
     const stopRemote = useCallback(
         (consumerId: string) => {
             removeConsumer(consumerId);
-            const socketId = audioConsumersRef.current.get(consumerId);
-            if (!socketId) return;
+            const consumer = audioConsumersRef.current.get(consumerId);
+            if (!consumer) return;
 
             audioConsumersRef.current.delete(consumerId);
-            remoteAudioManager.remove(socketId);
+            if (consumer.isScreen) {
+                remoteAudioManager.removeScreen(consumer.socketId);
+            } else {
+                remoteAudioManager.remove(consumer.socketId);
+            }
         },
         [remoteAudioManager, removeConsumer]
     );
@@ -69,9 +78,10 @@ export function useSfuRemoteMedia({
     /** Stops every remote stream, when the session is rebuilt or ends. */
     const stopAllRemote = useCallback(() => {
         clearVideos();
-        audioConsumersRef.current.forEach((socketId) =>
-            remoteAudioManager.remove(socketId)
-        );
+        audioConsumersRef.current.forEach(({ socketId, isScreen }) => {
+            if (isScreen) remoteAudioManager.removeScreen(socketId);
+            else remoteAudioManager.remove(socketId);
+        });
         audioConsumersRef.current.clear();
     }, [clearVideos, remoteAudioManager]);
 

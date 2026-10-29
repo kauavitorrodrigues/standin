@@ -41,6 +41,10 @@ const parseScreenShareSettings = (stored: unknown): ScreenShareSettings => {
             SCREEN_IDLE_GRACE_IDS,
             defaults.idleGrace
         ),
+        shareAudio:
+            typeof record.shareAudio === "boolean"
+                ? record.shareAudio
+                : defaults.shareAudio,
     };
 };
 

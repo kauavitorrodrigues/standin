@@ -74,6 +74,8 @@ export type ScreenShareSettings = {
     // "Optimize for video": 24 fps, and a hint that follows the tier.
     highQuality: boolean;
     idleGrace: ScreenIdleGrace;
+    // Sends the sound of the tab or of the system with the screen.
+    shareAudio: boolean;
 };
 
 export const DEFAULT_SCREEN_SHARE_SETTINGS: ScreenShareSettings = {
@@ -82,6 +84,7 @@ export const DEFAULT_SCREEN_SHARE_SETTINGS: ScreenShareSettings = {
     contentHint: "motion",
     highQuality: false,
     idleGrace: "1m",
+    shareAudio: false,
 };
 
 export const SCREEN_SHARE_SETTINGS_STORAGE_KEY = "media_screen_share_settings";

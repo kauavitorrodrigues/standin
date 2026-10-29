@@ -21,6 +21,19 @@ export const getScreenCaptureConstraints = (): MediaTrackConstraints =>
         cursor: "always",
     }) as MediaTrackConstraints;
 
+// The sound of a share is music and system sounds, not a voice, so the
+// processing meant for a microphone is off: it would pump the level and cut
+// what it takes for noise. `suppressLocalAudioPlayback` keeps the sharing tab
+// from playing the sound back to the person while it is also being sent, and
+// is missing from the DOM typings, hence the cast.
+export const getScreenAudioConstraints = (): MediaTrackConstraints =>
+    ({
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        suppressLocalAudioPlayback: true,
+    }) as MediaTrackConstraints;
+
 /**
  * The tier of a share: the chosen resolution, held at MED when the
  * performance level says HD is off.

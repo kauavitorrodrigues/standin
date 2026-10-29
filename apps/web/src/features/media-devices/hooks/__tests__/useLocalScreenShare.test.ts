@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, unmountAllHooks } from "@/test-utils/renderHook";
+import { DEFAULT_SCREEN_SHARE_SETTINGS } from "../../consts/streamingSettings";
+import { screenShareSettingsPreference } from "../../lib/streamingSettingsPreferences";
 import { useLocalScreenShare } from "../useLocalScreenShare";
 
 type FakeTrack = {
@@ -99,6 +101,34 @@ describe("useLocalScreenShare", () => {
             },
             audio: false,
         });
+    });
+
+    it("asks for the sound without voice processing when the setting is on", async () => {
+        vi.spyOn(screenShareSettingsPreference, "get").mockReturnValue({
+            ...DEFAULT_SCREEN_SHARE_SETTINGS,
+            shareAudio: true,
+        });
+        const picker = createPicker();
+        navigator.mediaDevices.getDisplayMedia = picker.getDisplayMedia;
+        const { result, act } = renderHook(useLocalScreenShare);
+        const { stream } = createFakeStream();
+
+        await act(async () => {
+            const pending = result.current.start();
+            picker.resolve(stream);
+            await pending;
+        });
+
+        expect(picker.getDisplayMedia).toHaveBeenCalledWith(
+            expect.objectContaining({
+                audio: expect.objectContaining({
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                }),
+            })
+        );
+        vi.restoreAllMocks();
     });
 
     it("keeps sharing when applyConstraints rejects", async () => {

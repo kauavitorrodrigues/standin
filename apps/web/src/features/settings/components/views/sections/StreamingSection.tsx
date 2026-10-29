@@ -1,4 +1,5 @@
 import { ScreenShareSettingsSelect } from "../../instances/ScreenShareSettingsSelect";
+import { ScreenShareAudioSwitch } from "../../instances/ScreenShareAudioSwitch";
 import { ScreenShareHighQualitySwitch } from "../../instances/ScreenShareHighQualitySwitch";
 import { SettingsGroup } from "../../layout/SettingsGroup";
 import { SettingsRow } from "../../layout/SettingsRow";
@@ -52,6 +53,12 @@ export const StreamingSection = () => (
                 description="Usa 24 quadros por segundo e dá prioridade à nitidez em 1080p ou mais. Vale para o próximo compartilhamento"
             >
                 <ScreenShareHighQualitySwitch />
+            </SettingsRow>
+            <SettingsRow
+                title="Compartilhar o áudio"
+                description="Envia o som da aba ou do sistema junto com a tela. Marque a opção de áudio na janela do navegador ao escolher o que compartilhar. Vale para o próximo compartilhamento"
+            >
+                <ScreenShareAudioSwitch />
             </SettingsRow>
         </SettingsGroup>
         <SettingsGroup label="Comportamento">

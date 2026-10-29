@@ -20,6 +20,7 @@ export function useSfuLocalTracks(
         localAudioTrack,
         localCameraTrack,
         localScreenTrack,
+        localScreenAudioTrack,
         isMicEnabled,
         isHeadphonesOn,
         isFocusModeOn,
@@ -40,6 +41,9 @@ export function useSfuLocalTracks(
     useEffect(() => {
         supervisorRef.current?.setTrack("screen", localScreenTrack);
     }, [supervisorRef, localScreenTrack]);
+    useEffect(() => {
+        supervisorRef.current?.setTrack("screen-audio", localScreenAudioTrack);
+    }, [supervisorRef, localScreenAudioTrack]);
     useEffect(() => {
         if (!supervisorRef.current) return;
         socket.emit("media:set-muted", { muted: !isMicEnabled });

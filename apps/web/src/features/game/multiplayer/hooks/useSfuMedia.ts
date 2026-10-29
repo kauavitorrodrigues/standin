@@ -31,6 +31,7 @@ export function useSfuMedia({
     localAudioTrack,
     localCameraTrack,
     localScreenTrack,
+    localScreenAudioTrack,
     isMicEnabled,
     isHeadphonesOn,
     isFocusModeOn,
@@ -54,6 +55,7 @@ export function useSfuMedia({
         localAudioTrack,
         localCameraTrack,
         localScreenTrack,
+        localScreenAudioTrack,
         isMicEnabled,
         isHeadphonesOn,
         isFocusModeOn,
@@ -102,6 +104,7 @@ export function useSfuMedia({
         supervisor.setTrack("mic", latest.localAudioTrack);
         supervisor.setTrack("camera", latest.localCameraTrack);
         supervisor.setTrack("screen", latest.localScreenTrack);
+        supervisor.setTrack("screen-audio", latest.localScreenAudioTrack);
         socket.emit("media:set-muted", { muted: !latest.isMicEnabled });
         socket.emit("media:set-privacy", {
             headphones: latest.isHeadphonesOn,

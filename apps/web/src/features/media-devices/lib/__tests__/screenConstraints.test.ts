@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_SCREEN_SHARE_SETTINGS } from "../../consts/streamingSettings";
 import {
     getIdleGraceMs,
+    getScreenAudioConstraints,
     getScreenCaptureConstraints,
     getScreenContentHint,
     getScreenTrackConstraints,
@@ -13,6 +14,22 @@ describe("getScreenCaptureConstraints", () => {
             width: { max: 2880 },
             height: { max: 2880 },
             cursor: "always",
+        });
+    });
+});
+
+describe("getScreenAudioConstraints", () => {
+    it("turns off the processing meant for a voice, which would spoil music", () => {
+        expect(getScreenAudioConstraints()).toMatchObject({
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+        });
+    });
+
+    it("keeps the sharing tab from playing the sound back to the person", () => {
+        expect(getScreenAudioConstraints()).toMatchObject({
+            suppressLocalAudioPlayback: true,
         });
     });
 });

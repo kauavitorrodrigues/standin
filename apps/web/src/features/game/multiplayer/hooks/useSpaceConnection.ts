@@ -195,6 +195,8 @@ export function useSpaceConnection({
         localAudioTrack: localStream?.getAudioTracks()[0] ?? null,
         localCameraTrack: localCameraStream?.getVideoTracks()[0] ?? null,
         localScreenTrack: screenShare.stream?.getVideoTracks()[0] ?? null,
+        localScreenAudioTrack:
+            screenShare.stream?.getAudioTracks()[0] ?? null,
         isMicEnabled,
         isHeadphonesOn,
         isFocusModeOn,
