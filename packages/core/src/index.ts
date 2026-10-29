@@ -10,3 +10,4 @@ export * from "./features/conversations";
 export * from "./features/avatar";
 export * from "./features/bootstrap";
 export * from "./features/health";
+export * from "./features/service-tokens";

@@ -120,6 +120,13 @@
       "when": 1793315098881,
       "tag": "0016_add_area_key",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793317632302,
+      "tag": "0017_add_service_tokens",
+      "breakpoints": true
     }
   ]
 }
