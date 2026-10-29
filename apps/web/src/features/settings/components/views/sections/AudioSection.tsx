@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { playSpeakerTest } from "@/features/sounds/lib/playSpeakerTest";
 import { useMediaDeviceControl } from "@/features/media-devices/hooks/useMediaDeviceControl";
 import { AudioProcessingSwitch } from "../../instances/AudioProcessingSwitch";
 import { DeviceSelect } from "../../instances/DeviceSelect";
@@ -85,6 +87,18 @@ export const AudioSection = () => {
                 </SettingsRow>
             </SettingsGroup>
             <SettingsGroup label="Teste">
+                <SettingsRow
+                    title="Testar saída de áudio"
+                    description="Toca um som no volume das outras pessoas, na saída escolhida"
+                >
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={playSpeakerTest}
+                    >
+                        Tocar som
+                    </Button>
+                </SettingsRow>
                 <MicPreview />
             </SettingsGroup>
         </>

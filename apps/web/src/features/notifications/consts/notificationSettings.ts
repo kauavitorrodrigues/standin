@@ -9,11 +9,14 @@ export type ChatSoundMode = (typeof CHAT_SOUND_MODE_IDS)[number];
 export type NotificationSettings = {
     chatNotify: ChatNotifyMode;
     chatSound: ChatSoundMode;
+    // 0..1, applied to every notification sound.
+    volume: number;
 };
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
     chatNotify: "direct",
     chatSound: "direct",
+    volume: 0.5,
 };
 
 export const NOTIFICATION_SETTINGS_STORAGE_KEY = "notification_settings";
@@ -21,5 +24,5 @@ export const NOTIFICATION_SETTINGS_STORAGE_KEY = "notification_settings";
 export const NOTIFICATION_SOUND = {
     frequencyHz: 880,
     durationSeconds: 0.18,
-    volume: 0.12,
+    throttleMs: 2000,
 } as const;
