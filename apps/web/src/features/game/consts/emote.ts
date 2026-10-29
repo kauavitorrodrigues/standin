@@ -36,6 +36,13 @@ export const EMOTE_PARTICLE = {
     MAX_ACTIVE: 32,
 } as const;
 
+// Events of the game that ask for emojis to float up from a point of the map,
+// for whatever has no avatar to carry them. Local to this client, nothing is
+// sent to the others.
+export const EMOTE_EVENTS = {
+    FIRE_EMOJI: "emote:fire-emoji",
+} as const;
+
 // Over every object and avatar and the foreground layer, under the room dim.
 export const EMOTE_DEPTH = PLACED_ASSET_DEPTH.FOREGROUND + 1;
 
