@@ -12,3 +12,4 @@ export * from "./chat";
 export * from "./areas";
 export * from "./avatar";
 export * from "./media";
+export * from "./health";

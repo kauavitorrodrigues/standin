@@ -51,12 +51,33 @@ services:
       # The public address of the machine. Without it clients cannot reach the
       # media port.
       MEDIA_ANNOUNCED_ADDRESS: ${MEDIA_ANNOUNCED_ADDRESS:?set the public address of the machine}
+      # The first admin and organization. The container creates them on start
+      # only when both ADMIN_EMAIL and ADMIN_PASSWORD are set.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-}
+      ORGANIZATION_NAME: ${ORGANIZATION_NAME:-}
     ports:
       # One port for all media, over UDP first and TCP as the fallback.
       - "${MEDIA_LISTEN_PORT:-44444}:${MEDIA_LISTEN_PORT:-44444}/udp"
       - "${MEDIA_LISTEN_PORT:-44444}:${MEDIA_LISTEN_PORT:-44444}/tcp"
     volumes:
       - uploads:/app/apps/api/public
+    # The image has no curl, so the check is a request made by node. /health
+    # answers 200 only while the database answers. The start period covers the
+    # migrations, which run before the server listens.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:${SERVER_PORT:-3001}/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   # Serves the web build and forwards /api to the app, with HTTPS from a
@@ -70,8 +91,11 @@ services:
         APP_COMMIT: ${APP_COMMIT:-}
         APP_COMMIT_TIME: ${APP_COMMIT_TIME:-}
     container_name: standin_proxy
+    # Waits for a healthy app so the first requests are not answered with a
+    # bad gateway while the migrations run.
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
       SERVER_PORT: ${SERVER_PORT:-3001}
@@ -80,6 +104,14 @@ services:
       - "443:443"
     volumes:
       - caddy_data:/data
+    # Asks the admin endpoint Caddy keeps on localhost inside the container, so
+    # the check does not depend on the domain or on the certificate.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
 
   # STUN/TURN relay for peers that cannot reach each other directly (strict

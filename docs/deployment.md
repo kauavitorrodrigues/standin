@@ -26,36 +26,52 @@ The page, the API and the sockets share one origin (`/api` is forwarded to the A
     - `MEDIA_ANNOUNCED_ADDRESS` (the **public IP** of the server, the address clients send media to)
 3. **Open the firewall**, in the host and in the provider's own firewall: `80` and `443` over TCP, and `MEDIA_LISTEN_PORT` over **UDP and TCP**. The UDP port carries the media. The TCP port on the same number is the fallback for networks that block UDP.
 4. **Start everything**: `deploy/up.sh`. It runs `docker compose --profile app up -d --build` with the commit and its time taken from git, so the settings of the app show which commit is running. The same command is the deploy of every later version. Plain `docker compose --profile app up -d --build` also works, and the settings then say only the version. The `app` container applies the migrations before it starts.
-5. **Seed the global library once**: `docker compose exec app pnpm --filter api seed:library` (blank maps need it).
-6. **Open the domain** in two browsers on different networks, join the same space and check that they hear and see each other.
+5. **Create the first admin and organization.** Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` (optionally `ADMIN_NAME`, default `Admin`, and `ORGANIZATION_NAME`, default `Standin`) before step 4 and the `app` container does it on start, right after the migrations. Or run it by hand: `docker compose exec -e ADMIN_EMAIL=you@example.com app pnpm --filter api bootstrap`. See [First admin](#first-admin) below.
+6. **Seed the global library once**: `docker compose exec app pnpm --filter api seed:library` (blank maps need it, and it needs the admin of step 5).
+7. **Check it is healthy**: `docker compose ps` shows `app` and `proxy` as `healthy`, and `curl https://<your domain>/api/health` answers with `"status":"ok"`.
+8. **Open the domain** in two browsers on different networks, join the same space and check that they hear and see each other.
 
 HTTPS is not optional: browsers only allow the microphone, the camera and screen capture on a secure page. Caddy forwards the WebSocket upgrades of Socket.IO on its own.
 
+## First admin
+
+`pnpm --filter api bootstrap` creates the first admin and the first organization from the environment, with no prompts. It is safe to run again: when an admin already exists it creates no account and never resets a password, and an organization is only created while there is none. It prints one line per step (`admin created`, `admin already exists`, `organization created`...).
+
+- `ADMIN_EMAIL` is required. `ADMIN_PASSWORD` must follow the sign up rules (8 to 72 characters, at least three kinds of character, no obvious sequences).
+- Without `ADMIN_PASSWORD` the command generates a strong one and prints it **once**, in that run. Store it right away, it is not saved anywhere else and it is not shown on a later run. Change it after the first sign in.
+- The container runs the command on start only when **both** `ADMIN_EMAIL` and `ADMIN_PASSWORD` are set, so a generated password never ends up in the container logs. To get a generated password, run the command by hand as in step 5 without setting `ADMIN_PASSWORD`.
+- Once the admin exists you can remove `ADMIN_PASSWORD` from `.env`.
+
+## Health checks
+
+The API answers `GET /health` with no session, rate limited to 120 requests a minute per address. The body is `{"status": "ok" | "degraded" | "down", "timestamp": "<ISO date>", "responseTimeMs": <number>}`. The database is checked with a 2 second limit: `ok` when it answers within 500 ms, `degraded` when it answers slower, `down` when it fails or times out. `ok` and `degraded` answer HTTP 200 and `down` answers 503. The body never says why a check failed. Through the proxy it is `/api/health`. `compose.yml` uses it as the healthcheck of `app` (the migrations run inside its start period) and the `proxy` waits for a healthy `app` before it starts. The `proxy` check asks the admin endpoint Caddy keeps inside its container. `docker compose ps` shows the state of each.
+
 ## Environment variables
 
-| Variable                                                          | Meaning                                                                                             |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`               | The database container. `POSTGRES_PORT` is only the port it shows on the host of a dev machine      |
-| `DATABASE_URL`, `DATABASE_POOL_MAX`                               | The database. The compose file builds the URL from the `POSTGRES_*` values. The pool defaults to 20 |
-| `DB_QUERY_COUNT`                                                  | `1` logs the queries sent per join (see [performance](performance.md)). Leave it `0` in production  |
-| `SERVER_PORT`, `SERVER_URL`, `FRONTEND_URL`, `JWT_SECRET`         | The API                                                                                             |
-| `STORAGE_DRIVER`, `S3_*`                                          | Where uploads go, see the [storage guide](storage.md)                                               |
-| `SITE_ADDRESS`                                                    | The domain Caddy serves                                                                             |
-| `APP_COMMIT`, `APP_COMMIT_TIME`                                   | Build arguments that show the commit in the settings of the app (step 4 above)                      |
-| `MEDIA_WORKERS`                                                   | `1` (default) runs the media server, `0` turns it off. One worker serves the whole process          |
-| `MEDIA_LISTEN_IP`                                                 | The address the media port listens on (`0.0.0.0`)                                                   |
-| `MEDIA_LISTEN_PORT`                                               | The one port for all media, over UDP and TCP (default `44444`)                                      |
-| `MEDIA_ANNOUNCED_ADDRESS`                                         | The public address clients send media to. Required behind a NAT, and on a laptop use `127.0.0.1`    |
-| `TURN_HOST`, `TURN_SECRET`, `TURN_PORT`, `TURN_TTL_SECONDS`       | The optional relay (see below). Off while `TURN_HOST` and `TURN_SECRET` are empty                   |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL` | Sign in with GitHub, see the [guide](github-login.md). Off while empty                              |
-| `VITE_BASE_API_URL`                                               | Read when the web is built. The image sets it to `/api`                                             |
-| `INTEGRATION_DATABASE_URL`                                        | Tests only. Never set it on a server                                                                |
+| Variable                                                           | Meaning                                                                                             |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`                | The database container. `POSTGRES_PORT` is only the port it shows on the host of a dev machine      |
+| `DATABASE_URL`, `DATABASE_POOL_MAX`                                | The database. The compose file builds the URL from the `POSTGRES_*` values. The pool defaults to 20 |
+| `DB_QUERY_COUNT`                                                   | `1` logs the queries sent per join (see [performance](performance.md)). Leave it `0` in production  |
+| `SERVER_PORT`, `SERVER_URL`, `FRONTEND_URL`, `JWT_SECRET`          | The API                                                                                             |
+| `STORAGE_DRIVER`, `S3_*`                                           | Where uploads go, see the [storage guide](storage.md)                                               |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ORGANIZATION_NAME` | The first admin and organization, see [First admin](#first-admin)                                   |
+| `SITE_ADDRESS`                                                     | The domain Caddy serves                                                                             |
+| `APP_COMMIT`, `APP_COMMIT_TIME`                                    | Build arguments that show the commit in the settings of the app (step 4 above)                      |
+| `MEDIA_WORKERS`                                                    | `1` (default) runs the media server, `0` turns it off. One worker serves the whole process          |
+| `MEDIA_LISTEN_IP`                                                  | The address the media port listens on (`0.0.0.0`)                                                   |
+| `MEDIA_LISTEN_PORT`                                                | The one port for all media, over UDP and TCP (default `44444`)                                      |
+| `MEDIA_ANNOUNCED_ADDRESS`                                          | The public address clients send media to. Required behind a NAT, and on a laptop use `127.0.0.1`    |
+| `TURN_HOST`, `TURN_SECRET`, `TURN_PORT`, `TURN_TTL_SECONDS`        | The optional relay (see below). Off while `TURN_HOST` and `TURN_SECRET` are empty                   |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`  | Sign in with GitHub, see the [guide](github-login.md). Off while empty                              |
+| `VITE_BASE_API_URL`                                                | Read when the web is built. The image sets it to `/api`                                             |
+| `INTEGRATION_DATABASE_URL`                                         | Tests only. Never set it on a server                                                                |
 
 All of them are in `.env.example` with a comment.
 
 ## Without Docker
 
-Build with `pnpm install --frozen-lockfile && pnpm build` and apply the migrations with `pnpm -C packages/database db:migrate`. Run `apps/api/dist/server.js` under a process manager with automatic restart, and serve `apps/web/dist` from a reverse proxy that forwards `/api` to the API and the WebSocket upgrades. Build the web with `VITE_BASE_API_URL=/api`. `pnpm install` downloads a prebuilt media worker. If none exists for the platform it builds one, which needs Python 3 and a C++ compiler.
+Build with `pnpm install --frozen-lockfile && pnpm build` and apply the migrations with `pnpm -C packages/database db:migrate`. Create the first admin with `pnpm --filter api bootstrap`. Run `apps/api/dist/server.js` under a process manager with automatic restart, and serve `apps/web/dist` from a reverse proxy that forwards `/api` to the API and the WebSocket upgrades. Build the web with `VITE_BASE_API_URL=/api`. `pnpm install` downloads a prebuilt media worker. If none exists for the platform it builds one, which needs Python 3 and a C++ compiler.
 
 ## Relay (coturn)
 
