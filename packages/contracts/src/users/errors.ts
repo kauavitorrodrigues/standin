@@ -48,3 +48,16 @@ export class ProfilePictureUnsupportedMediaError extends BaseError {
         );
     }
 }
+
+// The values given to the first install (admin email, name, password or
+// organization name) do not pass the same rules as the sign up. The message
+// names the field and the rule, never the value.
+export class BootstrapInputInvalidError extends BaseError {
+    constructor(detail: string) {
+        super(
+            `Invalid bootstrap input: ${detail}`,
+            "BOOTSTRAP_INPUT_INVALID",
+            422
+        );
+    }
+}

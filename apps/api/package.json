@@ -9,6 +9,7 @@
         "dev": "pnpm env:load tsx watch src/server.ts",
         "dev:lan": "pnpm dev",
         "backfill:avatar-sheets": "pnpm env:load tsx src/scripts/backfillAvatarSheets.ts",
+        "bootstrap": "pnpm env:load tsx src/scripts/bootstrap.ts",
         "seed:library": "pnpm env:load tsx src/scripts/seedLibrary.ts",
         "loadtest": "pnpm env:load tsx src/scripts/loadtest/loadtest.ts",
         "loadtest:media": "tsx src/scripts/medialoadtest/mediaLoadTest.ts",

@@ -25,7 +25,9 @@ async function seedLibrary() {
         )
         .limit(1);
     if (!admin) {
-        throw new Error("No admin user found. Run the database seed first.");
+        throw new Error(
+            "No admin user found. Run `pnpm --filter api bootstrap` first."
+        );
     }
 
     const result = await AssetService.seed(seed, { createdBy: admin.id });

@@ -3,6 +3,7 @@ import { RequiresAuth } from "./middlewares/requiresAuth";
 import { authRouter } from "./features/auth/routes";
 import { usersRouter } from "./features/users/routes";
 import { organizationsRouter } from "./features/organizations/routes";
+import { healthRouter } from "./features/health/routes";
 import { iceRouter } from "./features/ice/routes";
 import { templatesRouter } from "./features/maps/templates/routes";
 import { TemplateController } from "./features/maps/templates/controllers";
@@ -27,6 +28,8 @@ import {
 
 const router = express.Router();
 
+// For the container healthchecks and the post-deploy check. No session.
+router.use("/health", healthRouter);
 router.use("/auth", authRouter);
 // The avatar of the signed in user. It comes before the users router, which
 // only has `/me`.

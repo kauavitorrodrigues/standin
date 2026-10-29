@@ -8,3 +8,5 @@ export * from "./features/areas";
 export * from "./features/messages";
 export * from "./features/conversations";
 export * from "./features/avatar";
+export * from "./features/bootstrap";
+export * from "./features/health";
