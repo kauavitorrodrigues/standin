@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import type { MediaPauseReason } from "@standin/contracts";
 import type { RemoteAudioManager } from "../lib/RemoteAudioManager";
 import type { SfuSupervisor } from "../lib/SfuSupervisor";
 
@@ -35,6 +36,13 @@ export type UseSfuRemoteMediaOptions = {
 
 export type UseSfuSocketEventsOptions = {
     supervisorRef: RefObject<SfuSupervisor | null>;
+    // A video is held back for a reason, or plays again with a null reason.
+    setRemotePauseReason: (
+        consumerId: string,
+        reason: MediaPauseReason | null
+    ) => void;
+    // The server ended the hiding of some people, and these are still hidden.
+    setHiddenVideoUserIds: (userIds: readonly string[]) => void;
     applySpeakers: (userIds: readonly string[]) => void;
     setRemoteMicMuted: (userId: string, isMuted: boolean) => void;
     setRemotePrivacy: (userId: string, privacy: RemotePrivacy) => void;

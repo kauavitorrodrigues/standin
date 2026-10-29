@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import type { MediaPauseReason } from "@standin/contracts";
 import type { UseSfuRemoteMediaOptions } from "../types/sfuHooks";
 import type { SfuRemoteTrack } from "../types/sfu";
 import { diffSpeakers } from "../utils/diffSpeakers";
@@ -24,6 +25,7 @@ export function useSfuRemoteMedia({
     const {
         addTrack: addVideoTrack,
         removeConsumer,
+        setPauseReason,
         clear: clearVideos,
     } = videos;
 
@@ -75,6 +77,13 @@ export function useSfuRemoteMedia({
         [remoteAudioManager, removeConsumer]
     );
 
+    /** A video is held back for a reason, or plays again (a null reason). */
+    const setRemotePauseReason = useCallback(
+        (consumerId: string, reason: MediaPauseReason | null) =>
+            setPauseReason(consumerId, reason),
+        [setPauseReason]
+    );
+
     /** Stops every remote stream, when the session is rebuilt or ends. */
     const stopAllRemote = useCallback(() => {
         clearVideos();
@@ -113,6 +122,7 @@ export function useSfuRemoteMedia({
         playRemote,
         stopRemote,
         stopAllRemote,
+        setRemotePauseReason,
         applySpeakers,
     };
 }

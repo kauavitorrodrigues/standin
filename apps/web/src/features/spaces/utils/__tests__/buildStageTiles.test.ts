@@ -16,6 +16,7 @@ const remote = (
     userId,
     slot,
     stream: stream(`${socketId}-${slot}`),
+    pauseReason: null,
 });
 
 const names = buildNameLookup([
