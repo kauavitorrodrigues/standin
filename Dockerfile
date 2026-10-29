@@ -17,6 +17,13 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 # The page reaches the API through the same origin, under /api.
 ENV VITE_BASE_API_URL=/api
+# The build tells which commit it came from. The .git folder is not in the
+# context, so the commit comes in as an argument:
+#   docker build --build-arg APP_COMMIT=$(git rev-parse --short HEAD) ...
+ARG APP_COMMIT=""
+ARG APP_COMMIT_TIME=""
+ENV VITE_APP_COMMIT=$APP_COMMIT
+ENV VITE_APP_COMMIT_TIME=$APP_COMMIT_TIME
 RUN pnpm build
 
 FROM node:26-slim AS app

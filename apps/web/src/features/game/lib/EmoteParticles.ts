@@ -55,15 +55,21 @@ export class EmoteParticles {
 
     // `feet` is the anchor of the avatar, in world px.
     emit(feet: Point, emoji: string, count: number): void {
+        this.emitAt(
+            feet.x,
+            feet.y - AVATAR.visible.h * EMOTE_PARTICLE.SPAWN_BODY_SHARE,
+            emoji,
+            count
+        );
+    }
+
+    // The emojis start at this exact pixel of the world, with nothing added for
+    // a body: for a thing on the map that is not an avatar.
+    emitAt(x: number, y: number, emoji: string, count: number): void {
         if (!this.scene.scene.isActive()) return;
 
-        const origin = {
-            x: feet.x,
-            y: feet.y - AVATAR.visible.h * EMOTE_PARTICLE.SPAWN_BODY_SHARE,
-        };
-        if (!this.scene.cameras.main.worldView.contains(origin.x, origin.y)) {
-            return;
-        }
+        const origin = { x, y };
+        if (!this.scene.cameras.main.worldView.contains(x, y)) return;
 
         const key = this.textures.get(emoji, this.scene.time.now);
         if (key === null) return;

@@ -71,6 +71,7 @@ export const SlotParts = ({ slot }: SlotPartsProps) => {
                         return (
                             <PartGridRow
                                 key={virtualRow.key}
+                                slot={slot}
                                 items={items}
                                 columns={columns}
                                 offset={virtualRow.start}
@@ -83,6 +84,7 @@ export const SlotParts = ({ slot }: SlotPartsProps) => {
                 </div>
             </div>
             <VariationSwatchesField
+                slot={slot}
                 family={findChosenFamily(grid.items, choice)}
                 selectedId={choice?.partId ?? null}
                 onSelect={chooseVariation}

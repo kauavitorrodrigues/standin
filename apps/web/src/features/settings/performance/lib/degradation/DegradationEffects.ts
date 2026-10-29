@@ -16,6 +16,8 @@ export type DegradationNotice = {
     signalId: string;
     // The lowered values were written to the user's preference.
     promoted: boolean;
+    // The machine is back to normal. Shown once, with no way to cancel.
+    recovered?: boolean;
 };
 
 export const degradationNoticeStore = createMemoryStore<DegradationNotice | null>(null);
@@ -41,6 +43,7 @@ export class DegradationEffects {
     private active = false;
     // Set when the user cancelled, so the same episode is not applied again.
     private cancelled = false;
+    private degradedBy: string | null = null;
     // The user's preference before a permanent promotion, for Cancel.
     private previousPreference: PerformanceSettings | null = null;
 
@@ -53,6 +56,7 @@ export class DegradationEffects {
     degrade({ signalId, hardwareLimited }: DegradationStart) {
         if (this.active || this.cancelled) return;
         this.active = true;
+        this.degradedBy = signalId;
 
         const user = this.deps.preference.get();
         const lowered = getDegradedSettings();
@@ -71,11 +75,17 @@ export class DegradationEffects {
     }
 
     recover() {
+        // Say so only when the user was still on the lowered settings, not
+        // after Cancel, which already gave them back.
+        const signalId = this.active ? this.degradedBy : null;
         this.active = false;
         this.cancelled = false;
+        this.degradedBy = null;
         this.previousPreference = null;
         this.deps.override.set(NO_PERFORMANCE_OVERRIDE);
-        this.deps.notice.set(null);
+        this.deps.notice.set(
+            signalId ? { signalId, promoted: false, recovered: true } : null
+        );
     }
 
     cancel() {

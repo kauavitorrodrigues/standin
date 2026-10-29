@@ -13,6 +13,15 @@ export type EmoteParticleState = EmoteParticleMotion & {
     ageMs: number;
 };
 
+// What FIRE_EMOJI carries: where the emojis start, in world px, with no offset
+// from a body.
+export type FireEmojiEvent = {
+    x: number;
+    y: number;
+    emoji: string;
+    count: number;
+};
+
 // The parts of a Phaser canvas texture the emoji is drawn on.
 export type EmojiCanvas = {
     context: CanvasRenderingContext2D;

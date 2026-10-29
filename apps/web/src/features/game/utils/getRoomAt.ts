@@ -37,14 +37,22 @@ export const isInsideRoom = (room: GameRoom, point: Point): boolean => {
     );
 };
 
+// Every room whose shape holds the point, in the order they were drawn.
+export const getRoomsAt = (
+    rooms: readonly GameRoom[],
+    point: Point
+): GameRoom[] => rooms.filter((room) => isInsideRoom(room, point));
+
 // The room whose shape holds the point, or null when it is outside all of them.
-// A plain loop, since this runs for every remote avatar every frame and a
-// `find` would build a closure each time.
+// Rooms may overlap in the world, and then the one drawn last is the one the
+// point belongs to, so the search runs from the end. A plain loop, since this
+// runs for every remote avatar every frame and a `filter` or `find` would
+// build an array or a closure each time.
 export const getRoomAt = (
     rooms: readonly GameRoom[],
     point: Point
 ): GameRoom | null => {
-    for (let index = 0; index < rooms.length; index += 1) {
+    for (let index = rooms.length - 1; index >= 0; index -= 1) {
         const room = rooms[index]!;
         if (isInsideRoom(room, point)) return room;
     }

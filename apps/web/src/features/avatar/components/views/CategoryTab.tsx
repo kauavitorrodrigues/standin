@@ -16,6 +16,7 @@ export const CategoryTab = ({
 }: CategoryTabProps) => (
     <button
         type="button"
+        data-category-tab=""
         aria-current={isActive}
         onClick={() => onSelect(category.slot)}
         className={cn(

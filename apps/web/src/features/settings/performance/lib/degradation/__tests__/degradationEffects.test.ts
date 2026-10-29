@@ -109,6 +109,38 @@ describe("banner", () => {
         expect(effective().fpsLimit).toBe("30");
     });
 
+    it("recovering after a degradation leaves a recovery notice with the signal", () => {
+        const { effects, notice, effective } = setup();
+        effects.degrade(cpu);
+        effects.recover();
+        expect(notice.get()).toEqual({
+            signalId: "webrtcCpuLimitation",
+            promoted: false,
+            recovered: true,
+        });
+        expect(effective()).toEqual(DEFAULT_PERFORMANCE_SETTINGS);
+        effects.dismiss();
+        expect(notice.get()).toBeNull();
+    });
+
+    it("recovering with nothing degraded, or after Cancel, shows nothing", () => {
+        const { effects, notice } = setup();
+        effects.recover();
+        expect(notice.get()).toBeNull();
+        effects.degrade(cpu);
+        effects.cancel();
+        effects.recover();
+        expect(notice.get()).toBeNull();
+    });
+
+    it("a new degradation replaces the recovery notice", () => {
+        const { effects, notice } = setup();
+        effects.degrade(cpu);
+        effects.recover();
+        effects.degrade(battery);
+        expect(notice.get()).toEqual({ signalId: "batteryLow", promoted: false });
+    });
+
     it("cancel reverts the override and is not reapplied in the same episode", () => {
         const { effects, effective, notice } = setup();
         effects.degrade(cpu);

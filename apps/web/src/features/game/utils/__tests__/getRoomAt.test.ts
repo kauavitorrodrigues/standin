@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRoomAt } from "@/features/game/utils/getRoomAt";
+import { getRoomAt, getRoomsAt } from "@/features/game/utils/getRoomAt";
 import type { GameRoom } from "@/features/game/types/room";
 
 const rect: GameRoom = {
@@ -38,5 +38,33 @@ describe("getRoomAt", () => {
     it("follows the polygon, not its bounding box", () => {
         expect(getRoomAt([triangle], { x: 320, y: 320 })?.key).toBe("t");
         expect(getRoomAt([triangle], { x: 390, y: 390 })).toBeNull();
+    });
+
+    it("gives the point to the room drawn last when rooms overlap", () => {
+        const bigger: GameRoom = { ...rect, key: "bigger", width: 200, height: 200 };
+        const inside: GameRoom = { ...rect, key: "inside", width: 32, height: 32 };
+
+        expect(getRoomAt([bigger, inside], { x: 110, y: 110 })?.key).toBe("inside");
+        expect(getRoomAt([inside, bigger], { x: 110, y: 110 })?.key).toBe("bigger");
+    });
+
+    it("still finds the earlier room where the later one does not reach", () => {
+        const bigger: GameRoom = { ...rect, key: "bigger", width: 200, height: 200 };
+        const inside: GameRoom = { ...rect, key: "inside", width: 32, height: 32 };
+
+        expect(getRoomAt([bigger, inside], { x: 250, y: 250 })?.key).toBe("bigger");
+    });
+});
+
+describe("getRoomsAt", () => {
+    it("lists every room that holds the point in the order they were drawn", () => {
+        const bigger: GameRoom = { ...rect, key: "bigger", width: 200, height: 200 };
+        const inside: GameRoom = { ...rect, key: "inside", width: 32, height: 32 };
+
+        expect(getRoomsAt([bigger, inside, triangle], { x: 110, y: 110 }).map((r) => r.key)).toEqual([
+            "bigger",
+            "inside",
+        ]);
+        expect(getRoomsAt([bigger, inside], { x: 900, y: 900 })).toEqual([]);
     });
 });

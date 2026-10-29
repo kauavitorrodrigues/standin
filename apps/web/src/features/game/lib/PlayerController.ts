@@ -30,19 +30,23 @@ export class PlayerController {
     private readonly mover: TileMover;
     // Told where a walk was going when a tile on its way closed.
     private readonly onWalkBlocked: (destination: Cell) => void;
+    // Whether the avatar is about to sit, so a tap leaves its facing alone.
+    private readonly isAboutToSit: () => boolean;
 
     constructor(
         scene: Phaser.Scene,
         player: Player,
         walker: PathWalker,
         mover: TileMover,
-        onWalkBlocked: (destination: Cell) => void
+        onWalkBlocked: (destination: Cell) => void,
+        isAboutToSit: () => boolean = () => false
     ) {
         this.scene = scene;
         this.player = player;
         this.walker = walker;
         this.mover = mover;
         this.onWalkBlocked = onWalkBlocked;
+        this.isAboutToSit = isAboutToSit;
         this.keys = resolveMovementKeys(scene);
     }
 
@@ -96,7 +100,11 @@ export class PlayerController {
             return;
         }
 
-        if (direction) this.player.setDirection(direction);
+        // Over a free seat a tap does not turn the avatar: it sits on release
+        // facing the seat, and the turn would show for one frame before that.
+        if (direction && !this.isAboutToSit()) {
+            this.player.setDirection(direction);
+        }
 
         // A tap turns the avatar, and only a held key makes it walk.
         const walkX = isMoving ? axisX : 0;

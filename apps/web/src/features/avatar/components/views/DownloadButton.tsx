@@ -1,5 +1,6 @@
 import { DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AVATAR_TEST_IDS } from "../../utils/avatarTestIds";
 import {
     Tooltip,
     TooltipContent,
@@ -27,6 +28,7 @@ export const DownloadButton = ({
                     size="icon-lg"
                     variant="secondary"
                     aria-label="Baixar imagem"
+                    data-testid={AVATAR_TEST_IDS.download}
                     onClick={onDownload}
                 />
             </TooltipTrigger>

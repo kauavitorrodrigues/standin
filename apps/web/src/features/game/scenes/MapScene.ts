@@ -64,6 +64,8 @@ import { RemoteAvatar } from "@/features/game/lib/RemoteAvatar";
 import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
 import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
+import { EMOTE_EVENTS } from "@/features/game/consts/emote";
+import type { FireEmojiEvent } from "@/features/game/types/emote";
 import { getEmoteRadius } from "@/features/game/utils/getEmoteRadius";
 import {
     NEARBY_RATE_LIMIT,
@@ -377,10 +379,11 @@ export class MapScene extends Phaser.Scene {
         this.setLocalAvatarSheet(this.localAvatarSheetFileId);
         this.applyLocalUserProfile();
 
-        this.seatController = new SeatController(
-            this.player,
-            this.seatOccupancy
-        );
+        this.seatController = new SeatController(this.player, {
+            isTaken: this.seatOccupancy.isTaken,
+            mustYield: this.seatOccupancy.mustYield,
+            isBlocked: (seat) => this.isSeatBlocked(seat),
+        });
         this.tileMover = new TileMover(
             PLAYER_PHYSICS.SPEED,
             { columns: this.mapColumns, rows: this.mapRows },
@@ -392,7 +395,8 @@ export class MapScene extends Phaser.Scene {
             this.player,
             this.pathWalker,
             this.tileMover,
-            (destination) => this.replanWalk(destination)
+            (destination) => this.replanWalk(destination),
+            () => this.seatController?.canSitHere() ?? false
         );
         this.tileCursor = new TileCursor({
             scene: this,
@@ -477,7 +481,12 @@ export class MapScene extends Phaser.Scene {
             this.particleBudget
         );
 
+        const onFireEmoji = ({ x, y, emoji, count }: FireEmojiEvent) =>
+            this.emoteParticles?.emitAt(x, y, emoji, count);
+        this.game.events.on(EMOTE_EVENTS.FIRE_EMOJI, onFireEmoji);
+
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.game.events.off(EMOTE_EVENTS.FIRE_EMOJI, onFireEmoji);
             this.emoteParticles?.destroy();
             this.emoteParticles = null;
             this.emoteTextures?.destroy();
@@ -835,6 +844,19 @@ export class MapScene extends Phaser.Scene {
         if (!hasPlacedChanges(diff)) return;
 
         this.freeTrappedAvatars();
+    }
+
+    // The point of a seat lies inside a solid, like a wall or a closed door.
+    // The body of the avatar is not counted: a sofa against a wall is still a
+    // sofa, only a seat in the wall itself is out.
+    private isSeatBlocked(seat: { x: number; y: number }): boolean {
+        return this.getSolidRects().some(
+            (solid) =>
+                seat.x >= solid.x &&
+                seat.x < solid.x + solid.width &&
+                seat.y >= solid.y &&
+                seat.y < solid.y + solid.height
+        );
     }
 
     // An avatar can stand on the tile: inside the map and clear of the solids.

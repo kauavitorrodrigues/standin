@@ -4,7 +4,7 @@ import {
     LAYOUT_ZONE_KINDS,
 } from "../../schemas/layout.schema";
 import { LAYOUT_ISSUE_MESSAGES as Messages } from "../consts/issue-messages";
-import { SPAWN_MIN_DISTANCE_TILES } from "../consts/thresholds";
+import { MIN_SPAWN_ZONES, SPAWN_MIN_DISTANCE_TILES } from "../consts/thresholds";
 import {
     LAYOUT_ISSUE_CODES as Code,
     createIssue,
@@ -33,7 +33,7 @@ export const validateZones = (layout: LooseLayout): LayoutValidationResult => {
     const spawns = zones.filter(
         (zone) => zone.kind === LAYOUT_ZONE_KINDS.SPAWN
     );
-    if (spawns.length === 0) {
+    if (spawns.length < MIN_SPAWN_ZONES) {
         result.errors.push(
             createIssue(
                 Code.SPAWN_MISSING,

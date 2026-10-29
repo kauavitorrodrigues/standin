@@ -11,18 +11,24 @@ const buildSprite = () => {
         setTexture: vi.fn(() => sprite),
         setActive: vi.fn(() => sprite),
         setVisible: vi.fn(() => sprite),
-        setPosition: vi.fn(() => sprite),
+        setPosition: vi.fn((x: number, y: number) => {
+            void x;
+            void y;
+            return sprite;
+        }),
         setAlpha: vi.fn(() => sprite),
         destroy: vi.fn(),
     };
     return sprite;
 };
 
-const buildScene = () => {
+const buildScene = (
+    contains: (x: number, y: number) => boolean = () => true
+) => {
     const sprites: ReturnType<typeof buildSprite>[] = [];
     const scene = {
         scene: { isActive: () => true },
-        cameras: { main: { worldView: { contains: () => true } } },
+        cameras: { main: { worldView: { contains } } },
         time: { now: 0 },
         add: {
             sprite: () => {
@@ -94,5 +100,55 @@ describe("EmoteParticles global cap", () => {
         second.emit({ x: 0, y: 0 }, "x", 3);
 
         expect(budget.count).toBe(4);
+    });
+});
+
+describe("EmoteParticles.emitAt", () => {
+    const build = (contains: (x: number, y: number) => boolean = () => true) => {
+        const { scene, sprites } = buildScene(contains);
+        const textures = { get: () => "key" } as unknown as EmojiTextureCache;
+        const particles = new EmoteParticles(scene as never, textures, () => 0.5);
+        return { particles, sprites };
+    };
+
+    it("spawns the count of particles at the exact pixel, with no body offset", () => {
+        const { particles, sprites } = build();
+
+        particles.emitAt(200, 300, "🎉", 10);
+
+        expect(sprites).toHaveLength(10);
+        // The ones with no delay show at once, at the pixel asked for.
+        const placed = sprites.flatMap((sprite) => sprite.setPosition.mock.calls);
+        expect(placed.length).toBeGreaterThan(0);
+        placed.forEach(([x, y]) => {
+            expect(x).toBe(200);
+            expect(y).toBe(300);
+        });
+    });
+
+    it("respects the global cap", () => {
+        const { particles, sprites } = build();
+
+        particles.emitAt(0, 0, "🎉", 100);
+
+        expect(sprites).toHaveLength(EMOTE_PARTICLE.MAX_ACTIVE);
+    });
+
+    it("draws nothing for a pixel outside the view", () => {
+        const { particles, sprites } = build(() => false);
+
+        particles.emitAt(5000, 5000, "🎉", 10);
+
+        expect(sprites).toHaveLength(0);
+    });
+
+    it("emit still starts above the feet of the avatar", () => {
+        const { particles, sprites } = build();
+
+        particles.emit({ x: 100, y: 200 }, "x", 1);
+
+        const [[x, y]] = sprites[0].setPosition.mock.calls;
+        expect(x).toBe(100);
+        expect(y).toBeLessThan(200);
     });
 });

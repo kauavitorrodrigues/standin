@@ -3,12 +3,16 @@ import { CPU_LIMITATION_POLL_INTERVAL_MS } from "../consts/stats";
 export type CpuLimitationSample = {
     reason: string;
     cpuLimitedDuration: number;
+    // Share of the time since the previous poll spent limited by the cpu, from
+    // 0 to 100. Reported for diagnosis, no threshold reads it.
+    cpuLimitedPercentage: number;
 };
 
 export type CpuLimitationPollerOptions = {
     getVideoSenders: () => RTCRtpSender[];
     onSample: (sample: CpuLimitationSample) => void;
     intervalMs?: number;
+    now?: () => number;
 };
 
 type OutboundStats = {
@@ -27,6 +31,7 @@ export class CpuLimitationPoller {
     private timer: ReturnType<typeof setInterval> | null = null;
     private previousCpu = new WeakMap<RTCRtpSender, number>();
     private polling = false;
+    private lastPollAt: number | null = null;
     private readonly options: CpuLimitationPollerOptions;
 
     constructor(options: CpuLimitationPollerOptions) {
@@ -45,6 +50,7 @@ export class CpuLimitationPoller {
         if (!this.timer) return;
         clearInterval(this.timer);
         this.timer = null;
+        this.lastPollAt = null;
     }
 
     async poll(): Promise<void> {
@@ -64,6 +70,13 @@ export class CpuLimitationPoller {
     }
 
     private async collect(senders: RTCRtpSender[]): Promise<CpuLimitationSample> {
+        const now = (this.options.now ?? Date.now)();
+        const elapsedSeconds =
+            ((this.lastPollAt === null
+                ? (this.options.intervalMs ?? CPU_LIMITATION_POLL_INTERVAL_MS)
+                : now - this.lastPollAt)) / 1000;
+        this.lastPollAt = now;
+
         let reason = "none";
         let cpuLimitedDuration = 0;
 
@@ -81,6 +94,10 @@ export class CpuLimitationPoller {
                 cpuLimitedDuration += delta;
             });
         }
-        return { reason, cpuLimitedDuration };
+        const cpuLimitedPercentage =
+            elapsedSeconds > 0
+                ? Math.min(100, (cpuLimitedDuration / elapsedSeconds) * 100)
+                : 0;
+        return { reason, cpuLimitedDuration, cpuLimitedPercentage };
     }
 }
