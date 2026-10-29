@@ -25,7 +25,7 @@ The page, the API and the sockets share one origin (`/api` is forwarded to the A
     - `SERVER_URL` and `FRONTEND_URL` (both `https://` plus the domain)
     - `MEDIA_ANNOUNCED_ADDRESS` (the **public IP** of the server, the address clients send media to)
 3. **Open the firewall**, in the host and in the provider's own firewall: `80` and `443` over TCP, and `MEDIA_LISTEN_PORT` over **UDP and TCP**. The UDP port carries the media. The TCP port on the same number is the fallback for networks that block UDP.
-4. **Start everything**: `docker compose --profile app up -d --build`. The `app` container applies the migrations before it starts.
+4. **Start everything**: `docker compose --profile app up -d --build`. To show the commit in the settings of the app, build with `APP_COMMIT=$(git rev-parse --short HEAD) APP_COMMIT_TIME=$(git show -s --format=%cI HEAD) docker compose --profile app up -d --build`. Without them the settings say only the version. The `app` container applies the migrations before it starts.
 5. **Seed the global library once**: `docker compose exec app pnpm --filter api seed:library` (blank maps need it).
 6. **Open the domain** in two browsers on different networks, join the same space and check that they hear and see each other.
 

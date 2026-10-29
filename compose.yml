@@ -25,6 +25,9 @@ services:
     build:
       context: .
       target: app
+      args:
+        APP_COMMIT: ${APP_COMMIT:-}
+        APP_COMMIT_TIME: ${APP_COMMIT_TIME:-}
     container_name: standin_app
     depends_on:
       postgres:
@@ -63,6 +66,9 @@ services:
     build:
       context: .
       target: proxy
+      args:
+        APP_COMMIT: ${APP_COMMIT:-}
+        APP_COMMIT_TIME: ${APP_COMMIT_TIME:-}
     container_name: standin_proxy
     depends_on:
       - app
