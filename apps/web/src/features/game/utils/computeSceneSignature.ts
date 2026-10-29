@@ -1,3 +1,5 @@
+import { AMBIENT_DATA_KEY } from "@/features/game/consts/render-on-demand";
+
 type Signable = {
     x?: number;
     y?: number;
@@ -14,6 +16,8 @@ type Signable = {
     text?: string;
     commandBuffer?: unknown[];
     list?: Signable[];
+    // Phaser's way to read what was stored on an object with setData.
+    getData?: (key: string) => unknown;
 };
 
 export type SignableScene = {
@@ -66,21 +70,45 @@ const mixObject = (start: number, object: Signable): number => {
     return hash;
 };
 
-// A number that changes whenever something the canvas draws changed: the
-// cameras and every display object (position, scale, alpha, frame, text,
-// graphics commands, children of containers). Blinks, emotes, particles,
+const isAmbient = (object: Signable): boolean =>
+    object.getData?.(AMBIENT_DATA_KEY) === true;
+
+export type SceneSignatures = {
+    // Everything but the scenery that animates by itself: the cameras, the
+    // avatars, the interface drawn in the canvas, the emojis.
+    motion: number;
+    // Only the objects marked as ambient.
+    ambient: number;
+};
+
+// Two numbers that change whenever something the canvas draws changed. They
+// are the cameras and every display object (position, scale, alpha, frame,
+// text, graphics commands, children of containers). Blinks, emotes, particles,
 // remote avatars and typing marks all move one of these, so none of them
-// needs to raise the dirty flag by hand.
-export const computeSceneSignature = (scene: SignableScene): number => {
-    let hash = 2166136261;
+// needs to raise the dirty flag by hand. An object marked as ambient counts in
+// `ambient` only, so a change that comes from nothing but scenery animating
+// can be told from one that comes from someone moving.
+export const computeSceneSignatures = (scene: SignableScene): SceneSignatures => {
+    let motion = 2166136261;
+    let ambient = 2166136261;
     for (const camera of scene.cameras.cameras) {
-        hash = mix(hash, camera.scrollX);
-        hash = mix(hash, camera.scrollY);
-        hash = mix(hash, camera.zoom);
-        hash = mix(hash, camera.width);
-        hash = mix(hash, camera.height);
-        hash = mix(hash, camera.alpha);
+        motion = mix(motion, camera.scrollX);
+        motion = mix(motion, camera.scrollY);
+        motion = mix(motion, camera.zoom);
+        motion = mix(motion, camera.width);
+        motion = mix(motion, camera.height);
+        motion = mix(motion, camera.alpha);
     }
-    for (const object of scene.children.list) hash = mixObject(hash, object);
-    return hash;
+    for (const object of scene.children.list) {
+        if (isAmbient(object)) ambient = mixObject(ambient, object);
+        else motion = mixObject(motion, object);
+    }
+    return { motion, ambient };
+};
+
+// The two signatures as one number, for a caller that only asks whether
+// anything changed.
+export const computeSceneSignature = (scene: SignableScene): number => {
+    const { motion, ambient } = computeSceneSignatures(scene);
+    return (Math.imul(motion, 31) + ambient) >>> 0;
 };

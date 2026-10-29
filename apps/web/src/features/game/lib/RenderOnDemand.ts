@@ -1,6 +1,7 @@
 import { RENDER_ON_DEMAND } from "@/features/game/consts/render-on-demand";
 import {
-    computeSceneSignature,
+    computeSceneSignatures,
+    type SceneSignatures,
     type SignableScene,
 } from "@/features/game/utils/computeSceneSignature";
 
@@ -35,15 +36,19 @@ type GameLike = {
 /**
  * Makes the Phaser loop render on demand: nothing is drawn
  * while the scene is still (the canvas keeps its last picture, so there are
- * zero GL calls), and while something moves or animates the passes are capped
- * at MOVING_HZ. The loop keeps running, so game logic and input are untouched.
- * The fps limit of the settings stays on top of this cap.
+ * zero GL calls), and while something moves the passes are capped at
+ * MOVING_HZ. When the only change is scenery animating by itself (objects
+ * marked with AMBIENT_DATA_KEY) the cap is the much lower AMBIENT_HZ, since
+ * nobody needs water to ripple at the pace of a walk. The loop keeps running,
+ * so game logic and input are untouched. The fps limit of the settings stays
+ * on top of this cap.
  */
 export class RenderOnDemand {
     private readonly game: GameLike;
     private readonly now: () => number;
-    private readonly minIntervalMs = 1000 / RENDER_ON_DEMAND.MOVING_HZ;
-    private lastSignature: number | null = null;
+    private readonly movingIntervalMs = 1000 / RENDER_ON_DEMAND.MOVING_HZ;
+    private readonly ambientIntervalMs = 1000 / RENDER_ON_DEMAND.AMBIENT_HZ;
+    private lastSignatures: SceneSignatures | null = null;
     private lastRenderAt = Number.NEGATIVE_INFINITY;
     private forced = true;
     private drawing = false;
@@ -111,33 +116,40 @@ export class RenderOnDemand {
         this.installed = false;
     }
 
-    // The signature is only stored when a pass happens, so a change held back
-    // by the cadence stays dirty and is drawn on the next frame that is due.
+    // The signatures are only stored when a pass happens, so a change held
+    // back by the cadence stays dirty and is drawn on the next frame that is
+    // due. A change of anything but the ambient scenery is due at the pace of
+    // MOVING_HZ, one of the scenery alone at the pace of AMBIENT_HZ.
     private decide(): boolean {
-        const signature = this.readSignature();
-        const changed = signature !== this.lastSignature;
-        if (!changed && !this.forced) return false;
+        const signatures = this.readSignatures();
+        const last = this.lastSignatures;
+        const motionChanged = !last || signatures.motion !== last.motion;
+        const ambientChanged = !last || signatures.ambient !== last.ambient;
+        if (!motionChanged && !ambientChanged && !this.forced) return false;
 
         const at = this.now();
-        if (!this.forced && at - this.lastRenderAt < this.minIntervalMs) {
+        const intervalMs = motionChanged
+            ? this.movingIntervalMs
+            : this.ambientIntervalMs;
+        if (!this.forced && at - this.lastRenderAt < intervalMs) {
             return false;
         }
 
         this.forced = false;
-        this.lastSignature = signature;
+        this.lastSignatures = signatures;
         this.lastRenderAt = at;
         this.passes += 1;
         return true;
     }
 
-    private readSignature(): number {
-        let hash = 0;
+    private readSignatures(): SceneSignatures {
+        let motion = 0;
+        let ambient = 0;
         for (const scene of this.game.scene.getScenes(true)) {
-            hash =
-                (Math.imul(hash, 31) +
-                    computeSceneSignature(scene as SignableScene)) >>>
-                0;
+            const signatures = computeSceneSignatures(scene as SignableScene);
+            motion = (Math.imul(motion, 31) + signatures.motion) >>> 0;
+            ambient = (Math.imul(ambient, 31) + signatures.ambient) >>> 0;
         }
-        return hash;
+        return { motion, ambient };
     }
 }

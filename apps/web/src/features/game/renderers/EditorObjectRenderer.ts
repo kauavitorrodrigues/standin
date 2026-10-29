@@ -17,6 +17,7 @@ import {
 import { EDITOR_OBJECT_PLACEHOLDER } from "@/features/game/consts/placed-objects";
 import { loadAssetTexture } from "@/features/editor/lib/loadAssetTexture";
 import { OBJECT_DROP } from "@/features/game/consts/object-drop";
+import { AMBIENT_DATA_KEY } from "@/features/game/consts/render-on-demand";
 import { prefersReducedMotion } from "@/features/game/utils/prefersReducedMotion";
 import { diffPlaced } from "@/features/game/renderers/diffPlaced";
 
@@ -312,7 +313,12 @@ export class EditorObjectRenderer {
                     slice.crop.height
                 );
             }
-            if (animated) sprite.play(animationKey);
+            if (animated) {
+                sprite.play(animationKey);
+                // Scenery that animates by itself, drawn at the ambient cadence
+                // (see RenderOnDemand).
+                sprite.setData(AMBIENT_DATA_KEY, true);
+            }
             return sprite;
         });
     }

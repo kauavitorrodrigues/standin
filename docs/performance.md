@@ -369,7 +369,8 @@ What they do **not** say:
   with the people already heard keeping their place.
 - A camera is one layer here, not the three simulcast layers. The layer
   switching of a real simulcast camera does not work on plain transports (see
-  4.8), so the tests below use one layer at the quality being measured.
+  the limits at the end of 4.7), so the tests below use one layer at the
+  quality being measured.
 - "First stream" is only meaningful when people are in range at the start. In
   the spread layout it measures how long until somebody walks near.
 
@@ -436,6 +437,52 @@ Not proven by these runs:
   choice was checked by hand in Chrome and Firefox instead.
 - Packet loss, delay and encryption. It is all loopback.
 - The pictures are a test pattern, which compresses differently from a camera.
+
+### 4.8 What the browser draws
+
+The game draws on demand. While nothing changes the canvas keeps its last
+picture and makes no GL call. While something moves it draws at most 36 times a
+second, and while the only thing that changes is scenery that animates by
+itself (water, a screen, a flag) it draws at most 4 times a second. The caps
+are constants in `consts/render-on-demand.ts` (**Code**), and the tests in
+`lib/__tests__/RenderOnDemand.test.ts` fail when the cadence goes over them.
+
+| State                                   | Budget (Code)                                  |
+| --------------------------------------- | ---------------------------------------------- |
+| Nothing changes                         | 0 render passes, 0 GL calls                    |
+| Only ambient scenery animates           | at most 4 passes per second                    |
+| Something moves (an avatar walks)       | at most 36 passes per second                   |
+
+A standing avatar blinks every 2.5 to 6 s, and each blink is two passes (eyes
+closed, eyes open). So a scene with one avatar and nothing else shows 0.4 to
+0.8 passes per second, not zero. That is not a leak of the cadence, it is the
+blink.
+
+**Measured** with the profiler of the game in a development build, on one
+machine, one avatar, 5 s per state, in a headless Chrome:
+
+| State                       | Passes per second | Draws per pass | Quads per pass |
+| --------------------------- | ----------------- | -------------- | -------------- |
+| Still (avatar blinking)     | 0.4 to 0.8        | 1              | about 510      |
+| Still, between blinks (3 s) | 0                 | 0              | 0              |
+| Walking (arrow key held)    | 25                | 1              | about 500      |
+
+Every pass is one clear, one draw, one bind and one upload. The ambient state
+was not measured in a browser: no map of the development database has an
+animated object placed, so it is covered by the tests only. The 50 avatar case
+was not measured either, only the cost of one pass with one avatar.
+
+To see the numbers of your own space, open the game in a development build
+(`pnpm dev`) and run this in the console. It counts the GL calls for the number
+of seconds given (5 by default), prints one line and returns the figures:
+
+```js
+await window.__glProfile(5)
+```
+
+The profiler (`utils/glCallProfiler.ts`) wraps the methods of the GL context
+for that time and takes them off afterwards, so it costs nothing when it is not
+running and is not part of a production build.
 
 ## 5. What you need to run it
 
