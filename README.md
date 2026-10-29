@@ -18,7 +18,7 @@ A 2D top-down virtual space for teams, with a built-in map editor, real-time pre
 
 ## Overview
 
-Stand!N is a 2D top-down virtual space platform for teams, inspired by tools like Gather and classic Habbo Hotel. Each `Organization` is the platform's tenant: it owns its members, its spaces (`Space`), and the maps (`Map`) those spaces render in Phaser.
+Stand!N is a 2D top-down virtual space platform for teams, inspired by classic Habbo Hotel. Each `Organization` is the platform's tenant: it owns its members, its spaces (`Space`), and the maps (`Map`) those spaces render in Phaser.
 
 The product goal is to give a team a navigable "virtual office" with real-time presence between teammates, and to let them build that office themselves. There is no external map tool: the platform ships a complete map editor. You upload your own art (tileset sheets and object sprites), and then assemble tilesets, objects, areas, rooms, and whole maps inside the app. It has no dependency on paid third-party services beyond the server it runs on.
 
