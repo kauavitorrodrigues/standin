@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import {
+    GAME_CONTEXT_CONFIG,
     GAME_PHYSICS_CONFIG,
     GAME_RENDER_CONFIG,
 } from "@/features/game/consts/game-config";
+import { findContextMismatch } from "@/features/game/utils/findContextMismatch";
 import { getFpsLimit } from "@/features/settings/performance/lib/performanceValues";
 import { effectivePerformanceSettings } from "@/features/settings/performance/lib/performanceOverride";
 import { GAME_SCENE_KEYS } from "@/features/game/consts/scene-keys";
@@ -47,6 +49,7 @@ export const createGameEngine = ({
         width: container.clientWidth,
         height: container.clientHeight,
         pixelArt: GAME_RENDER_CONFIG.PIXEL_ART,
+        render: GAME_CONTEXT_CONFIG,
         backgroundColor: GAME_RENDER_CONFIG.BACKGROUND_COLOR,
         disableContextMenu: GAME_RENDER_CONFIG.DISABLE_CONTEXT_MENU,
         fps: {
@@ -98,6 +101,21 @@ export const createGameEngine = ({
             console.info(formatGlProfile(profile));
             return profile;
         };
+    }
+
+    // Dev only: says once what the browser gave for the context, and which of
+    // the attributes the game asked for it did not keep.
+    if (import.meta.env.DEV) {
+        game.events.once(Phaser.Core.Events.READY, () => {
+            const gl = (game.renderer as { gl?: WebGLRenderingContext }).gl;
+            const attributes = gl?.getContextAttributes();
+            const mismatch = findContextMismatch(attributes);
+            if (mismatch.length === 0) {
+                console.info("[game] webgl context", attributes);
+            } else {
+                console.warn("[game] webgl context differs", mismatch);
+            }
+        });
     }
 
     const unbindResize = bindGameResize(game, container);

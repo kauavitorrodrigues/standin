@@ -3,6 +3,7 @@ import { useEffectivePerformanceSettings } from "@/features/settings/performance
 import { getFpsLimit } from "@/features/settings/performance/lib/performanceValues";
 import { applyFpsLimit } from "@/features/game/utils/fpsLimit";
 import { createGameEngine } from "@/features/game/lib/Engine";
+import { getWebglProbe } from "@/features/game/utils/probeWebgl";
 import { useMapRenderSync } from "@/features/game/hooks/useMapRenderSync";
 import type { GameEngineHandle } from "@/features/game/types/game";
 import type { GameMapData } from "@/features/game/types/tilemap";
@@ -27,6 +28,10 @@ export const useGameEngine = (
     const containerRef = useCallback(
         (container: HTMLDivElement | null) => {
             if (!container || !map) return;
+            // With no WebGL the page says so (see GameCanvas) and there is no
+            // game to start: Phaser would fall back to a canvas that is too
+            // slow for the space.
+            if (getWebglProbe().status === "unsupported") return;
 
             const engine = createGameEngine({
                 container,
