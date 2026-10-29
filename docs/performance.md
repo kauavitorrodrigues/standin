@@ -537,6 +537,45 @@ with a photo (clicked) and the typing icon were not seen in this run: the bots
 do not click or type, and they are members, so there was no guest tag either
 (the tag has none).
 
+### 4.11 Allocation per frame and the particle cap
+
+Two limits of the render path were checked in a real browser: no recurring
+allocation per frame from the hover, the typing marks and the particles, and one
+cap on the particles of the whole scene.
+
+The cap is `EMOTE_PARTICLE.MAX_ACTIVE` (32), counted by one `ParticleBudget`
+that the scene shares between the emoji particles and the pixel emitter
+(`emitAt`). The per-user limit stays in `EmoteRateLimiter`. Unit tests cover 50
+people emoting at once (never more than 32 sprites), a pixel burst of 100
+(also 32), two emitters on one budget, and the budget going back to 0 when the
+particles end. The cost of a frame is in `frameAllocations.test.ts`
+(`pnpm --filter web exec vitest run frameAllocations`).
+
+The allocation timeline was recorded in headless Chrome with 50 bots plus the
+signed-in person (70% walking, each one chatting and emoting), on the Vite dev
+server. After 15 s in the space, `HeapProfiler.startSampling` ran for 30 s with
+a 256 B interval, counting also what the garbage collector had already taken.
+Each allocation is attributed to the function that made it.
+
+- `updateRemoteHover`, `updateTypingMarks`, the hover state writer, the particle
+  step and the per-room cache do not appear in the profile.
+- Two recurring allocations did, both per frame and per tag or bubble, and were
+  taken out: `NameTagOverlay.place` built a string key of seven numbers for
+  every tag in every frame (about 8 MB in 30 s, now numbers kept in place), and
+  `MapScene.findNearbyAnchor`, asked by the chat bubbles every frame, made a
+  new object and walked the map of peers each time (about 18 to 20 MB in 30 s,
+  now one reused object and a cached socket per person). After the change
+  neither shows in the profile.
+- What is left in the profile is React in development mode (`jsxDEV`,
+  `createElement`, about 1.6 GB sampled in 30 s, most of it from the dev
+  runtime) and Phaser's own batching. A production build was not profiled.
+
+The final screenshot of each run was looked at: the game was open, with the 50
+avatars, their tags, the chat bubbles and the emojis drawn. One run per variant,
+on one machine, so the megabytes are an order of magnitude, not a result to
+build on. The emote cap was not seen at the limit in the browser (the bots emote
+too rarely to reach 32 at once), only in the tests.
+
 ## 5. What you need to run it
 
 ### 5.1 The data path alone (without the media server)
