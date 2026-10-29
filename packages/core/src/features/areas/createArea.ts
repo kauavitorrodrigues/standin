@@ -9,12 +9,14 @@ import { validateAreaUpload } from "./utils/validateAreaUpload";
 
 /**
  * Creates an area from its native resolution PNG and its stamp. Every problem
- * is collected before anything is written.
+ * is collected before anything is written. Only the library seed sends a
+ * `key`, an area made in the editor has none.
  */
 export const createArea = async (
     image: UploadedImage,
     data: AreaData,
-    { organizationId, createdBy }: LibraryContext
+    { organizationId, createdBy }: LibraryContext,
+    key: string | null = null
 ): Promise<AreaDetail> => {
     const { name, stamp } = await validateAreaUpload(image, data);
 
@@ -24,6 +26,7 @@ export const createArea = async (
             .values({
                 organizationId,
                 createdBy,
+                key,
                 name,
                 width: stamp.width,
                 height: stamp.height,

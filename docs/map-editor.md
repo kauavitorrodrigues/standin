@@ -204,10 +204,144 @@ pnpm --filter api seed:library path/to/folder
 ```
 
 Each entry carries the same fields as the `data` part of the upload endpoints
-(`POST /library/tilesets`, `POST /library/assets`, and variants), plus a `file`
-path relative to the folder. The seed is idempotent by `key` and never
-deletes. Without a folder, it loads the placeholder library that blank maps
-are built from.
+(`POST /library/tilesets`, `POST /library/assets`, variants, avatar parts and
+bases, areas), plus a `file` path relative to the folder. The seed runs the
+same services as the endpoints, so it applies the same validation. It is
+idempotent by `key` and never deletes. A field an entry leaves out is not
+compared, so a seed does not undo an edit made in the editor. Without a
+folder, it loads the placeholder library that blank maps are built from.
+
+Every section is optional. A file with only `tilesets` and `assets` works as
+it always did.
+
+### Order
+
+The sections are applied in this order, since each one names what the earlier
+ones made:
+
+1. `tilesets`
+2. `assets` (with their `variants`)
+3. `bundles`, the parts of assets, once every asset exists
+4. `areas`, which name tilesets and assets by `key`
+5. `avatarBases`
+6. `avatarParts` (with their color `variations`)
+
+A second run prints `unchanged` for every entry whose fields and PNGs did not
+change. An entry that a service refuses stops the run with the section, the
+`key` and the reason, for example `avatarParts "hair-red": The avatar sheet
+does not have the expected size.`
+
+### Bundles
+
+A bundle sets the parts of an asset: placing the root also places its parts.
+Root and parts are assets by `key`, from the file or already in the library.
+A bundle that lists no parts clears them. The parts of a root that a map
+already uses cannot change, like in the editor.
+
+### Areas
+
+An area is a stamp and its thumbnail, a PNG of the stamp size times 32 px (64x64 for a 2x2 stamp). The
+stamp is the one the editor stores, except that tilesets and assets are named
+by `key` (`tilesetKey` in the palette, `assetKey` in the objects). The seed
+turns the keys into ids before the stamp is validated. A key that matches
+nothing fails the entry and lists the field of each one. The `key` of the area
+is its identity, and it is stored in the database. Areas made in the editor
+have no key.
+
+### Avatars
+
+Avatar parts and bases are identified by `key`. The `slot` of a part is its
+category: the categories exist already, one for each slot. The sprite sheet
+(`file`) must be 2304x64 with 72 frames and the `preview` any PNG. A color
+variation is found by its `colorKey` inside the part, and its own key is
+derived from the key of the part and the color, like in the endpoint. The
+`slot` of a part and the `kind` of a base never change.
+
+### Example
+
+```json
+{
+    "tilesets": [
+        {
+            "key": "floor",
+            "name": "Floor",
+            "file": "floor.png",
+            "tileMeta": { "0": { "category": "FLOOR" } }
+        }
+    ],
+    "assets": [
+        {
+            "key": "chair",
+            "name": "Chair",
+            "type": "CHAIR",
+            "footprint": { "w": 1, "h": 1 },
+            "file": "chair.png"
+        },
+        {
+            "key": "table",
+            "name": "Table",
+            "type": "TABLE",
+            "footprint": { "w": 1, "h": 1 },
+            "file": "table.png"
+        }
+    ],
+    "bundles": [
+        {
+            "asset": "table",
+            "parts": [{ "partAsset": "chair", "offsetX": 0, "offsetY": 1 }]
+        }
+    ],
+    "areas": [
+        {
+            "key": "lobby",
+            "name": "Lobby",
+            "file": "lobby.png",
+            "stamp": {
+                "version": 1,
+                "width": 2,
+                "height": 2,
+                "palette": [{ "tilesetKey": "floor", "tileIndex": 0 }],
+                "layers": { "ground": [1, 1, 1, 1] },
+                "objects": [
+                    {
+                        "assetKey": "table",
+                        "dx": 0,
+                        "dy": 0,
+                        "offsetX": 0,
+                        "offsetY": 0,
+                        "parentIndex": null
+                    }
+                ],
+                "zone": null
+            }
+        }
+    ],
+    "avatarBases": [
+        { "key": "body", "name": "Body", "file": "body.png", "isDefault": true }
+    ],
+    "avatarParts": [
+        {
+            "key": "hair-short",
+            "name": "Short hair",
+            "slot": "HAIR",
+            "colorKey": "black",
+            "colorHex": "#1A1A1A",
+            "file": "hair-short.png",
+            "preview": "hair-short-preview.png",
+            "variations": [
+                {
+                    "colorKey": "red",
+                    "colorHex": "#B03A2E",
+                    "file": "hair-short-red.png",
+                    "preview": "hair-short-red-preview.png"
+                }
+            ]
+        }
+    ]
+}
+```
+
+The JSON Schema of the file is `packages/authoring/schemas/library.schema.json`.
 
 ## 4. Exporting
 

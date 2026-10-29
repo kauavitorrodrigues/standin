@@ -1,4 +1,8 @@
 import { BaseError } from "../errors/base";
+import type {
+    LibrarySeedIssue,
+    LibrarySeedReference,
+} from "./types/library-seed";
 
 export class AssetNotFoundError extends BaseError {
     constructor() {
@@ -265,6 +269,96 @@ export class LibrarySeedAdminNotFoundError extends BaseError {
         super(
             "No admin user found. Run `pnpm --filter api bootstrap` first.",
             "LIBRARY_SEED_ADMIN_NOT_FOUND",
+            500
+        );
+    }
+}
+
+// A key written in a library file (an area stamp or a bundle) that matches no
+// tileset or asset. Every unknown key of the entry is listed with its field.
+export class LibrarySeedReferenceNotFoundError extends BaseError {
+    public readonly entry: string;
+    public readonly references: LibrarySeedReference[];
+
+    constructor(entry: string, references: LibrarySeedReference[]) {
+        const listed = references
+            .map(({ field, key }) => `${field} "${key}"`)
+            .join(", ");
+        super(
+            `${entry}: no tileset or asset matches ${listed}.`,
+            "LIBRARY_SEED_REFERENCE_NOT_FOUND",
+            422
+        );
+        this.entry = entry;
+        this.references = references;
+    }
+}
+
+// An entry of an avatar, area or bundle section that a service refused. It
+// keeps the code and the status of the refusal and says which entry it was.
+export class LibrarySeedEntryError extends BaseError {
+    public readonly entry: string;
+    public readonly issues: LibrarySeedIssue[];
+
+    constructor(
+        entry: string,
+        cause: BaseError,
+        issues: LibrarySeedIssue[] = []
+    ) {
+        const detail = issues.map(({ path, message }) => `${path}: ${message}`);
+        super(
+            `${entry}: ${detail.length > 0 ? detail.join(" ") : cause.message}`,
+            cause.code,
+            cause.status
+        );
+        this.entry = entry;
+        this.issues = issues;
+        this.cause = cause;
+    }
+}
+
+// The key of an avatar part already belongs to a part of another slot. The
+// slot never changes, so the file and the library disagree.
+export class LibrarySeedAvatarSlotChangedError extends BaseError {
+    constructor(key: string, current: string, wanted: string) {
+        super(
+            `The avatar part "${key}" is in the slot ${current} and cannot move to ${wanted}.`,
+            "LIBRARY_SEED_AVATAR_SLOT_CHANGED",
+            409
+        );
+    }
+}
+
+// The key of an avatar part in the file belongs to a color variation, or the
+// other way around.
+export class LibrarySeedAvatarPartKindError extends BaseError {
+    constructor(key: string) {
+        super(
+            `The avatar part "${key}" exists as a color variation of another part.`,
+            "LIBRARY_SEED_AVATAR_PART_KIND",
+            409
+        );
+    }
+}
+
+// The kind of an avatar base never changes.
+export class LibrarySeedAvatarKindChangedError extends BaseError {
+    constructor(key: string, current: string, wanted: string) {
+        super(
+            `The avatar base "${key}" is a ${current} and cannot become a ${wanted}.`,
+            "LIBRARY_SEED_AVATAR_KIND_CHANGED",
+            409
+        );
+    }
+}
+
+// A color variation that the avatar service reported as created but that is
+// not in the family it returned.
+export class LibrarySeedAvatarVariationMissingError extends BaseError {
+    constructor(key: string, colorKey: string) {
+        super(
+            `The color "${colorKey}" of the avatar part "${key}" was created but is not in the family.`,
+            "LIBRARY_SEED_AVATAR_VARIATION_MISSING",
             500
         );
     }

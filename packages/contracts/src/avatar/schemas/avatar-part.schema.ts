@@ -57,24 +57,29 @@ export const AvatarPartSchema = AvatarPartRowSchema.extend({
     variations: z.array(AvatarPartRowSchema),
 });
 
+// The fields of `data` in `POST /library/avatar-parts`, before the rule on
+// the color pair.
+export const AvatarPartFieldsSchema = z.object({
+    key: key.optional(),
+    name,
+    slot,
+    colorKey: colorKey.optional(),
+    colorHex: colorHex.optional(),
+});
+
+// The color is both set or both missing.
+export const hasCompleteColorPair = (data: {
+    colorKey?: string;
+    colorHex?: string;
+}): boolean => (data.colorKey === undefined) === (data.colorHex === undefined);
+
 // `data` part of `POST /library/avatar-parts`. The server derives the key from
 // the name when it is missing. The color is both set or both missing. The
 // sheets come in their own parts.
-export const CreateAvatarPartDataSchema = z
-    .object({
-        key: key.optional(),
-        name,
-        slot,
-        colorKey: colorKey.optional(),
-        colorHex: colorHex.optional(),
-    })
-    .refine(
-        (data) =>
-            (data.colorKey === undefined) === (data.colorHex === undefined),
-        {
-            error: Messages.color.pair.invalid,
-        }
-    );
+export const CreateAvatarPartDataSchema = AvatarPartFieldsSchema.refine(
+    hasCompleteColorPair,
+    { error: Messages.color.pair.invalid }
+);
 
 // `data` part of `POST /library/avatar-parts/:partId/variations`. The name,
 // the slot and the base come from the base part, and the key is derived.

@@ -38,5 +38,41 @@ export const readLibraryFolder = async (
                 ),
             }))
         ),
+        bundles: parsed.bundles,
+        areas: await Promise.all(
+            parsed.areas.map(async ({ file, ...area }) => ({
+                ...area,
+                image: await readImage(file),
+            }))
+        ),
+        avatarBases: await Promise.all(
+            parsed.avatarBases.map(async ({ file, preview, ...base }) => ({
+                ...base,
+                image: await readImage(file),
+                preview: preview ? await readImage(preview) : undefined,
+            }))
+        ),
+        avatarParts: await Promise.all(
+            parsed.avatarParts.map(
+                async ({ file, preview, variations, ...part }) => ({
+                    ...part,
+                    image: await readImage(file),
+                    preview: await readImage(preview),
+                    variations: await Promise.all(
+                        (variations ?? []).map(
+                            async ({
+                                file: variationFile,
+                                preview: variationPreview,
+                                ...variation
+                            }) => ({
+                                ...variation,
+                                image: await readImage(variationFile),
+                                preview: await readImage(variationPreview),
+                            })
+                        )
+                    ),
+                })
+            )
+        ),
     };
 };
