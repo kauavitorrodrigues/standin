@@ -8,3 +8,4 @@ export * from "./footprintMask";
 export * from "./pickDoorVariant";
 export * from "./wallPiece";
 export * from "./wallStyle";
+export * from "./findRepeatedIndexes";

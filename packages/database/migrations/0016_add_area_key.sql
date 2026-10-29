@@ -1,0 +1,3 @@
+ALTER TABLE "areas" ADD COLUMN "key" varchar(100);--> statement-breakpoint
+CREATE UNIQUE INDEX "areas_key_global_unique" ON "areas" USING btree ("key") WHERE "areas"."organization_id" IS NULL AND "areas"."deleted_at" IS NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "areas_organization_id_key_unique" ON "areas" USING btree ("organization_id","key") WHERE "areas"."organization_id" IS NOT NULL AND "areas"."deleted_at" IS NULL;

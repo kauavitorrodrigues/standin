@@ -6,6 +6,10 @@ export const AvatarErrorMessages = {
         key: { invalid: "The avatar color name is invalid." },
         hex: { invalid: "The avatar color is invalid." },
         pair: { invalid: "Send the color name and the color together." },
+        family: {
+            invalid:
+                "A part with color variations needs a color name and a color of its own.",
+        },
     },
     update: {
         invalid: "The avatar update is invalid.",

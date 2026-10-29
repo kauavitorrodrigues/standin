@@ -9,7 +9,7 @@
     },
     "scripts": {
         "check-types": "tsc --noEmit",
-        "generate:schemas": "tsx scripts/generateSchemas.ts",
+        "generate:schemas": "tsx src/scripts/generateSchemas.ts",
         "test": "vitest run"
     },
     "dependencies": {

@@ -36,6 +36,18 @@ async function seedLibrary() {
     for (const { key, action } of result.assets) {
         console.log(`✓ asset ${key}: ${action}`);
     }
+    for (const { key, action } of result.bundles) {
+        console.log(`✓ bundle ${key}: ${action}`);
+    }
+    for (const { key, action } of result.areas) {
+        console.log(`✓ area ${key}: ${action}`);
+    }
+    for (const { key, action } of result.avatarBases) {
+        console.log(`✓ avatar base ${key}: ${action}`);
+    }
+    for (const { key, action } of result.avatarParts) {
+        console.log(`✓ avatar part ${key}: ${action}`);
+    }
     process.exit(0);
 }
 

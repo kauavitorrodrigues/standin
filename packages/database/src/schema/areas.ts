@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
     createdAtColumn,
     deletedAtColumn,
@@ -12,6 +12,7 @@ import {
     jsonb,
     pgTable,
     index,
+    uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type { Stamp } from "@standin/contracts";
 import { filesTable } from "./files";
@@ -28,6 +29,8 @@ export const areasTable = pgTable(
         id: uuidPrimaryKeyColumn(),
 
         // Properties columns
+        // Identity of a library seed. Null for an area made in the editor.
+        key: varchar("key", { length: 100 }),
         name: varchar("name", { length: 60 }).notNull(),
         // In tiles. Equal to the stamp, and fixed after creation.
         width: integer("width").notNull(),
@@ -52,6 +55,16 @@ export const areasTable = pgTable(
         deletedAt: deletedAtColumn(),
     },
     (table) => [
+        uniqueIndex("areas_key_global_unique")
+            .on(table.key)
+            .where(
+                sql`${table.organizationId} IS NULL AND ${table.deletedAt} IS NULL`
+            ),
+        uniqueIndex("areas_organization_id_key_unique")
+            .on(table.organizationId, table.key)
+            .where(
+                sql`${table.organizationId} IS NOT NULL AND ${table.deletedAt} IS NULL`
+            ),
         index("areas_organization_id_index").on(table.organizationId),
         index("areas_created_by_index").on(table.createdBy),
         index("areas_thumbnail_file_id_index").on(table.thumbnailFileId),

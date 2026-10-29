@@ -113,6 +113,13 @@
       "when": 1793224667208,
       "tag": "0015_add_space_thumbnail",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793315098881,
+      "tag": "0016_add_area_key",
+      "breakpoints": true
     }
   ]
 }

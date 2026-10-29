@@ -141,3 +141,19 @@ export const LibraryTilesetQueryErrorMessages = {
     inUse: { invalid: "The in use filter must be true or false." },
     progress: { invalid: "The progress filter is invalid." },
 };
+
+// The rules of `library.json` that no single field can state: a key or a
+// bundle part written twice.
+export const LibrarySeedFileErrorMessages = {
+    repeatedKey: (section: string, key: string) =>
+        `The key "${key}" is written twice in ${section}.`,
+    repeatedColor: (part: string, colorKey: string) =>
+        `The avatar part "${part}" lists the color "${colorKey}" twice.`,
+    repeatedBundlePart: (
+        bundle: string,
+        part: string,
+        offsetX: number,
+        offsetY: number
+    ) =>
+        `The bundle "${bundle}" lists the part "${part}" twice at the offset ${offsetX}, ${offsetY}.`,
+};
