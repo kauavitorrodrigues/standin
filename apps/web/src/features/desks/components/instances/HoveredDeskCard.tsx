@@ -12,6 +12,7 @@ type HoveredDeskCardProps = {
     names: ReadonlyMap<string, string>;
     onlineUserIds: readonly string[];
     isBusy: boolean;
+    lockText: string | null;
     onClaim: (deskId: string, isMove: boolean) => void;
     onOpenProfile: () => void;
     onPointerEnter: () => void;
@@ -27,6 +28,7 @@ export const HoveredDeskCard = ({
     names,
     onlineUserIds,
     isBusy,
+    lockText,
     onClaim,
     onOpenProfile,
     onPointerEnter,
@@ -47,6 +49,7 @@ export const HoveredDeskCard = ({
                     hover={hover}
                     action={view.action}
                     isBusy={isBusy}
+                    lockText={lockText}
                     onAction={() => onClaim(hover.id, view.action === "move")}
                     onPointerEnter={onPointerEnter}
                     onPointerLeave={onPointerLeave}

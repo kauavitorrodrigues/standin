@@ -1,6 +1,6 @@
 import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
 import { useState } from "react";
-import type { SpaceDetails } from "@standin/contracts";
+import type { SpaceDetails, UserSummary } from "@standin/contracts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 import { SocketProvider } from "@/features/game/multiplayer/contexts/SocketContext";
@@ -12,11 +12,15 @@ import { GameControls } from "@/features/game/components/GameControls";
 import { RoomHeader } from "@/features/game/components/RoomHeader";
 import { WalkChip } from "@/features/game/components/WalkChip";
 import { ZoneLabel } from "@/features/game/components/ZoneLabel";
+import { useMapRender } from "@/features/game/queries/useMapRender";
 import { useWalkState } from "@/features/game/hooks/useWalkState";
 import { useSelectedPerson } from "@/features/game/hooks/useSelectedPerson";
 import { WalkToPersonChip } from "@/features/game/components/WalkToPersonChip";
 import { describeWalk } from "@/features/game/utils/describeWalk";
 import { useSceneDesks } from "@/features/desks/hooks/useSceneDesks";
+import { useAssignPick } from "@/features/desks/hooks/useAssignPick";
+import { AssignDeskBanner } from "@/features/desks/components/views/AssignDeskBanner";
+import { PersonDeskMenu } from "@/features/desks/components/instances/PersonDeskMenu";
 import { LockedDoorDialog } from "@/features/game/components/dialogs/LockedDoorDialog";
 import { RoomJoinRequests } from "@/features/game/components/RoomJoinRequests";
 import { useLockedDoorPrompt } from "@/features/game/multiplayer/hooks/useLockedDoorPrompt";
@@ -98,6 +102,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const gameMap = useGameMapData(space.map);
     const mapLock = useSpaceMapLock(space.map.id);
+    const mapRender = useMapRender(space.map.id);
     const profileCard = useProfileCard();
     const decorator = useDecoratorSession();
     const decorateAvailability = useDecorateAvailability(space.map.id, mapLock);
@@ -132,7 +137,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const currentRoom = useCurrentRoom(handle?.game ?? null);
     const walk = useWalkState(handle?.game ?? null);
     const selectedPersonId = useSelectedPerson(handle?.game ?? null);
-    const { isAtOwnDesk } = useSceneDesks(handle, space.id, user.id);
+    const { isAtOwnDesk, desks } = useSceneDesks(handle, space.id, user.id);
+    const assignPick = useAssignPick();
     const lockedDoor = useLockedDoorPrompt(handle?.game ?? null, currentRoom);
 
     const stageTiles = useStageTiles({
@@ -143,6 +149,23 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const { members } = OrganizationsQueries.useMembers();
     const names = buildNameLookup(members);
+    // The owner of the organization manages the desks of the others from the
+    // list of people.
+    const canManageDesks = mapRender.data?.access.canEdit ?? false;
+    const renderPersonActions = (
+        person: UserSummary,
+        hold: (isHeld: boolean) => void
+    ) =>
+        person.id === user.id ? null : (
+            <PersonDeskMenu
+                spaceId={space.id}
+                person={{ id: person.id, name: person.name }}
+                desk={desks.find((desk) => desk.userId === person.id)}
+                isMapLocked={mapLock.isLocked}
+                onAssign={assignPick.start}
+                onHold={hold}
+            />
+        );
     const walkText = describeWalk(walk.purpose, (id) => names.get(id));
     // Walking to oneself, with another tab of the same account, is no action.
     const personToWalkTo =
@@ -225,6 +248,9 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     spaceName={space.name}
                     onlineUserIds={onlineUserIds}
                     onClose={peoplePanel.close}
+                    renderActions={
+                        canManageDesks ? renderPersonActions : undefined
+                    }
                 />
                 <LayoutPrimitive.Content style={layout.contentStyle}>
                     <GameCanvas ref={containerRef} />
@@ -239,6 +265,10 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         isWalking={walk.isWalking}
                         text={walkText}
                         onCancel={walk.cancel}
+                    />
+                    <AssignDeskBanner
+                        name={assignPick.target?.name ?? null}
+                        onCancel={assignPick.cancel}
                     />
                     <WalkToPersonChip
                         name={
@@ -261,6 +291,9 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         names={names}
                         onlineUserIds={onlineUserIds}
                         isMapLocked={mapLock.isLocked}
+                        lockHolderName={mapLock.by?.name}
+                        assignTarget={assignPick.target}
+                        onAssignDone={assignPick.cancel}
                         isProfileOpen={profileCard.isOpen}
                         onOpenProfile={profileCard.open}
                         onCloseProfile={profileCard.close}

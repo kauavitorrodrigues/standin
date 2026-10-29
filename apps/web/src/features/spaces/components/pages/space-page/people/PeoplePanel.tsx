@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import type { UserSummary } from "@standin/contracts";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -13,7 +15,6 @@ import { useSearchHotkey } from "@/features/spaces/hooks/useSearchHotkey";
 import { splitPeopleByPresence } from "@/features/spaces/utils/splitPeopleByPresence";
 import { SearchPeopleField } from "@/features/spaces/components/pages/space-page/people/SearchPeopleField";
 import { SidePanel } from "@/components/layout/SidePanel";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { PeopleList } from "@/features/spaces/components/pages/space-page/people/PeopleList";
 
 type Props = {
@@ -21,6 +22,11 @@ type Props = {
     onlineUserIds: readonly string[];
     isClosing: boolean;
     onClose: () => void;
+    // Actions at the end of each row, like the desk menu of the owner.
+    renderActions?: (
+        person: UserSummary,
+        hold: (isHeld: boolean) => void
+    ) => ReactNode;
 };
 
 // Who is in the space, docked next to the rail.
@@ -29,6 +35,7 @@ export const PeoplePanel = ({
     onlineUserIds,
     isClosing,
     onClose,
+    renderActions,
 }: Props) => {
     const { user } = useAuth();
     const { members } = OrganizationsQueries.useMembers();
@@ -53,16 +60,15 @@ export const PeoplePanel = ({
             isClosing={isClosing}
             width={`${PEOPLE_PANEL_WIDTH_REM}rem`}
         >
-            <ScrollArea className="min-h-0 flex-1">
-                <div className="flex flex-col gap-3 px-4 pb-4">
-                    <SearchPeopleField control={control} />
-                    <PeopleList
-                        online={online}
-                        offline={offline}
-                        selfUserId={user.id}
-                    />
-                </div>
-            </ScrollArea>
+            <div className="px-4 pb-3">
+                <SearchPeopleField control={control} />
+            </div>
+            <PeopleList
+                online={online}
+                offline={offline}
+                selfUserId={user.id}
+                renderActions={renderActions}
+            />
         </SidePanel>
     );
 };

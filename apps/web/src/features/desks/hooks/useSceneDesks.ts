@@ -31,5 +31,5 @@ export const useSceneDesks = (
         handle?.setDeskClaims(desks, userId);
     }, [handle, desks, userId]);
 
-    return { isAtOwnDesk };
+    return { isAtOwnDesk, desks };
 };

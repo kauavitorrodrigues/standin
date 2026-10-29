@@ -1,4 +1,5 @@
 import type { HoverState } from "@/features/game/types/hover";
+import { DESK_MESSAGES } from "../../consts/messages";
 import type { DeskCardAction } from "../../types/deskCard";
 import { DeskCardButton } from "./DeskCardButton";
 
@@ -6,6 +7,8 @@ type DeskCardProps = {
     hover: HoverState;
     action: DeskCardAction;
     isBusy: boolean;
+    // What the label says instead of "free" while the Studio holds the map.
+    lockText: string | null;
     onAction: () => void;
     onPointerEnter: () => void;
     onPointerLeave: () => void;
@@ -19,6 +22,7 @@ export const DeskCard = ({
     hover,
     action,
     isBusy,
+    lockText,
     onAction,
     onPointerEnter,
     onPointerLeave,
@@ -40,7 +44,7 @@ export const DeskCard = ({
             onPointerLeave={onPointerLeave}
         />
         <span className="absolute top-full right-0 mt-1 rounded-md bg-black/70 px-2 py-1 text-xs whitespace-nowrap text-white">
-            Mesa livre
+            {lockText ?? DESK_MESSAGES.FREE_DESK}
         </span>
     </div>
 );
