@@ -7,6 +7,7 @@ import type { StageTile } from "@/features/spaces/types/stage";
 import { StageFrame } from "@/features/spaces/components/pages/space-page/stage/StageFrame";
 import { AllTilesView } from "@/features/spaces/components/pages/space-page/stage/AllTilesView";
 import { CarouselControls } from "@/features/spaces/components/pages/space-page/stage/CarouselControls";
+import { StageVideoActionsContext } from "@/features/spaces/components/pages/space-page/stage/StageVideoActions";
 import { VideoTile } from "@/features/spaces/components/pages/space-page/stage/VideoTile";
 
 type VideoStageProps = {
@@ -24,6 +25,9 @@ type VideoStageProps = {
     onActiveVideosChange: (ids: ReadonlySet<string> | null) => void;
     // Who is in a big tile of the full view, with the layer each one needs.
     onFocusChange: (views: MediaView[]) => void;
+    // Hides the video of a person, who is still heard, or shows it again.
+    onHideVideo?: (userId: string) => void;
+    onShowVideo?: (userId: string) => void;
 };
 
 export const VideoStage = ({
@@ -36,6 +40,8 @@ export const VideoStage = ({
     onTogglePin,
     onActiveVideosChange,
     onFocusChange,
+    onHideVideo,
+    onShowVideo,
 }: VideoStageProps) => {
     const {
         visible,
@@ -61,13 +67,12 @@ export const VideoStage = ({
             activeKey === null ? null : new Set(activeKey.split("|"))
         );
     }, [activeKey, onActiveVideosChange]);
-    useEffect(
-        () => () => onActiveVideosChange(null),
-        [onActiveVideosChange]
-    );
+    useEffect(() => () => onActiveVideosChange(null), [onActiveVideosChange]);
 
     return (
-        <>
+        <StageVideoActionsContext.Provider
+            value={{ hideVideo: onHideVideo, showVideo: onShowVideo }}
+        >
             {isStripVisible && (
                 <StageFrame>
                     <div className="pointer-events-auto flex min-w-0 max-w-full items-center gap-2 overflow-x-auto rounded-xl bg-neutral-900/50 p-2 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
@@ -106,6 +111,6 @@ export const VideoStage = ({
                     onFocusChange={onFocusChange}
                 />
             )}
-        </>
+        </StageVideoActionsContext.Provider>
     );
 };
