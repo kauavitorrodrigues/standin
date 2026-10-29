@@ -14,6 +14,14 @@ type SinkableAudioElement = HTMLAudioElement & {
  */
 export class RemoteAudioManager {
     private readonly audioElements = new Map<string, HTMLAudioElement>();
+    // The sound of a screen a peer shares, by the socket id of the peer. It is
+    // not a voice: it never takes an audible slot, so it can not push a voice
+    // out of the ceiling. It follows the volume of its peer and is played by
+    // the same rules otherwise.
+    private readonly screenElements = new Map<string, HTMLAudioElement>();
+    // The last distance volume of every peer, with or without a voice. The
+    // sound of a screen outlives a muted voice, so it reads this one.
+    private readonly peerVolumes = new Map<string, number>();
     // Elements whose play() was rejected by the browser's autoplay policy.
     // Browsers don't retry a blocked element on their own once the user
     // finally interacts with the page - only a fresh play() call does that -
@@ -66,6 +74,34 @@ export class RemoteAudioManager {
         this.attemptPlay(audio);
     }
 
+    /** Plays the sound a peer shares with their screen. */
+    attachScreen(socketId: string, stream: MediaStream): void {
+        const audio = this.screenElements.get(socketId) ?? new Audio();
+        audio.srcObject = new MediaStream(stream.getAudioTracks());
+        audio.autoplay = true;
+        // Silent until the distance volume of the peer is known, like a voice.
+        audio.volume = 0;
+        this.applySinkId(audio);
+
+        this.screenElements.set(socketId, audio);
+        audio.volume = (this.peerVolumes.get(socketId) ?? 0) * this.masterVolume;
+        this.attemptPlay(audio);
+    }
+
+    /** Stops the sound a peer shared with their screen. */
+    removeScreen(socketId: string): void {
+        const audio = this.screenElements.get(socketId);
+        if (!audio) return;
+
+        audio.pause();
+        audio.srcObject = null;
+        this.screenElements.delete(socketId);
+        this.blockedAudioElements.delete(audio);
+        this.forgetVolumeIfAlone(socketId);
+    }
+
+    // A voice that goes away does not take the sound of the screen with it:
+    // a person who mutes still shares it.
     remove(socketId: string): void {
         const audio = this.audioElements.get(socketId);
         if (!audio) return;
@@ -77,11 +113,21 @@ export class RemoteAudioManager {
         this.speakingPeers.delete(socketId);
         this.suspendedPeers.delete(socketId);
         this.blockedAudioElements.delete(audio);
+        this.forgetVolumeIfAlone(socketId);
+    }
+
+    private forgetVolumeIfAlone(socketId: string): void {
+        if (this.audioElements.has(socketId)) return;
+        if (this.screenElements.has(socketId)) return;
+        this.peerVolumes.delete(socketId);
     }
 
     removeAll(): void {
         this.disposed = true;
 
+        Array.from(this.screenElements.keys()).forEach((socketId) =>
+            this.removeScreen(socketId)
+        );
         Array.from(this.audioElements.keys()).forEach((socketId) =>
             this.remove(socketId)
         );
@@ -97,6 +143,12 @@ export class RemoteAudioManager {
     }
 
     setVolume(socketId: string, volume: number): void {
+        const screen = this.screenElements.get(socketId);
+        if (screen || this.audioElements.has(socketId)) {
+            this.peerVolumes.set(socketId, volume);
+        }
+        if (screen) screen.volume = volume * this.masterVolume;
+
         const audio = this.audioElements.get(socketId);
         if (!audio) return;
 
@@ -151,6 +203,9 @@ export class RemoteAudioManager {
         this.audioElements.forEach((audio, socketId) => {
             audio.volume = (this.proximityVolumes.get(socketId) ?? 0) * volume;
         });
+        this.screenElements.forEach((audio, socketId) => {
+            audio.volume = (this.peerVolumes.get(socketId) ?? 0) * volume;
+        });
     }
 
     // Applied to every current audio element immediately, and to every one
@@ -159,6 +214,7 @@ export class RemoteAudioManager {
     setSinkId(deviceId: string | null): void {
         this.sinkId = deviceId;
         this.audioElements.forEach((audio) => this.applySinkId(audio));
+        this.screenElements.forEach((audio) => this.applySinkId(audio));
     }
 
     private applySinkId(audio: HTMLAudioElement): void {
@@ -189,6 +245,9 @@ export class RemoteAudioManager {
 
     private isTracked(audio: HTMLAudioElement): boolean {
         for (const element of this.audioElements.values()) {
+            if (element === audio) return true;
+        }
+        for (const element of this.screenElements.values()) {
             if (element === audio) return true;
         }
         return false;

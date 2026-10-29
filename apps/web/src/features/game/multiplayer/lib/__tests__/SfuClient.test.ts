@@ -185,6 +185,25 @@ describe("SfuClient", () => {
         expect(bySource.screen.encodings).toHaveLength(1);
     });
 
+    it("sends the sound of the screen as its own stream, hinted as music", async () => {
+        const { client, transports } = setup();
+        await client.start();
+        const sound = fakeTrack("audio");
+        client.setTrack("screen", fakeTrack("video"));
+        client.setTrack("screen-audio", sound);
+        await vi.waitFor(() =>
+            expect(transports.send.produce).toHaveBeenCalledTimes(2)
+        );
+
+        const call = transports.send.produce.mock.calls.find(
+            (entry) => entry[0].appData.source === "screen-audio"
+        );
+        expect(call?.[0].track).toBe(sound);
+        expect(sound.contentHint).toBe("music");
+        // No voice codec options such as discontinuous transmission.
+        expect(call?.[0]).not.toHaveProperty("codecOptions");
+    });
+
     it("stops sending a source when its track goes away", async () => {
         const { client, requests } = setup();
         await client.start();
