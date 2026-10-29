@@ -1,4 +1,5 @@
 import type { Ref } from "react";
+import { WebglNotice } from "@/features/game/components/WebglNotice";
 import { blurActiveEditableElement } from "@/features/game/utils/player";
 
 type Props = {
@@ -6,9 +7,12 @@ type Props = {
 };
 
 export const GameCanvas = ({ ref }: Props) => (
-    <div
-        ref={ref}
-        className="h-full w-full"
-        onPointerDown={blurActiveEditableElement}
-    />
+    <div className="relative h-full w-full">
+        <div
+            ref={ref}
+            className="h-full w-full"
+            onPointerDown={blurActiveEditableElement}
+        />
+        <WebglNotice />
+    </div>
 );
