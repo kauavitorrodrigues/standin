@@ -65,6 +65,7 @@ describe("pinnedRemoteUserIds", () => {
             label: id,
             isSelf,
             isMuted: false,
+            notice: null,
         }) as const;
 
     it("maps pinned tiles to remote users in pin order without repeats", () => {

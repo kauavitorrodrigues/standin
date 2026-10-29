@@ -45,6 +45,7 @@ export const useStageTiles = ({
                 includeSelf: isOnStage,
                 mutedUserIds,
                 speakingUserIds,
+                hiddenUserIds: video.hiddenVideoUserIds,
                 localScreenStream: screenShare.stream,
                 names: buildNameLookup(members),
             }),
@@ -56,6 +57,7 @@ export const useStageTiles = ({
             isOnStage,
             mutedUserIds,
             speakingUserIds,
+            video.hiddenVideoUserIds,
             screenShare.stream,
             members,
         ]

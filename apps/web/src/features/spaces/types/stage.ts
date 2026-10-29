@@ -1,3 +1,4 @@
+import type { MediaPauseReason } from "@standin/contracts";
 import type { RemoteVideoSlot } from "@/features/game/multiplayer/types/remoteVideo";
 
 export type StageTile = {
@@ -11,6 +12,9 @@ export type StageTile = {
     isSelf: boolean;
     // Their mic is off. Always false for screens, which carry no audio.
     isMuted: boolean;
+    // Why the video of this tile is not playing, null while it does. Held back
+    // by the server, hidden by the viewer, or lowered by a rule of the space.
+    notice: MediaPauseReason | null;
 };
 
 // One page of the stage carousel. `carouselIndex` is zero based and always
