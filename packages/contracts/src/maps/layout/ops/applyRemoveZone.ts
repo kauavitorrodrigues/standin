@@ -4,6 +4,7 @@ import {
     type MapLayout,
 } from "../../schemas/layout.schema";
 import { LAYOUT_ISSUE_MESSAGES as Messages } from "../consts/issue-messages";
+import { MIN_SPAWN_ZONES } from "../consts/thresholds";
 import {
     LAYOUT_ISSUE_CODES as Code,
     createIssue,
@@ -22,12 +23,12 @@ export const applyRemoveZone = (
 
     group.objects = group.objects.filter((object) => object.id !== op.zoneId);
 
-    const hasSpawn = group.objects.some(
+    const spawnCount = group.objects.filter(
         (object) =>
             isZoneObject(object) &&
             objectToZone(object).kind === LAYOUT_ZONE_KINDS.SPAWN
-    );
-    if (hasSpawn) return [];
+    ).length;
+    if (spawnCount >= MIN_SPAWN_ZONES) return [];
 
     return [
         createIssue(

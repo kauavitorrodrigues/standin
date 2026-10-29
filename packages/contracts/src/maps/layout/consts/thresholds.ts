@@ -1,6 +1,10 @@
 // Spawns closer than this many tiles raise a warning.
 export const SPAWN_MIN_DISTANCE_TILES = 2;
 
+// A map keeps at least this many spawn zones, so there is always somewhere to
+// put who enters it.
+export const MIN_SPAWN_ZONES = 1;
+
 // How far a thumbnail aspect ratio may drift from the map's before warning.
 export const MAX_THUMBNAIL_ASPECT_DRIFT = 0.02;
 
