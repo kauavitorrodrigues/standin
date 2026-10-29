@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { moveCategoryFocus } from "../../utils/moveCategoryFocus";
 
 type SlotProps = { children: ReactNode };
 
@@ -13,6 +14,11 @@ const Body = ({ children }: SlotProps) => (
 const Slots = ({ children }: SlotProps) => (
     <nav
         aria-label="Partes do avatar"
+        onKeyDown={(event) => {
+            if (moveCategoryFocus(event.currentTarget, event.key)) {
+                event.preventDefault();
+            }
+        }}
         className="flex min-h-0 flex-col gap-1 overflow-y-auto rounded-xl bg-muted p-2"
     >
         {children}

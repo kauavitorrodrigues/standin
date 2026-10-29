@@ -10,9 +10,11 @@ import type {
     AvatarCategoryPartVariation,
 } from "../../types/editor";
 import { PART_GRID_TILE_SIZE } from "../../consts/editor/grid";
+import { AVATAR_TEST_IDS } from "../../utils/avatarTestIds";
 import { PartTileImage } from "./PartTileImage";
 
 type PartCellProps = {
+    slot: string;
     item: AvatarCategoryPartItem;
     // The color shown in the tile: the chosen one when this part is selected,
     // the first one otherwise.
@@ -40,6 +42,7 @@ const RemoveMark = ({ isSelected, onRemove }: RemoveMarkProps) => {
 };
 
 export const PartCell = ({
+    slot,
     item,
     variation,
     isSelected,
@@ -56,6 +59,7 @@ export const PartCell = ({
                     <button
                         type="button"
                         data-part-tile=""
+                        data-testid={AVATAR_TEST_IDS.part(slot, item.name)}
                         aria-label={item.name}
                         aria-pressed={isSelected}
                         onClick={() => onChoose(item)}

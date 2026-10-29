@@ -9,6 +9,7 @@ import type { AvatarCategoryPartItem } from "../../types/editor";
 import { PartCell } from "./PartCell";
 
 type PartGridRowProps = {
+    slot: string;
     items: readonly AvatarCategoryPartItem[];
     columns: number;
     // Where the row sits in the virtual list, in px from the top.
@@ -20,6 +21,7 @@ type PartGridRowProps = {
 
 // One row of tiles of the virtual grid.
 export const PartGridRow = ({
+    slot,
     items,
     columns,
     offset,
@@ -47,6 +49,7 @@ export const PartGridRow = ({
             return (
                 <PartCell
                     key={item.id}
+                    slot={slot}
                     item={item}
                     variation={variation}
                     isSelected={isSelected}

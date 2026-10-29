@@ -7,6 +7,7 @@ import { getSwatchVariations } from "../../utils/draft";
 import { ColorSwatch } from "../views/ColorSwatch";
 
 type VariationSwatchesFieldProps = {
+    slot: string;
     // The chosen part when it is in the loaded pages.
     family: AvatarCategoryPartItem | undefined;
     selectedId: string | null;
@@ -19,6 +20,7 @@ type VariationSwatchesFieldProps = {
 // The colors the chosen part is registered with, below the grid. A part of a
 // single color, or one that is not loaded yet, shows nothing.
 export const VariationSwatchesField = ({
+    slot,
     family,
     selectedId,
     onSelect,
@@ -32,6 +34,7 @@ export const VariationSwatchesField = ({
             {variations.map((variation) => (
                 <ColorSwatch
                     key={variation.id}
+                    slot={slot}
                     variation={variation}
                     isSelected={variation.id === selectedId}
                     onSelect={(next) => onSelect(family, next)}

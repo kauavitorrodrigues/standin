@@ -4,8 +4,10 @@ import { cn } from "@/lib/utils";
 import { useApplyingColor } from "../../hooks/useApplyingColor";
 import { useSheetPixels } from "../../queries/useSheetPixels";
 import type { AvatarCategoryPartVariation } from "../../types/editor";
+import { AVATAR_TEST_IDS } from "../../utils/avatarTestIds";
 
 type ColorSwatchProps = {
+    slot: string;
     variation: AvatarCategoryPartVariation;
     isSelected: boolean;
     onSelect: (variation: AvatarCategoryPartVariation) => void;
@@ -45,6 +47,7 @@ const LoadingMark = ({ isApplying, isSelected, url }: LoadingMarkProps) => {
 // One color of the chosen part. The dot is the hex the admin registered with
 // the variation, it is not applied to the sheet.
 export const ColorSwatch = ({
+    slot,
     variation,
     isSelected,
     onSelect,
@@ -56,6 +59,10 @@ export const ColorSwatch = ({
     return (
         <button
             type="button"
+            data-testid={AVATAR_TEST_IDS.color(
+                slot,
+                variation.colorKey ?? variation.id
+            )}
             title={variation.colorKey ?? undefined}
             aria-label={variation.colorKey ?? variation.id}
             aria-pressed={isSelected}
