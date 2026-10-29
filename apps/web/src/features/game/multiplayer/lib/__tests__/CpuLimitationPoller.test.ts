@@ -28,7 +28,11 @@ describe("CpuLimitationPoller", () => {
         cpu = 10;
         await poller.poll();
         poller.stop();
-        expect(onSample).toHaveBeenNthCalledWith(1, { reason: "cpu", cpuLimitedDuration: 4 });
+        expect(onSample).toHaveBeenNthCalledWith(1, {
+            reason: "cpu",
+            cpuLimitedDuration: 4,
+            cpuLimitedPercentage: 80,
+        });
     });
 
     it("reports 0 when the reason is not cpu", async () => {
@@ -42,7 +46,38 @@ describe("CpuLimitationPoller", () => {
         poller.start();
         await poller.poll();
         poller.stop();
-        expect(onSample).toHaveBeenCalledWith({ reason: "none", cpuLimitedDuration: 0 });
+        expect(onSample).toHaveBeenCalledWith({
+            reason: "none",
+            cpuLimitedDuration: 0,
+            cpuLimitedPercentage: 0,
+        });
+    });
+
+    it("reports the share of the time since the previous poll, capped at 100", async () => {
+        let cpu = 0;
+        let now = 1000;
+        const sender = fakeSender(() => ({
+            type: "outbound-rtp",
+            qualityLimitationReason: "cpu",
+            qualityLimitationDurations: { cpu },
+        }));
+        const onSample = vi.fn();
+        const poller = new CpuLimitationPoller({
+            getVideoSenders: () => [sender],
+            onSample,
+            now: () => now,
+        });
+        poller.start();
+        await poller.poll();
+        cpu = 2;
+        now += 10_000;
+        await poller.poll();
+        cpu = 30;
+        now += 10_000;
+        await poller.poll();
+        poller.stop();
+        expect(onSample.mock.calls[1][0].cpuLimitedPercentage).toBe(20);
+        expect(onSample.mock.calls[2][0].cpuLimitedPercentage).toBe(100);
     });
 
     it("polls on the interval", async () => {

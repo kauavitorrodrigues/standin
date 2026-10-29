@@ -1,6 +1,17 @@
 // Copy for the degradation banner, per signal id (see the signals in
 // ./degradation).
-export const getDegradationCopy = (signalId: string, promoted: boolean) => {
+export const getDegradationCopy = (
+    signalId: string,
+    promoted: boolean,
+    recovered = false
+) => {
+    if (recovered) {
+        return {
+            title: "Desempenho normalizado",
+            description:
+                "Voltamos às suas configurações de desempenho. Os vídeos e as animações estão como antes.",
+        };
+    }
     const title = getTitle(signalId);
     return { title, description: getDescription(signalId, promoted) };
 };

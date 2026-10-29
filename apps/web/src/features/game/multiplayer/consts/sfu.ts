@@ -80,10 +80,3 @@ export const SFU_REQUEST_TIMEOUT_MS = 8000;
 // The media session is built again at most this many times in the window of
 // AttemptRateTracker before the client gives up and waits for the next join.
 export const SFU_REBUILD_MAX_ATTEMPTS = 6;
-
-// Weak machine detection from the sender statistics: a window of samples, cut
-// to the low layer when the CPU limited time inside it reaches the cut, and
-// recovered when it falls to the recover value.
-export const CPU_WINDOW_MS = 60_000;
-export const CPU_CUT_SECONDS = 20;
-export const CPU_RECOVER_SECONDS = 5;

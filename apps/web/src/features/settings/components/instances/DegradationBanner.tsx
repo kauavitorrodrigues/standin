@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,18 +7,34 @@ import {
 } from "@/features/settings/performance/lib/degradation/DegradationEffects";
 import { getDegradationCopy } from "@/features/settings/performance/lib/getDegradationCopy";
 
+// How long the recovery notice stays up before it goes away on its own.
+const RECOVERY_NOTICE_MS = 8000;
+
 // Tells that quality was lowered. Dismissing keeps the lowered settings,
-// Cancel gives the user's own settings back.
+// Cancel gives the user's own settings back. When the machine recovers it
+// tells that too, with nothing to cancel.
 export const DegradationBanner = () => {
     const notice = useSyncExternalStore(
         degradationNoticeStore.subscribe,
         degradationNoticeStore.get
     );
+    const recovered = notice?.recovered === true;
+
+    useEffect(() => {
+        if (!recovered) return;
+        const timer = setTimeout(
+            () => degradationEffects.dismiss(),
+            RECOVERY_NOTICE_MS
+        );
+        return () => clearTimeout(timer);
+    }, [recovered]);
+
     if (!notice) return null;
 
     const { title, description } = getDegradationCopy(
         notice.signalId,
-        notice.promoted
+        notice.promoted,
+        recovered
     );
 
     return (
@@ -38,14 +54,16 @@ export const DegradationBanner = () => {
                 </Button>
             </div>
             <p className="text-xs text-muted-foreground">{description}</p>
-            <Button
-                variant="outline"
-                size="sm"
-                className="self-start"
-                onClick={() => degradationEffects.cancel()}
-            >
-                Cancelar
-            </Button>
+            {!recovered && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="self-start"
+                    onClick={() => degradationEffects.cancel()}
+                >
+                    Cancelar
+                </Button>
+            )}
         </div>
     );
 };

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BatterySignal, getBatterySeverity } from "../BatterySignal";
 import { DegradationMonitor } from "../DegradationMonitor";
+import { DebugSignal } from "../DebugSignal";
 import { WebrtcCpuSignal, getWebrtcCpuSignal } from "../WebrtcCpuSignal";
 import { WebrtcCpuWindow } from "../WebrtcCpuWindow";
 import { DegradationSeverity } from "../DegradationSeverity";
@@ -146,5 +147,23 @@ describe("WebrtcCpuSignal", () => {
 
     it("is registered in the default monitor", () => {
         expect(getWebrtcCpuSignal().id).toBe("webrtcCpuLimitation");
+    });
+});
+
+describe("DebugSignal", () => {
+    afterEach(() => {
+        getWebrtcCpuSignal().stop();
+    });
+
+    it("__degradeCpu goes through the real cpu window", () => {
+        const debug = new DebugSignal();
+        debug.start();
+        const cpuSignal = getWebrtcCpuSignal();
+        window.__degradeCpu?.(10);
+        expect(cpuSignal.severity).toBe(DegradationSeverity.None);
+        window.__degradeCpu?.(10);
+        expect(cpuSignal.severity).toBe(DegradationSeverity.Degraded);
+        debug.stop();
+        expect(window.__degradeCpu).toBeUndefined();
     });
 });
