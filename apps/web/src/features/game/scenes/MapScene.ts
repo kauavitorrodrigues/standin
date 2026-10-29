@@ -273,6 +273,13 @@ export class MapScene extends Phaser.Scene {
     private lastVolumeUpdateAt = 0;
     // The user id of each remote peer, to find its avatar sheet.
     private remoteUserIds = new Map<string, string>();
+    // Which socket to read for a person, so the bubbles do not walk
+    // `remoteUserIds` in every frame. Cleared whenever that map changes.
+    private readonly nearbySocketIds = new Map<string, string>();
+    private readonly nearbyAnchor: NearbyAnchor = {
+        feet: { x: 0, y: 0 },
+        isAllowed: false,
+    };
     private anyPeerAudible = false;
     // The reach of the voice and video of the space, set by the owner.
     private proximityPreset: ProximityPreset = DEFAULT_PROXIMITY_PRESET;
@@ -629,6 +636,7 @@ export class MapScene extends Phaser.Scene {
             this.avatarSheets = null;
             this.seatOccupancy.clear();
             this.remoteUserIds.clear();
+            this.nearbySocketIds.clear();
             this.unsubscribeRoomSync?.();
             this.roomDoorView?.destroy();
             this.roomDimOverlay?.destroy();
@@ -1067,6 +1075,7 @@ export class MapScene extends Phaser.Scene {
         );
         this.remoteAvatars.set(socketId, avatar);
         this.remoteUserIds.set(socketId, userId);
+        this.nearbySocketIds.clear();
         this.avatarSheets?.bind(socketId, avatar, avatarSheetFileId);
         avatar.setName(this.pendingUserNames.take(userId, profile.name));
         avatar.setProfile({
@@ -1270,6 +1279,7 @@ export class MapScene extends Phaser.Scene {
         this.remoteAvatars.delete(socketId);
         this.seatOccupancy.remove(socketId);
         this.remoteUserIds.delete(socketId);
+        this.nearbySocketIds.clear();
         this.emoteRateLimiter.remove(socketId);
         this.nearbyRateLimiter.remove(socketId);
         this.nearbyTypingRateLimiter.remove(socketId);
@@ -1284,6 +1294,7 @@ export class MapScene extends Phaser.Scene {
         this.remoteAvatars.clear();
         this.seatOccupancy.clear();
         this.remoteUserIds.clear();
+        this.nearbySocketIds.clear();
     }
 
     setPositionBroadcaster(
@@ -1443,10 +1454,24 @@ export class MapScene extends Phaser.Scene {
     };
 
     // The avatar of a person for the bubble: the local one, or the first remote
-    // avatar of that user (the same person can have more than one tab).
+    // avatar of that user (the same person can have more than one tab). The
+    // bubbles ask for it every frame, so the answer is one object that is
+    // written again: it is only good until the next call.
     private findNearbyAnchor(userId: string): NearbyAnchor | null {
+        const anchor = this.nearbyAnchor;
         if (userId === this.localUserProfile?.userId && this.player) {
-            return { feet: this.player.gameObject, isAllowed: true };
+            anchor.feet = this.player.gameObject;
+            anchor.isAllowed = true;
+            return anchor;
+        }
+
+        const known = this.nearbySocketIds.get(userId);
+        const cached =
+            known === undefined ? undefined : this.remoteAvatars.get(known);
+        if (cached) {
+            anchor.feet = cached.gameObject;
+            anchor.isAllowed = this.isRemoteTagAllowed(cached);
+            return anchor;
         }
 
         for (const [socketId, remoteUserId] of this.remoteUserIds) {
@@ -1455,10 +1480,10 @@ export class MapScene extends Phaser.Scene {
             const avatar = this.remoteAvatars.get(socketId);
             if (!avatar) continue;
 
-            return {
-                feet: avatar.gameObject,
-                isAllowed: this.isRemoteTagAllowed(avatar),
-            };
+            this.nearbySocketIds.set(userId, socketId);
+            anchor.feet = avatar.gameObject;
+            anchor.isAllowed = this.isRemoteTagAllowed(avatar);
+            return anchor;
         }
         return null;
     }
