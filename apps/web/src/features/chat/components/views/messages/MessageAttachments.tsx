@@ -47,7 +47,7 @@ export const MessageAttachments = ({
                             key={id}
                             className="group/attachment relative w-fit"
                         >
-                            <a href={url} target="_blank" rel="noreferrer">
+                            <a href={url} target="_blank" rel="noopener noreferrer">
                                 <img
                                     src={url}
                                     alt={file.originalName}
@@ -78,7 +78,7 @@ export const MessageAttachments = ({
                         <a
                             href={url}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             className="flex min-w-0 items-center gap-2 hover:underline"
                         >
                             <FileIcon className="size-4 shrink-0" />
