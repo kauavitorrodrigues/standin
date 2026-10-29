@@ -1,9 +1,11 @@
 import { NOTIFICATION_SOUND } from "@/features/notifications/consts/notificationSettings";
+import { SPEAKER_TEST_SOUND } from "@/features/sounds/consts/soundTones";
 import { createToneUrl } from "@/features/sounds/lib/createToneUrl";
 import { SoundEffect } from "@/features/sounds/lib/SoundEffect";
 
 type SoundCatalog = {
     notification: SoundEffect;
+    speakerTest: SoundEffect;
 };
 
 let catalog: SoundCatalog | null = null;
@@ -18,6 +20,12 @@ export const getSoundCatalog = (): SoundCatalog => {
             createToneUrl(
                 NOTIFICATION_SOUND.frequencyHz,
                 NOTIFICATION_SOUND.durationSeconds
+            )
+        ),
+        speakerTest: new SoundEffect(
+            createToneUrl(
+                SPEAKER_TEST_SOUND.frequencyHz,
+                SPEAKER_TEST_SOUND.durationSeconds
             )
         ),
     };

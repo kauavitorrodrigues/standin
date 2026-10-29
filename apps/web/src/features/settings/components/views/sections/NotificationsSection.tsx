@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { playNotificationSoundNow } from "@/features/notifications/lib/playNotificationSound";
 import { useNotificationSettings } from "@/features/notifications/hooks/useNotificationSettings";
 import { getNotificationsDescription } from "../../../utils/getNotificationsDescription";
 import { NotificationSettingsSelect } from "../../instances/NotificationSettingsSelect";
@@ -53,6 +55,18 @@ export const NotificationsSection = () => {
                     description="Volume dos sons de aviso, no alto-falante escolhido em Áudio"
                 >
                     <NotificationVolumeSlider />
+                </SettingsRow>
+                <SettingsRow
+                    title="Testar aviso"
+                    description="Toca o som de aviso como ele soa para uma nova mensagem"
+                >
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={playNotificationSoundNow}
+                    >
+                        Tocar aviso
+                    </Button>
                 </SettingsRow>
             </SettingsGroup>
         </>
