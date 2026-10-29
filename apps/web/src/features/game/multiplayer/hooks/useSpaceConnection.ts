@@ -202,7 +202,7 @@ export function useSpaceConnection({
         setRemoteMicMuted,
         setRemotePrivacy,
     });
-    const { beginSession, endSession, rebuildSession } = sfu;
+    const { beginSession, endSession, rebuildSession, failures } = sfu;
 
     // Dev only failure harness, not present in production builds:
     // Vite replaces import.meta.env.DEV with false and drops the branch.
@@ -213,7 +213,7 @@ export function useSpaceConnection({
         window.__simulateScenario = (name) =>
             simulateScenario(name, {
                 socket,
-                media: { rebuildSession },
+                media: { rebuildSession, ...failures },
                 reload: () => window.location.reload(),
                 setTimeout: (callback, delayMs) =>
                     setTimeout(callback, delayMs),
@@ -222,7 +222,7 @@ export function useSpaceConnection({
             delete window.__simulateScenario;
             delete window.__connectionReport;
         };
-    }, [rebuildSession]);
+    }, [rebuildSession, failures]);
 
     // Mirrors the speaker device preference onto every remote <audio>
     // element, live: useMediaDeviceControl (a separate hook instance, owning

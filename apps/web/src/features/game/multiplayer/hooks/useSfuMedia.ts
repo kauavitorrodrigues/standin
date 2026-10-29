@@ -1,7 +1,8 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { connectionReporter, socket } from "../socket";
 import { SfuClient } from "../lib/SfuClient";
 import { SfuSupervisor } from "../lib/SfuSupervisor";
+import type { TransportErrorType } from "../lib/TransportConnectionMonitor";
 import type { MediaView } from "../types/mediaView";
 import type { SfuSocket } from "../types/sfuSignal";
 import type { UseSfuMediaOptions } from "../types/sfuHooks";
@@ -128,6 +129,23 @@ export function useSfuMedia({
         supervisorRef.current?.reset();
     }, []);
 
+    /**
+     * The failures the dev console can cause on the media session. Each one
+     * does nothing when there is no session.
+     */
+    const failures = useMemo(
+        () => ({
+            restartIce: () => supervisorRef.current?.forceIceRestart(),
+            publishTransportError: (type: TransportErrorType) =>
+                supervisorRef.current?.simulateTransportError(type),
+            dropSendTransport: () => supervisorRef.current?.forgetSendTransport(),
+            pauseConsumers: () => supervisorRef.current?.pauseConsumers(),
+            resumeConsumers: () => supervisorRef.current?.resumeConsumers(),
+            dropTransports: () => supervisorRef.current?.dropTransports(),
+        }),
+        []
+    );
+
     return {
         remoteVideos: remote.remoteVideos,
         setActiveVideoIds: remote.setActiveVideoIds,
@@ -136,5 +154,6 @@ export function useSfuMedia({
         setFocus,
         setPins,
         rebuildSession,
+        failures,
     };
 }

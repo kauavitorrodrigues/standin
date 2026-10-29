@@ -21,6 +21,7 @@ import { IceRestarter } from "./IceRestarter";
 import {
     TransportConnectionMonitor,
     type MonitorReason,
+    type TransportErrorType,
 } from "./TransportConnectionMonitor";
 
 type CreateDevice = () => Device;
@@ -318,6 +319,44 @@ export class SfuClient {
             .filter((producer) => producer.kind === "video")
             .map((producer) => producer.rtpSender)
             .filter((sender): sender is RTCRtpSender => sender !== undefined);
+    }
+
+    /*
+     * The calls below only exist for the failure scenarios of the dev console
+     * (see utils/simulateScenario.ts). Nothing else uses them.
+     */
+
+    /** Restarts ICE on both transports now, whatever state they are in. */
+    forceIceRestart(): void {
+        this.restarters.forEach((restarter) => restarter.trigger());
+    }
+
+    /** Reports an error of the transports as if the monitor had found it. */
+    simulateTransportError(type: TransportErrorType): void {
+        this.monitors.forEach((monitor) => monitor.publishSimulated(type));
+    }
+
+    /** Forgets the send transport, which the server still holds. */
+    forgetSendTransport(): void {
+        this.sendTransport = null;
+    }
+
+    /** Pauses every consumer on this side, with no message to the server. */
+    pauseConsumers(): void {
+        this.consumers.forEach((consumer) => consumer.pause());
+    }
+
+    /** Resumes every consumer paused by {@link pauseConsumers}. */
+    resumeConsumers(): void {
+        this.consumers.forEach((consumer) => consumer.resume());
+    }
+
+    /** Closes both transports and forgets them, so the session has none. */
+    dropTransports(): void {
+        this.sendTransport?.close();
+        this.recvTransport?.close();
+        this.sendTransport = null;
+        this.recvTransport = null;
     }
 
     /** Closes the session. Everything announced afterwards is ignored. */

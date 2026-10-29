@@ -12,6 +12,12 @@ const setup = (failBuilds = 0) => {
         close: ReturnType<typeof vi.fn>;
         setTrack: ReturnType<typeof vi.fn>;
         setDemand: ReturnType<typeof vi.fn>;
+        forceIceRestart: ReturnType<typeof vi.fn>;
+        simulateTransportError: ReturnType<typeof vi.fn>;
+        forgetSendTransport: ReturnType<typeof vi.fn>;
+        pauseConsumers: ReturnType<typeof vi.fn>;
+        resumeConsumers: ReturnType<typeof vi.fn>;
+        dropTransports: ReturnType<typeof vi.fn>;
         events: SfuEvents;
     }[] = [];
     let remainingFailures = failBuilds;
@@ -34,6 +40,12 @@ const setup = (failBuilds = 0) => {
                 close: vi.fn(),
                 setTrack: vi.fn(),
                 setDemand: vi.fn(),
+                forceIceRestart: vi.fn(),
+                simulateTransportError: vi.fn(),
+                forgetSendTransport: vi.fn(),
+                pauseConsumers: vi.fn(),
+                resumeConsumers: vi.fn(),
+                dropTransports: vi.fn(),
                 handleConsumerNew: vi.fn(),
                 handleConsumerClosed: vi.fn(),
                 getVideoSenders: () => [],
@@ -137,5 +149,33 @@ describe("SfuSupervisor", () => {
         expect(signal.send).toHaveBeenLastCalledWith("media:set-pins", {
             userIds: [],
         });
+    });
+
+    it("hands the failures of the dev console to the current client", async () => {
+        const { supervisor, clients } = setup();
+        await supervisor.start();
+
+        supervisor.forceIceRestart();
+        supervisor.simulateTransportError("FailedToConnect");
+        supervisor.forgetSendTransport();
+        supervisor.pauseConsumers();
+        supervisor.resumeConsumers();
+        supervisor.dropTransports();
+
+        expect(clients[0].forceIceRestart).toHaveBeenCalledOnce();
+        expect(clients[0].simulateTransportError).toHaveBeenCalledWith("FailedToConnect");
+        expect(clients[0].forgetSendTransport).toHaveBeenCalledOnce();
+        expect(clients[0].pauseConsumers).toHaveBeenCalledOnce();
+        expect(clients[0].resumeConsumers).toHaveBeenCalledOnce();
+        expect(clients[0].dropTransports).toHaveBeenCalledOnce();
+    });
+
+    it("does nothing with the failures when there is no session", () => {
+        const { supervisor } = setup();
+
+        expect(() => {
+            supervisor.forceIceRestart();
+            supervisor.dropTransports();
+        }).not.toThrow();
     });
 });

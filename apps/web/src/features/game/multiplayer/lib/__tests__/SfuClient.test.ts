@@ -68,6 +68,8 @@ const fakeTransport = (id: string) => {
             id: options.id,
             track: fakeTrack(),
             close: vi.fn(),
+            pause: vi.fn(),
+            resume: vi.fn(),
         })),
         restartIce: vi.fn(async () => undefined),
         close: vi.fn(() => {
@@ -368,6 +370,38 @@ describe("SfuClient", () => {
             }
         });
 
+        it("forces an ICE restart on both transports, whatever state they are in", async () => {
+            vi.useFakeTimers();
+            try {
+                const { client, events, transports } = setup();
+                await client.start();
+                client.forceIceRestart();
+                await vi.advanceTimersByTimeAsync(3000);
+
+                expect(transports.send.restartIce).toHaveBeenCalled();
+                expect(transports.recv.restartIce).toHaveBeenCalled();
+                expect(events.onBroken).not.toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it("a simulated transport error is only reported, and the session keeps running", async () => {
+            vi.spyOn(console, "warn").mockImplementation(() => {});
+            const { client, events, transports } = setup();
+            await client.start();
+            client.simulateTransportError("FailedToConnect");
+
+            expect(console.warn).toHaveBeenCalledWith(
+                "[multiplayer] transport error",
+                "FailedToConnect",
+                expect.objectContaining({ id: "send-1" })
+            );
+            expect(events.onBroken).not.toHaveBeenCalled();
+            expect(transports.send.restartIce).not.toHaveBeenCalled();
+            vi.restoreAllMocks();
+        });
+
         it("adds the report of the socket to the warning when it has one", async () => {
             vi.spyOn(console, "warn").mockImplementation(() => {});
             const report = {
@@ -398,5 +432,44 @@ describe("SfuClient", () => {
             vi.restoreAllMocks();
         });
 
+        it("pauses and resumes every consumer", async () => {
+            const { client } = setup();
+            await client.start();
+            await client.handleConsumerNew(consumerNew("c1"));
+            await client.handleConsumerNew(consumerNew("c2"));
+            const consumers = await Promise.all(
+                [0, 1].map((index) => {
+                    const mock = (client as unknown as {
+                        recvTransport: { consume: { mock: { results: { value: Promise<{ pause: () => void; resume: () => void }> }[] } } };
+                    }).recvTransport.consume.mock.results[index];
+                    return mock.value;
+                })
+            );
+
+            client.pauseConsumers();
+            consumers.forEach((consumer) => expect(consumer.pause).toHaveBeenCalledOnce());
+            client.resumeConsumers();
+            consumers.forEach((consumer) => expect(consumer.resume).toHaveBeenCalledOnce());
+        });
+
+        it("forgets the send transport without closing it, so nothing is produced", async () => {
+            const { client, transports } = setup();
+            await client.start();
+            client.forgetSendTransport();
+            client.setTrack("mic", fakeTrack());
+            await Promise.resolve();
+
+            expect(transports.send.close).not.toHaveBeenCalled();
+            expect(transports.send.produce).not.toHaveBeenCalled();
+        });
+
+        it("drops both transports by closing them", async () => {
+            const { client, transports } = setup();
+            await client.start();
+            client.dropTransports();
+
+            expect(transports.send.close).toHaveBeenCalledOnce();
+            expect(transports.recv.close).toHaveBeenCalledOnce();
+        });
     });
 });
