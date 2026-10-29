@@ -502,6 +502,28 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12))
 
+  packages/authoring:
+    dependencies:
+      '@standin/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      '@standin/tsconfig':
+        specifier: workspace:*
+        version: link:../config/tsconfig
+      '@standin/vitest-config':
+        specifier: workspace:*
+        version: link:../config/vitest
+      '@types/node':
+        specifier: 26.4.0
+        version: 26.4.0
+      typescript:
+        specifier: 6.0.2
+        version: 6.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12))
+
   packages/config/eslint:
     dependencies:
       '@eslint/js':
