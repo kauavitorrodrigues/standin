@@ -165,5 +165,10 @@ export const createGameEngine = ({
             bindHoverClickSubscription(game, event, listener),
         selectHover: (event, id) => selectHover(game, event, id),
         pinHover: (event, id) => pinHover(game, event, id),
+        setDeskClaims: (claims, userId) =>
+            getMapScene(game)?.setDeskClaims(claims, userId),
+        walkToOwnDesk: () => getMapScene(game)?.walkToOwnDesk() ?? false,
+        walkToPerson: (userId) =>
+            getMapScene(game)?.walkToPerson(userId) ?? false,
     };
 };

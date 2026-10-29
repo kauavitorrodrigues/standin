@@ -12,4 +12,6 @@ export const WALK_EVENTS = {
     // A search for a way stopped at its limit and not because every way was
     // tried. The payload has the id of the map and the two tiles.
     LIMIT_REACHED: "walk:limit-reached",
+    // Where the walk that starts goes (a WalkPurpose), told before CHANGED.
+    PURPOSE: "walk:purpose",
 } as const;

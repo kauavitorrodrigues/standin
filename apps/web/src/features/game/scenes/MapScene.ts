@@ -43,13 +43,23 @@ import { PlayerController } from "@/features/game/lib/PlayerController";
 import { PathWalker } from "@/features/game/lib/PathWalker";
 import { TileMover } from "@/features/game/lib/TileMover";
 import { WALK_EVENTS } from "@/features/game/consts/walk-events";
+import { DESK_EVENTS, DESK_REACH_PX } from "@/features/game/consts/desk";
+import { REMOTE_SELECTION_EVENTS } from "@/features/game/consts/remote-selection";
+import type { WalkPurpose } from "@/features/game/types/walk";
+import { splitDeskAreas } from "@/features/game/utils/splitDeskAreas";
+import { findNearestFreeTile } from "@/features/game/utils/findNearestFreeTile";
+import { isWithinReach } from "@/features/game/utils/isWithinReach";
 import { ZONE_EVENTS } from "@/features/game/consts/zone";
 import { buildZoneAreas } from "@/features/game/utils/buildZoneAreas";
 import { findAreaGoals } from "@/features/game/utils/findAreaGoals";
 import type { HoverTarget } from "@/features/game/types/hover";
 import { TileCursor } from "@/features/game/lib/TileCursor";
 import { findPath, getStandingPoint } from "@/features/game/utils/findPath";
-import { getCellAt, getCellCenter } from "@/features/game/utils/cell";
+import {
+    getCellAt,
+    getCellCenter,
+    isSameCell,
+} from "@/features/game/utils/cell";
 import { isRoomEntitled } from "@/features/game/utils/isRoomEntitled";
 import type { Cell } from "@/features/game/types/cell";
 import { buildSolidIndex } from "@/features/game/utils/buildSolidIndex";
@@ -146,7 +156,6 @@ import {
 } from "@/features/game/utils/hover";
 import { ParticleBudget } from "@/features/game/lib/ParticleBudget";
 import { HoverTargetController } from "@/features/game/lib/HoverTargetController";
-import { DESK_EVENTS } from "@/features/game/consts/desk";
 import {
     PLAYER_EVENTS,
     PLAYER_HOVER_ID,
@@ -201,6 +210,17 @@ export class MapScene extends Phaser.Scene {
     // where the mark of a tile is not drawn.
     private deskAreas: HoverTarget[] = [];
     private zoneAreas: HoverTarget[] = [];
+    // Who holds which desk, as the page last told. Kept to rebuild the areas
+    // below when the objects change.
+    private deskClaims: readonly { mapAssetId: string; userId: string }[] = [];
+    private deskUserId: string | null = null;
+    // The desk of the person, and the ones somebody else holds.
+    private ownDeskArea: HoverTarget | null = null;
+    private otherDeskAreas: HoverTarget[] = [];
+    // What the page was last told about the avatar being at its own desk.
+    private isAtOwnDeskReported = false;
+    // The remote person the page was last told is selected.
+    private reportedSelectedUserId: string | null = null;
     private playerHoverController: HoverTargetController | null = null;
     private playerOutline: AvatarOutline | null = null;
     // The mouse is on the local avatar, or its card is open.
@@ -563,6 +583,7 @@ export class MapScene extends Phaser.Scene {
                 tilemap.heightInPixels
             );
             this.deskHoverController?.setTargets(this.deskAreas);
+            this.refreshDeskClaims();
 
             const doors = buildRoomDoors(
                 placed,
@@ -662,6 +683,7 @@ export class MapScene extends Phaser.Scene {
         this.deskHoverController?.update();
         this.updatePlayerHover();
         this.updateTileCursor();
+        this.updateAtOwnDesk();
         this.frameDelta = delta;
         this.remoteAvatars.forEach(this.updateRemoteAvatar);
         this.updateNameTags();
@@ -910,6 +932,7 @@ export class MapScene extends Phaser.Scene {
 
         this.replansLeft = PATH_SEARCH.MAX_REPLANS;
         this.walkAlternates = [];
+        this.setWalkPurpose({ kind: "tile" });
         const area = this.findAreaAt(world);
         const isStarted =
             (area !== null && this.startWalkToArea(area, world)) ||
@@ -921,6 +944,125 @@ export class MapScene extends Phaser.Scene {
 
         player.standUp();
         this.cameraController?.recenterOn(player.gameObject);
+    }
+
+    // Who holds which desk, from the page. The desk of the person is where
+    // `walkToOwnDesk` goes and what `isAtOwnDesk` is about; the ones of the
+    // others are not walked onto.
+    setDeskClaims(
+        claims: readonly { mapAssetId: string; userId: string }[],
+        userId: string
+    ): void {
+        this.deskClaims = claims;
+        this.deskUserId = userId;
+        this.refreshDeskClaims();
+    }
+
+    private refreshDeskClaims(): void {
+        const { own, others } = splitDeskAreas(
+            this.deskAreas,
+            this.deskClaims,
+            this.deskUserId ?? ""
+        );
+        this.ownDeskArea = own;
+        this.otherDeskAreas = others;
+        this.updateAtOwnDesk();
+    }
+
+    // Tells the page when the avatar gets to its own desk or leaves it. Only
+    // numbers are read, so it costs nothing in a frame.
+    private updateAtOwnDesk(): void {
+        const { player, ownDeskArea } = this;
+        const isAt =
+            player !== null &&
+            ownDeskArea !== null &&
+            isWithinReach(ownDeskArea.bounds, player, DESK_REACH_PX);
+        if (isAt === this.isAtOwnDeskReported) return;
+
+        this.isAtOwnDeskReported = isAt;
+        this.game.events.emit(DESK_EVENTS.AT_OWN_DESK_CHANGED, isAt);
+    }
+
+    // Walks to the desk of the person, to a free seat of it first. False when
+    // there is no desk to go to or no way there.
+    walkToOwnDesk(): boolean {
+        const { player, ownDeskArea } = this;
+        if (!player || !ownDeskArea || isGameInputSuspended()) return false;
+
+        const { x, y, width, height } = ownDeskArea.bounds;
+        return this.startPurposeWalk({ kind: "desk" }, () =>
+            this.startWalkToArea(ownDeskArea, {
+                x: x + width / 2,
+                y: y + height / 2,
+            })
+        );
+    }
+
+    // Walks to the tile next to a person, never onto theirs. False when the
+    // person is not on the map or there is no tile or way to them.
+    walkToPerson(userId: string): boolean {
+        const { player } = this;
+        if (!player || isGameInputSuspended()) return false;
+
+        const avatar = this.findRemoteAvatarOf(userId);
+        if (!avatar) return false;
+
+        const goal = getCellAt(avatar.gameObject);
+        return this.startPurposeWalk({ kind: "person", userId }, () => {
+            const near = findNearestFreeTile({
+                goal,
+                direction: null,
+                isOpen: (cell) => this.isCellWalkable(cell, 0),
+                isExcluded: (cell) =>
+                    isSameCell(cell, goal) || this.isForbiddenTile(cell),
+            });
+            return near !== null && this.startWalk(near);
+        });
+    }
+
+    private findRemoteAvatarOf(userId: string): RemoteAvatar | null {
+        for (const [socketId, remoteUserId] of this.remoteUserIds) {
+            const avatar = this.remoteAvatars.get(socketId);
+            if (remoteUserId === userId && avatar?.hasPosition) return avatar;
+        }
+        return null;
+    }
+
+    // Starts a walk the page asked for, with the text of its chip. The walk
+    // is planned by `plan`; the page is told when it cannot be.
+    private startPurposeWalk(
+        purpose: WalkPurpose,
+        plan: () => boolean
+    ): boolean {
+        const { player } = this;
+        if (!player) return false;
+
+        this.replansLeft = PATH_SEARCH.MAX_REPLANS;
+        this.walkAlternates = [];
+        this.setWalkPurpose(purpose);
+        if (!plan()) {
+            this.game.events.emit(WALK_EVENTS.FAILED);
+            return false;
+        }
+
+        player.standUp();
+        this.cameraController?.recenterOn(player.gameObject);
+        return true;
+    }
+
+    private setWalkPurpose(purpose: WalkPurpose): void {
+        this.game.events.emit(WALK_EVENTS.PURPOSE, purpose);
+    }
+
+    // A tile an avatar may not be walked to: a locked room it may not enter,
+    // or a desk that somebody else holds.
+    private isForbiddenTile(cell: Cell): boolean {
+        if (this.isLockedRoomTile(cell)) return true;
+
+        const center = getCellCenter(cell);
+        return this.otherDeskAreas.some(({ bounds }) =>
+            isWithinReach(bounds, center, 0)
+        );
     }
 
     // A tile on the way closed under a walk, like a door that just locked. It
@@ -1002,7 +1144,7 @@ export class MapScene extends Phaser.Scene {
             direction: getDirectionVector(player.direction),
             radius,
             isOpen: (cell) => this.isCellWalkable(cell, 0),
-            isForbidden: (cell) => this.isLockedRoomTile(cell),
+            isForbidden: (cell) => this.isForbiddenTile(cell),
             findRoute: (target) =>
                 findPath({
                     start,
@@ -1191,6 +1333,18 @@ export class MapScene extends Phaser.Scene {
         this.remoteSelection.select(socketId, (id) =>
             this.remoteAvatars.get(id)
         );
+        this.reportRemoteSelection();
+    }
+
+    // Tells the page which person is selected, only when it changed.
+    private reportRemoteSelection(): void {
+        const { id } = this.remoteSelection;
+        const userId =
+            id === null ? null : (this.remoteUserIds.get(id) ?? null);
+        if (userId === this.reportedSelectedUserId) return;
+
+        this.reportedSelectedUserId = userId;
+        this.game.events.emit(REMOTE_SELECTION_EVENTS.CHANGED, userId);
     }
 
     // The name over every avatar of a remote person, with no new scene. Used by
@@ -1309,6 +1463,7 @@ export class MapScene extends Phaser.Scene {
 
     removeRemoteAvatar(socketId: string): void {
         this.remoteSelection.remove(socketId);
+        this.reportRemoteSelection();
         this.avatarSheets?.release(socketId);
         this.remoteAvatars.get(socketId)?.destroy();
         this.remoteAvatars.delete(socketId);
@@ -1322,6 +1477,7 @@ export class MapScene extends Phaser.Scene {
 
     clearRemoteAvatars(): void {
         this.remoteSelection.clear();
+        this.reportRemoteSelection();
         this.remoteAvatars.forEach((_avatar, socketId) =>
             this.avatarSheets?.release(socketId)
         );

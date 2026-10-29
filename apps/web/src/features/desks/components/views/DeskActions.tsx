@@ -1,4 +1,4 @@
-import { EllipsisVerticalIcon } from "lucide-react";
+import { EllipsisVerticalIcon, FootprintsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeskIcon } from "@/components/icons/DeskIcon";
 import {
@@ -11,10 +11,18 @@ import {
 type DeskActionsProps = {
     disabled: boolean;
     onRelease: () => void;
+    // The avatar is at its desk already, or there is no desk to go to.
+    isWalkDisabled: boolean;
+    onWalkToDesk: () => void;
 };
 
 // The actions button of the profile card, with the options of a desk.
-export const DeskActions = ({ disabled, onRelease }: DeskActionsProps) => (
+export const DeskActions = ({
+    disabled,
+    onRelease,
+    isWalkDisabled,
+    onWalkToDesk,
+}: DeskActionsProps) => (
     <DropdownMenu>
         <DropdownMenuTrigger
             render={
@@ -33,6 +41,10 @@ export const DeskActions = ({ disabled, onRelease }: DeskActionsProps) => (
             sideOffset={11}
             className="w-50"
         >
+            <DropdownMenuItem disabled={isWalkDisabled} onClick={onWalkToDesk}>
+                <FootprintsIcon />
+                Ir para minha mesa
+            </DropdownMenuItem>
             <DropdownMenuItem disabled={disabled} onClick={onRelease}>
                 <DeskIcon />
                 Liberar minha mesa
