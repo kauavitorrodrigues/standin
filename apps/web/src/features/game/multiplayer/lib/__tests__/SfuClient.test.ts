@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Device } from "mediasoup-client";
+import { ICE_DISCONNECTED_GRACE_MS } from "../../consts/connection";
 import { SfuClient } from "../SfuClient";
 import type { SfuEvents } from "../../types/sfu";
 import type { SfuSignal } from "../../types/sfuSignal";
@@ -50,10 +51,17 @@ const fakeTransport = (id: string) => {
         })
     );
     const created = { track: null as MediaStreamTrack | null };
-    return {
+    const transport = {
         id,
+        connectionState: "new",
+        closed: false,
         on: (event: string, handler: Handler) => handlers.set(event, handler),
         handlers,
+        // Like the browser: the state is set before the event is emitted.
+        changeState: (state: string) => {
+            transport.connectionState = state;
+            handlers.get("connectionstatechange")?.(state);
+        },
         senders,
         produce,
         consume: vi.fn(async (options: { id: string }) => ({
@@ -62,8 +70,11 @@ const fakeTransport = (id: string) => {
             close: vi.fn(),
         })),
         restartIce: vi.fn(async () => undefined),
-        close: vi.fn(),
+        close: vi.fn(() => {
+            transport.closed = true;
+        }),
     };
+    return transport;
 };
 
 const setup = () => {
@@ -272,7 +283,7 @@ describe("SfuClient", () => {
         try {
             const { client, events, transports, requests } = setup();
             await client.start();
-            transports.recv.handlers.get("connectionstatechange")?.("failed");
+            transports.recv.changeState("failed");
             await vi.advanceTimersByTimeAsync(3000);
 
             expect(
@@ -308,7 +319,7 @@ describe("SfuClient", () => {
                     return original?.(event, payload);
                 }
             );
-            transports.recv.handlers.get("connectionstatechange")?.("failed");
+            transports.recv.changeState("failed");
             await vi.advanceTimersByTimeAsync(3000);
 
             expect(events.onBroken).toHaveBeenCalledTimes(1);
@@ -323,5 +334,39 @@ describe("SfuClient", () => {
         client.close();
         await client.handleConsumerNew(consumerNew("late"));
         expect(events.onRemoteTrack).not.toHaveBeenCalled();
+    });
+
+    describe("ICE restart and the failure scenarios", () => {
+        it("restarts ICE when a disconnection outlasts the grace period", async () => {
+            vi.useFakeTimers();
+            try {
+                const { client, transports } = setup();
+                await client.start();
+                transports.send.changeState("connected");
+                transports.send.changeState("disconnected");
+                await vi.advanceTimersByTimeAsync(ICE_DISCONNECTED_GRACE_MS + 3000);
+
+                expect(transports.send.restartIce).toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it("does not restart ICE for a transport that was closed meanwhile", async () => {
+            vi.useFakeTimers();
+            try {
+                const { client, transports } = setup();
+                await client.start();
+                transports.send.changeState("connected");
+                transports.send.changeState("disconnected");
+                transports.send.close();
+                await vi.advanceTimersByTimeAsync(ICE_DISCONNECTED_GRACE_MS + 3000);
+
+                expect(transports.send.restartIce).not.toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
     });
 });

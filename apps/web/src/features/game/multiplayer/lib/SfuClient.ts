@@ -14,6 +14,7 @@ import {
 } from "../utils/sfuProducer";
 import { setSenderActive } from "../utils/setSenderActive";
 import { logMedia } from "../utils/logMedia";
+import { isIceRestartNeeded } from "../utils/isIceRestartNeeded";
 import { openTransport } from "../utils/sfuTransport";
 import { IceRestarter } from "./IceRestarter";
 import {
@@ -116,9 +117,13 @@ export class SfuClient {
             new TransportConnectionMonitor({
                 id: transport.id,
                 onError: (type) => {
-                    if (type === "FailedState") restarter.trigger();
+                    if (type === "FailedState" && isIceRestartNeeded(transport)) {
+                        restarter.trigger();
+                    }
                 },
-                onGraceExpired: () => restarter.trigger(),
+                onGraceExpired: () => {
+                    if (isIceRestartNeeded(transport)) restarter.trigger();
+                },
             });
         this.monitors.push(monitor);
         this.restarters.push(restarter);
