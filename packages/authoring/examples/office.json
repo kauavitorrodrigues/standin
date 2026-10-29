@@ -1,0 +1,19 @@
+{
+    "kind": "map",
+    "sizeTier": "S",
+    "rooms": [
+        {
+            "key": "office",
+            "label": "Office",
+            "x": 4,
+            "y": 4,
+            "width": 10,
+            "height": 8,
+            "walls": { "tileset": "brick", "style": "Brick" },
+            "floor": { "tileset": "floor", "tileIndex": 0 },
+            "doors": [{ "side": "south", "door": "door-s" }]
+        }
+    ],
+    "objects": [{ "asset": "crate", "x": 11, "y": 6 }],
+    "spawns": [{ "x": 8, "y": 14 }]
+}

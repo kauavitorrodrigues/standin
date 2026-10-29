@@ -1,0 +1,21 @@
+# A template has no spawn point, so none is asked for.
+kind: template
+name: Open plan
+sizeTier: S
+style:
+  walls: { tileset: brick, style: Brick }
+rooms:
+  - key: quiet
+    label: Quiet room
+    x: 2
+    y: 2
+    width: 6
+    height: 5
+    doors:
+      - { side: east, door: door-e }
+desks:
+  - asset: desk
+    x: 12
+    y: 8
+    chairs:
+      - { asset: chair, x: 12, y: 9 }

@@ -1,0 +1,45 @@
+kind: map
+name: Office
+sizeTier: S
+style:
+  floor: { tileset: floor, tileIndex: 0 }
+  walls: { tileset: brick, style: Brick }
+floors:
+  - { tileset: floor, tileIndex: 1, from: { x: 0, y: 13 }, to: { x: 29, y: 14 } }
+rooms:
+  - key: office
+    label: Office
+    x: 4
+    y: 4
+    width: 10
+    height: 8
+    doors:
+      - { side: south, door: door-s }
+  - key: meeting
+    label: Meeting room
+    x: 16
+    y: 4
+    width: 8
+    height: 6
+    doors:
+      - { side: west, door: door-w, offset: 2 }
+zones:
+  - { label: Lounge, x: 4, y: 15, width: 6, height: 4 }
+desks:
+  - asset: desk
+    x: 6
+    y: 7
+    items:
+      - { asset: monitor, x: 6, y: 7 }
+    chairs:
+      - { asset: chair, x: 6, y: 8 }
+  - asset: desk
+    x: 9
+    y: 7
+    chairs:
+      - { asset: chair, x: 9, y: 8, offsetY: 4 }
+objects:
+  - { asset: crate, x: 11, y: 6 }
+  - { asset: crate, x: 20, y: 8 }
+spawns:
+  - { x: 8, y: 16, label: Entrance }

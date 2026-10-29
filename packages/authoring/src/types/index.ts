@@ -7,3 +7,4 @@ export * from "./params";
 export * from "./result";
 export * from "./step";
 export * from "./validate";
+export * from "./spec";

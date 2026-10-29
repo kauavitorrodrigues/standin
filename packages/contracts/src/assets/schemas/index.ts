@@ -9,3 +9,4 @@ export * from "./asset-definition.schema";
 export * from "./library-data.schema";
 export * from "./library-family-query.schema";
 export * from "./library-tileset-query.schema";
+export * from "./library-seed.schema";

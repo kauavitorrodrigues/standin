@@ -1,8 +1,10 @@
-import { getOccupiedCells } from "@standin/contracts";
-import type { EditorModel } from "@standin/contracts";
+import type { EditorModel } from "../types/editor-model";
+import { getOccupiedCells } from "./getOccupiedCells";
 
-// Every cell a placed object covers, as "column,row" keys.
-export const getOccupiedKeys = (model: EditorModel): Set<string> => {
+/** Every cell a placed object covers, as "column,row" keys. */
+export const getOccupiedKeys = (
+    model: Pick<EditorModel, "placed" | "library">
+): Set<string> => {
     const assets = new Map(model.library.assets.map((a) => [a.id, a]));
     const keys = new Set<string>();
 

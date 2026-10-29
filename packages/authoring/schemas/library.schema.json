@@ -1,0 +1,457 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "tilesets": {
+            "default": [],
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "margin": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                    },
+                    "spacing": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                    },
+                    "tileMeta": {
+                        "type": "object",
+                        "propertyNames": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                        },
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "category": {
+                                    "type": "string",
+                                    "enum": [
+                                        "FLOOR",
+                                        "WALL",
+                                        "CEILING",
+                                        "DECORATION",
+                                        "EMPTY"
+                                    ]
+                                },
+                                "solid": {
+                                    "type": "boolean"
+                                },
+                                "blankDefault": {
+                                    "type": "boolean"
+                                },
+                                "top": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                },
+                                "edges": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "enum": [
+                                            "N",
+                                            "E",
+                                            "S",
+                                            "W"
+                                        ]
+                                    }
+                                },
+                                "style": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 40
+                                },
+                                "overlap": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 32
+                                },
+                                "solidMask": {
+                                    "minItems": 1,
+                                    "type": "array",
+                                    "items": {
+                                        "minItems": 1,
+                                        "type": "array",
+                                        "items": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "category"
+                            ]
+                        }
+                    },
+                    "key": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "file": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "name",
+                    "key",
+                    "file"
+                ]
+            }
+        },
+        "assets": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "CHAIR",
+                            "TABLE",
+                            "DESK",
+                            "SOFA",
+                            "TV",
+                            "MONITOR",
+                            "TREE",
+                            "PLANT",
+                            "RUG",
+                            "POSTER",
+                            "DOOR",
+                            "WINDOW",
+                            "DECORATION"
+                        ]
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "placement": {
+                        "type": "string",
+                        "enum": [
+                            "GROUND",
+                            "SURFACE",
+                            "WALL"
+                        ]
+                    },
+                    "solid": {
+                        "type": "boolean"
+                    },
+                    "surfaceHeightPx": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                    },
+                    "footprint": {
+                        "type": "object",
+                        "properties": {
+                            "w": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                            },
+                            "h": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                            },
+                            "offsetX": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                            },
+                            "mask": {
+                                "anyOf": [
+                                    {
+                                        "minItems": 1,
+                                        "type": "array",
+                                        "items": {
+                                            "minItems": 1,
+                                            "type": "array",
+                                            "items": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "solidMask": {
+                                "anyOf": [
+                                    {
+                                        "minItems": 1,
+                                        "type": "array",
+                                        "items": {
+                                            "minItems": 1,
+                                            "type": "array",
+                                            "items": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            }
+                        },
+                        "required": [
+                            "w",
+                            "h"
+                        ]
+                    },
+                    "action": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "SIT",
+                                    "TELEPORT"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "actionParams": {
+                        "anyOf": [
+                            {
+                                "type": "object",
+                                "propertyNames": {
+                                    "type": "string"
+                                },
+                                "additionalProperties": {}
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "promptText": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rotation": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "DEG_0",
+                                    "DEG_90",
+                                    "DEG_180",
+                                    "DEG_270"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "color": {
+                        "anyOf": [
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "key": {
+                                        "type": "string",
+                                        "maxLength": 32,
+                                        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                    },
+                                    "hex": {
+                                        "type": "string",
+                                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                                    }
+                                },
+                                "required": [
+                                    "key",
+                                    "hex"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "animation": {
+                        "anyOf": [
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "frameCount": {
+                                        "type": "integer",
+                                        "minimum": 2,
+                                        "maximum": 9007199254740991
+                                    },
+                                    "frameDurationMs": {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                    },
+                                    "repeat": {
+                                        "type": "integer",
+                                        "minimum": -1,
+                                        "maximum": 9007199254740991
+                                    }
+                                },
+                                "required": [
+                                    "frameCount",
+                                    "frameDurationMs",
+                                    "repeat"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "key": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "file": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                },
+                                "color": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "string",
+                                            "maxLength": 32,
+                                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                        },
+                                        "hex": {
+                                            "type": "string",
+                                            "pattern": "^#[0-9A-Fa-f]{6}$"
+                                        }
+                                    },
+                                    "required": [
+                                        "key",
+                                        "hex"
+                                    ]
+                                },
+                                "rotation": {
+                                    "type": "string",
+                                    "enum": [
+                                        "DEG_0",
+                                        "DEG_90",
+                                        "DEG_180",
+                                        "DEG_270"
+                                    ]
+                                },
+                                "footprint": {
+                                    "type": "object",
+                                    "properties": {
+                                        "w": {
+                                            "type": "integer",
+                                            "exclusiveMinimum": 0,
+                                            "maximum": 9007199254740991
+                                        },
+                                        "h": {
+                                            "type": "integer",
+                                            "exclusiveMinimum": 0,
+                                            "maximum": 9007199254740991
+                                        },
+                                        "offsetX": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                        },
+                                        "mask": {
+                                            "anyOf": [
+                                                {
+                                                    "minItems": 1,
+                                                    "type": "array",
+                                                    "items": {
+                                                        "minItems": 1,
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "boolean"
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        },
+                                        "solidMask": {
+                                            "anyOf": [
+                                                {
+                                                    "minItems": 1,
+                                                    "type": "array",
+                                                    "items": {
+                                                        "minItems": 1,
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "boolean"
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "w",
+                                        "h"
+                                    ]
+                                },
+                                "actionParams": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                        "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                },
+                                "file": {
+                                    "type": "string",
+                                    "minLength": 1
+                                }
+                            },
+                            "required": [
+                                "file"
+                            ],
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "type",
+                    "footprint",
+                    "key",
+                    "file"
+                ]
+            }
+        }
+    }
+}

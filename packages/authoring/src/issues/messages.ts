@@ -35,6 +35,20 @@ export const AUTHORING_ISSUE_MESSAGES: AuthoringIssueMessages = {
     [Code.INVALID_MASK]: ({ field }) => MASK_FIELD_MESSAGE[field],
     [Code.WALL_STYLE_INCOMPLETE]: ({ style }) =>
         `The wall style "${style}" does not have the eight pieces.`,
+    [Code.SPEC_PARSE_ERROR]: ({ reason }) =>
+        `The spec text could not be read: ${reason}`,
+    [Code.SPEC_EMPTY]: () => "The spec is empty.",
+    [Code.SPEC_UNKNOWN_FIELD]: ({ field }) =>
+        `The spec has no field named "${field}" here.`,
+    [Code.SPEC_INVALID_TYPE]: ({ detail }) => detail,
+    [Code.SPEC_INVALID_VALUE]: ({ detail }) => detail,
+    [Code.SPEC_OUT_OF_RANGE]: ({ detail }) => detail,
+    [Code.SPEC_DUPLICATE_ROOM_KEY]: ({ key }) =>
+        `More than one room has the key "${key}".`,
+    [Code.SPEC_BASE_MISSING]: ({ kind }) =>
+        `A ${kind} spec needs a base model to compile on.`,
+    [Code.SPEC_SIZE_TIER_MISMATCH]: ({ tier, width, height }) =>
+        `The map is ${width} x ${height} tiles, which does not fit the size tier ${tier}.`,
     [Code.CELL_OUT_OF_BOUNDS]: ({ area, width, height }) =>
         `The ${area} reaches outside the map (${width} x ${height} tiles).`,
 };

@@ -50,3 +50,5 @@ export * from "./assertDiffInScope";
 export * from "./validateDoors";
 export * from "./toPublishIssues";
 export * from "./validateEditorOps";
+export * from "./doorFamily";
+export * from "./getOccupiedKeys";

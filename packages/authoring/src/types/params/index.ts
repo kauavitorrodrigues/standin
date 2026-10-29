@@ -5,3 +5,4 @@ export * from "./object";
 export * from "./room";
 export * from "./spawn";
 export * from "./stamp";
+export * from "./zone";

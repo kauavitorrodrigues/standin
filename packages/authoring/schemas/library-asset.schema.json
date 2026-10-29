@@ -1,0 +1,228 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+        },
+        "name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "CHAIR",
+                "TABLE",
+                "DESK",
+                "SOFA",
+                "TV",
+                "MONITOR",
+                "TREE",
+                "PLANT",
+                "RUG",
+                "POSTER",
+                "DOOR",
+                "WINDOW",
+                "DECORATION"
+            ]
+        },
+        "category": {
+            "type": "string"
+        },
+        "placement": {
+            "type": "string",
+            "enum": [
+                "GROUND",
+                "SURFACE",
+                "WALL"
+            ]
+        },
+        "solid": {
+            "type": "boolean"
+        },
+        "surfaceHeightPx": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+        },
+        "footprint": {
+            "type": "object",
+            "properties": {
+                "w": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                },
+                "h": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                },
+                "offsetX": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                },
+                "mask": {
+                    "anyOf": [
+                        {
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "solidMask": {
+                    "anyOf": [
+                        {
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "w",
+                "h"
+            ]
+        },
+        "action": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "enum": [
+                        "SIT",
+                        "TELEPORT"
+                    ]
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "actionParams": {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "propertyNames": {
+                        "type": "string"
+                    },
+                    "additionalProperties": {}
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "promptText": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "rotation": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "enum": [
+                        "DEG_0",
+                        "DEG_90",
+                        "DEG_180",
+                        "DEG_270"
+                    ]
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "color": {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "key": {
+                            "type": "string",
+                            "maxLength": 32,
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                        },
+                        "hex": {
+                            "type": "string",
+                            "pattern": "^#[0-9A-Fa-f]{6}$"
+                        }
+                    },
+                    "required": [
+                        "key",
+                        "hex"
+                    ]
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "animation": {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "frameCount": {
+                            "type": "integer",
+                            "minimum": 2,
+                            "maximum": 9007199254740991
+                        },
+                        "frameDurationMs": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                        },
+                        "repeat": {
+                            "type": "integer",
+                            "minimum": -1,
+                            "maximum": 9007199254740991
+                        }
+                    },
+                    "required": [
+                        "frameCount",
+                        "frameDurationMs",
+                        "repeat"
+                    ]
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "organizationId": {
+            "type": "string",
+            "minLength": 1
+        }
+    },
+    "required": [
+        "name",
+        "type",
+        "footprint"
+    ]
+}
