@@ -85,6 +85,9 @@ describe("media signalling with several clients", () => {
                 consumerNew: () => undefined,
                 consumerClosed: () => undefined,
                 producerDemand: () => undefined,
+                consumerPaused: () => undefined,
+                consumerResumed: () => undefined,
+                hiddenVideoChanged: () => undefined,
             }
         );
         MediaRuntime.useServer(media);

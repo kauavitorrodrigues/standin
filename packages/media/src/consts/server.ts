@@ -48,9 +48,12 @@ export const SPEAKER_MAX_ENTRIES = 8;
 export const SPEAKER_THRESHOLD_DB = -60;
 export const SPEAKER_INTERVAL_MS = 400;
 
-// Receivers on a weak machine get the low layer, one video and fewer voices.
-export const LOW_QUALITY_CAROUSEL_SIZE = 1;
+// Receivers on a weak machine get the low layer, one video playing and fewer
+// voices. The other videos of the carousel wait paused, so their tiles can say
+// why and play again as soon as the machine recovers.
+export const LOW_QUALITY_ACTIVE_VIDEOS = 1;
 export const LOW_QUALITY_LOUDEST_SPEAKERS = 2;
+
 
 // A video stream nobody receives is kept going for this long before its sender
 // is told to stop encoding, so walking in and out of range does not make the

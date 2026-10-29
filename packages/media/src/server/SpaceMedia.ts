@@ -10,6 +10,7 @@ import {
     MediaTransportExistsError,
     MediaTransportNotFoundError,
     MediaTransportNotRestartableError,
+    type MediaPauseReason,
     DEFAULT_PROXIMITY_PRESET,
     type MediaSource,
     type ProximityPreset,
@@ -100,6 +101,9 @@ export class SpaceMedia {
     private speakerListener: ((peerIds: string[]) => void) | null = null;
     private closed = false;
     private proximityPreset: ProximityPreset = DEFAULT_PROXIMITY_PRESET;
+    // How many videos of each receiver the server holds back while it is short
+    // of CPU (see ServerLoadMonitor), 0 when it is not.
+    private videoShed = 0;
 
     private constructor(
         readonly spaceId: string,
@@ -246,6 +250,9 @@ export class SpaceMedia {
         });
         // Removed first so the close events of the consumers below stay silent.
         this.peers.delete(peerId);
+        // Nobody keeps a person hidden who is gone, so a new person who comes
+        // with another id starts shown.
+        this.peers.forEach((other) => other.hiddenVideo.delete(peerId));
         peer.sendTransport?.close();
         peer.recvTransport?.close();
         peer.consumers.clear();
@@ -307,6 +314,27 @@ export class SpaceMedia {
     setPins(peerId: string, pinnedPeerIds: readonly string[]): void {
         const peer = this.peers.get(peerId);
         if (peer) peer.pins = [...pinnedPeerIds];
+    }
+
+    /**
+     * The people a receiver hid. They have no video for this receiver, and are
+     * still heard. The caller marks the receiver dirty so the plan runs again.
+     */
+    setHiddenVideo(peerId: string, hiddenPeerIds: readonly string[]): void {
+        const peer = this.peers.get(peerId);
+        if (peer) peer.hiddenVideo = new Set(hiddenPeerIds);
+    }
+
+    /**
+     * How many videos of each receiver are held back for the load of the
+     * server. The caller marks everybody dirty when it changes.
+     *
+     * @returns Whether the level changed.
+     */
+    setVideoShed(level: number): boolean {
+        if (level === this.videoShed) return false;
+        this.videoShed = level;
+        return true;
     }
 
     private requirePeer(peerId: string): Peer {
@@ -551,7 +579,8 @@ export class SpaceMedia {
             this.speakerIds,
             this.peers,
             split,
-            this.proximityPreset
+            this.proximityPreset,
+            this.videoShed
         );
         await Promise.all(
             planned.plans
@@ -592,8 +621,19 @@ export class SpaceMedia {
                 closeConsumer(peer, producerId, this.notifier)
             );
             await Promise.all([
-                ...plan.pause.map((id) => setConsumerPaused(peer, id, true)),
-                ...plan.resume.map((id) => setConsumerPaused(peer, id, false)),
+                ...[...plan.pause, ...plan.retag].map(
+                    ({ producerId, reason }) =>
+                        setConsumerPaused(
+                            peer,
+                            producerId,
+                            true,
+                            this.notifier,
+                            reason
+                        )
+                ),
+                ...plan.resume.map((id) =>
+                    setConsumerPaused(peer, id, false, this.notifier)
+                ),
                 ...plan.setLayer.map(({ producerId, layer }) =>
                     setConsumerLayer(peer, producerId, layerOf(layer))
                 ),
@@ -604,12 +644,28 @@ export class SpaceMedia {
                     want.producerId,
                     want.kind,
                     want.layer && layerOf(want.layer),
-                    want.paused
+                    want.paused,
+                    want.pauseReason ?? null
                 );
             }
+            this.releaseHidden(peer, plan.releasedHidden);
         } finally {
             peer.applying = false;
         }
+    }
+
+    // Ends the hiding of the people who left the reach of the video and tells
+    // the client which are still hidden.
+    private releaseHidden(peer: Peer, released: readonly string[]): void {
+        const dropped = released.filter((id) => peer.hiddenVideo.delete(id));
+        if (dropped.length === 0) return;
+
+        this.notifier.hiddenVideoChanged(peer.id, {
+            userIds: [...peer.hiddenVideo].flatMap((id) => {
+                const userId = this.userIdOf(id);
+                return userId ? [userId] : [];
+            }),
+        });
     }
 
     private async createConsumer(
@@ -617,7 +673,8 @@ export class SpaceMedia {
         producerId: string,
         kind: ProducerKind,
         layer: SimulcastLayer | null,
-        paused: boolean
+        paused: boolean,
+        pauseReason: MediaPauseReason | null
     ): Promise<void> {
         const owner = this.producerOwners.get(producerId);
         if (!owner) return;
@@ -625,7 +682,7 @@ export class SpaceMedia {
         const entry = await buildConsumer(
             this.router,
             peer,
-            { producerId, kind, layer, paused },
+            { producerId, kind, layer, paused, pauseReason },
             owner.peerId
         );
         if (!entry) return;
@@ -644,6 +701,13 @@ export class SpaceMedia {
             peer.id,
             toConsumerNewPayload(entry, this.userIdOf(owner.peerId) ?? "")
         );
+        // A consumer that is made held back says so right after it is announced.
+        if (entry.pauseReason) {
+            this.notifier.consumerPaused(peer.id, {
+                consumerId: entry.consumer.id,
+                reason: entry.pauseReason,
+            });
+        }
     }
 
     private onProducerClosed(

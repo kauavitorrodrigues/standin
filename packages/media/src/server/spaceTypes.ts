@@ -1,5 +1,5 @@
 import type { types } from "mediasoup";
-import type { MediaSource } from "@standin/contracts";
+import type { MediaPauseReason, MediaSource } from "@standin/contracts";
 import type { ProducerKind, SimulcastLayer } from "../planner/types";
 
 export type ConsumerEntry = {
@@ -12,6 +12,8 @@ export type ConsumerEntry = {
     // What the planner wants (the magnitude says pause). The consumer itself
     // stays paused until the client confirms it is ready.
     paused: boolean;
+    // Why it is paused, null when it is not.
+    pauseReason: MediaPauseReason | null;
     ready: boolean;
 };
 
@@ -35,6 +37,8 @@ export type Peer = {
     focus: Map<string, SimulcastLayer>;
     // Peer ids the person pinned on the stage, in pin order.
     pins: string[];
+    // Peer ids whose video the person hid.
+    hiddenVideo: Set<string>;
     rtpCapabilities: types.RtpCapabilities | null;
     sendTransport: types.Transport | null;
     recvTransport: types.Transport | null;

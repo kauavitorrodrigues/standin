@@ -17,6 +17,9 @@ describe("SpaceMedia.restartIce with a real worker", () => {
                 consumerNew: () => undefined,
                 consumerClosed: () => undefined,
                 producerDemand: () => undefined,
+                consumerPaused: () => undefined,
+                consumerResumed: () => undefined,
+                hiddenVideoChanged: () => undefined,
             }
         );
         room = await server.acquireRoom("space-ice");

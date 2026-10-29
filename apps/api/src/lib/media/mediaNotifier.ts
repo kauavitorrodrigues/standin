@@ -21,4 +21,22 @@ export const mediaNotifier: MediaNotifier = {
             MediaEvents.PRODUCER_DEMAND,
             payload
         ),
+    consumerPaused: (peerId, payload) =>
+        SocketManager.emitToSocket(
+            peerId,
+            MediaEvents.CONSUMER_PAUSED,
+            payload
+        ),
+    consumerResumed: (peerId, payload) =>
+        SocketManager.emitToSocket(
+            peerId,
+            MediaEvents.CONSUMER_RESUMED,
+            payload
+        ),
+    hiddenVideoChanged: (peerId, payload) =>
+        SocketManager.emitToSocket(
+            peerId,
+            MediaEvents.HIDDEN_VIDEO_CHANGED,
+            payload
+        ),
 };

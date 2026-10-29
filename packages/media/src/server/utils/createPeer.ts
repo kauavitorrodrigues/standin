@@ -10,6 +10,7 @@ export const createPeer = (id: string, userId: string): Peer => ({
     focusMode: false,
     focus: new Map(),
     pins: [],
+    hiddenVideo: new Set(),
     rtpCapabilities: null,
     sendTransport: null,
     recvTransport: null,

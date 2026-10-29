@@ -1,4 +1,8 @@
-import type { ProximityMagnitude, ProximityPreset } from "@standin/contracts";
+import type {
+    MediaPauseReason,
+    ProximityMagnitude,
+    ProximityPreset,
+} from "@standin/contracts";
 
 export type ProducerKind = "audio" | "camera" | "screen" | "screen-audio";
 
@@ -31,6 +35,9 @@ export type CurrentConsumer = {
     // Null for kinds that are not simulcast (audio, screen, screen-audio).
     layer: SimulcastLayer | null;
     paused: boolean;
+    // Why it is paused, null when it is not. A consumer that was held back for
+    // one reason and is now held for another is told again.
+    pauseReason?: MediaPauseReason | null;
 };
 
 export type DesiredConsumer = CurrentConsumer & {
@@ -65,6 +72,14 @@ export type PlannerConfig = {
     pxPerTile: number;
     preset: ProximityPreset;
     videoPauseMagnitude: number;
+    // Video consumers that play at once. The ones beyond it, up to the
+    // carousel, are kept paused for the receiver (a weak machine asked for
+    // less) so a tile can say so and play again at once.
+    activeVideoLimit: number;
+    // How many of the lowest priority videos of each receiver the server holds
+    // back because it is short of CPU. Never a pinned person or one of the
+    // loudest speakers, and never audio.
+    videoShed: number;
     minChangeIntervalMs: number;
     rules: readonly MagnitudeRule[];
 };
@@ -87,19 +102,29 @@ export type PlanInput = {
     // The people each receiver pinned, in pin order. A pinned person that is
     // within the video reach sorts before everything else for the video slots.
     pins?: ReadonlyMap<string, readonly string[]>;
+    // The people each receiver hid. Their video is worth nothing to that
+    // receiver, so no video consumer is kept for the pair.
+    hiddenVideo?: ReadonlyMap<string, ReadonlySet<string>>;
     config?: Partial<PlannerConfig>;
 };
 
 export type LayerChange = { producerId: string; layer: SimulcastLayer };
+
+export type PauseChange = { producerId: string; reason: MediaPauseReason };
 
 export type ReceiverPlan = {
     receiverId: string;
     desired: DesiredConsumer[];
     create: DesiredConsumer[];
     close: CurrentConsumer[];
-    pause: string[];
+    pause: PauseChange[];
+    // Consumers that stay paused for another reason than they were.
+    retag: PauseChange[];
     resume: string[];
     setLayer: LayerChange[];
+    // Hidden people who are out of the reach of the video, or gone: the hiding
+    // ends, so they show again when they come back.
+    releasedHidden: string[];
     changed: boolean;
 };
 

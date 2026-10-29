@@ -5,7 +5,7 @@ import type {
     SimulcastLayer,
 } from "../planner/types";
 import {
-    LOW_QUALITY_CAROUSEL_SIZE,
+    LOW_QUALITY_ACTIVE_VIDEOS,
     LOW_QUALITY_LOUDEST_SPEAKERS,
 } from "./server";
 
@@ -33,6 +33,6 @@ export const SPATIAL_LAYER: Record<SimulcastLayer, number> = {
 
 // What a receiver on a weak machine changes in the planner.
 export const LOW_QUALITY_PLANNER_CONFIG: Partial<PlannerConfig> = {
-    carouselSize: LOW_QUALITY_CAROUSEL_SIZE,
+    activeVideoLimit: LOW_QUALITY_ACTIVE_VIDEOS,
     loudestSpeakers: LOW_QUALITY_LOUDEST_SPEAKERS,
 };
