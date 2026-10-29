@@ -9,6 +9,7 @@ export * from "./server/types";
 export * from "./server/MediaServer";
 export * from "./server/SpaceMedia";
 export * from "./server/DirtyTracker";
+export * from "./server/ServerLoadMonitor";
 
 import type { types } from "mediasoup";
 

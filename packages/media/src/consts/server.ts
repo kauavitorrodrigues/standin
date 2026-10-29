@@ -54,6 +54,18 @@ export const SPEAKER_INTERVAL_MS = 400;
 export const LOW_QUALITY_ACTIVE_VIDEOS = 1;
 export const LOW_QUALITY_LOUDEST_SPEAKERS = 2;
 
+// When the worker is short of CPU the server holds back the videos that matter
+// least. The share is of one core, which is what the worker can use. It starts
+// above HIGH for HOLD_MS, holds back one more video for each HOLD_MS it stays
+// there, and gives one back for each HOLD_MS spent below LOW. Between the two
+// nothing changes, so the load does not make it flicker.
+export const SERVER_LOAD = {
+    HIGH_CPU_SHARE: 0.85,
+    LOW_CPU_SHARE: 0.7,
+    HOLD_MS: 10_000,
+    // As many as a receiver can hold at once, which is the carousel.
+    MAX_SHED: 2,
+} as const;
 
 // A video stream nobody receives is kept going for this long before its sender
 // is told to stop encoding, so walking in and out of range does not make the

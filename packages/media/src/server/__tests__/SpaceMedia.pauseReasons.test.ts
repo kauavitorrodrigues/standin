@@ -201,4 +201,13 @@ describe("pause reasons with a real worker", () => {
     it("says the level did not change when it is set to the same", () => {
         expect(room.setVideoShed(0)).toBe(false);
     });
+
+    it("starts a room at the level of the server", async () => {
+        expect(server.setVideoShed(1)).toEqual(["space-reasons"]);
+        const other = await server.acquireRoom("space-new");
+        // A room that is made while the server sheds already sheds.
+        expect(other.setVideoShed(1)).toBe(false);
+        expect(server.setVideoShed(1)).toEqual([]);
+        server.setVideoShed(0);
+    });
 });

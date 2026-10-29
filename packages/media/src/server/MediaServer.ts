@@ -25,6 +25,8 @@ export class MediaServer {
     private readonly pending = new Map<string, Promise<SpaceMedia>>();
     private readonly diedListeners = new Set<() => void>();
     private telemetry: NodeJS.Timeout | null = null;
+    // The videos of each receiver held back for the load of the worker.
+    private videoShed = 0;
     private closed = false;
 
     private constructor(
@@ -76,6 +78,23 @@ export class MediaServer {
     }
 
     /**
+     * How many videos of each receiver every room holds back for the load of
+     * the worker. New rooms start at the same level.
+     *
+     * @returns The spaces whose receivers must be planned again, none when the
+     * level did not change.
+     */
+    setVideoShed(level: number): string[] {
+        if (level === this.videoShed) return [];
+        this.videoShed = level;
+        const changed: string[] = [];
+        this.rooms.forEach((room, spaceId) => {
+            if (room.setVideoShed(level)) changed.push(spaceId);
+        });
+        return changed;
+    }
+
+    /**
      * The media of a space, created when the first person asks for it. Two
      * calls at the same time for the same space share one creation.
      */
@@ -103,6 +122,7 @@ export class MediaServer {
             this.webRtcServer,
             this.notifier
         );
+        room.setVideoShed(this.videoShed);
         this.rooms.set(spaceId, room);
         return room;
     }
