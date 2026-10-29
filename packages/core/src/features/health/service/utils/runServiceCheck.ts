@@ -1,4 +1,5 @@
 import {
+    HealthCheckTimeoutError,
     SERVICE_HEALTH_STATUSES,
     type ServiceHealthStatus,
 } from "@standin/contracts";
@@ -25,7 +26,7 @@ export const runServiceCheck = async (
     const timeout = new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
             controller.abort();
-            reject(new Error("The health check timed out."));
+            reject(new HealthCheckTimeoutError());
         }, timeoutMs);
     });
 
