@@ -8,5 +8,8 @@ declare global {
         __glProfile?: (
             seconds?: number
         ) => Promise<import("../utils/glCallProfiler").GlProfile>;
+        // Dev only: the React roots and name tags alive, to check that all the
+        // tags share one root.
+        __nameTagStats?: () => { roots: number; tags: number };
     }
 }

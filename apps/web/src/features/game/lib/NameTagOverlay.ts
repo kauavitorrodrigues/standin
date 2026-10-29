@@ -45,6 +45,15 @@ type AddParams = {
 };
 
 const overlays = new WeakMap<Phaser.Scene, NameTagOverlay>();
+// The overlays with a mounted root, to count them from the dev console.
+const mounted = new Set<NameTagOverlay>();
+
+// How many React roots and name tags are alive. Dev builds expose it to check
+// that the tags share a single root (see Engine.ts).
+export const getNameTagOverlayStats = () => ({
+    roots: mounted.size,
+    tags: [...mounted].reduce((sum, overlay) => sum + overlay.tagCount, 0),
+});
 
 const isShallowEqual = (a: object, b: object): boolean => {
     const keys = Object.keys(a) as (keyof typeof a)[];
@@ -108,6 +117,7 @@ export class NameTagOverlay {
         parent.appendChild(this.layer);
         parent.appendChild(this.host);
         this.root = createRoot(this.host);
+        mounted.add(this);
         scene.events.on(Phaser.Scenes.Events.RENDER, this.placeAll, this);
     }
 
@@ -191,6 +201,7 @@ export class NameTagOverlay {
         if (this.isDestroyed) return;
 
         this.isDestroyed = true;
+        mounted.delete(this);
         this.scene.events?.off(
             Phaser.Scenes.Events.RENDER,
             this.placeAll,

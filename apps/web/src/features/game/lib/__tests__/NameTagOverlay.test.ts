@@ -16,6 +16,7 @@ vi.mock("phaser", () => ({
 }));
 
 import { NameTag } from "../NameTag";
+import { getNameTagOverlayStats } from "../NameTagOverlay";
 
 const makeScene = () => {
     const handlers = new Map<string, () => void>();
@@ -67,6 +68,7 @@ describe("NameTagOverlay", () => {
         expect(scene.game.domContainer.querySelectorAll("aside")).toHaveLength(
             50
         );
+        expect(getNameTagOverlayStats()).toEqual({ roots: 1, tags: 50 });
     });
 
     it("draws the content at most every 100 ms", () => {
