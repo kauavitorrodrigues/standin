@@ -484,6 +484,28 @@ The profiler (`utils/glCallProfiler.ts`) wraps the methods of the GL context
 for that time and takes them off afterwards, so it costs nothing when it is not
 running and is not part of a production build.
 
+### 4.9 Database queries of a join
+
+Measured with `DB_QUERY_COUNT=1` (section 9) at commit `4ac669b`. Each round
+ran against a freshly restarted API (cold caches, section 2.5), 100% walking,
+30 s, one run per row, one machine, 0 errors. The query counts come from the
+`space:join` lines of the API log.
+
+| N bots | Queries per join (min to max) | Queries of the whole mass join | Join p50 / p99 | `msg/s` | API memory (start, peak, end) |
+| ------ | ----------------------------- | ------------------------------ | -------------- | ------- | ----------------------------- |
+| 10     | 8 to 8                        | 80                             | 25.2 / 27.8 ms | 117     | 225, 235, 235 MB              |
+| 25     | 6 to 8                        | 161                            | 24.3 / 32.3 ms | 383     | 225, 236, 236 MB              |
+| 50     | 6 to 8                        | 364                            | 60.7 / 70.6 ms | 1,052   | 224, 235, 235 MB              |
+
+A join costs 6 to 8 queries. The spread comes from the caches: a person
+already cached skips the user lookup, and a space already cached skips the
+access check. The bots join within milliseconds of each other, so the share
+that hits a cache changes with N. A join in a warm API, with the same bots
+joining again within 30 s, costs 6.
+
+The last column is the process memory of the API during the round. Join times
+here are higher than in section 4.1 for N = 50 because every cache is cold.
+
 ## 5. What you need to run it
 
 ### 5.1 The data path alone (without the media server)
