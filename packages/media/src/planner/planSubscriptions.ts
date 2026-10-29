@@ -1,5 +1,8 @@
-import { calculateProximityMagnitude } from "@standin/contracts";
-import type { ProximityMagnitude } from "@standin/contracts";
+import {
+    MEDIA_PAUSE_REASONS,
+    calculateProximityMagnitude,
+} from "@standin/contracts";
+import type { MediaPauseReason, ProximityMagnitude } from "@standin/contracts";
 import {
     CAROUSEL_SIZE,
     LOUDEST_SPEAKERS,
@@ -34,6 +37,8 @@ export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
     pxPerTile: PX_PER_TILE,
     preset: PROXIMITY_PRESET,
     videoPauseMagnitude: VIDEO_PAUSE_MAGNITUDE,
+    activeVideoLimit: CAROUSEL_SIZE,
+    videoShed: 0,
     minChangeIntervalMs: MIN_CHANGE_INTERVAL_MS,
     rules: DEFAULT_MAGNITUDE_RULES,
 };
@@ -62,6 +67,8 @@ type Desired = {
     // People the receiver may still hear or see, used so a revocation is
     // never held back by the debounce.
     reachable: Set<string>;
+    // Hidden people that are out of the reach of the video, or gone.
+    releasedHidden: string[];
 };
 
 const NOT_PINNED = Number.MAX_SAFE_INTEGER;
@@ -118,13 +125,14 @@ const toDesired = (
     producerId: string,
     kind: ProducerKind,
     layer: SimulcastLayer | null,
-    paused: boolean
+    pauseReason: MediaPauseReason | null
 ): DesiredConsumer => ({
     personId,
     producerId,
     kind,
     layer,
-    paused,
+    paused: pauseReason !== null,
+    pauseReason,
     connection: "strong",
 });
 
@@ -136,7 +144,13 @@ const buildDesired = (
 ): Desired => {
     const receiverSpot = input.positions.get(receiver.id);
     const reachable = new Set<string>();
-    if (!receiverSpot) return { consumers: [], reachable };
+    if (!receiverSpot) {
+        return { consumers: [], reachable, releasedHidden: [] };
+    }
+
+    const hidden = input.hiddenVideo?.get(receiver.id);
+    // How far each hidden person is, to tell who left the reach of the video.
+    const hiddenDistances = new Map<string, number>();
 
     const heldKinds = new Map<string, Set<ProducerKind>>();
     held.forEach((consumer) => {
@@ -159,7 +173,11 @@ const buildDesired = (
             config.preset,
             distance / config.pxPerTile
         );
-        const mag = applyMagnitudeRules(config.rules, receiver, person, base);
+        const ruled = applyMagnitudeRules(config.rules, receiver, person, base);
+        // A hidden person has no video for this receiver, but is still heard.
+        const isHidden = hidden?.has(person.id) ?? false;
+        if (isHidden) hiddenDistances.set(person.id, distance);
+        const mag = isHidden ? { ...ruled, video: 0 } : ruled;
         const kinds = heldKinds.get(person.id);
         const holdsAudio = kinds?.has("audio") ?? false;
         const holdsVideo = VIDEO_KINDS.some((kind) => kinds?.has(kind));
@@ -220,7 +238,7 @@ const buildDesired = (
                     person.producers.audio!,
                     "audio",
                     null,
-                    false
+                    null
                 )
             );
         });
@@ -251,58 +269,86 @@ const buildDesired = (
     const speakingRank = (entry: VideoEntry) =>
         entry.source === "camera" ? rankOf(entry.candidate.person.id) : 0;
 
-    entries
-        .sort(
-            (a, b) =>
-                a.pinRank - b.pinRank ||
-                sourcePriority(a) - sourcePriority(b) ||
-                speakingRank(a) - speakingRank(b) ||
-                Number(b.incumbent) - Number(a.incumbent) ||
-                a.candidate.distance - b.candidate.distance ||
-                compareText(a.candidate.person.id, b.candidate.person.id)
-        )
-        .slice(0, config.carouselSize)
-        .forEach((entry) => {
-            const { person, mag } = entry.candidate;
-            const requested = input.focus?.get(receiver.id)?.get(person.id);
-            const layer = layerFor(entry.source, requested);
-            const paused = mag.video <= config.videoPauseMagnitude;
-            consumers.push(
-                toDesired(
-                    person.id,
-                    entry.producerId,
-                    entry.source,
-                    layer,
-                    paused
-                )
-            );
+    entries.sort(
+        (a, b) =>
+            a.pinRank - b.pinRank ||
+            sourcePriority(a) - sourcePriority(b) ||
+            speakingRank(a) - speakingRank(b) ||
+            Number(b.incumbent) - Number(a.incumbent) ||
+            a.candidate.distance - b.candidate.distance ||
+            compareText(a.candidate.person.id, b.candidate.person.id)
+    );
+    const chosen = entries.slice(0, config.carouselSize);
 
-            const screenAudio = person.producers["screen-audio"];
-            if (entry.source === "screen" && screenAudio && mag.audio > 0) {
-                consumers.push(
-                    toDesired(
-                        person.id,
-                        screenAudio,
-                        "screen-audio",
-                        null,
-                        false
-                    )
-                );
-            }
-        });
+    // Why each chosen video is held back, if it is. A rule of the space comes
+    // first, then the limit the receiver asked for, then what the server sheds.
+    const reasons = new Map<VideoEntry, MediaPauseReason>();
+    chosen.forEach((entry, index) => {
+        if (entry.candidate.mag.video <= config.videoPauseMagnitude) {
+            reasons.set(entry, MEDIA_PAUSE_REASONS.SPACE_RULE);
+        } else if (index >= config.activeVideoLimit) {
+            reasons.set(entry, MEDIA_PAUSE_REASONS.CLIENT_LIMIT);
+        }
+    });
+
+    // The server sheds from the end, where the videos that matter least are.
+    // A pinned person and one of the loudest speakers stay, and so does a video
+    // that is already held back, which would not free anything.
+    const isProtected = (entry: VideoEntry) =>
+        entry.pinRank !== NOT_PINNED ||
+        (entry.source === "camera" &&
+            rankOf(entry.candidate.person.id) < config.loudestSpeakers);
+    let toShed = config.videoShed;
+    for (let index = chosen.length - 1; index >= 0 && toShed > 0; index -= 1) {
+        const entry = chosen[index]!;
+        if (reasons.has(entry) || isProtected(entry)) continue;
+        reasons.set(entry, MEDIA_PAUSE_REASONS.SERVER_LIMIT);
+        toShed -= 1;
+    }
+
+    chosen.forEach((entry) => {
+        const { person } = entry.candidate;
+        const requested = input.focus?.get(receiver.id)?.get(person.id);
+        const layer = layerFor(entry.source, requested);
+        consumers.push(
+            toDesired(
+                person.id,
+                entry.producerId,
+                entry.source,
+                layer,
+                reasons.get(entry) ?? null
+            )
+        );
+
+        const screenAudio = person.producers["screen-audio"];
+        if (
+            entry.source === "screen" &&
+            screenAudio &&
+            entry.candidate.mag.audio > 0
+        ) {
+            // The sound of a screen is audio, so nothing holds it back.
+            consumers.push(
+                toDesired(person.id, screenAudio, "screen-audio", null, null)
+            );
+        }
+    });
 
     consumers.sort(
         (a, b) =>
             KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
             compareText(a.personId, b.personId)
     );
-    return { consumers, reachable };
+    const releasedHidden = [...(hidden ?? [])].filter(
+        (id) => (hiddenDistances.get(id) ?? Infinity) > config.videoExitRadius
+    );
+    return { consumers, reachable, releasedHidden };
 };
 
 const diffConsumers = (
     receiverId: string,
     desired: DesiredConsumer[],
-    held: readonly CurrentConsumer[]
+    held: readonly CurrentConsumer[],
+    releasedHidden: string[]
 ): ReceiverPlan => {
     const heldById = new Map(
         held.map((consumer) => [consumer.producerId, consumer])
@@ -315,8 +361,10 @@ const diffConsumers = (
         create: [],
         close: held.filter((consumer) => !desiredIds.has(consumer.producerId)),
         pause: [],
+        retag: [],
         resume: [],
         setLayer: [],
+        releasedHidden,
         changed: false,
     };
 
@@ -326,7 +374,16 @@ const diffConsumers = (
             plan.create.push(want);
             return;
         }
-        if (want.paused && !have.paused) plan.pause.push(want.producerId);
+        if (want.paused && want.pauseReason) {
+            const change = {
+                producerId: want.producerId,
+                reason: want.pauseReason,
+            };
+            if (!have.paused) plan.pause.push(change);
+            else if (have.pauseReason !== want.pauseReason) {
+                plan.retag.push(change);
+            }
+        }
         if (!want.paused && have.paused) plan.resume.push(want.producerId);
         if (want.layer && want.layer !== have.layer) {
             plan.setLayer.push({
@@ -340,8 +397,10 @@ const diffConsumers = (
         plan.create.length > 0 ||
         plan.close.length > 0 ||
         plan.pause.length > 0 ||
+        plan.retag.length > 0 ||
         plan.resume.length > 0 ||
-        plan.setLayer.length > 0;
+        plan.setLayer.length > 0 ||
+        plan.releasedHidden.length > 0;
     return plan;
 };
 
@@ -378,13 +437,13 @@ export const planSubscriptions = (input: PlanInput): PlanResult => {
 
     receivers.forEach((receiverId) => {
         const held = input.current.get(receiverId) ?? [];
-        const { consumers, reachable } = buildDesired(
+        const { consumers, reachable, releasedHidden } = buildDesired(
             peopleById.get(receiverId)!,
             input,
             config,
             held
         );
-        const full = diffConsumers(receiverId, consumers, held);
+        const full = diffConsumers(receiverId, consumers, held, releasedHidden);
 
         const last = input.lastChangeAt.get(receiverId);
         const debounced =
@@ -406,9 +465,11 @@ export const planSubscriptions = (input: PlanInput): PlanResult => {
             create: [],
             close: revoked,
             pause: [],
+            retag: [],
             resume: [],
             setLayer: [],
-            changed: revoked.length > 0,
+            releasedHidden,
+            changed: revoked.length > 0 || releasedHidden.length > 0,
         });
     });
 

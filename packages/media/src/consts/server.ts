@@ -48,9 +48,24 @@ export const SPEAKER_MAX_ENTRIES = 8;
 export const SPEAKER_THRESHOLD_DB = -60;
 export const SPEAKER_INTERVAL_MS = 400;
 
-// Receivers on a weak machine get the low layer, one video and fewer voices.
-export const LOW_QUALITY_CAROUSEL_SIZE = 1;
+// Receivers on a weak machine get the low layer, one video playing and fewer
+// voices. The other videos of the carousel wait paused, so their tiles can say
+// why and play again as soon as the machine recovers.
+export const LOW_QUALITY_ACTIVE_VIDEOS = 1;
 export const LOW_QUALITY_LOUDEST_SPEAKERS = 2;
+
+// When the worker is short of CPU the server holds back the videos that matter
+// least. The share is of one core, which is what the worker can use. It starts
+// above HIGH for HOLD_MS, holds back one more video for each HOLD_MS it stays
+// there, and gives one back for each HOLD_MS spent below LOW. Between the two
+// nothing changes, so the load does not make it flicker.
+export const SERVER_LOAD = {
+    HIGH_CPU_SHARE: 0.85,
+    LOW_CPU_SHARE: 0.7,
+    HOLD_MS: 10_000,
+    // As many as a receiver can hold at once, which is the carousel.
+    MAX_SHED: 2,
+} as const;
 
 // A video stream nobody receives is kept going for this long before its sender
 // is told to stop encoding, so walking in and out of range does not make the

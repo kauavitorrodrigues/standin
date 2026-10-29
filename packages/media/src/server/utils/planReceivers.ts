@@ -10,6 +10,7 @@ import type { Peer } from "../spaceTypes";
 import {
     buildCurrentConsumers,
     buildFocusMap,
+    buildHiddenVideoMap,
     buildLastChangeAt,
     buildPeople,
     buildPinsMap,
@@ -32,7 +33,8 @@ export const planReceivers = (
     speakers: readonly string[],
     peers: ReadonlyMap<string, Peer>,
     split: SplitReceivers,
-    preset: ProximityPreset
+    preset: ProximityPreset,
+    videoShed: number = 0
 ): PlannedReceivers => {
     const base: Omit<PlanInput, "dirtyIds" | "config"> = {
         now,
@@ -43,6 +45,7 @@ export const planReceivers = (
         lastChangeAt: buildLastChangeAt(peers.values()),
         focus: buildFocusMap(peers.values()),
         pins: buildPinsMap(peers.values()),
+        hiddenVideo: buildHiddenVideoMap(peers.values()),
     };
 
     const planned: PlannedReceivers = {
@@ -57,7 +60,7 @@ export const planReceivers = (
         planned.deferred.push(...result.deferred);
     };
 
-    run(split.normal, { preset });
-    run(split.low, { ...LOW_QUALITY_PLANNER_CONFIG, preset });
+    run(split.normal, { preset, videoShed });
+    run(split.low, { ...LOW_QUALITY_PLANNER_CONFIG, preset, videoShed });
     return planned;
 };

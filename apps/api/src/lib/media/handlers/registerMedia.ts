@@ -8,6 +8,7 @@ import { registerMediaProduce } from "./produce";
 import { registerMediaRestart } from "./restart";
 import { registerMediaRestartIce } from "./restartIce";
 import { registerMediaSetFocus } from "./setFocus";
+import { registerMediaSetHiddenVideo } from "./setHiddenVideo";
 import { registerMediaSetLowQuality } from "./setLowQuality";
 import { registerMediaSetMuted } from "./setMuted";
 import { registerMediaSetPins } from "./setPins";
@@ -23,6 +24,7 @@ export function registerMedia(socket: Socket) {
     registerMediaCloseProducer(socket);
     registerMediaConsumerReady(socket);
     registerMediaSetFocus(socket);
+    registerMediaSetHiddenVideo(socket);
     registerMediaSetLowQuality(socket);
     registerMediaSetMuted(socket);
     registerMediaSetPins(socket);

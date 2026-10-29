@@ -3,6 +3,8 @@ import type { types } from "mediasoup";
 import type {
     MediaConsumerClosedPayload,
     MediaConsumerNewPayload,
+    MediaConsumerPausedPayload,
+    MediaHiddenVideoChangedPayload,
 } from "@standin/contracts";
 import { MediaServer } from "../MediaServer";
 import type { SpaceMedia } from "../SpaceMedia";
@@ -10,7 +12,11 @@ import type { MediaNotifier } from "../types";
 
 type Sent = {
     peerId: string;
-    payload: MediaConsumerNewPayload | MediaConsumerClosedPayload;
+    payload:
+        | MediaConsumerNewPayload
+        | MediaConsumerClosedPayload
+        | MediaConsumerPausedPayload
+        | MediaHiddenVideoChangedPayload;
 };
 
 const opusParameters = (ssrc: number): types.RtpParameters => ({
@@ -29,10 +35,18 @@ const opusParameters = (ssrc: number): types.RtpParameters => ({
 describe("MediaServer with a real worker", () => {
     const created: Sent[] = [];
     const closed: Sent[] = [];
+    const paused: Sent[] = [];
+    const resumed: Sent[] = [];
+    const hiddenChanges: Sent[] = [];
     const notifier: MediaNotifier = {
         consumerNew: (peerId, payload) => created.push({ peerId, payload }),
         consumerClosed: (peerId, payload) => closed.push({ peerId, payload }),
         producerDemand: () => undefined,
+        consumerPaused: (peerId, payload) => paused.push({ peerId, payload }),
+        consumerResumed: (peerId, payload) =>
+            resumed.push({ peerId, payload }),
+        hiddenVideoChanged: (peerId, payload) =>
+            hiddenChanges.push({ peerId, payload }),
     };
     const positions = new Map<string, { x: number; y: number }>();
     const source = { get: (id: string) => positions.get(id) };

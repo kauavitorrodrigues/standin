@@ -1,4 +1,5 @@
 import type { types } from "mediasoup";
+import type { MediaPauseReason } from "@standin/contracts";
 import { SPATIAL_LAYER } from "../../consts/spaceMedia";
 import type { ProducerKind, SimulcastLayer } from "../../planner/types";
 import type { ConsumerEntry, Peer } from "../spaceTypes";
@@ -22,15 +23,38 @@ export const closeConsumer = (
     notifier.consumerClosed(peer.id, { consumerId: entry.consumer.id });
 };
 
+/**
+ * Holds a consumer back for a reason, or lets it flow again, and tells the
+ * client either way: the intent is told at once, even before the client has
+ * confirmed the consumer and the worker can act on it.
+ */
 export const setConsumerPaused = async (
     peer: Peer,
     producerId: string,
-    paused: boolean
+    paused: boolean,
+    notifier: MediaNotifier,
+    reason: MediaPauseReason | null = null
 ): Promise<void> => {
     const entry = peer.consumers.get(producerId);
     if (!entry) return;
 
+    const before = entry.pauseReason;
     entry.paused = paused;
+    entry.pauseReason = paused ? reason : null;
+    if (paused && reason) {
+        if (before !== reason) {
+            notifier.consumerPaused(peer.id, {
+                consumerId: entry.consumer.id,
+                reason,
+            });
+        }
+    } else if (!paused && before) {
+        notifier.consumerResumed(peer.id, {
+            consumerId: entry.consumer.id,
+            reason: before,
+        });
+    }
+
     // Before the client confirms, the consumer stays paused whatever is wanted.
     if (!entry.ready) return;
     if (paused === entry.consumer.paused) return;
@@ -58,6 +82,7 @@ type NewConsumer = {
     kind: ProducerKind;
     layer: SimulcastLayer | null;
     paused: boolean;
+    pauseReason: MediaPauseReason | null;
 };
 
 // Builds the consumer paused on the receive transport of the peer. Returns
@@ -94,6 +119,7 @@ export const buildConsumer = async (
         kind: want.kind,
         layer: want.layer,
         paused: want.paused,
+        pauseReason: want.paused ? want.pauseReason : null,
         ready: false,
     };
 };

@@ -7,12 +7,14 @@ import type {
     MediaProduceSchema,
     MediaRestartIceSchema,
     MediaSetFocusSchema,
+    MediaSetHiddenVideoSchema,
     MediaSetLowQualitySchema,
     MediaSetMutedSchema,
     MediaSetPinsSchema,
     MediaSetPrivacySchema,
 } from "../schemas";
 import type { MediaKind, MediaSource } from "../enums/media-source";
+import type { MediaPauseReason } from "../enums/media-pause-reason";
 
 export type MediaCreateTransportInput = z.infer<
     typeof MediaCreateTransportSchema
@@ -26,6 +28,7 @@ export type MediaCloseProducerInput = z.infer<typeof MediaCloseProducerSchema>;
 export type MediaConsumerReadyInput = z.infer<typeof MediaConsumerReadySchema>;
 export type MediaSetFocusInput = z.infer<typeof MediaSetFocusSchema>;
 export type MediaSetPinsInput = z.infer<typeof MediaSetPinsSchema>;
+export type MediaSetHiddenVideoInput = z.infer<typeof MediaSetHiddenVideoSchema>;
 export type MediaSetLowQualityInput = z.infer<typeof MediaSetLowQualitySchema>;
 export type MediaSetMutedInput = z.infer<typeof MediaSetMutedSchema>;
 export type MediaSetPrivacyInput = z.infer<typeof MediaSetPrivacySchema>;
@@ -72,6 +75,18 @@ export type MediaProducerDemandPayload = {
 };
 
 export type MediaConsumerClosedPayload = { consumerId: string };
+
+// A stream the server holds back, or lets flow again, with the reason. The
+// consumer stays, so a stream that comes back plays at once.
+export type MediaConsumerPausedPayload = {
+    consumerId: string;
+    reason: MediaPauseReason;
+};
+export type MediaConsumerResumedPayload = MediaConsumerPausedPayload;
+
+// The people whose video this person hid, after the server dropped some of
+// them because they went out of the reach of the video.
+export type MediaHiddenVideoChangedPayload = { userIds: string[] };
 
 // Loudest first, user ids.
 export type MediaSpeakersPayload = { userIds: string[] };

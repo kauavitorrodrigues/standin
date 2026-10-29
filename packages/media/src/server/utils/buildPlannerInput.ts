@@ -37,6 +37,7 @@ export const buildCurrentConsumers = (
                 kind: entry.kind,
                 layer: entry.layer,
                 paused: entry.paused,
+                pauseReason: entry.pauseReason,
             }))
         );
     }
@@ -64,6 +65,18 @@ export const buildPinsMap = (
         pins.set(peer.id, peer.pins);
     }
     return pins;
+};
+
+// The people each receiver hid.
+export const buildHiddenVideoMap = (
+    peers: Iterable<Peer>
+): Map<string, ReadonlySet<string>> => {
+    const hidden = new Map<string, ReadonlySet<string>>();
+    for (const peer of peers) {
+        if (peer.hiddenVideo.size === 0) continue;
+        hidden.set(peer.id, peer.hiddenVideo);
+    }
+    return hidden;
 };
 
 // The layer each receiver asks for per person. A weak machine always gets the

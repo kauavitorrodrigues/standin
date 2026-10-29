@@ -78,6 +78,9 @@ export const runMediaLoadTest = async (
             closed += 1;
         },
         producerDemand: () => undefined,
+        consumerPaused: () => undefined,
+        consumerResumed: () => undefined,
+        hiddenVideoChanged: () => undefined,
     };
 
     const server = await MediaServer.create(

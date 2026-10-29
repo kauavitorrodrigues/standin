@@ -9,6 +9,10 @@ import {
     MediaSetFocusSchema,
     MediaSetLowQualitySchema,
     MediaSetMutedSchema,
+    MediaSetHiddenVideoSchema,
+    MEDIA_PAUSE_REASONS,
+    MAX_MEDIA_HIDDEN_VIDEOS,
+    MediaEvents,
     MediaSetPinsSchema,
     MediaSetPrivacySchema,
 } from "..";
@@ -175,5 +179,50 @@ describe("media signalling schemas", () => {
             MediaSetPrivacySchema.safeParse({ headphones: "yes", focus: false })
                 .success
         ).toBe(false);
+    });
+});
+
+describe("hiding the video of people", () => {
+    it("takes a list of user ids, empty to show everybody again", () => {
+        expect(MediaSetHiddenVideoSchema.safeParse({ userIds: [] }).success).toBe(
+            true
+        );
+        expect(
+            MediaSetHiddenVideoSchema.safeParse({ userIds: ["u1", "u2"] }).success
+        ).toBe(true);
+    });
+
+    it("refuses an empty id, a missing list and a list that is too long", () => {
+        expect(
+            MediaSetHiddenVideoSchema.safeParse({ userIds: [""] }).success
+        ).toBe(false);
+        expect(MediaSetHiddenVideoSchema.safeParse({}).success).toBe(false);
+        const tooMany = Array.from(
+            { length: MAX_MEDIA_HIDDEN_VIDEOS + 1 },
+            (_, index) => `u${index}`
+        );
+        expect(
+            MediaSetHiddenVideoSchema.safeParse({ userIds: tooMany }).success
+        ).toBe(false);
+    });
+});
+
+describe("pause reasons and their events", () => {
+    it("names the four reasons a video is held back", () => {
+        expect(Object.values(MEDIA_PAUSE_REASONS).sort()).toEqual([
+            "client-limit",
+            "server-limit",
+            "space-rule",
+            "user-hidden",
+        ]);
+    });
+
+    it("has an event for a stream held back, one for it flowing again and one for the hiding", () => {
+        expect(MediaEvents.CONSUMER_PAUSED).toBe("media:consumer-paused");
+        expect(MediaEvents.CONSUMER_RESUMED).toBe("media:consumer-resumed");
+        expect(MediaEvents.SET_HIDDEN_VIDEO).toBe("media:set-hidden-video");
+        expect(MediaEvents.HIDDEN_VIDEO_CHANGED).toBe(
+            "media:hidden-video-changed"
+        );
     });
 });

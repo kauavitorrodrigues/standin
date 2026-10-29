@@ -125,6 +125,11 @@ const leave = (spaceId: string, socketId: string): void => {
 
 const usage = () => server?.usage();
 
+// Holds back that many videos of each receiver in every space, for the load of
+// the worker. Returns the spaces whose receivers must be planned again.
+const setVideoShed = (level: number): string[] =>
+    server?.setVideoShed(level) ?? [];
+
 const startTelemetry = (write: Parameters<MediaServer["startTelemetry"]>[0]) =>
     server?.startTelemetry(write);
 
@@ -148,5 +153,6 @@ export const MediaRuntime = {
     activeSpaceIds,
     leave,
     usage,
+    setVideoShed,
     startTelemetry,
 };

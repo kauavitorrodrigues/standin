@@ -38,6 +38,9 @@ import type {
     MediaCloseProducerInput,
     MediaConnectTransportInput,
     MediaConsumerClosedPayload,
+    MediaConsumerPausedPayload,
+    MediaConsumerResumedPayload,
+    MediaHiddenVideoChangedPayload,
     MediaConsumerNewPayload,
     MediaConsumerReadyInput,
     MediaCreateTransportAck,
@@ -51,6 +54,7 @@ import type {
     MediaSetFocusInput,
     MediaSetLowQualityInput,
     MediaSetMutedInput,
+    MediaSetHiddenVideoInput,
     MediaSetPinsInput,
     MediaSetPrivacyInput,
     MediaPrivacyChangedPayload,
@@ -210,6 +214,7 @@ export type ClientToServerEvents = {
     "media:set-focus": (payload: MediaSetFocusInput) => void;
     // The people this one pinned, who keep a video slot while close enough.
     "media:set-pins": (payload: MediaSetPinsInput) => void;
+    "media:set-hidden-video": (payload: MediaSetHiddenVideoInput) => void;
     // A weak machine asks for the low layer and fewer streams.
     "media:set-low-quality": (payload: MediaSetLowQualityInput) => void;
     "media:set-muted": (payload: MediaSetMutedInput) => void;
@@ -293,6 +298,11 @@ export type ServerToClientEvents = {
     "chat:typing": (payload: ChatTypingPayload) => void;
     "media:consumer-new": (payload: MediaConsumerNewPayload) => void;
     "media:consumer-closed": (payload: MediaConsumerClosedPayload) => void;
+    "media:consumer-paused": (payload: MediaConsumerPausedPayload) => void;
+    "media:consumer-resumed": (payload: MediaConsumerResumedPayload) => void;
+    "media:hidden-video-changed": (
+        payload: MediaHiddenVideoChangedPayload
+    ) => void;
     "media:producer-demand": (payload: MediaProducerDemandPayload) => void;
     "media:speakers": (payload: MediaSpeakersPayload) => void;
     "media:state-changed": (payload: MediaStateChangedPayload) => void;

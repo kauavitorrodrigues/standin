@@ -46,6 +46,12 @@ export const MediaErrorMessages = {
             invalid: "A pinned person is invalid.",
         },
     },
+    hiddenVideo: {
+        invalid: "The hidden people are invalid.",
+        userId: {
+            invalid: "A hidden person is invalid.",
+        },
+    },
     lowQuality: {
         enabled: {
             invalid: "The low quality flag must be true or false.",

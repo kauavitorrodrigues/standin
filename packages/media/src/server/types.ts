@@ -1,6 +1,9 @@
 import type {
     MediaConsumerClosedPayload,
     MediaConsumerNewPayload,
+    MediaConsumerPausedPayload,
+    MediaConsumerResumedPayload,
+    MediaHiddenVideoChangedPayload,
     MediaProducerDemandPayload,
 } from "@standin/contracts";
 
@@ -15,6 +18,20 @@ export type MediaNotifier = {
     producerDemand: (
         peerId: string,
         payload: MediaProducerDemandPayload
+    ) => void;
+    // A stream is held back, or flows again, and why.
+    consumerPaused: (
+        peerId: string,
+        payload: MediaConsumerPausedPayload
+    ) => void;
+    consumerResumed: (
+        peerId: string,
+        payload: MediaConsumerResumedPayload
+    ) => void;
+    // The server ended the hiding of some people, who left the reach.
+    hiddenVideoChanged: (
+        peerId: string,
+        payload: MediaHiddenVideoChangedPayload
     ) => void;
 };
 

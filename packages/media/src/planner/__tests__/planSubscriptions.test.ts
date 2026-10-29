@@ -296,7 +296,9 @@ describe("planSubscriptions video", () => {
             config: { rules: [dim] },
             current: new Map([["me", [held("a", "camera")]]]),
         });
-        expect(paused.pause).toEqual(["a:camera"]);
+        expect(paused.pause).toEqual([
+            { producerId: "a:camera", reason: "space-rule" },
+        ]);
 
         const resumed = plan(spots, people, {
             current: new Map([
