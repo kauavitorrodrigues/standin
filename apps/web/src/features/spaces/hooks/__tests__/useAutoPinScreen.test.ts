@@ -16,6 +16,7 @@ const tile = (
     label: id,
     isSelf,
     isMuted: false,
+    notice: null,
 });
 
 const setup = (initial: StageTile[]) => {

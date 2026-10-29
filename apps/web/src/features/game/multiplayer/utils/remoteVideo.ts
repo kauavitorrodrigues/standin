@@ -3,6 +3,7 @@ import type { RemoteVideo } from "../types/remoteVideo";
 export type RemoteVideoIdentity = {
     id: string;
     stream: MediaStream | null;
+    pauseReason?: RemoteVideo["pauseReason"];
 };
 
 /**
@@ -17,11 +18,13 @@ export const areRemoteVideosEqual = (
     first.every(
         (video, index) =>
             video.id === second[index].id &&
-            video.stream === second[index].stream
+            video.stream === second[index].stream &&
+            (video.pauseReason ?? null) === (second[index].pauseReason ?? null)
     );
 
 export type RemoteVideoEntry = Pick<RemoteVideo, "userId" | "slot"> & {
     track: MediaStreamTrack;
+    pauseReason?: RemoteVideo["pauseReason"];
 };
 
 /** A camera and a screen are the only video sources a person sends. */

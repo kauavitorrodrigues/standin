@@ -11,6 +11,7 @@ const tiles = (count: number): StageTile[] =>
         label: `Pessoa ${index}`,
         isSelf: false,
         isMuted: false,
+        notice: null,
     }));
 
 const ids = (result: ReturnType<typeof splitVisibleTiles>) =>

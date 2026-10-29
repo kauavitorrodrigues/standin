@@ -42,6 +42,7 @@ export function useRemoteVideos() {
                 userId: entry.userId,
                 slot: entry.slot,
                 stream: null,
+                pauseReason: entry.pauseReason ?? null,
             };
             if (!isActive) return video;
 
@@ -83,6 +84,21 @@ export function useRemoteVideos() {
         [sync]
     );
 
+    // The server holds a video back for a reason, or lets it play again.
+    const setPauseReason = useCallback(
+        (consumerId: string, reason: RemoteVideo["pauseReason"]) => {
+            const entry = entriesRef.current.get(consumerId);
+            if (!entry || (entry.pauseReason ?? null) === reason) return;
+
+            entriesRef.current.set(consumerId, {
+                ...entry,
+                pauseReason: reason,
+            });
+            sync();
+        },
+        [sync]
+    );
+
     const removeConsumer = useCallback(
         (consumerId: string) => {
             if (!entriesRef.current.delete(consumerId)) return;
@@ -96,5 +112,12 @@ export function useRemoteVideos() {
         sync();
     }, [sync]);
 
-    return { remoteVideos, addTrack, removeConsumer, clear, setActiveVideoIds };
+    return {
+        remoteVideos,
+        addTrack,
+        removeConsumer,
+        setPauseReason,
+        clear,
+        setActiveVideoIds,
+    };
 }

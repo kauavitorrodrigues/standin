@@ -192,6 +192,8 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
                         onTogglePin={pinnedVideos.togglePin}
                         onActiveVideosChange={video.setActiveVideoIds}
                         onFocusChange={video.setFocus}
+                        onHideVideo={video.hideVideo}
+                        onShowVideo={video.showVideo}
                     />
                     <LayoutPrimitive.TopControls
                         visible={layout.isStageToggleVisible}

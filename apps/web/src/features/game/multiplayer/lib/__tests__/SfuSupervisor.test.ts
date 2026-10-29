@@ -151,6 +151,44 @@ describe("SfuSupervisor", () => {
         });
     });
 
+    it("sends the hidden people once the session is ready, and again after a rebuild", async () => {
+        const { supervisor, signal, clients } = setup();
+        supervisor.setHiddenVideo(["user-b"]);
+        expect(signal.send).not.toHaveBeenCalledWith("media:set-hidden-video", {
+            userIds: ["user-b"],
+        });
+
+        await supervisor.start();
+        expect(signal.send).toHaveBeenCalledWith("media:set-hidden-video", {
+            userIds: ["user-b"],
+        });
+
+        // The session breaks and is built again: the new one is told who is hidden.
+        (signal.send as ReturnType<typeof vi.fn>).mockClear();
+        clients[0].events.onBroken();
+        await vi.waitFor(() => expect(clients).toHaveLength(2));
+        await vi.waitFor(() =>
+            expect(signal.send).toHaveBeenCalledWith("media:set-hidden-video", {
+                userIds: ["user-b"],
+            })
+        );
+
+        supervisor.setHiddenVideo([]);
+        expect(signal.send).toHaveBeenLastCalledWith("media:set-hidden-video", {
+            userIds: [],
+        });
+    });
+
+    it("does not send a list of hidden people nobody asked for", async () => {
+        const { supervisor, signal } = setup();
+        await supervisor.start();
+
+        expect(signal.send).not.toHaveBeenCalledWith(
+            "media:set-hidden-video",
+            expect.anything()
+        );
+    });
+
     it("hands the failures of the dev console to the current client", async () => {
         const { supervisor, clients } = setup();
         await supervisor.start();

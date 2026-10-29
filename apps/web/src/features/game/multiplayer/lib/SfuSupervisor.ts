@@ -27,6 +27,7 @@ export class SfuSupervisor {
     private current: SfuClient | null = null;
     private focus: readonly MediaView[] = [];
     private pins: string[] = [];
+    private hiddenVideo: string[] = [];
     private lowQuality = false;
     private stopped = false;
     private rebuilding = false;
@@ -68,6 +69,7 @@ export class SfuSupervisor {
         this.ready = true;
         if (this.focus.length > 0) this.sendFocus();
         if (this.pins.length > 0) this.sendPins();
+        if (this.hiddenVideo.length > 0) this.sendHiddenVideo();
         if (this.lowQuality) this.sendLowQuality();
     }
 
@@ -139,6 +141,23 @@ export class SfuSupervisor {
         if (!this.ready) return;
         this.options.signal.send(MediaEvents.SET_PINS, {
             userIds: this.pins,
+        });
+    }
+
+    /**
+     * The people whose video the local user hid, as the full list. The server
+     * keeps them hidden while they are within reach, and the list is sent
+     * again to a session that is built again.
+     */
+    setHiddenVideo(userIds: readonly string[]): void {
+        this.hiddenVideo = [...userIds];
+        this.sendHiddenVideo();
+    }
+
+    private sendHiddenVideo(): void {
+        if (!this.ready) return;
+        this.options.signal.send(MediaEvents.SET_HIDDEN_VIDEO, {
+            userIds: this.hiddenVideo,
         });
     }
 

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { connectionReporter, socket } from "../socket";
 import { SfuClient } from "../lib/SfuClient";
 import { SfuSupervisor } from "../lib/SfuSupervisor";
@@ -49,7 +49,24 @@ export function useSfuMedia({
         setUserSpeaking,
     });
     
-    const { playRemote, stopRemote, stopAllRemote, applySpeakers } = remote;
+    const {
+        playRemote,
+        stopRemote,
+        stopAllRemote,
+        setRemotePauseReason,
+        applySpeakers,
+    } = remote;
+
+    // The people whose video the local user hid, as the server holds it: it
+    // drops a person from the list by itself when they leave the reach.
+    const [hiddenVideoUserIds, setHiddenState] = useState<ReadonlySet<string>>(
+        new Set()
+    );
+    const hiddenRef = useRef<ReadonlySet<string>>(new Set());
+    const storeHidden = useCallback((next: ReadonlySet<string>) => {
+        hiddenRef.current = next;
+        setHiddenState(next);
+    }, []);
 
     const latestRef = useSfuLocalTracks(supervisorRef, {
         localAudioTrack,
@@ -63,6 +80,8 @@ export function useSfuMedia({
     
     useSfuSocketEvents({
         supervisorRef,
+        setRemotePauseReason,
+        setHiddenVideoUserIds: (userIds) => storeHidden(new Set(userIds)),
         applySpeakers,
         setRemoteMicMuted,
         setRemotePrivacy,
@@ -72,11 +91,12 @@ export function useSfuMedia({
     const endSession = useCallback(() => {
         supervisorRef.current?.stop();
         supervisorRef.current = null;
+        storeHidden(new Set());
         stopCpuReadingRef.current?.();
         stopCpuReadingRef.current = null;
         applySpeakers([]);
         stopAllRemote();
-    }, [applySpeakers, stopAllRemote]);
+    }, [applySpeakers, stopAllRemote, storeHidden]);
 
     /** Starts a session with what the person is sending right now. */
     const beginSession = useCallback(() => {
@@ -127,6 +147,29 @@ export function useSfuMedia({
         supervisorRef.current?.setPins(pinnedUserIds);
     }, []);
 
+    /** Hides the video of a person: no camera and no screen, still heard. */
+    const hideVideo = useCallback(
+        (userId: string) => {
+            if (hiddenRef.current.has(userId)) return;
+            const next = new Set(hiddenRef.current).add(userId);
+            storeHidden(next);
+            supervisorRef.current?.setHiddenVideo([...next]);
+        },
+        [storeHidden]
+    );
+
+    /** Shows the video of a person again. */
+    const showVideo = useCallback(
+        (userId: string) => {
+            if (!hiddenRef.current.has(userId)) return;
+            const next = new Set(hiddenRef.current);
+            next.delete(userId);
+            storeHidden(next);
+            supervisorRef.current?.setHiddenVideo([...next]);
+        },
+        [storeHidden]
+    );
+
     /** Builds the media session again, for the dev harness. */
     const rebuildSession = useCallback(() => {
         supervisorRef.current?.reset();
@@ -156,6 +199,9 @@ export function useSfuMedia({
         endSession,
         setFocus,
         setPins,
+        hiddenVideoUserIds,
+        hideVideo,
+        showVideo,
         rebuildSession,
         failures,
     };

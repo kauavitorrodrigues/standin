@@ -11,6 +11,7 @@ const tile = (id: string): StageTile => ({
     label: id,
     isSelf: false,
     isMuted: false,
+    notice: null,
 });
 
 describe("usePinnedVideos", () => {

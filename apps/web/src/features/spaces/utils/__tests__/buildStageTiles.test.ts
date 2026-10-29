@@ -16,6 +16,7 @@ const remote = (
     userId,
     slot,
     stream: stream(`${socketId}-${slot}`),
+    pauseReason: null,
 });
 
 const names = buildNameLookup([
@@ -262,6 +263,55 @@ describe("buildStageTiles", () => {
                 "s1:screen",
                 "s1:camera",
             ]);
+        });
+    });
+
+    describe("notices", () => {
+        it("carries the reason the server holds a video back on its tile", () => {
+            const tiles = buildStageTiles({
+                remoteVideos: [
+                    { ...remote("s1", "u1", "camera"), pauseReason: "client-limit" },
+                    remote("s2", "u2", "camera"),
+                ],
+                localCameraStream: null,
+                localScreenStream: null,
+                names,
+            });
+
+            const byUser = (userId: string) =>
+                tiles.find((tile) => tile.userId === userId)!;
+            expect(byUser("u1").notice).toBe("client-limit");
+            expect(byUser("u2").notice).toBeNull();
+        });
+
+        it("shows a hidden person nearby as an avatar that says it is hidden", () => {
+            const tiles = buildStageTiles({
+                remoteVideos: [],
+                localCameraStream: null,
+                localScreenStream: null,
+                names,
+                nearbyUserIds: ["u1", "u2"],
+                hiddenUserIds: new Set(["u1"]),
+            });
+
+            expect(tiles.find((tile) => tile.userId === "u1")).toMatchObject({
+                stream: null,
+                notice: "user-hidden",
+            });
+            expect(tiles.find((tile) => tile.userId === "u2")!.notice).toBeNull();
+        });
+
+        it("never marks our own tiles", () => {
+            const tiles = buildStageTiles({
+                remoteVideos: [],
+                localCameraStream: stream("mine"),
+                localScreenStream: stream("screen"),
+                names,
+                includeSelf: true,
+                hiddenUserIds: new Set(["me"]),
+            });
+
+            expect(tiles.every((tile) => tile.notice === null)).toBe(true);
         });
     });
 });

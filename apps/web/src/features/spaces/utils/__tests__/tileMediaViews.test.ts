@@ -12,6 +12,7 @@ const tile = (id: string, overrides: Partial<StageTile> = {}): StageTile => ({
     label: id,
     isSelf: false,
     isMuted: false,
+    notice: null,
     ...overrides,
 });
 

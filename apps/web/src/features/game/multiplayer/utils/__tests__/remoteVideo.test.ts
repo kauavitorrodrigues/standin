@@ -34,4 +34,19 @@ describe("remote video helpers", () => {
             areRemoteVideosEqual([{ id: "a", stream }], [{ id: "b", stream }])
         ).toBe(false);
     });
+
+    it("tells a video that is held back from the same one playing", () => {
+        const stream = {} as MediaStream;
+        const playing = [{ id: "a:camera", stream, pauseReason: null }];
+
+        expect(
+            areRemoteVideosEqual(playing, [
+                { id: "a:camera", stream, pauseReason: "server-limit" as const },
+            ])
+        ).toBe(false);
+        // No reason and a null reason are the same.
+        expect(areRemoteVideosEqual(playing, [{ id: "a:camera", stream }])).toBe(
+            true
+        );
+    });
 });

@@ -1,4 +1,4 @@
-import type { UserSummary } from "@standin/contracts";
+import { MEDIA_PAUSE_REASONS, type UserSummary } from "@standin/contracts";
 import type { RemoteVideo } from "@/features/game/multiplayer/types/remoteVideo";
 import type { StageTile } from "@/features/spaces/types/stage";
 
@@ -28,6 +28,9 @@ type BuildStageTilesInput = {
     mutedUserIds?: ReadonlySet<string>;
     // Users speaking right now. They sort ahead of the other people.
     speakingUserIds?: ReadonlySet<string>;
+    // Users whose video the viewer hid. They have no video, so they show as
+    // an avatar that says so.
+    hiddenUserIds?: ReadonlySet<string>;
 };
 
 const nameOf = (
@@ -52,6 +55,7 @@ export const buildStageTiles = ({
     includeSelf,
     mutedUserIds = new Set(),
     speakingUserIds = new Set(),
+    hiddenUserIds = new Set(),
 }: BuildStageTilesInput): StageTile[] => {
     const tiles: StageTile[] = [];
 
@@ -64,6 +68,7 @@ export const buildStageTiles = ({
             label: labelFor("Você", "screen"),
             isSelf: true,
             isMuted: false,
+            notice: null,
         });
     }
 
@@ -79,6 +84,7 @@ export const buildStageTiles = ({
                 video.slot === "camera" &&
                 video.userId !== null &&
                 mutedUserIds.has(video.userId),
+            notice: video.pauseReason,
         });
     });
 
@@ -100,6 +106,9 @@ export const buildStageTiles = ({
                 label: nameOf(userId, names),
                 isSelf: false,
                 isMuted: mutedUserIds.has(userId),
+                notice: hiddenUserIds.has(userId)
+                    ? MEDIA_PAUSE_REASONS.USER_HIDDEN
+                    : null,
             });
         });
 
@@ -112,6 +121,7 @@ export const buildStageTiles = ({
             label: "Você",
             isSelf: true,
             isMuted: mutedUserIds.has(selfUserId),
+            notice: null,
         });
     }
 
