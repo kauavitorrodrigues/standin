@@ -1,6 +1,7 @@
 import { useNotificationSettings } from "@/features/notifications/hooks/useNotificationSettings";
 import { getNotificationsDescription } from "../../../utils/getNotificationsDescription";
 import { NotificationSettingsSelect } from "../../instances/NotificationSettingsSelect";
+import { NotificationVolumeSlider } from "../../instances/NotificationVolumeSlider";
 import { NotificationsSwitch } from "../../instances/NotificationsSwitch";
 import { SettingsGroup } from "../../layout/SettingsGroup";
 import { SettingsRow } from "../../layout/SettingsRow";
@@ -46,6 +47,12 @@ export const NotificationsSection = () => {
                             { value: "never", label: "Nunca" },
                         ]}
                     />
+                </SettingsRow>
+                <SettingsRow
+                    title="Volume dos avisos"
+                    description="Volume dos sons de aviso, no alto-falante escolhido em Áudio"
+                >
+                    <NotificationVolumeSlider />
                 </SettingsRow>
             </SettingsGroup>
         </>

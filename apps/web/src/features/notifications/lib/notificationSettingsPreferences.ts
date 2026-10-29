@@ -25,6 +25,12 @@ const parseNotificationSettings = (stored: unknown): NotificationSettings => {
             CHAT_SOUND_MODE_IDS,
             defaults.chatSound
         ),
+        volume:
+            typeof record.volume === "number" &&
+            record.volume >= 0 &&
+            record.volume <= 1
+                ? record.volume
+                : defaults.volume,
     };
 };
 

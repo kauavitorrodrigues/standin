@@ -5,20 +5,21 @@ import { SettingSelect } from "./SettingSelect";
 
 type Option<T extends string> = { value: T; label: string };
 
-type Props<K extends keyof NotificationSettings> = {
+// The volume has its own slider.
+type SelectField = Exclude<keyof NotificationSettings, "volume">;
+
+type Props<K extends SelectField> = {
     field: K;
     ariaLabel: string;
     options: Option<NotificationSettings[K]>[];
 };
 
 // One field of the notification settings, saved as soon as it changes.
-export const NotificationSettingsSelect = <
-    K extends keyof NotificationSettings,
->({
-        field,
-        ariaLabel,
-        options,
-    }: Props<K>) => {
+export const NotificationSettingsSelect = <K extends SelectField>({
+    field,
+    ariaLabel,
+    options,
+}: Props<K>) => {
     const settings = useNotificationSettingsPreference();
 
     return (

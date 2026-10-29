@@ -1,24 +1,19 @@
 import { NOTIFICATION_SOUND } from "@/features/notifications/consts/notificationSettings";
+import { notificationSettingsPreference } from "@/features/notifications/lib/notificationSettingsPreferences";
+import { getSoundCatalog } from "@/features/sounds/lib/soundCatalog";
+import { throttle } from "@/lib/throttle";
 
-let context: AudioContext | null = null;
-
-// A short beep made on the spot, so there is no sound file to ship.
-export const playNotificationSound = (): void => {
-    context ??= new AudioContext();
-    void context.resume();
-
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.frequency.value = NOTIFICATION_SOUND.frequencyHz;
-    gain.gain.value = NOTIFICATION_SOUND.volume;
-    oscillator.connect(gain).connect(context.destination);
-
-    const now = context.currentTime;
-    gain.gain.setValueAtTime(NOTIFICATION_SOUND.volume, now);
-    gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        now + NOTIFICATION_SOUND.durationSeconds
-    );
-    oscillator.start(now);
-    oscillator.stop(now + NOTIFICATION_SOUND.durationSeconds);
+// Plays at the volume saved in the settings, read on every play so a change
+// applies to the next sound.
+export const playNotificationSoundNow = (): void => {
+    const effect = getSoundCatalog().notification;
+    effect.setVolume(notificationSettingsPreference.get().volume);
+    void effect.play();
 };
+
+// A burst of messages makes one sound at the start and one at the end of
+// the window instead of one per message.
+export const playNotificationSound = throttle(
+    playNotificationSoundNow,
+    NOTIFICATION_SOUND.throttleMs
+);

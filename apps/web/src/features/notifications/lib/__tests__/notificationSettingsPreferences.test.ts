@@ -46,6 +46,21 @@ describe("notificationSettingsPreference", () => {
         expect(preference.get()).toEqual({
             chatNotify: "all",
             chatSound: "never",
+            volume: 0.5,
         });
+    });
+
+    it("keeps a saved volume and drops one out of range", async () => {
+        localStorage.setItem(
+            NOTIFICATION_SETTINGS_STORAGE_KEY,
+            JSON.stringify({ volume: 0.2 })
+        );
+        expect((await loadPreference()).get().volume).toBe(0.2);
+
+        localStorage.setItem(
+            NOTIFICATION_SETTINGS_STORAGE_KEY,
+            JSON.stringify({ volume: 4 })
+        );
+        expect((await loadPreference()).get().volume).toBe(0.5);
     });
 });

@@ -5,6 +5,7 @@ import type Phaser from "phaser";
 import { connectionReporter, socket } from "../socket";
 import { useSocketEvent } from "./useSocketEvent";
 import { DEFAULT_SPACE_SETTINGS, JOIN_TIMEOUT_MS } from "../consts/connection";
+import { getSoundCatalog } from "@/features/sounds/lib/soundCatalog";
 import { getMapScene } from "@/features/game/utils/map";
 import { EmoteSender } from "@/features/game/lib/EmoteSender";
 import { SpaceChannel, type SpaceChannelTransport } from "../lib/SpaceChannel";
@@ -235,6 +236,11 @@ export function useSpaceConnection({
             remoteAudioManager.setSinkId(deviceId);
         });
     }, [remoteAudioManager]);
+
+    // Makes the app sounds while the person is not yet in a hurry for them.
+    useEffect(() => {
+        getSoundCatalog();
+    }, []);
 
     // The output volume from the settings, live, on top of the distance
     // volume of every peer.
