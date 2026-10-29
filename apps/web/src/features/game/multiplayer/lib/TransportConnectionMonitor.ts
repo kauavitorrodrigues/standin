@@ -1,4 +1,5 @@
 import { ICE_DISCONNECTED_GRACE_MS } from "../consts/connection";
+import type { ConnectionReport } from "./ConnectionReporter";
 
 // Error taxonomy of the transport. There is no telemetry sink yet, so errors
 // reach the owner through onError and a console warning.
@@ -27,6 +28,8 @@ export type TransportConnectionMonitorOptions = {
     // connected, after the error was published. The owner decides whether
     // to restart.
     onGraceExpired?: () => void;
+    // What the signaling socket was doing, added to the warning of an error.
+    describeConnection?: () => ConnectionReport;
 };
 
 // Transport agnostic connection monitor. "disconnected" does not panic:
@@ -36,6 +39,7 @@ export class TransportConnectionMonitor {
     private readonly id: string;
     private readonly onError: TransportConnectionMonitorOptions["onError"];
     private readonly onGraceExpired: (() => void) | undefined;
+    private readonly describeConnection: (() => ConnectionReport) | undefined;
 
     private currentState = "new";
     private lastConnectedAt = 0;
@@ -43,8 +47,14 @@ export class TransportConnectionMonitor {
     private monitorReason: MonitorReason = "initialConnect";
     private timer: ReturnType<typeof setTimeout> | null = null;
 
-    constructor({ id, onError, onGraceExpired }: TransportConnectionMonitorOptions) {
+    constructor({
+        id,
+        onError,
+        onGraceExpired,
+        describeConnection,
+    }: TransportConnectionMonitorOptions) {
         this.id = id;
+        this.describeConnection = describeConnection;
         this.onError = onError;
         this.onGraceExpired = onGraceExpired;
     }
@@ -130,7 +140,12 @@ export class TransportConnectionMonitor {
 
     private publish(type: TransportErrorType): void {
         const payload = { id: this.id, connectionState: this.currentState };
-        console.warn("[multiplayer] transport error", type, payload);
+        const report = this.describeConnection?.();
+        if (report) {
+            console.warn("[multiplayer] transport error", type, payload, report);
+        } else {
+            console.warn("[multiplayer] transport error", type, payload);
+        }
         this.onError(type, payload);
     }
 

@@ -368,5 +368,35 @@ describe("SfuClient", () => {
             }
         });
 
+        it("adds the report of the socket to the warning when it has one", async () => {
+            vi.spyOn(console, "warn").mockImplementation(() => {});
+            const report = {
+                connected: true,
+                lastConnectAt: 1,
+                lastDisconnectAt: null,
+                lastDisconnectReason: null,
+                pingIntervalMs: 25000,
+                pingTimeoutMs: 20000,
+            };
+            const { signal, events, device, transports } = setup();
+            const client = new SfuClient(
+                signal,
+                events,
+                () => device as unknown as Device,
+                () => report
+            );
+            await client.start();
+            transports.send.changeState("failed");
+            client.close();
+
+            expect(console.warn).toHaveBeenCalledWith(
+                "[multiplayer] transport error",
+                "FailedState",
+                expect.anything(),
+                report
+            );
+            vi.restoreAllMocks();
+        });
+
     });
 });

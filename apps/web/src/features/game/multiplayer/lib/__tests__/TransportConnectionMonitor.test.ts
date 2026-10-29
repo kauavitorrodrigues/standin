@@ -167,4 +167,29 @@ describe("TransportConnectionMonitor", () => {
             expect.anything()
         );
     });
+
+    it("adds what the socket was doing to the warning of an error", () => {
+        const report = {
+            connected: false,
+            lastConnectAt: 1,
+            lastDisconnectAt: 2,
+            lastDisconnectReason: "ping timeout",
+            pingIntervalMs: 25000,
+            pingTimeoutMs: 20000,
+        };
+        const monitor = new TransportConnectionMonitor({
+            id: "t1",
+            onError: vi.fn(),
+            describeConnection: () => report,
+        });
+
+        monitor.onConnectionStateChanged("failed");
+
+        expect(console.warn).toHaveBeenCalledWith(
+            "[multiplayer] transport error",
+            TransportErrorType.FailedState,
+            { id: "t1", connectionState: "failed" },
+            report
+        );
+    });
 });

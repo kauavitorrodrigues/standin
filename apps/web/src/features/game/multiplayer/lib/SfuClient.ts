@@ -16,6 +16,7 @@ import { setSenderActive } from "../utils/setSenderActive";
 import { logMedia } from "../utils/logMedia";
 import { isIceRestartNeeded } from "../utils/isIceRestartNeeded";
 import { openTransport } from "../utils/sfuTransport";
+import type { ConnectionReport } from "./ConnectionReporter";
 import { IceRestarter } from "./IceRestarter";
 import {
     TransportConnectionMonitor,
@@ -23,6 +24,7 @@ import {
 } from "./TransportConnectionMonitor";
 
 type CreateDevice = () => Device;
+type DescribeConnection = () => ConnectionReport;
 
 /**
  * The browser side of the media server, for one media session.
@@ -44,6 +46,7 @@ export class SfuClient {
     private readonly signal: SfuSignal;
     private readonly events: SfuEvents;
     private readonly device: Device;
+    private readonly describeConnection: DescribeConnection | undefined;
     private sendTransport: types.Transport | null = null;
     private recvTransport: types.Transport | null = null;
     private readonly producers = new Map<SfuSource, types.Producer>();
@@ -64,11 +67,13 @@ export class SfuClient {
     constructor(
         signal: SfuSignal,
         events: SfuEvents,
-        createDevice: CreateDevice = () => new Device()
+        createDevice: CreateDevice = () => new Device(),
+        describeConnection?: DescribeConnection
     ) {
         this.signal = signal;
         this.events = events;
         this.device = createDevice();
+        this.describeConnection = describeConnection;
     }
 
     /**
@@ -116,6 +121,7 @@ export class SfuClient {
         const monitor: TransportConnectionMonitor =
             new TransportConnectionMonitor({
                 id: transport.id,
+                describeConnection: this.describeConnection,
                 onError: (type) => {
                     if (type === "FailedState" && isIceRestartNeeded(transport)) {
                         restarter.trigger();

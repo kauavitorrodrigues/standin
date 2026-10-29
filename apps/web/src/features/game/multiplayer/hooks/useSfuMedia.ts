@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { socket } from "../socket";
+import { connectionReporter, socket } from "../socket";
 import { SfuClient } from "../lib/SfuClient";
 import { SfuSupervisor } from "../lib/SfuSupervisor";
 import type { MediaView } from "../types/mediaView";
@@ -87,7 +87,13 @@ export function useSfuMedia({
                 onRemoteTrackClosed: stopRemote,
                 onRemoteTrackClosedAll: stopAllRemote,
             },
-            createClient: (events) => new SfuClient(signal, events),
+            createClient: (events) =>
+                new SfuClient(
+                    signal,
+                    events,
+                    undefined,
+                    connectionReporter.getReport
+                ),
         });
         supervisorRef.current = supervisor;
 

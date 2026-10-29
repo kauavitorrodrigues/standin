@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type SpaceSettings, type Space, type User } from "@standin/contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import type Phaser from "phaser";
-import { socket } from "../socket";
+import { connectionReporter, socket } from "../socket";
 import { useSocketEvent } from "./useSocketEvent";
 import { DEFAULT_SPACE_SETTINGS, JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getMapScene } from "@/features/game/utils/map";
@@ -209,6 +209,7 @@ export function useSpaceConnection({
     useEffect(() => {
         if (!import.meta.env.DEV) return;
 
+        window.__connectionReport = connectionReporter.getReport;
         window.__simulateScenario = (name) =>
             simulateScenario(name, {
                 socket,
@@ -219,6 +220,7 @@ export function useSpaceConnection({
             });
         return () => {
             delete window.__simulateScenario;
+            delete window.__connectionReport;
         };
     }, [rebuildSession]);
 

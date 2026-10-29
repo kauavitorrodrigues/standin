@@ -1,6 +1,7 @@
 import { io, type Socket } from "socket.io-client";
 import { SOCKET_PATH_OPTIONS, SOCKET_URL } from "@/lib/api/url";
 import { SOCKET_RECONNECTION_OPTIONS } from "@/features/game/multiplayer/consts/connection";
+import { ConnectionReporter } from "@/features/game/multiplayer/lib/ConnectionReporter";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -17,3 +18,8 @@ export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
         ...SOCKET_RECONNECTION_OPTIONS,
     }
 );
+
+// Remembers when the socket connected and dropped, for the reports of media
+// transport errors and the dev console.
+export const connectionReporter = new ConnectionReporter(socket);
+connectionReporter.start();
