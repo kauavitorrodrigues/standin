@@ -7,6 +7,7 @@ import type { SfuSupervisorOptions } from "../types/sfuSupervisor";
 import { wait as realWait } from "../utils/wait";
 import { AttemptRateTracker } from "./AttemptRateTracker";
 import type { SfuClient } from "./SfuClient";
+import type { TransportErrorType } from "./TransportConnectionMonitor";
 
 /**
  * Keeps one media session alive for the whole stay in a space. It builds a
@@ -174,6 +175,35 @@ export class SfuSupervisor {
 
     getVideoSenders(): RTCRtpSender[] {
         return this.current?.getVideoSenders() ?? [];
+    }
+
+    /*
+     * The calls below only exist for the failure scenarios of the dev console.
+     * They reach the client of the moment, and do nothing without one.
+     */
+
+    forceIceRestart(): void {
+        this.current?.forceIceRestart();
+    }
+
+    simulateTransportError(type: TransportErrorType): void {
+        this.current?.simulateTransportError(type);
+    }
+
+    forgetSendTransport(): void {
+        this.current?.forgetSendTransport();
+    }
+
+    pauseConsumers(): void {
+        this.current?.pauseConsumers();
+    }
+
+    resumeConsumers(): void {
+        this.current?.resumeConsumers();
+    }
+
+    dropTransports(): void {
+        this.current?.dropTransports();
     }
 
     /** Closes the session for good. */

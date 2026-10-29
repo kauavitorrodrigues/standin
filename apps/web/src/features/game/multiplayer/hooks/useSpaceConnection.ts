@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type SpaceSettings, type Space, type User } from "@standin/contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import type Phaser from "phaser";
-import { socket } from "../socket";
+import { connectionReporter, socket } from "../socket";
 import { useSocketEvent } from "./useSocketEvent";
 import { DEFAULT_SPACE_SETTINGS, JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getMapScene } from "@/features/game/utils/map";
@@ -202,25 +202,27 @@ export function useSpaceConnection({
         setRemoteMicMuted,
         setRemotePrivacy,
     });
-    const { beginSession, endSession, rebuildSession } = sfu;
+    const { beginSession, endSession, rebuildSession, failures } = sfu;
 
     // Dev only failure harness, not present in production builds:
     // Vite replaces import.meta.env.DEV with false and drops the branch.
     useEffect(() => {
         if (!import.meta.env.DEV) return;
 
+        window.__connectionReport = connectionReporter.getReport;
         window.__simulateScenario = (name) =>
             simulateScenario(name, {
                 socket,
-                media: { rebuildSession },
+                media: { rebuildSession, ...failures },
                 reload: () => window.location.reload(),
                 setTimeout: (callback, delayMs) =>
                     setTimeout(callback, delayMs),
             });
         return () => {
             delete window.__simulateScenario;
+            delete window.__connectionReport;
         };
-    }, [rebuildSession]);
+    }, [rebuildSession, failures]);
 
     // Mirrors the speaker device preference onto every remote <audio>
     // element, live: useMediaDeviceControl (a separate hook instance, owning

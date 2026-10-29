@@ -14,14 +14,18 @@ import {
 } from "../utils/sfuProducer";
 import { setSenderActive } from "../utils/setSenderActive";
 import { logMedia } from "../utils/logMedia";
+import { isIceRestartNeeded } from "../utils/isIceRestartNeeded";
 import { openTransport } from "../utils/sfuTransport";
+import type { ConnectionReport } from "./ConnectionReporter";
 import { IceRestarter } from "./IceRestarter";
 import {
     TransportConnectionMonitor,
     type MonitorReason,
+    type TransportErrorType,
 } from "./TransportConnectionMonitor";
 
 type CreateDevice = () => Device;
+type DescribeConnection = () => ConnectionReport;
 
 /**
  * The browser side of the media server, for one media session.
@@ -43,6 +47,7 @@ export class SfuClient {
     private readonly signal: SfuSignal;
     private readonly events: SfuEvents;
     private readonly device: Device;
+    private readonly describeConnection: DescribeConnection | undefined;
     private sendTransport: types.Transport | null = null;
     private recvTransport: types.Transport | null = null;
     private readonly producers = new Map<SfuSource, types.Producer>();
@@ -63,11 +68,13 @@ export class SfuClient {
     constructor(
         signal: SfuSignal,
         events: SfuEvents,
-        createDevice: CreateDevice = () => new Device()
+        createDevice: CreateDevice = () => new Device(),
+        describeConnection?: DescribeConnection
     ) {
         this.signal = signal;
         this.events = events;
         this.device = createDevice();
+        this.describeConnection = describeConnection;
     }
 
     /**
@@ -115,10 +122,15 @@ export class SfuClient {
         const monitor: TransportConnectionMonitor =
             new TransportConnectionMonitor({
                 id: transport.id,
+                describeConnection: this.describeConnection,
                 onError: (type) => {
-                    if (type === "FailedState") restarter.trigger();
+                    if (type === "FailedState" && isIceRestartNeeded(transport)) {
+                        restarter.trigger();
+                    }
                 },
-                onGraceExpired: () => restarter.trigger(),
+                onGraceExpired: () => {
+                    if (isIceRestartNeeded(transport)) restarter.trigger();
+                },
             });
         this.monitors.push(monitor);
         this.restarters.push(restarter);
@@ -307,6 +319,44 @@ export class SfuClient {
             .filter((producer) => producer.kind === "video")
             .map((producer) => producer.rtpSender)
             .filter((sender): sender is RTCRtpSender => sender !== undefined);
+    }
+
+    /*
+     * The calls below only exist for the failure scenarios of the dev console
+     * (see utils/simulateScenario.ts). Nothing else uses them.
+     */
+
+    /** Restarts ICE on both transports now, whatever state they are in. */
+    forceIceRestart(): void {
+        this.restarters.forEach((restarter) => restarter.trigger());
+    }
+
+    /** Reports an error of the transports as if the monitor had found it. */
+    simulateTransportError(type: TransportErrorType): void {
+        this.monitors.forEach((monitor) => monitor.publishSimulated(type));
+    }
+
+    /** Forgets the send transport, which the server still holds. */
+    forgetSendTransport(): void {
+        this.sendTransport = null;
+    }
+
+    /** Pauses every consumer on this side, with no message to the server. */
+    pauseConsumers(): void {
+        this.consumers.forEach((consumer) => consumer.pause());
+    }
+
+    /** Resumes every consumer paused by {@link pauseConsumers}. */
+    resumeConsumers(): void {
+        this.consumers.forEach((consumer) => consumer.resume());
+    }
+
+    /** Closes both transports and forgets them, so the session has none. */
+    dropTransports(): void {
+        this.sendTransport?.close();
+        this.recvTransport?.close();
+        this.sendTransport = null;
+        this.recvTransport = null;
     }
 
     /** Closes the session. Everything announced afterwards is ignored. */
