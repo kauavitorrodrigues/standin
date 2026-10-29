@@ -1,5 +1,5 @@
 import { db, usersTable, and, eq, isNull } from "@standin/database";
-import { USER_ROLES } from "@standin/contracts";
+import { LibrarySeedAdminNotFoundError, USER_ROLES } from "@standin/contracts";
 import { AssetService, DEFAULT_LIBRARY_SEED } from "@standin/core";
 import { readLibraryFolder } from "./utils/readLibraryFolder";
 
@@ -25,9 +25,7 @@ async function seedLibrary() {
         )
         .limit(1);
     if (!admin) {
-        throw new Error(
-            "No admin user found. Run `pnpm --filter api bootstrap` first."
-        );
+        throw new LibrarySeedAdminNotFoundError();
     }
 
     const result = await AssetService.seed(seed, { createdBy: admin.id });

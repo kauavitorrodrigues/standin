@@ -12,3 +12,11 @@ export type BootstrapInstanceResult = {
     // Only set when the admin was created without a password in the input.
     generatedPassword?: string;
 };
+
+export type ResolvedAdmin = {
+    admin: { id: string; email: string };
+    // Only set when the admin was created along with it.
+    organization: { id: string; name: string } | null;
+    generatedPassword?: string;
+    step: BootstrapStep;
+};

@@ -258,3 +258,14 @@ export class LibraryUnsupportedMediaError extends LibraryError {
         );
     }
 }
+
+// The library seed script has no admin to own what it creates.
+export class LibrarySeedAdminNotFoundError extends BaseError {
+    constructor() {
+        super(
+            "No admin user found. Run `pnpm --filter api bootstrap` first.",
+            "LIBRARY_SEED_ADMIN_NOT_FOUND",
+            500
+        );
+    }
+}
