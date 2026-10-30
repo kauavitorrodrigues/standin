@@ -11,6 +11,7 @@
         "test": "turbo run test",
         "format": "prettier . --write",
         "format:check": "prettier . --check",
+        "deploy": "sh deploy/deploy.sh",
         "standin": "pnpm --filter cli --silent standin"
     },
     "devDependencies": {

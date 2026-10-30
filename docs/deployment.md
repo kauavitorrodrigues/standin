@@ -146,7 +146,7 @@ Every deploy drops every connection, so do it when nobody is in a space.
 
 1. **Check it is empty.** Read the last `[Media] - Usage` line (`docker compose logs --tail 20 app | grep Usage`): `peers` should be 0 or the people agreed to be dropped. Write down the `peers` number if it is not 0.
 2. **Back up first**: `deploy/backup.sh <folder>` (the commands to restore it are in the Backups section) and note the commit now running (`git rev-parse --short HEAD`).
-3. **Deploy**: `git pull`, then `deploy/up.sh`. The `app` container applies the migrations before it starts.
+3. **Deploy**: `git pull`, then `deploy/up.sh`. The `app` container applies the migrations before it starts. From your own machine, `pnpm run deploy` does the pull, the build and the health check over ssh (see the header of `deploy/deploy.sh` for `deploy.local.env`); on the server, `sh deploy/update.sh` does the same.
 4. **Check**: `docker compose ps` shows `app` and `proxy` up, the logs of `app` have no error, and the Usage line shows the media worker started. Open the domain in two browsers and check they hear and see each other. After a deploy with people in the space, the `peers` number must come back to the one noted in step 1 within a minute, which is the check that everyone reconnected.
 5. **Roll back** if a check fails: `git checkout <previous commit>` and `deploy/up.sh` again. The migrations only go forward, so if the new version changed the database and the old code cannot read it, restore the dump of step 2 (Backups section) after stopping `app`.
 
