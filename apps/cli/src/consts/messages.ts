@@ -33,3 +33,27 @@ export const MESSAGES = {
     scopeMissingFix: (scope: string): string =>
         `Create a token with the "${scope}" scope: \`pnpm -s standin token create --name <name> --scope ${scope}\`, then \`pnpm -s standin login\`.`,
 } as const;
+
+// What the CLI says about the parts of a library seed upload.
+export const SEED_UPLOAD_MESSAGES = {
+    fileMissing: "the file was not uploaded",
+} as const;
+
+// Why a file cannot be used, in words that follow its name.
+export const FILE_PROBLEMS = {
+    missing: "the file does not exist",
+    unreadable: (code: string): string => `it cannot be read (${code})`,
+    tooLarge: (size: string, max: string): string =>
+        `it is ${size}, over the limit of ${max}`,
+    notPng: "it is not a PNG",
+    outsideFolder:
+        "it resolves outside the content folder, and a link that leaves the folder is not followed",
+} as const;
+
+// What a command that writes in steps says when one of them failed.
+export const STEPS_MESSAGES = {
+    unfinished: (name: string, id: string): string =>
+        `The template "${name}" (${id}) was created but not finished: finish it in the editor, publish it with \`pnpm -s standin template publish ${id}\`, or delete it on the admin screen and run the command again.`,
+    uncertain: (target: string, name: string, listCommand: string): string =>
+        `The last write (${target} "${name}") may have happened before the connection failed: check \`pnpm -s standin ${listCommand}\` before running the command again.`,
+} as const;

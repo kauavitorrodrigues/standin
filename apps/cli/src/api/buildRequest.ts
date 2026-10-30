@@ -1,6 +1,7 @@
 import { API_USER_AGENT, JSON_CONTENT_TYPE } from "../consts/api";
 import type { ApiCall, HttpRequest, RemoteTarget } from "../types";
 import { buildRequestUrl } from "../utils/buildRequestUrl";
+import { buildForm } from "./buildForm";
 
 // The request for a call. The token only travels in the header.
 export const buildRequest = (
@@ -20,5 +21,7 @@ export const buildRequest = (
         request.headers["content-type"] = JSON_CONTENT_TYPE;
         request.body = JSON.stringify(call.body);
     }
+    if (call.form) request.form = buildForm(call.form);
+    if (call.timeoutMs) request.timeoutMs = call.timeoutMs;
     return request;
 };

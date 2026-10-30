@@ -5,9 +5,10 @@ Operates a Standin instance from the shell, in two tiers:
 - **Server-side commands** (`bootstrap`, `seed library`, `health`, `token ...`)
   run where the instance is hosted: they read the root `.env` and use the
   database directly. No login.
-- **Remote commands** (`map ...`, `library list`, `login`, `logout`) go through
-  the API with a service token. They never import the core and need no `.env`
-  or database. `schema print` needs neither.
+- **Remote commands** (`map ...`, `library list`, `template ...`,
+  `content apply`, `login`, `logout`) go through the API with a service token.
+  They never import the core and need no `.env` or database. `schema print`
+  and `content validate` need neither a network nor a token.
 
 ```sh
 pnpm -s standin --help
@@ -37,6 +38,12 @@ TypeScript file run by `tsx`, so this private app needs `tsx` on the PATH
 | `map validate <spec>`        | Checks a map spec against a map of the instance. Writes nothing.                                                  |
 | `map apply <spec>`           | Builds the spec on a map and applies it.                                                                          |
 | `library list`               | Lists tilesets, assets and areas of the global library.                                                           |
+| `template create <name>`     | Creates a template, optionally fills its map from a spec, uploads its thumbnail and publishes it.                 |
+| `template get <id>`          | Shows one template.                                                                                               |
+| `template list`              | Lists the templates, drafts and published.                                                                        |
+| `template publish <id>`      | Publishes a draft template.                                                                                       |
+| `content validate <folder>`  | Checks a content folder (library and templates) on this machine. Sends nothing.                                   |
+| `content apply <folder>`     | Seeds the library of a content folder, then creates its templates.                                                |
 | `schema print <kind>`        | Prints a JSON Schema. No network.                                                                                 |
 
 `bootstrap` values come from the flag, or from the variable when the flag is
@@ -88,11 +95,17 @@ with a `fix`, never a prompt.
 Remote commands authenticate with a service token, created by `token create`
 or on the admin screen. Reading and writing are separate scopes:
 
-| Command                       | Scopes                   |
-| ----------------------------- | ------------------------ |
-| `map validate`                | `maps:read`              |
-| `map apply` (and `--dry-run`) | `maps:read` `maps:write` |
-| `library list`                | `library:read`           |
+| Command                         | Scopes                                                                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `map validate`                  | `maps:read`                                                                                                                             |
+| `map apply` (and `--dry-run`)   | `maps:read` `maps:write`                                                                                                                |
+| `library list`                  | `library:read`                                                                                                                          |
+| `template get`, `template list` | `templates:read`                                                                                                                        |
+| `template create`               | `templates:write`; with `--spec` also `maps:read` `maps:write`                                                                          |
+| `template publish`              | `templates:write` (and `templates:read` with `--dry-run`)                                                                               |
+| `content validate`              | none, it is local                                                                                                                       |
+| `content apply`                 | `library:write` when the folder has a `library.json`; `templates:read` `templates:write` `maps:read` `maps:write` when it has templates |
+| `content apply --dry-run`       | `library:write` for the library, `templates:read` for the templates (nothing is written)                                                |
 
 A token acts as the active admin that owns it. If that admin is demoted or
 removed the API answers `SERVICE_TOKEN_OWNER_INVALID` (exit 4); create another
@@ -119,6 +132,157 @@ nothing. A spec of `kind: area` is refused (it is a library entry); `map` and
 
 A stale `--base-version` answers 409 and a map an editor has open answers 423,
 both exit 6; the error carries the current `version`, or `by` and `since`.
+
+### `template ...`
+
+```sh
+pnpm -s standin template create "Open office" --size-tier S
+pnpm -s standin template create "Open office" --spec ./open-office.yaml --thumbnail ./open-office.png --dry-run
+pnpm -s standin template create "Open office" --spec ./open-office.yaml --thumbnail ./open-office.png --publish --json
+pnpm -s standin template list --size-tier S
+pnpm -s standin template get <template-id>
+pnpm -s standin template publish <template-id> --dry-run
+pnpm -s standin template publish <template-id>
+```
+
+`template create` creates the template as a draft (`POST /templates`) and then,
+in this order and only when asked: `--spec` builds a spec of `kind: template`
+on the map of the template (the map is read, the spec compiled to editor ops
+and applied, exactly like `map apply`), `--thumbnail` uploads a PNG, and
+`--publish` publishes it. A template is **never** published by default, and
+`--publish` needs `--thumbnail` (the server refuses to publish without one;
+exit 2 before any request). `--size-tier` (`XS`, `S`, `M`, `L`, `XL`) can be
+left out with `--spec`, which then gives it; with both they must match.
+`--description` is optional. The thumbnail is checked to be a PNG of at most
+3 MB before any request.
+
+The steps are not transactional. If one fails, the ones before stay on the
+instance and the error says so (see [Partial work](#partial-work)); the id of
+the draft is in `details.completed`.
+
+`--dry-run` checks only what is local: that the PNG is a PNG, that the spec
+parses and is of kind template, the size tier. It sends nothing at all, not
+even a read. It cannot compile the spec: that is done on the map of the
+template, which does not exist yet, so a spec whose keys are not in the library
+fails only on a real run (after the draft was made, see above).
+
+`template get` and `template list` are read-only (`--json` prints the template
+as the API gives it). `template publish --dry-run` reads the template and says
+whether it is a draft that can be published.
+
+### `content validate` and `content apply`
+
+A content folder holds a library and map templates:
+
+```text
+content/
+  library.json            the library, as `seed library` reads it
+  tilesets/floor.png      the PNGs library.json names, by relative path
+  assets/crate.png
+  templates/
+    open-office.yaml      a spec of kind template (.yaml, .yml or .json)
+    open-office.png       its thumbnail (same name, .png), optional
+    lounge.yaml
+  maps/                   not handled: reported as ignored (a warning)
+```
+
+Both parts are optional, but a folder with neither is exit 3 with a `fix`. A
+template is called as the `name` of its spec, or as the name of its file when
+the spec has none; the description is empty.
+
+```sh
+pnpm -s standin content validate ./content
+pnpm -s standin content apply ./content --dry-run
+pnpm -s standin content apply ./content
+pnpm -s standin content apply ./content --publish --json
+```
+
+`content validate` runs on this machine, with no URL and no token, and sends
+nothing. It checks `library.json` against its schema, that every PNG it names
+exists, is a PNG and is at most 3 MB, the limits of the upload (300 files,
+`library.json` 4 MB, 64 MB in all), and every template spec against the spec
+schema. It lists all the issues at once as `{file, path, message}` (exit 3).
+What needs the instance (that library keys exist, that a spec fits its map) is
+not checked: `content apply --dry-run` asks the server for the library part.
+
+`content apply` runs the same checks first (nothing is sent if any fails, and
+they come before the URL and the token are looked for), then:
+
+1. **Library.** `library.json` and its PNGs go to `POST /library/seed`, a
+   multipart upload where each PNG is a part named by the path written in
+   `library.json`. The seed is idempotent by key: a second run says
+   `unchanged`.
+2. **Templates.** Each spec is matched to a template **by name**
+   (`GET /templates`):
+    - no template has the name: it is created, its spec is applied to its map,
+      its thumbnail is uploaded, and it is published only with `--publish`;
+    - the template exists: it is **not touched** and is reported as `exists`.
+      The spec is not applied again, because applying ops adds content (it does
+      not replace it), so a second apply would put everything twice or fail on
+      the objects already in place. To change an existing template, edit it in
+      the editor, or delete it on the admin screen and run the command again.
+      A retired template with the name counts as existing;
+    - the template exists as a **draft** and `--publish` is given: it is
+      published as it is. That finishes a run that failed at the publish step
+      itself (the content and the thumbnail were already there). A draft with
+      no thumbnail on the instance cannot be published: the command refuses it
+      before writing anything (exit 3, `CLI_TEMPLATE_NOT_PUBLISHABLE`); finish
+      it in the editor, or delete it on the admin screen and run again. One
+      already published is `unchanged`.
+      With `--publish` a template that is going to be created needs its
+      thumbnail beside the spec (the command refuses before any write when it
+      lacks it); one that already exists needs no local file.
+
+Everything read from the folder stays inside it: the folder is resolved once
+and so is each file. A link that leaves the folder (a PNG, `library.json`, a
+spec, a thumbnail, or `templates/` itself) is an issue and is never followed;
+a link that stays inside is followed. A name in `library.json` that the upload
+cannot carry is an issue too: a path that leaves the folder, a name over 255
+bytes, one with a double quote or a line break, or `library` (the name of the
+`library.json` part).
+
+Limits (checked here before the request, and by the server): 300 PNG files, 3
+MB each, `library.json` 4 MB, 64 MB for the whole upload (counted with about
+150 bytes of framing per part, an estimate: the server has the last word); a
+thumbnail is at most 3 MB. The size of a file is asked first, so a file that
+is over the limit is never read, and reading stops when the total crosses it.
+
+`content apply --dry-run` writes nothing. For the library it calls
+`POST /library/seed?dryRun=true`: the server only parses `library.json` and
+checks that every file it names came with the upload; it does not decode the
+images nor resolve the keys, so a PNG that is not a valid image or a key that
+does not exist shows only on a real run. For the templates it lists the
+existing ones by name (read before the library, so a `--publish` that cannot
+finish is refused here too) and says what would be created or published; it
+does not compile the specs, which needs the template to exist. It needs the URL and a
+token with `library:write` (library) and `templates:read` (templates).
+
+#### Partial work
+
+Applying is not transactional and stops at the first failure, with the exit
+code of that failure. The error (also with `--json`, as one document) lists in
+`details`:
+
+- `completed`: what was already done, e.g.
+  `{"target":"template","name":"Open office","action":"created","id":"..."}`
+  (the steps of a template are `created`, `spec applied`, `thumbnail uploaded`,
+  `published`; the library is `seeded`). A failure that is not one of the
+  CLI's own (a bug, an answer that is not the API) is reported the same way,
+  as `CLI_INTERNAL` (exit 1) with the work done;
+- `pending`: the library and the templates that were not finished, each as
+  `{target, name}` (a template called `library` is not the library; the one
+  that failed is still in it);
+- `uncertain`: when the connection failed (or timed out) while a write was on
+  its way, that step as `{target, name}`. The write may have happened, so the
+  `fix` says to check `template list` or `library list` before running again.
+  The seed has 5 minutes to answer, a thumbnail 2, the other writes 1;
+- `unfinished`: a template this run created but did not finish, `{name, id}`.
+  The `fix` says what to do with it: finish it in the editor, publish it with
+  `template publish`, or delete it on the admin screen and run again (a rerun
+  would find it by name and leave it as it is).
+
+The library is idempotent, so running `content apply` again after fixing the
+cause is safe for it.
 
 ### `library list` and `schema print`
 
@@ -160,9 +324,13 @@ pnpm -s standin token revoke <id> --yes
 - `--dry-run`: checks the input and says what would happen. It never writes
   and never reads the database, so it does not say what already exists there.
   For `map apply` it sends `validateOnly`, so the server replays the ops.
+  `template create --dry-run` sends nothing, `template publish --dry-run`
+  reads, and `content apply --dry-run` runs the dry run of the library seed
+  and reads the templates (see their sections for what each one checks).
 - `--yes`: accepted by every command. Only `token revoke` needs it, and only
   at a terminal. `map apply` never asks for confirmation: it is the agent flow
-  and has `--dry-run` to check first.
+  and has `--dry-run` to check first. The same goes for `template` and
+  `content apply`.
 - `--help`: usage and examples.
 
 A missing required value is asked for only when stdin and stdout are both
@@ -182,7 +350,9 @@ terminals and `--json` is not set. Otherwise it is a usage error (exit 2).
 
 An error from the API keeps the code of the server (`SERVICE_TOKEN_SCOPE_MISSING`,
 `STALE_LAYOUT_VERSION`, `MAP_LOCKED`...) and may carry `issues` (the list the
-server or the spec checks found) and `details` (`version`, `by`, `since`). A
+server or the spec checks found; for a content folder each has the `file`) and
+`details` (`version`, `by`, `since`, and `completed`, `pending`, `unfinished`
+after a partial `template create` or `content apply`). A
 404 from the API (a map that does not exist) is exit 3, any other 5xx is exit 1.
 
 ## Examples
@@ -198,5 +368,10 @@ pnpm -s standin login --url http://localhost:3001 --token '<token>'
 pnpm -s standin map validate ./office.yaml --map <map-id>
 pnpm -s standin map apply ./office.yaml --map <map-id> --dry-run --json
 pnpm -s standin library list --json
+pnpm -s standin template create "Open office" --spec ./open-office.yaml --thumbnail ./open-office.png --dry-run
+pnpm -s standin template list --size-tier S --json
+pnpm -s standin content validate ./content
+pnpm -s standin content apply ./content --dry-run --json
+pnpm -s standin content apply ./content --publish
 pnpm -s standin schema print spec > spec.schema.json
 ```

@@ -1,6 +1,8 @@
 // One problem the server or the local checks found, as a list entry. `opIndex`
 // is set when the problem belongs to an operation of the ops sent.
 export type ErrorIssue = {
+    // The file of a content folder the problem is in, relative to the folder.
+    file?: string;
     opIndex?: number;
     code?: string;
     path?: string;

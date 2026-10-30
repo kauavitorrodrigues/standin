@@ -19,3 +19,6 @@ export const FOLDER_ERROR_NAMES: Record<string, true> = {
 
 // The code of a file that is not there.
 export const MISSING_FILE_CODE: string = "ENOENT";
+
+// The code reported for a failure that carries none.
+export const UNKNOWN_CODE: string = "UNKNOWN";
