@@ -9,6 +9,7 @@ import {
 } from "@standin/database";
 import type { Organization } from "@standin/contracts";
 import { FileService } from "../files";
+import { SoundboardService } from "../soundboard";
 import { SpaceGuestService, SpaceService } from "../spaces";
 import { publishOrganizationMemberRemoved } from "./members/memberRemovedEvents";
 
@@ -35,11 +36,20 @@ export const deleteOrganization = async (id: string): Promise<Organization> => {
             const { removedGuests, storageKeys } =
                 await SpaceService.deleteByOrganizationId(id, tx);
 
-            return { organization, removedGuests, removedMembers, storageKeys };
+            // Its clips go with it, files included.
+            const clipStorageKeys =
+                await SoundboardService.deleteByOrganizationId(id, tx);
+
+            return {
+                organization,
+                removedGuests,
+                removedMembers,
+                storageKeys: [...storageKeys, ...clipStorageKeys],
+            };
         });
 
-    // The photos of its spaces leave storage only now that the deletion is
-    // committed. A failure is logged, the organization is already gone.
+    // The photos of its spaces and its clips leave storage only now that the
+    // deletion is committed. A failure is logged, the organization is gone.
     await FileService.purge(storageKeys);
 
     // The guests inside lose their sockets once the deletion is committed.
