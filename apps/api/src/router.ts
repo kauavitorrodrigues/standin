@@ -10,7 +10,7 @@ import { TemplateController } from "./features/maps/templates/controllers";
 import { libraryRouter } from "./features/library/routes";
 import { RequiresLibraryAdmin } from "./features/library/middleware/requiresLibraryAdmin";
 import { serviceTokensRouter } from "./features/service-tokens/routes";
-import { mapsRouter } from "./features/maps/routes";
+import { mapApplyRouter, mapsRouter } from "./features/maps/routes";
 import { desksRouter } from "./features/desks/routes";
 import {
     guestSpacesAccessRouter,
@@ -81,6 +81,10 @@ router.use("/service-tokens", RequiresAuth, serviceTokensRouter);
 
 // Catalog of avatar pieces for the editor.
 router.use("/avatar", avatarCatalogRouter);
+
+// Applying ops to a map accepts a service token with the maps:write scope. It
+// must come before the session-only maps router below.
+router.use("/maps", mapApplyRouter);
 
 // Reading and editing maps, and the desks of a space.
 router.use("/maps", RequiresAuth, mapsRouter);

@@ -25,6 +25,8 @@ export const MapService = {
     loadLibrary: loadLayoutLibrary,
 };
 
+export { MapApplyService } from "./apply";
+export type { ApplyOutcome } from "./apply";
 export { MapAssetService } from "./assets";
 export { DeskService } from "./desks";
 export { MapLockService } from "./lock";
