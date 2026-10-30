@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     ServiceTokenExpiredError,
+    ServiceTokenNotActiveError,
     ServiceTokenNotFoundError,
     ServiceTokenRevokedError,
     ServiceTokenScopeError,
@@ -11,6 +12,8 @@ const mocks = vi.hoisted(() => ({
     findByHash: vi.fn(),
     findById: vi.fn(),
     list: vi.fn(),
+    regenerate: vi.fn(),
+    remove: vi.fn(),
     revoke: vi.fn(),
     touchLastUsed: vi.fn(),
 }));
@@ -19,6 +22,8 @@ vi.mock("../../repository", () => ({ ServiceTokenRepository: mocks }));
 
 import { authenticateServiceToken } from "../authenticate";
 import { createServiceToken } from "../create";
+import { regenerateServiceToken } from "../regenerate";
+import { removeServiceToken } from "../remove";
 import { revokeServiceToken } from "../revoke";
 import { hashToken } from "../../utils/hashToken";
 
@@ -84,6 +89,80 @@ describe("revokeServiceToken", () => {
         mocks.findById.mockResolvedValue(null);
 
         await expect(revokeServiceToken("nope")).rejects.toBeInstanceOf(
+            ServiceTokenNotFoundError
+        );
+    });
+});
+
+describe("regenerateServiceToken", () => {
+    it("swaps the hash and the prefix and returns the new clear token", async () => {
+        mocks.findById.mockResolvedValue(row());
+        mocks.regenerate.mockImplementation(async (_id, input) =>
+            row({ tokenPrefix: input.tokenPrefix })
+        );
+
+        const result = await regenerateServiceToken("t1");
+
+        const [id, input] = mocks.regenerate.mock.calls[0];
+        expect(id).toBe("t1");
+        expect(result.token.startsWith("sit_")).toBe(true);
+        expect(input.tokenHash).toBe(hashToken(result.token));
+        expect(input.tokenPrefix).toBe(result.token.slice(0, 12));
+        expect(JSON.stringify(input)).not.toContain(result.token);
+    });
+
+    it("gives a different token each time", async () => {
+        mocks.findById.mockResolvedValue(row());
+        mocks.regenerate.mockResolvedValue(row());
+
+        const first = await regenerateServiceToken("t1");
+        const second = await regenerateServiceToken("t1");
+
+        expect(first.token).not.toBe(second.token);
+    });
+
+    it("fails for an unknown id", async () => {
+        mocks.findById.mockResolvedValue(null);
+
+        await expect(regenerateServiceToken("nope")).rejects.toBeInstanceOf(
+            ServiceTokenNotFoundError
+        );
+    });
+
+    it.each([
+        ["revoked", { revokedAt: new Date() }],
+        ["expired", { expiresAt: new Date(Date.now() - DAY) }],
+    ])("refuses a %s token", async (_label, overrides) => {
+        mocks.findById.mockResolvedValue(row(overrides));
+
+        await expect(regenerateServiceToken("t1")).rejects.toBeInstanceOf(
+            ServiceTokenNotActiveError
+        );
+        expect(mocks.regenerate).not.toHaveBeenCalled();
+    });
+
+    it("refuses when the token was revoked while regenerating", async () => {
+        mocks.findById.mockResolvedValue(row());
+        mocks.regenerate.mockResolvedValue(null);
+
+        await expect(regenerateServiceToken("t1")).rejects.toBeInstanceOf(
+            ServiceTokenNotActiveError
+        );
+    });
+});
+
+describe("removeServiceToken", () => {
+    it("removes the row", async () => {
+        mocks.remove.mockResolvedValue(true);
+
+        await expect(removeServiceToken("t1")).resolves.toBeUndefined();
+        expect(mocks.remove).toHaveBeenCalledWith("t1");
+    });
+
+    it("fails for an unknown id", async () => {
+        mocks.remove.mockResolvedValue(false);
+
+        await expect(removeServiceToken("nope")).rejects.toBeInstanceOf(
             ServiceTokenNotFoundError
         );
     });

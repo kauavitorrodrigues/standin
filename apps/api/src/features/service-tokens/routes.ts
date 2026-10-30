@@ -11,6 +11,9 @@ router.use(RequiresRole([ROLES.ADMIN]));
 
 router.post("/", ServiceTokenController.create);
 router.get("/", ServiceTokenController.list);
-router.delete("/:id", ServiceTokenController.revoke);
+// Revoking keeps the row, shown as revoked. Deleting removes it for good.
+router.post("/:id/revoke", ServiceTokenController.revoke);
+router.post("/:id/regenerate", ServiceTokenController.regenerate);
+router.delete("/:id", ServiceTokenController.remove);
 
 export const serviceTokensRouter = router;

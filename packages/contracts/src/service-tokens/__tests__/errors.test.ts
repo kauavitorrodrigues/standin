@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BaseError } from "../../errors/base";
 import {
     ServiceTokenExpiredError,
+    ServiceTokenNotActiveError,
     ServiceTokenNotFoundError,
     ServiceTokenRevokedError,
     ServiceTokenScopeError,
@@ -13,6 +14,7 @@ describe("service token errors", () => {
         [new ServiceTokenExpiredError(), 401, "SERVICE_TOKEN_EXPIRED"],
         [new ServiceTokenScopeError("maps:write"), 403, "SERVICE_TOKEN_SCOPE_MISSING"],
         [new ServiceTokenNotFoundError(), 404, "SERVICE_TOKEN_NOT_FOUND"],
+        [new ServiceTokenNotActiveError(), 409, "SERVICE_TOKEN_NOT_ACTIVE"],
     ])("%s has its status and code", (error, status, code) => {
         expect(error).toBeInstanceOf(BaseError);
         expect(error.status).toBe(status);

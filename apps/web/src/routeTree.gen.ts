@@ -29,6 +29,7 @@ import { Route as AppAdminAdminAvatarCategoriesIndexRouteImport } from './routes
 import { Route as AppAdminAdminAvatarPartsIndexRouteImport } from './routes/_app/_admin/admin/avatar-parts/index'
 import { Route as AppAdminAdminAvatarNewRouteImport } from './routes/_app/_admin/admin/avatar/new'
 import { Route as AppAdminAdminMapsIndexRouteImport } from './routes/_app/_admin/admin/maps/index'
+import { Route as AppAdminAdminServiceTokensIndexRouteImport } from './routes/_app/_admin/admin/service-tokens/index'
 import { Route as AppAdminAdminTilesetsIndexRouteImport } from './routes/_app/_admin/admin/tilesets/index'
 import { Route as AppAdminAdminTilesetsTilesetIdRouteImport } from './routes/_app/_admin/admin/tilesets/$tilesetId'
 import { Route as AppAdminAdminTilesetsNewRouteImport } from './routes/_app/_admin/admin/tilesets/new'
@@ -144,6 +145,12 @@ const AppAdminAdminMapsIndexRoute = AppAdminAdminMapsIndexRouteImport.update({
   path: '/admin/maps/',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminAdminServiceTokensIndexRoute =
+  AppAdminAdminServiceTokensIndexRouteImport.update({
+    id: '/admin/service-tokens/',
+    path: '/admin/service-tokens/',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
 const AppAdminAdminTilesetsIndexRoute =
   AppAdminAdminTilesetsIndexRouteImport.update({
     id: '/admin/tilesets/',
@@ -247,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/admin/avatar-categories/': typeof AppAdminAdminAvatarCategoriesIndexRoute
   '/admin/avatar-parts/': typeof AppAdminAdminAvatarPartsIndexRoute
   '/admin/maps/': typeof AppAdminAdminMapsIndexRoute
+  '/admin/service-tokens/': typeof AppAdminAdminServiceTokensIndexRoute
   '/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
   '/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
   '/library/assets/': typeof AppDefaultLibraryAssetsIndexRoute
@@ -279,6 +287,7 @@ export interface FileRoutesByTo {
   '/admin/avatar-categories': typeof AppAdminAdminAvatarCategoriesIndexRoute
   '/admin/avatar-parts': typeof AppAdminAdminAvatarPartsIndexRoute
   '/admin/maps': typeof AppAdminAdminMapsIndexRoute
+  '/admin/service-tokens': typeof AppAdminAdminServiceTokensIndexRoute
   '/admin/tilesets': typeof AppAdminAdminTilesetsIndexRoute
   '/library/areas': typeof AppDefaultLibraryAreasIndexRoute
   '/library/assets': typeof AppDefaultLibraryAssetsIndexRoute
@@ -315,6 +324,7 @@ export interface FileRoutesById {
   '/_app/_admin/admin/avatar-categories/': typeof AppAdminAdminAvatarCategoriesIndexRoute
   '/_app/_admin/admin/avatar-parts/': typeof AppAdminAdminAvatarPartsIndexRoute
   '/_app/_admin/admin/maps/': typeof AppAdminAdminMapsIndexRoute
+  '/_app/_admin/admin/service-tokens/': typeof AppAdminAdminServiceTokensIndexRoute
   '/_app/_admin/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
   '/_app/_default/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
   '/_app/_default/library/assets/': typeof AppDefaultLibraryAssetsIndexRoute
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/admin/avatar-categories/'
     | '/admin/avatar-parts/'
     | '/admin/maps/'
+    | '/admin/service-tokens/'
     | '/admin/tilesets/'
     | '/library/areas/'
     | '/library/assets/'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/admin/avatar-categories'
     | '/admin/avatar-parts'
     | '/admin/maps'
+    | '/admin/service-tokens'
     | '/admin/tilesets'
     | '/library/areas'
     | '/library/assets'
@@ -416,6 +428,7 @@ export interface FileRouteTypes {
     | '/_app/_admin/admin/avatar-categories/'
     | '/_app/_admin/admin/avatar-parts/'
     | '/_app/_admin/admin/maps/'
+    | '/_app/_admin/admin/service-tokens/'
     | '/_app/_admin/admin/tilesets/'
     | '/_app/_default/library/areas/'
     | '/_app/_default/library/assets/'
@@ -572,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdminMapsIndexRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/_admin/admin/service-tokens/': {
+      id: '/_app/_admin/admin/service-tokens/'
+      path: '/admin/service-tokens'
+      fullPath: '/admin/service-tokens/'
+      preLoaderRoute: typeof AppAdminAdminServiceTokensIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/_admin/admin/tilesets/': {
       id: '/_app/_admin/admin/tilesets/'
       path: '/admin/tilesets'
@@ -678,6 +698,7 @@ interface AppAdminRouteChildren {
   AppAdminAdminAvatarCategoriesIndexRoute: typeof AppAdminAdminAvatarCategoriesIndexRoute
   AppAdminAdminAvatarPartsIndexRoute: typeof AppAdminAdminAvatarPartsIndexRoute
   AppAdminAdminMapsIndexRoute: typeof AppAdminAdminMapsIndexRoute
+  AppAdminAdminServiceTokensIndexRoute: typeof AppAdminAdminServiceTokensIndexRoute
   AppAdminAdminTilesetsIndexRoute: typeof AppAdminAdminTilesetsIndexRoute
   AppAdminAdminAreasAreaIdEditRoute: typeof AppAdminAdminAreasAreaIdEditRoute
   AppAdminAdminMapsTemplateIdEditRoute: typeof AppAdminAdminMapsTemplateIdEditRoute
@@ -696,6 +717,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
     AppAdminAdminAvatarCategoriesIndexRoute,
   AppAdminAdminAvatarPartsIndexRoute: AppAdminAdminAvatarPartsIndexRoute,
   AppAdminAdminMapsIndexRoute: AppAdminAdminMapsIndexRoute,
+  AppAdminAdminServiceTokensIndexRoute: AppAdminAdminServiceTokensIndexRoute,
   AppAdminAdminTilesetsIndexRoute: AppAdminAdminTilesetsIndexRoute,
   AppAdminAdminAreasAreaIdEditRoute: AppAdminAdminAreasAreaIdEditRoute,
   AppAdminAdminMapsTemplateIdEditRoute: AppAdminAdminMapsTemplateIdEditRoute,
