@@ -1,8 +1,24 @@
+// One problem the server or the local checks found, as a list entry. `opIndex`
+// is set when the problem belongs to an operation of the ops sent.
+export type ErrorIssue = {
+    opIndex?: number;
+    code?: string;
+    path?: string;
+    message: string;
+};
+
+// Extra facts an error carries for the JSON output, such as the version a
+// stale apply should have used.
+export type ErrorDetails = Record<string, unknown>;
+
 export type CliErrorHints = {
     // The input that was wrong, such as `--email`.
     path?: string;
     // What to do about it, ready to be followed.
     fix?: string;
+    // What the server or the local checks found wrong, one entry each.
+    issues?: ErrorIssue[];
+    details?: ErrorDetails;
 };
 
 export type ErrorReport = CliErrorHints & {

@@ -17,4 +17,20 @@ export const createLazyServices = (): CliServices => ({
         const { HealthService } = await import("@standin/core");
         return HealthService.getPublic();
     },
+    listActiveAdmins: async () => {
+        const { UserService } = await import("@standin/core");
+        return UserService.listActiveAdmins();
+    },
+    createServiceToken: async (createdById, input) => {
+        const { ServiceTokenService } = await import("@standin/core");
+        return ServiceTokenService.create(createdById, input);
+    },
+    listServiceTokens: async () => {
+        const { ServiceTokenService } = await import("@standin/core");
+        return ServiceTokenService.list();
+    },
+    revokeServiceToken: async (id) => {
+        const { ServiceTokenService } = await import("@standin/core");
+        return ServiceTokenService.revoke(id);
+    },
 });

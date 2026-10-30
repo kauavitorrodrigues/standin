@@ -7,6 +7,7 @@ import { createUserFromIdentity } from "./identities/createFromIdentity";
 import { findUserByIdentity } from "./identities/findByIdentity";
 import { linkIdentity } from "./identities/linkIdentity";
 import { isUserValid } from "./isValid";
+import { listActiveAdmins } from "./listActiveAdmins";
 import { updateUser } from "./update";
 import { updateProfilePicture } from "./updateProfilePicture";
 import { onUserNameChanged } from "./utils/nameEvents";
@@ -18,6 +19,7 @@ export const UserService = {
     findById: findUserById,
     findManyByIds: findUsersByIds,
     isValid: isUserValid,
+    listActiveAdmins,
     update: updateUser,
     // Hook for the socket: runs after a person is renamed.
     onNameChanged: onUserNameChanged,

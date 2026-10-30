@@ -2,9 +2,15 @@ import type { BootstrapInput, PublicHealthReport } from "@standin/contracts";
 import type {
     BootstrapInstanceResult,
     LibrarySeed,
+    CreateServiceTokenInput,
     LibrarySeedResult,
 } from "@standin/core";
+import type { CreatedServiceToken, ServiceToken } from "@standin/contracts";
 import type { EXIT_CODES } from "../consts/exitCodes";
+import type { HttpTransport } from "./api";
+import type { ConfigStore } from "./config";
+import type { CliFiles } from "./files";
+import type { TokenAdmin } from "./token";
 
 export type ExitCode = (typeof EXIT_CODES)[keyof typeof EXIT_CODES];
 
@@ -29,6 +35,14 @@ export type CliServices = {
     loadLibrary: (folder: string | undefined) => Promise<LibrarySeed>;
     seedLibrary: (seed: LibrarySeed) => Promise<LibrarySeedResult>;
     getHealth: () => Promise<PublicHealthReport>;
+    // The admins that can own a service token.
+    listActiveAdmins: () => Promise<TokenAdmin[]>;
+    createServiceToken: (
+        createdById: string,
+        input: CreateServiceTokenInput
+    ) => Promise<CreatedServiceToken>;
+    listServiceTokens: () => Promise<ServiceToken[]>;
+    revokeServiceToken: (id: string) => Promise<ServiceToken>;
 };
 
 export type GlobalFlags = {
@@ -42,6 +56,9 @@ export type CommandContext<Args> = {
     env: CliEnv;
     io: CliIo;
     services: CliServices;
+    http: HttpTransport;
+    config: ConfigStore;
+    files: CliFiles;
 };
 
 // What a command hands back: the data for `--json` and the lines for people.
@@ -54,4 +71,9 @@ export type CliRuntime = {
     env: CliEnv;
     io: CliIo;
     services: CliServices;
+    // The seams of the remote commands: the network, the login file and the
+    // files of the user. The tests replace them.
+    http: HttpTransport;
+    config: ConfigStore;
+    files: CliFiles;
 };

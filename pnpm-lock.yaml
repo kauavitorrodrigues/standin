@@ -322,6 +322,9 @@ importers:
       '@clack/prompts':
         specifier: 1.8.1
         version: 1.8.1
+      '@standin/authoring':
+        specifier: workspace:*
+        version: link:../../packages/authoring
       '@standin/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -331,6 +334,9 @@ importers:
       commander:
         specifier: 15.0.0
         version: 15.0.0
+      zod:
+        specifier: 4.5.1
+        version: 4.5.1
     devDependencies:
       '@standin/tsconfig':
         specifier: workspace:*

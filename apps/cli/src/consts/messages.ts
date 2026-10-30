@@ -27,4 +27,9 @@ export const MESSAGES = {
     healthMarkOk: "✓",
     healthMarkWarn: "!",
     adminEmailQuestion: "Admin email",
+    issueLine: (text: string): string => `  - ${text}`,
+    detailLine: (name: string, value: unknown): string =>
+        `  ${name}: ${JSON.stringify(value)}`,
+    scopeMissingFix: (scope: string): string =>
+        `Create a token with the "${scope}" scope: \`pnpm -s standin token create --name <name> --scope ${scope}\`, then \`pnpm -s standin login\`.`,
 } as const;

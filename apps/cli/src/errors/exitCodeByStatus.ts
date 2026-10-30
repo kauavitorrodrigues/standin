@@ -9,4 +9,6 @@ export const EXIT_CODE_BY_STATUS: Record<number, ExitCode> = {
     401: EXIT_CODES.AUTH,
     403: EXIT_CODES.AUTH,
     409: EXIT_CODES.CONFLICT,
+    // A locked map: someone else is editing it.
+    423: EXIT_CODES.CONFLICT,
 };

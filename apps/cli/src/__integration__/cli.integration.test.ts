@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createFakeRuntime } from "../testing/createFakeRuntime";
 import type { CliRuntime, Outcome } from "../types";
 
 // Runs bootstrap, seed library and health against a real Postgres, calling
@@ -40,6 +41,8 @@ describe.skipIf(!enabled)("cli (real database)", () => {
 
     const run = async (argv: string[]): Promise<Outcome> => {
         const outcome: Outcome = { code: 0, out: "", err: "" };
+        // The remote seams are not used by these commands.
+        const fake = createFakeRuntime();
         const runtime: CliRuntime = {
             env: { INIT_CWD: workDir },
             io: {
@@ -53,6 +56,9 @@ describe.skipIf(!enabled)("cli (real database)", () => {
                 ask: async () => undefined,
             },
             services: createLazyServices(),
+            http: fake.runtime.http,
+            config: fake.runtime.config,
+            files: fake.runtime.files,
         };
         outcome.code = await runCli(argv, runtime);
         return outcome;

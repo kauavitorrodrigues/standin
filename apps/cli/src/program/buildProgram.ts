@@ -1,7 +1,13 @@
 import { Command } from "commander";
 import { registerBootstrap } from "../commands/bootstrap/registerBootstrap";
 import { registerHealth } from "../commands/health/registerHealth";
+import { registerLibraryList } from "../commands/library/registerLibraryList";
+import { registerLogin } from "../commands/login/registerLogin";
+import { registerLogout } from "../commands/logout/registerLogout";
+import { registerMap } from "../commands/map/registerMap";
+import { registerSchemaPrint } from "../commands/schema/registerSchemaPrint";
 import { registerSeedLibrary } from "../commands/seedLibrary/registerSeedLibrary";
+import { registerToken } from "../commands/token/registerToken";
 import type { CliRuntime } from "../types";
 import { PROGRAM_DESCRIPTION, PROGRAM_HELP } from "./consts";
 
@@ -28,5 +34,11 @@ export const buildProgram = (runtime: CliRuntime): Command => {
     registerBootstrap(program, runtime);
     registerSeedLibrary(program, runtime);
     registerHealth(program, runtime);
+    registerToken(program, runtime);
+    registerLogin(program, runtime);
+    registerLogout(program, runtime);
+    registerMap(program, runtime);
+    registerLibraryList(program, runtime);
+    registerSchemaPrint(program, runtime);
     return program;
 };
