@@ -29,6 +29,10 @@ export type Peer = {
     lowQuality: boolean;
     // The microphone is off, so the planner skips this person's audio.
     muted: boolean;
+    // A soundboard clip is playing through the microphone track. The sound is
+    // heard even while the person is muted, since muting silences the voice
+    // before the track, not the clip.
+    soundboardActive: boolean;
     // Headphones on: no connection with anybody, in both directions.
     headphones: boolean;
     // Focus mode, stored and shown, with no effect on strong connections.

@@ -67,6 +67,7 @@ import {
 import { isWebRtcTransport } from "./utils/isWebRtcTransport";
 import { planReceivers } from "./utils/planReceivers";
 import { stabilizeRanking } from "./utils/stabilizeRanking";
+import { isSilenced } from "./utils/isSilenced";
 import { speakersHeardBy } from "./utils/speakersHeardBy";
 import { splitReceivers } from "./utils/splitReceivers";
 import { toConsumerNewPayload } from "./utils/toConsumerNewPayload";
@@ -177,9 +178,10 @@ export class SpaceMedia {
 
     private setSpeakers(reported: string[]): void {
         // The observer can still report a muted person, who never ranks.
-        const audible = reported.filter(
-            (id) => !this.peers.get(id)?.muted
-        );
+        const audible = reported.filter((id) => {
+            const peer = this.peers.get(id);
+            return !peer || !isSilenced(peer);
+        });
         const next = stabilizeRanking(this.speakerIds, audible);
         if (isSameRanking(next, this.speakerIds)) return;
         this.speakerIds = next;
@@ -279,7 +281,21 @@ export class SpaceMedia {
         const peer = this.peers.get(peerId);
         if (!peer) return;
         peer.muted = muted;
-        if (muted) {
+        if (isSilenced(peer)) {
+            this.setSpeakers(this.speakerIds.filter((id) => id !== peerId));
+        }
+    }
+
+    /**
+     * A soundboard clip starts or stops on the microphone track of a person.
+     * While it plays the person is heard even when muted. The caller marks the
+     * neighbours dirty so the planner runs.
+     */
+    setSoundboardActive(peerId: string, active: boolean): void {
+        const peer = this.peers.get(peerId);
+        if (!peer) return;
+        peer.soundboardActive = active;
+        if (isSilenced(peer)) {
             this.setSpeakers(this.speakerIds.filter((id) => id !== peerId));
         }
     }
@@ -299,10 +315,7 @@ export class SpaceMedia {
     }
 
     /** The layer a receiver asks for per person it sees in a tile. */
-    setFocus(
-        peerId: string,
-        views: ReadonlyMap<string, SimulcastLayer>
-    ): void {
+    setFocus(peerId: string, views: ReadonlyMap<string, SimulcastLayer>): void {
         const peer = this.peers.get(peerId);
         if (peer) peer.focus = new Map(views);
     }

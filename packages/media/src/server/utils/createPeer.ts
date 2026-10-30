@@ -6,6 +6,7 @@ export const createPeer = (id: string, userId: string): Peer => ({
     roomKey: null,
     lowQuality: false,
     muted: false,
+    soundboardActive: false,
     headphones: false,
     focusMode: false,
     focus: new Map(),
