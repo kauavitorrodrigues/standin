@@ -148,6 +148,7 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
         micError: localAudioError,
         sendEmote,
         nearbyChat,
+        soundboard: null,
     });
 
     return (
