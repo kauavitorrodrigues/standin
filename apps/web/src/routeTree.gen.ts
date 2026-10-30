@@ -32,6 +32,7 @@ import { Route as AppAdminAdminAvatarNewRouteImport } from './routes/_app/_admin
 import { Route as AppAdminAdminGlobalSettingsIndexRouteImport } from './routes/_app/_admin/admin/global-settings/index'
 import { Route as AppAdminAdminMapsIndexRouteImport } from './routes/_app/_admin/admin/maps/index'
 import { Route as AppAdminAdminServiceTokensIndexRouteImport } from './routes/_app/_admin/admin/service-tokens/index'
+import { Route as AppAdminAdminSoundsIndexRouteImport } from './routes/_app/_admin/admin/sounds/index'
 import { Route as AppAdminAdminTilesetsIndexRouteImport } from './routes/_app/_admin/admin/tilesets/index'
 import { Route as AppAdminAdminTilesetsTilesetIdRouteImport } from './routes/_app/_admin/admin/tilesets/$tilesetId'
 import { Route as AppAdminAdminTilesetsNewRouteImport } from './routes/_app/_admin/admin/tilesets/new'
@@ -39,6 +40,7 @@ import { Route as AppDefaultLibraryAreasIndexRouteImport } from './routes/_app/_
 import { Route as AppDefaultLibraryAreasNewRouteImport } from './routes/_app/_default/library/areas/new'
 import { Route as AppDefaultLibraryAssetsIndexRouteImport } from './routes/_app/_default/library/assets/index'
 import { Route as AppDefaultLibraryAssetsNewRouteImport } from './routes/_app/_default/library/assets/new'
+import { Route as AppDefaultLibrarySoundsIndexRouteImport } from './routes/_app/_default/library/sounds/index'
 import { Route as AppDefaultLibraryTilesetsIndexRouteImport } from './routes/_app/_default/library/tilesets/index'
 import { Route as AppDefaultLibraryTilesetsTilesetIdRouteImport } from './routes/_app/_default/library/tilesets/$tilesetId'
 import { Route as AppDefaultLibraryTilesetsNewRouteImport } from './routes/_app/_default/library/tilesets/new'
@@ -164,6 +166,12 @@ const AppAdminAdminServiceTokensIndexRoute =
     path: '/admin/service-tokens/',
     getParentRoute: () => AppAdminRoute,
   } as any)
+const AppAdminAdminSoundsIndexRoute =
+  AppAdminAdminSoundsIndexRouteImport.update({
+    id: '/admin/sounds/',
+    path: '/admin/sounds/',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
 const AppAdminAdminTilesetsIndexRoute =
   AppAdminAdminTilesetsIndexRouteImport.update({
     id: '/admin/tilesets/',
@@ -204,6 +212,12 @@ const AppDefaultLibraryAssetsNewRoute =
   AppDefaultLibraryAssetsNewRouteImport.update({
     id: '/assets/new',
     path: '/assets/new',
+    getParentRoute: () => AppDefaultLibraryRoute,
+  } as any)
+const AppDefaultLibrarySoundsIndexRoute =
+  AppDefaultLibrarySoundsIndexRouteImport.update({
+    id: '/sounds/',
+    path: '/sounds/',
     getParentRoute: () => AppDefaultLibraryRoute,
   } as any)
 const AppDefaultLibraryTilesetsIndexRoute =
@@ -270,9 +284,11 @@ export interface FileRoutesByFullPath {
   '/admin/global-settings/': typeof AppAdminAdminGlobalSettingsIndexRoute
   '/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/admin/service-tokens/': typeof AppAdminAdminServiceTokensIndexRoute
+  '/admin/sounds/': typeof AppAdminAdminSoundsIndexRoute
   '/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
   '/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
   '/library/assets/': typeof AppDefaultLibraryAssetsIndexRoute
+  '/library/sounds/': typeof AppDefaultLibrarySoundsIndexRoute
   '/library/tilesets/': typeof AppDefaultLibraryTilesetsIndexRoute
   '/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
@@ -305,9 +321,11 @@ export interface FileRoutesByTo {
   '/admin/global-settings': typeof AppAdminAdminGlobalSettingsIndexRoute
   '/admin/maps': typeof AppAdminAdminMapsIndexRoute
   '/admin/service-tokens': typeof AppAdminAdminServiceTokensIndexRoute
+  '/admin/sounds': typeof AppAdminAdminSoundsIndexRoute
   '/admin/tilesets': typeof AppAdminAdminTilesetsIndexRoute
   '/library/areas': typeof AppDefaultLibraryAreasIndexRoute
   '/library/assets': typeof AppDefaultLibraryAssetsIndexRoute
+  '/library/sounds': typeof AppDefaultLibrarySoundsIndexRoute
   '/library/tilesets': typeof AppDefaultLibraryTilesetsIndexRoute
   '/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
@@ -344,9 +362,11 @@ export interface FileRoutesById {
   '/_app/_admin/admin/global-settings/': typeof AppAdminAdminGlobalSettingsIndexRoute
   '/_app/_admin/admin/maps/': typeof AppAdminAdminMapsIndexRoute
   '/_app/_admin/admin/service-tokens/': typeof AppAdminAdminServiceTokensIndexRoute
+  '/_app/_admin/admin/sounds/': typeof AppAdminAdminSoundsIndexRoute
   '/_app/_admin/admin/tilesets/': typeof AppAdminAdminTilesetsIndexRoute
   '/_app/_default/library/areas/': typeof AppDefaultLibraryAreasIndexRoute
   '/_app/_default/library/assets/': typeof AppDefaultLibraryAssetsIndexRoute
+  '/_app/_default/library/sounds/': typeof AppDefaultLibrarySoundsIndexRoute
   '/_app/_default/library/tilesets/': typeof AppDefaultLibraryTilesetsIndexRoute
   '/_app/_admin/admin/areas/$areaId/edit': typeof AppAdminAdminAreasAreaIdEditRoute
   '/_app/_admin/admin/maps/$templateId/edit': typeof AppAdminAdminMapsTemplateIdEditRoute
@@ -381,9 +401,11 @@ export interface FileRouteTypes {
     | '/admin/global-settings/'
     | '/admin/maps/'
     | '/admin/service-tokens/'
+    | '/admin/sounds/'
     | '/admin/tilesets/'
     | '/library/areas/'
     | '/library/assets/'
+    | '/library/sounds/'
     | '/library/tilesets/'
     | '/admin/areas/$areaId/edit'
     | '/admin/maps/$templateId/edit'
@@ -416,9 +438,11 @@ export interface FileRouteTypes {
     | '/admin/global-settings'
     | '/admin/maps'
     | '/admin/service-tokens'
+    | '/admin/sounds'
     | '/admin/tilesets'
     | '/library/areas'
     | '/library/assets'
+    | '/library/sounds'
     | '/library/tilesets'
     | '/admin/areas/$areaId/edit'
     | '/admin/maps/$templateId/edit'
@@ -454,9 +478,11 @@ export interface FileRouteTypes {
     | '/_app/_admin/admin/global-settings/'
     | '/_app/_admin/admin/maps/'
     | '/_app/_admin/admin/service-tokens/'
+    | '/_app/_admin/admin/sounds/'
     | '/_app/_admin/admin/tilesets/'
     | '/_app/_default/library/areas/'
     | '/_app/_default/library/assets/'
+    | '/_app/_default/library/sounds/'
     | '/_app/_default/library/tilesets/'
     | '/_app/_admin/admin/areas/$areaId/edit'
     | '/_app/_admin/admin/maps/$templateId/edit'
@@ -632,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAdminServiceTokensIndexRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/_admin/admin/sounds/': {
+      id: '/_app/_admin/admin/sounds/'
+      path: '/admin/sounds'
+      fullPath: '/admin/sounds/'
+      preLoaderRoute: typeof AppAdminAdminSoundsIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/_admin/admin/tilesets/': {
       id: '/_app/_admin/admin/tilesets/'
       path: '/admin/tilesets'
@@ -679,6 +712,13 @@ declare module '@tanstack/react-router' {
       path: '/assets/new'
       fullPath: '/library/assets/new'
       preLoaderRoute: typeof AppDefaultLibraryAssetsNewRouteImport
+      parentRoute: typeof AppDefaultLibraryRoute
+    }
+    '/_app/_default/library/sounds/': {
+      id: '/_app/_default/library/sounds/'
+      path: '/sounds'
+      fullPath: '/library/sounds/'
+      preLoaderRoute: typeof AppDefaultLibrarySoundsIndexRouteImport
       parentRoute: typeof AppDefaultLibraryRoute
     }
     '/_app/_default/library/tilesets/': {
@@ -740,6 +780,7 @@ interface AppAdminRouteChildren {
   AppAdminAdminGlobalSettingsIndexRoute: typeof AppAdminAdminGlobalSettingsIndexRoute
   AppAdminAdminMapsIndexRoute: typeof AppAdminAdminMapsIndexRoute
   AppAdminAdminServiceTokensIndexRoute: typeof AppAdminAdminServiceTokensIndexRoute
+  AppAdminAdminSoundsIndexRoute: typeof AppAdminAdminSoundsIndexRoute
   AppAdminAdminTilesetsIndexRoute: typeof AppAdminAdminTilesetsIndexRoute
   AppAdminAdminAreasAreaIdEditRoute: typeof AppAdminAdminAreasAreaIdEditRoute
   AppAdminAdminMapsTemplateIdEditRoute: typeof AppAdminAdminMapsTemplateIdEditRoute
@@ -760,6 +801,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminAdminGlobalSettingsIndexRoute: AppAdminAdminGlobalSettingsIndexRoute,
   AppAdminAdminMapsIndexRoute: AppAdminAdminMapsIndexRoute,
   AppAdminAdminServiceTokensIndexRoute: AppAdminAdminServiceTokensIndexRoute,
+  AppAdminAdminSoundsIndexRoute: AppAdminAdminSoundsIndexRoute,
   AppAdminAdminTilesetsIndexRoute: AppAdminAdminTilesetsIndexRoute,
   AppAdminAdminAreasAreaIdEditRoute: AppAdminAdminAreasAreaIdEditRoute,
   AppAdminAdminMapsTemplateIdEditRoute: AppAdminAdminMapsTemplateIdEditRoute,
@@ -776,6 +818,7 @@ interface AppDefaultLibraryRouteChildren {
   AppDefaultLibraryTilesetsNewRoute: typeof AppDefaultLibraryTilesetsNewRoute
   AppDefaultLibraryAreasIndexRoute: typeof AppDefaultLibraryAreasIndexRoute
   AppDefaultLibraryAssetsIndexRoute: typeof AppDefaultLibraryAssetsIndexRoute
+  AppDefaultLibrarySoundsIndexRoute: typeof AppDefaultLibrarySoundsIndexRoute
   AppDefaultLibraryTilesetsIndexRoute: typeof AppDefaultLibraryTilesetsIndexRoute
   AppDefaultLibraryAreasAreaIdEditRoute: typeof AppDefaultLibraryAreasAreaIdEditRoute
 }
@@ -788,6 +831,7 @@ const AppDefaultLibraryRouteChildren: AppDefaultLibraryRouteChildren = {
   AppDefaultLibraryTilesetsNewRoute: AppDefaultLibraryTilesetsNewRoute,
   AppDefaultLibraryAreasIndexRoute: AppDefaultLibraryAreasIndexRoute,
   AppDefaultLibraryAssetsIndexRoute: AppDefaultLibraryAssetsIndexRoute,
+  AppDefaultLibrarySoundsIndexRoute: AppDefaultLibrarySoundsIndexRoute,
   AppDefaultLibraryTilesetsIndexRoute: AppDefaultLibraryTilesetsIndexRoute,
   AppDefaultLibraryAreasAreaIdEditRoute: AppDefaultLibraryAreasAreaIdEditRoute,
 }
