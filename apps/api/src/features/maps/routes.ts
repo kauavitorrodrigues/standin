@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { MAP_ACCESS_MODES } from "@/consts/mapAccess";
 import { MAP_ID_SOURCES } from "@/consts/mapIdSources";
+import { RequiresAuth } from "@/middlewares/requiresAuth";
 import { RequiresMapAccess } from "@/middlewares/requiresMapAccess";
 import { RequiresMapNotLocked } from "@/middlewares/requiresMapNotLocked";
 import { ReadsPublishBody } from "@/middlewares/readsPublishBody";
@@ -75,4 +76,22 @@ router.delete(
     MapController.assets.remove
 );
 
+// WARNING: every route on this router must carry RequiresAuth.scoped, because
+// it is mounted ahead of the session-only RequiresAuth and nothing else guards
+// it. Never add a route here without it.
+// The one map route a service token may call. It is mounted before the
+// session-only maps router (see router.ts), so a token reaches nothing else.
+// Reading is enough here: the service asks for canEdit. There is no lock
+// guard, because the service takes the lock itself and refuses with the
+// same 423 when an editor holds it.
+const applyRouter = Router();
+applyRouter.post(
+    "/:mapId/apply",
+    RequiresAuth.scoped("maps:write"),
+    RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    ReadsPublishBody,
+    MapController.apply
+);
+
 export const mapsRouter = router;
+export const mapApplyRouter = applyRouter;

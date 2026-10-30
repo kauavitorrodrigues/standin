@@ -64,6 +64,12 @@ export const PublishErrorMessages = {
     limits: { invalid: "The object limits are invalid." },
 };
 
+export const ApplyErrorMessages = {
+    baseVersion: PublishErrorMessages.baseVersion,
+    ops: PublishErrorMessages.ops,
+    validateOnly: { invalid: "The validateOnly flag must be true or false." },
+};
+
 export const StampErrorMessages = {
     invalid: "The area stamp is invalid.",
     version: "The area stamp version is not supported.",

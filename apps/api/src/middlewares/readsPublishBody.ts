@@ -9,8 +9,9 @@ import { sendError } from "@/utils/sendError";
 
 const readJson = express.json({ limit: MAX_PUBLISH_BODY_BYTES });
 
-// Reads the JSON body of the publish route with its own limit, so the global
-// reader keeps its small one for every other route (app.ts skips this route).
+// Reads the JSON body of the publish and apply routes with their own limit,
+// so the global reader keeps its small one for every other route (app.ts
+// skips these routes).
 // A body over the limit answers 413 OP_TOO_LARGE like too many operations.
 export const ReadsPublishBody = (
     req: ExtendedRequest,

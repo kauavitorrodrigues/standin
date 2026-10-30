@@ -1,27 +1,20 @@
 import { db } from "@standin/database";
 import {
     LockNotHeldError,
-    OutOfScopeError,
     MAX_PUBLISH_OPS,
     PublishForbiddenError,
     PublishTooManyOpsError,
-    PublishValidationError,
-    assertDiffInScope,
-    validateEditorOps,
 } from "@standin/contracts";
 import type { PublishRequest, PublishResult, User } from "@standin/contracts";
 import { MapLockService } from "../lock";
 import type { MapAccess } from "../types/map-access";
 import { getObjectsRevision } from "./getObjectsRevision";
-import { loadEditorModel } from "./loadEditorModel";
 import { persistModelDiff } from "./persistModelDiff";
 import type { PublishOutcome } from "./types/publish-outcome";
-import { assertBaseIsCurrent } from "./utils/assertBaseIsCurrent";
-import { assertRequestInScope } from "./utils/assertRequestInScope";
 import { canPublishInScope } from "./utils/canPublishInScope";
 import { getPublishScope } from "./utils/getPublishScope";
 import { getReleaseDeskIds } from "./utils/getReleaseDeskIds";
-import { lockMapForPublish } from "./utils/lockMapForPublish";
+import { replayPublishRequest } from "./utils/replayPublishRequest";
 
 /**
  * Publishes a draft: replays every operation on the model read from the
@@ -64,26 +57,17 @@ export const publishMap = async (
     }
 
     const { result, releasedDesks } = await db.transaction(async (tx) => {
-        const currentVersion = await lockMapForPublish(tx, access.mapId);
-        await assertBaseIsCurrent(tx, access.mapId, request, currentVersion);
-
-        const base = await loadEditorModel(tx, access);
-        const actor = { userId: user.id };
-        assertRequestInScope(request.ops, scope, actor, base);
-
-        const replayed = validateEditorOps(base, request.ops);
-        if (!replayed.ok) throw new PublishValidationError(replayed.issues);
-        if (assertDiffInScope(base, replayed.model, scope).length > 0) {
-            throw new OutOfScopeError();
-        }
-
-        const persisted = await persistModelDiff(
+        const { base, model } = await replayPublishRequest(
             tx,
+            user,
             access,
-            base,
-            replayed.model,
-            { releaseDeskIds: getReleaseDeskIds(request.ops) }
+            scope,
+            request
         );
+
+        const persisted = await persistModelDiff(tx, access, base, model, {
+            releaseDeskIds: getReleaseDeskIds(request.ops),
+        });
 
         const result: PublishResult = {
             version: persisted.version,

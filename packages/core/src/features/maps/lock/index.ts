@@ -1,6 +1,7 @@
 import { createMapLockService } from "./createMapLockService";
 import { toLockState } from "./utils/toLockState";
 
+export { APPLY_SESSION_PREFIX } from "./consts/apply-session";
 export type {
     AcquireDenied,
     AcquireGranted,

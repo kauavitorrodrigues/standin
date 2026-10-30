@@ -1,5 +1,6 @@
 import { LOCK_HEARTBEAT_MS, LOCK_TTL_MS } from "@standin/contracts";
 import { describe, expect, it } from "vitest";
+import { APPLY_SESSION_PREFIX } from "../consts/apply-session";
 import { createMapLockService } from "../createMapLockService";
 
 const ana = { id: "u1", name: "Ana" };
@@ -244,5 +245,21 @@ describe("MapLockService modes", () => {
         });
         service.acquire("m1", ana, "s2", "map");
         expect(service.get("m1")?.lastPublish).toBeUndefined();
+    });
+});
+
+describe("MapLockService with an apply lock", () => {
+    it("denies the same person in the Studio while an apply holds the lock", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, `${APPLY_SESSION_PREFIX}abc`);
+        const result = service.acquire("m1", ana, "s2");
+        expect(result.ok).toBe(false);
+        expect(service.get("m1")?.sessionId).toBe(`${APPLY_SESSION_PREFIX}abc`);
+    });
+
+    it("denies a decorator too", () => {
+        const { service } = setup();
+        service.acquire("m1", ana, `${APPLY_SESSION_PREFIX}abc`);
+        expect(service.acquire("m1", bia, "s2", "objects").ok).toBe(false);
     });
 });

@@ -1,3 +1,4 @@
+import { applyMap } from "./apply";
 import { renderMap } from "./render";
 import { exportMap } from "./exportTiled";
 import { getMapArea } from "./area";
@@ -13,5 +14,6 @@ export const MapController = {
     area: getMapArea,
     lock: getMapLock,
     publish: publishMap,
+    apply: applyMap,
     assets: MapAssetController,
 };
