@@ -1,3 +1,4 @@
+import type { LibrarySeedFile } from "@standin/contracts";
 import type { HttpResponse } from "./api";
 import type { CliConfigFile } from "./config";
 import type { CliEnv, CliServices } from "./runtime";
@@ -45,3 +46,33 @@ export type PublishAnswer = {
     idMap: Record<string, string>;
     limits: { objectsUsed: number; objectsMax: number };
 };
+
+// The size in pixels of a PNG.
+export type PngSize = {
+    width: number;
+    height: number;
+};
+
+// A `pnpm -s standin ...` line of a document, with its continuation lines
+// joined, and where it starts.
+export type DocCommand = {
+    file: string;
+    line: number;
+    text: string;
+};
+
+// The result of checking one document line against the commands of the CLI.
+// A line that is not a `pnpm -s standin` command is not checked.
+export type DocCommandCheck = {
+    checked: boolean;
+    problems: string[];
+};
+
+// One asset entry of `library.json`, as the seed schema parses it.
+export type SeedAsset = LibrarySeedFile["assets"][number];
+
+// One tileset entry of `library.json`.
+export type SeedTileset = LibrarySeedFile["tilesets"][number];
+
+// One variant of an asset entry of `library.json`.
+export type SeedVariant = NonNullable<SeedAsset["variants"]>[number];

@@ -1,0 +1,182 @@
+{
+    "tilesets": [
+        {
+            "key": "example-floor",
+            "name": "Example floor",
+            "file": "tilesets/floor.png",
+            "tileMeta": {
+                "0": {
+                    "category": "FLOOR"
+                },
+                "1": {
+                    "category": "FLOOR"
+                }
+            }
+        },
+        {
+            "key": "example-brick",
+            "name": "Example brick",
+            "file": "tilesets/brick.png",
+            "tileMeta": {
+                "8": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["N", "W"],
+                    "solid": true,
+                    "top": 0
+                },
+                "9": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["N"],
+                    "solid": true,
+                    "top": 1
+                },
+                "10": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["N", "E"],
+                    "solid": true,
+                    "top": 2
+                },
+                "11": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["W"],
+                    "solidMask": [
+                        [true, false, false, false],
+                        [true, false, false, false],
+                        [true, false, false, false],
+                        [true, false, false, false]
+                    ]
+                },
+                "12": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["E"],
+                    "solidMask": [
+                        [false, false, false, true],
+                        [false, false, false, true],
+                        [false, false, false, true],
+                        [false, false, false, true]
+                    ]
+                },
+                "13": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["S", "W"],
+                    "solid": true,
+                    "top": 5
+                },
+                "14": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["S"],
+                    "solid": true,
+                    "top": 6
+                },
+                "15": {
+                    "category": "WALL",
+                    "style": "Brick",
+                    "edges": ["S", "E"],
+                    "solid": true,
+                    "top": 7
+                }
+            }
+        }
+    ],
+    "assets": [
+        {
+            "key": "example-crate",
+            "name": "Crate",
+            "type": "DECORATION",
+            "category": "ROOM_DECOR",
+            "footprint": {
+                "w": 1,
+                "h": 1
+            },
+            "file": "assets/crate.png"
+        },
+        {
+            "key": "example-desk",
+            "name": "Desk",
+            "type": "DESK",
+            "footprint": {
+                "w": 2,
+                "h": 1
+            },
+            "file": "assets/desk.png"
+        },
+        {
+            "key": "example-chair",
+            "name": "Chair",
+            "type": "CHAIR",
+            "footprint": {
+                "w": 1,
+                "h": 1
+            },
+            "action": "SIT",
+            "actionParams": {
+                "seats": [
+                    {
+                        "dx": 16,
+                        "dy": 8,
+                        "facing": "UP"
+                    }
+                ]
+            },
+            "file": "assets/chair.png"
+        },
+        {
+            "key": "example-monitor",
+            "name": "Monitor",
+            "type": "MONITOR",
+            "placement": "SURFACE",
+            "footprint": {
+                "w": 1,
+                "h": 1
+            },
+            "file": "assets/monitor.png"
+        },
+        {
+            "key": "example-door",
+            "name": "Door",
+            "type": "DOOR",
+            "rotation": "DEG_0",
+            "footprint": {
+                "w": 2,
+                "h": 1
+            },
+            "file": "assets/door.png",
+            "variants": [
+                {
+                    "key": "example-door-e",
+                    "rotation": "DEG_90",
+                    "footprint": {
+                        "w": 1,
+                        "h": 2
+                    },
+                    "file": "assets/door-e.png"
+                },
+                {
+                    "key": "example-door-s",
+                    "rotation": "DEG_180",
+                    "footprint": {
+                        "w": 2,
+                        "h": 1
+                    },
+                    "file": "assets/door-s.png"
+                },
+                {
+                    "key": "example-door-w",
+                    "rotation": "DEG_270",
+                    "footprint": {
+                        "w": 1,
+                        "h": 2
+                    },
+                    "file": "assets/door-w.png"
+                }
+            ]
+        }
+    ]
+}
