@@ -557,8 +557,8 @@ describe.skipIf(!enabled)("apply over HTTP (real stack)", () => {
             const { token, serviceToken } = await issue();
             await call(
                 { as: "admin" },
-                "DELETE",
-                `/service-tokens/${serviceToken.id}`
+                "POST",
+                `/service-tokens/${serviceToken.id}/revoke`
             );
 
             const response = await apply({ bearer: token }, mapId, 1, []);

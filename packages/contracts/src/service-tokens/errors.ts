@@ -33,3 +33,14 @@ export class ServiceTokenScopeError extends BaseError {
         );
     }
 }
+
+// Only a token that still works can get a new secret.
+export class ServiceTokenNotActiveError extends BaseError {
+    constructor() {
+        super(
+            "Only an active service token can be regenerated.",
+            "SERVICE_TOKEN_NOT_ACTIVE",
+            409
+        );
+    }
+}

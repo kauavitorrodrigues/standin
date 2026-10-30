@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ServiceTokenNotFoundError } from "@standin/contracts";
+import {
+    ServiceTokenNotActiveError,
+    ServiceTokenNotFoundError,
+} from "@standin/contracts";
 
 const mocks = vi.hoisted(() => ({
     create: vi.fn(),
     list: vi.fn(),
+    regenerate: vi.fn(),
+    remove: vi.fn(),
     revoke: vi.fn(),
 }));
 
@@ -11,6 +16,8 @@ vi.mock("@standin/core", () => ({ ServiceTokenService: mocks }));
 
 import { createServiceToken } from "../create";
 import { listServiceTokens } from "../list";
+import { regenerateServiceToken } from "../regenerate";
+import { removeServiceToken } from "../remove";
 import { revokeServiceToken } from "../revoke";
 
 const buildRes = () => {
@@ -96,5 +103,65 @@ describe("revokeServiceToken controller", () => {
             error: "Service token not found.",
             code: "SERVICE_TOKEN_NOT_FOUND",
         });
+    });
+});
+
+describe("regenerateServiceToken controller", () => {
+    it("answers 200 with the new token and no caching", async () => {
+        const created = { token: "sit_new", serviceToken: { id: "t1" } };
+        mocks.regenerate.mockResolvedValue(created);
+        const res = buildRes();
+
+        await regenerateServiceToken({ params: { id: "t1" } } as any, res);
+
+        expect(mocks.regenerate).toHaveBeenCalledWith("t1");
+        expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store");
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(created);
+    });
+
+    it("answers 404 for an unknown token", async () => {
+        mocks.regenerate.mockRejectedValue(new ServiceTokenNotFoundError());
+        const res = buildRes();
+
+        await regenerateServiceToken({ params: { id: "nope" } } as any, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it("answers 409 for a token that is not active", async () => {
+        mocks.regenerate.mockRejectedValue(new ServiceTokenNotActiveError());
+        const res = buildRes();
+
+        await regenerateServiceToken({ params: { id: "t1" } } as any, res);
+
+        expect(res.status).toHaveBeenCalledWith(409);
+        expect(res.json).toHaveBeenCalledWith({
+            error: "Only an active service token can be regenerated.",
+            code: "SERVICE_TOKEN_NOT_ACTIVE",
+        });
+    });
+});
+
+describe("removeServiceToken controller", () => {
+    it("answers 204 with no body", async () => {
+        mocks.remove.mockResolvedValue(undefined);
+        const res: any = buildRes();
+        res.send = vi.fn(() => res);
+
+        await removeServiceToken({ params: { id: "t1" } } as any, res);
+
+        expect(mocks.remove).toHaveBeenCalledWith("t1");
+        expect(res.status).toHaveBeenCalledWith(204);
+        expect(res.send).toHaveBeenCalled();
+    });
+
+    it("answers 404 for an unknown token", async () => {
+        mocks.remove.mockRejectedValue(new ServiceTokenNotFoundError());
+        const res = buildRes();
+
+        await removeServiceToken({ params: { id: "nope" } } as any, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
     });
 });

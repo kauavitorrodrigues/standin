@@ -11,3 +11,9 @@ export type InsertServiceTokenInput = CreateServiceTokenInput & {
     tokenHash: string;
     tokenPrefix: string;
 };
+
+export type RegenerateServiceTokenInput = {
+    tokenHash: string;
+    tokenPrefix: string;
+    now: Date;
+};

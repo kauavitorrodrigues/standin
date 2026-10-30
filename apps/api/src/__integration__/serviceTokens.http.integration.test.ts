@@ -254,8 +254,8 @@ describe.skipIf(!enabled)("service tokens over HTTP", () => {
             expect((await callScoped("/maps", token)).status).toBe(200);
 
             const revoked = await callApp(
-                "DELETE",
-                `/service-tokens/${serviceToken.id}`,
+                "POST",
+                `/service-tokens/${serviceToken.id}/revoke`,
                 { as: "admin" }
             );
 
@@ -268,10 +268,10 @@ describe.skipIf(!enabled)("service tokens over HTTP", () => {
 
         it("keeps the first revocation when revoked again", async () => {
             const { serviceToken } = await issue(["maps:write"]);
-            const path = `/service-tokens/${serviceToken.id}`;
+            const path = `/service-tokens/${serviceToken.id}/revoke`;
 
-            const first = await callApp("DELETE", path, { as: "admin" });
-            const second = await callApp("DELETE", path, { as: "admin" });
+            const first = await callApp("POST", path, { as: "admin" });
+            const second = await callApp("POST", path, { as: "admin" });
 
             expect(second.status).toBe(200);
             expect(second.body.serviceToken.revokedAt).toBe(
@@ -281,13 +281,221 @@ describe.skipIf(!enabled)("service tokens over HTTP", () => {
 
         it("answers 404 for an unknown token", async () => {
             const response = await callApp(
-                "DELETE",
-                "/service-tokens/does-not-exist",
+                "POST",
+                "/service-tokens/does-not-exist/revoke",
                 { as: "admin" }
             );
 
             expect(response.status).toBe(404);
             expect(response.body.code).toBe("SERVICE_TOKEN_NOT_FOUND");
+        });
+    });
+
+    describe("regenerate", () => {
+        it("refuses the old token at once, even after it was used", async () => {
+            const { token: oldToken, serviceToken } = await issue([
+                "maps:write",
+            ]);
+            // A use that fills every cache on the way.
+            expect((await callScoped("/maps", oldToken)).status).toBe(200);
+
+            const response = await callApp(
+                "POST",
+                `/service-tokens/${serviceToken.id}/regenerate`,
+                { as: "admin" }
+            );
+
+            expect(response.status).toBe(200);
+            const newToken: string = response.body.token;
+            expect(newToken).toMatch(/^sit_/);
+            expect(newToken).not.toBe(oldToken);
+            expect((await callScoped("/maps", oldToken)).status).toBe(401);
+            expect((await callScoped("/maps", newToken)).status).toBe(200);
+        });
+
+        it("keeps the settings and resets the usage", async () => {
+            const expiresAt = new Date(Date.now() + 86_400_000).toISOString();
+            const { token, serviceToken } = await issue(
+                ["maps:write", "library:write"],
+                { expiresAt }
+            );
+            await callScoped("/maps", token);
+
+            const response = await callApp(
+                "POST",
+                `/service-tokens/${serviceToken.id}/regenerate`,
+                { as: "admin" }
+            );
+
+            const next = response.body.serviceToken;
+            expect(next).toMatchObject({
+                id: serviceToken.id,
+                name: serviceToken.name,
+                scopes: serviceToken.scopes,
+                createdById: serviceToken.createdById,
+                expiresAt,
+                lastUsedAt: null,
+                tokenPrefix: response.body.token.slice(0, 12),
+            });
+            expect(new Date(next.updatedAt).getTime()).toBeGreaterThanOrEqual(
+                new Date(serviceToken.updatedAt).getTime()
+            );
+            expect(JSON.stringify(response.body.serviceToken)).not.toContain(
+                response.body.token
+            );
+        });
+
+        it("sends the new token without caching", async () => {
+            const { serviceToken } = await issue(["maps:write"]);
+
+            const response = await fetch(
+                `${appUrl}/service-tokens/${serviceToken.id}/regenerate`,
+                {
+                    method: "POST",
+                    headers: {
+                        cookie: `token=${createToken(users.admin)}`,
+                    },
+                }
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.headers.get("cache-control")).toBe("no-store");
+        });
+
+        it("refuses a revoked token with 409", async () => {
+            const { serviceToken } = await issue(["maps:write"]);
+            await callApp(
+                "POST",
+                `/service-tokens/${serviceToken.id}/revoke`,
+                { as: "admin" }
+            );
+
+            const response = await callApp(
+                "POST",
+                `/service-tokens/${serviceToken.id}/regenerate`,
+                { as: "admin" }
+            );
+
+            expect(response.status).toBe(409);
+            expect(response.body.code).toBe("SERVICE_TOKEN_NOT_ACTIVE");
+        });
+
+        it("refuses an expired token with 409", async () => {
+            const { serviceToken } = await issue(["maps:write"]);
+            await db
+                .update(serviceTokensTable)
+                .set({ expiresAt: new Date(Date.now() - 1000) })
+                .where(eq(serviceTokensTable.id, serviceToken.id));
+
+            const response = await callApp(
+                "POST",
+                `/service-tokens/${serviceToken.id}/regenerate`,
+                { as: "admin" }
+            );
+
+            expect(response.status).toBe(409);
+            expect(response.body.code).toBe("SERVICE_TOKEN_NOT_ACTIVE");
+        });
+
+        it("answers 404 for an unknown token", async () => {
+            const response = await callApp(
+                "POST",
+                "/service-tokens/does-not-exist/regenerate",
+                { as: "admin" }
+            );
+
+            expect(response.status).toBe(404);
+            expect(response.body.code).toBe("SERVICE_TOKEN_NOT_FOUND");
+        });
+    });
+
+    describe("delete", () => {
+        it("removes an active token, which is then an unknown token", async () => {
+            const { token, serviceToken } = await issue(["maps:write"]);
+            expect((await callScoped("/maps", token)).status).toBe(200);
+
+            const response = await callApp(
+                "DELETE",
+                `/service-tokens/${serviceToken.id}`,
+                { as: "admin" }
+            );
+
+            expect(response.status).toBe(204);
+            const rows = await db
+                .select()
+                .from(serviceTokensTable)
+                .where(eq(serviceTokensTable.id, serviceToken.id));
+            expect(rows).toHaveLength(0);
+            const list = await callApp("GET", "/service-tokens", {
+                as: "admin",
+            });
+            expect(JSON.stringify(list.body)).not.toContain(serviceToken.id);
+            const refused = await callScoped("/maps", token);
+            expect(refused.status).toBe(401);
+            expect(refused.body.code).not.toBe("SERVICE_TOKEN_REVOKED");
+        });
+
+        it("removes a revoked token too", async () => {
+            const { serviceToken } = await issue(["maps:write"]);
+            const path = `/service-tokens/${serviceToken.id}`;
+            await callApp("POST", `${path}/revoke`, { as: "admin" });
+
+            expect((await callApp("DELETE", path, { as: "admin" })).status).toBe(
+                204
+            );
+        });
+
+        it("answers 404 for an unknown or already deleted token", async () => {
+            const { serviceToken } = await issue(["maps:write"]);
+            const path = `/service-tokens/${serviceToken.id}`;
+            await callApp("DELETE", path, { as: "admin" });
+
+            const again = await callApp("DELETE", path, { as: "admin" });
+            const unknown = await callApp(
+                "DELETE",
+                "/service-tokens/does-not-exist",
+                { as: "admin" }
+            );
+
+            expect(again.status).toBe(404);
+            expect(unknown.status).toBe(404);
+            expect(unknown.body.code).toBe("SERVICE_TOKEN_NOT_FOUND");
+        });
+    });
+
+    describe("a service token on the management routes", () => {
+        it.each([
+            ["POST", "/service-tokens"],
+            ["GET", "/service-tokens"],
+            ["POST", "/service-tokens/some-id/revoke"],
+            ["POST", "/service-tokens/some-id/regenerate"],
+            ["DELETE", "/service-tokens/some-id"],
+        ])("refuses it on %s %s", async (method, route) => {
+            const { token } = await issue(["maps:write", "library:write"]);
+
+            const response = await callApp(
+                method,
+                route,
+                { bearer: token },
+                method === "POST" && route === "/service-tokens"
+                    ? { name: "x", scopes: ["maps:write"] }
+                    : undefined
+            );
+
+            expect(response.status).toBe(401);
+        });
+
+        it("refuses a member session on the new routes", async () => {
+            for (const [method, route] of [
+                ["POST", "/service-tokens/some-id/revoke"],
+                ["POST", "/service-tokens/some-id/regenerate"],
+                ["DELETE", "/service-tokens/some-id"],
+            ]) {
+                const response = await callApp(method, route, {
+                    as: "member",
+                });
+                expect(response.status).toBe(403);
+            }
         });
     });
 });
