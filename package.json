@@ -10,7 +10,8 @@
         "check-types": "turbo run check-types",
         "test": "turbo run test",
         "format": "prettier . --write",
-        "format:check": "prettier . --check"
+        "format:check": "prettier . --check",
+        "standin": "pnpm --filter cli --silent standin"
     },
     "devDependencies": {
         "@standin/prettier-config": "workspace:*",

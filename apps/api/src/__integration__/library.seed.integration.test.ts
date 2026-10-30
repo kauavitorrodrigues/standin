@@ -657,8 +657,7 @@ describe.skipIf(!enabled)("library seed (real database)", () => {
         };
 
         it("refuses a key written twice and a bundle part written twice", async () => {
-            const { readLibraryFolder } =
-                await import("@/scripts/utils/readLibraryFolder");
+            const { readLibraryFolder } = core;
             const area = {
                 key: key("twice"),
                 name: "Twice",
@@ -680,8 +679,7 @@ describe.skipIf(!enabled)("library seed (real database)", () => {
         });
 
         it("reads library.json and its PNGs and seeds them twice", async () => {
-            const { readLibraryFolder } =
-                await import("@/scripts/utils/readLibraryFolder");
+            const { readLibraryFolder } = core;
             const folder = fs.mkdtempSync(path.join(os.tmpdir(), "library-"));
             const write = (name: string, png: Buffer) =>
                 fs.writeFileSync(path.join(folder, name), png);

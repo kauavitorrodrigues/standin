@@ -1,0 +1,28 @@
+{
+    "name": "cli",
+    "version": "0.1.0",
+    "private": true,
+    "bin": {
+        "standin": "src/index.ts"
+    },
+    "scripts": {
+        "standin": "cd ../api && dotenv -e ../../.env -- tsx ../cli/src/index.ts",
+        "check-types": "tsc --noEmit",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@clack/prompts": "1.8.1",
+        "@standin/contracts": "workspace:*",
+        "@standin/core": "workspace:*",
+        "commander": "15.0.0"
+    },
+    "devDependencies": {
+        "@standin/tsconfig": "workspace:*",
+        "@standin/vitest-config": "workspace:*",
+        "@types/node": "26.4.0",
+        "dotenv-cli": "11.0.0",
+        "tsx": "4.23.12",
+        "typescript": "6.0.2",
+        "vitest": "4.1.10"
+    }
+}
