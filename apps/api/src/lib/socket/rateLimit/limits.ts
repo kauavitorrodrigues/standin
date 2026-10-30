@@ -3,6 +3,7 @@ import {
     EditorEvents,
     MediaEvents,
     RoomEvents,
+    SoundboardEvents,
     SpaceEvents,
 } from "@standin/contracts";
 import type { RateLimit } from "./createRateLimiter";
@@ -40,6 +41,9 @@ export const RATE_LIMITS: Record<string, RateLimit> = {
     [MediaEvents.SET_LOW_QUALITY]: { perSecond: 1, burst: 4 },
     [MediaEvents.SET_MUTED]: { perSecond: 4, burst: 8 },
     [MediaEvents.SET_PRIVACY]: { perSecond: 4, burst: 8 },
+    // The cooldown is the real limit, this only keeps a flood off the database.
+    [SoundboardEvents.PLAY]: { perSecond: 2, burst: 4 },
+    [SoundboardEvents.STOP]: { perSecond: 2, burst: 4 },
     [EditorEvents.EDITOR_ACQUIRE]: { perSecond: 1, burst: 5 },
     [EditorEvents.EDITOR_RELEASE]: { perSecond: 1, burst: 5 },
     [EditorEvents.EDITOR_HEARTBEAT]: { perSecond: 2, burst: 5 },

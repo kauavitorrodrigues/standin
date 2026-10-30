@@ -29,6 +29,7 @@ import {
     mapsRouter,
 } from "./features/maps/routes";
 import { desksRouter } from "./features/desks/routes";
+import { defaultSoundboardRouter } from "./features/soundboard/routes";
 import {
     guestSpacesAccessRouter,
     invitesAccessRouter,
@@ -107,6 +108,9 @@ router.use("/library", RequiresAuth, RequiresLibraryAdmin, libraryRouter);
 
 // Admin session only: who may use the instance, and its people.
 router.use("/admin", RequiresAuth, globalSettingsAdminRouter);
+
+// Admin session only: the default clips of the soundboard.
+router.use("/soundboard/default-clips", RequiresAuth, defaultSoundboardRouter);
 
 // Admin session only: the tokens of tools and agents.
 router.use("/service-tokens", RequiresAuth, serviceTokensRouter);
