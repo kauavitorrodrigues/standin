@@ -1,4 +1,7 @@
 #!/usr/bin/env tsx
+import { createFileConfigStore } from "./config/createFileConfigStore";
+import { createNodeFiles } from "./config/createNodeFiles";
+import { createFetchTransport } from "./api/createFetchTransport";
 import { EXIT_CODES } from "./consts/exitCodes";
 import { createProcessIo } from "./io/createProcessIo";
 import { runCli } from "./program/runCli";
@@ -13,6 +16,9 @@ const main = async (): Promise<void> => {
         env: process.env,
         io: createProcessIo(),
         services: createLazyServices(),
+        http: createFetchTransport(),
+        config: createFileConfigStore(process.env),
+        files: createNodeFiles(),
     };
     const code: ExitCode = await runCli(process.argv.slice(2), runtime);
     // The database pool keeps the process alive, so it ends here.

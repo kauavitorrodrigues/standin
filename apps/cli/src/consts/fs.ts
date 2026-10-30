@@ -16,3 +16,6 @@ export const FOLDER_ERROR_NAMES: Record<string, true> = {
     SyntaxError: true,
     ZodError: true,
 };
+
+// The code of a file that is not there.
+export const MISSING_FILE_CODE: string = "ENOENT";

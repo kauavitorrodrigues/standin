@@ -2,6 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import { EXIT_CODES } from "../../consts/exitCodes";
 import { createLazyServices } from "../../services/createLazyServices";
 import { createFakeRuntime } from "../../testing/createFakeRuntime";
+import {
+    MAP_ID,
+    VALID_SPEC,
+    buildPalette,
+    buildRender,
+} from "../../testing/mapFixtures";
+import { REMOTE_ENV } from "../../testing/runCliFake";
+import type { FakeOptions } from "../../types";
 import type { CliRuntime } from "../../types";
 import { runCli } from "../runCli";
 
@@ -17,11 +25,12 @@ vi.mock("@standin/core", () => {
     throw new loads.CoreLoadedError("the core must not load");
 });
 
-const build = () => {
-    const fake = createFakeRuntime();
+const SPEC_PATH = "/specs/office.yaml";
+
+const build = (options: FakeOptions = {}) => {
+    const fake = createFakeRuntime(options);
     const runtime: CliRuntime = {
-        env: {},
-        io: fake.io,
+        ...fake.runtime,
         services: createLazyServices(),
     };
     return { runtime, written: fake.written };
@@ -34,6 +43,17 @@ describe("runCli without the core", () => {
             ["bootstrap", "--help"],
             ["seed", "library", "--help"],
             ["health", "--help"],
+            ["token", "--help"],
+            ["token", "create", "--help"],
+            ["token", "list", "--help"],
+            ["token", "revoke", "--help"],
+            ["login", "--help"],
+            ["logout", "--help"],
+            ["map", "--help"],
+            ["map", "validate", "--help"],
+            ["map", "apply", "--help"],
+            ["library", "list", "--help"],
+            ["schema", "print", "--help"],
         ]) {
             const { runtime } = build();
             await expect(runCli(argv, runtime)).resolves.toBe(EXIT_CODES.OK);
@@ -48,5 +68,80 @@ describe("runCli without the core", () => {
         );
         expect(JSON.parse(written.out).error.code).toBe("CLI_MISSING_OPTION");
         expect(loads.count).toBe(0);
+    });
+
+    it("runs the remote commands without loading the core", async () => {
+        const options: FakeOptions = {
+            env: REMOTE_ENV,
+            files: { [SPEC_PATH]: VALID_SPEC },
+            routes: {
+                [`GET /maps/${MAP_ID}/render`]: {
+                    status: 200,
+                    body: buildRender(),
+                },
+                [`GET /maps/${MAP_ID}/library`]: {
+                    status: 200,
+                    body: { library: buildPalette() },
+                },
+                [`POST /maps/${MAP_ID}/apply`]: {
+                    status: 200,
+                    body: { valid: true },
+                },
+                "GET /library/overview": {
+                    status: 200,
+                    body: { groups: [], total: 0 },
+                },
+                "GET /library/tilesets": {
+                    status: 200,
+                    body: { tilesets: [], total: 0, facets: {} },
+                },
+                "GET /library/assets?page=1&pageSize=100": {
+                    status: 200,
+                    body: {
+                        families: [],
+                        page: 1,
+                        pageSize: 100,
+                        total: 0,
+                        totalPages: 1,
+                    },
+                },
+                "GET /library/areas": {
+                    status: 200,
+                    body: { areas: [], total: 0 },
+                },
+            },
+        };
+        for (const argv of [
+            ["map", "validate", SPEC_PATH, "--map", MAP_ID],
+            ["map", "apply", SPEC_PATH, "--map", MAP_ID, "--dry-run"],
+            ["library", "list"],
+            ["schema", "print", "spec"],
+            ["login", "--dry-run"],
+            ["logout"],
+        ]) {
+            const { runtime } = build(options);
+            await expect(runCli(argv, runtime)).resolves.toBe(EXIT_CODES.OK);
+        }
+        expect(loads.count).toBe(0);
+    });
+
+    it("answers a remote usage error as JSON without loading the core", async () => {
+        const { runtime, written } = build();
+        await expect(
+            runCli(["library", "list", "--json"], runtime)
+        ).resolves.toBe(EXIT_CODES.USAGE);
+        expect(JSON.parse(written.out).error.code).toBe(
+            "CLI_REMOTE_URL_MISSING"
+        );
+        expect(loads.count).toBe(0);
+    });
+
+    it("loads the core only for a token command", async () => {
+        const { runtime, written } = build();
+        await expect(
+            runCli(["token", "list", "--json"], runtime)
+        ).resolves.toBe(EXIT_CODES.INTERNAL);
+        expect(JSON.parse(written.out).ok).toBe(false);
+        expect(loads.count).toBe(1);
     });
 });

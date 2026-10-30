@@ -12,9 +12,11 @@
     },
     "dependencies": {
         "@clack/prompts": "1.8.1",
+        "@standin/authoring": "workspace:*",
         "@standin/contracts": "workspace:*",
         "@standin/core": "workspace:*",
-        "commander": "15.0.0"
+        "commander": "15.0.0",
+        "zod": "4.5.1"
     },
     "devDependencies": {
         "@standin/tsconfig": "workspace:*",

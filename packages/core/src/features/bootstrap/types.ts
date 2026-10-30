@@ -20,3 +20,9 @@ export type ResolvedAdmin = {
     generatedPassword?: string;
     step: BootstrapStep;
 };
+
+// An active admin as the repository lists them.
+export type ActiveAdmin = {
+    id: string;
+    email: string;
+};

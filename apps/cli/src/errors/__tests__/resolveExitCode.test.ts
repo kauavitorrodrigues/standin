@@ -35,6 +35,7 @@ describe("resolveExitCode", () => {
         [401, EXIT_CODES.AUTH],
         [403, EXIT_CODES.AUTH],
         [409, EXIT_CODES.CONFLICT],
+        [423, EXIT_CODES.CONFLICT],
         [404, EXIT_CODES.INTERNAL],
         [500, EXIT_CODES.INTERNAL],
     ])("maps the status %i of a domain error to %i", (status, expected) => {
