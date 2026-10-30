@@ -15,10 +15,7 @@ import type {
     RoomUnlockPayload,
 } from "./room";
 import type { MapServerEvents } from "../../maps/types/events";
-import type {
-    MapJoinSchema,
-    SpaceJoinSchema,
-} from "../schemas/space";
+import type { MapJoinSchema, SpaceJoinSchema } from "../schemas/space";
 import type {
     SpaceEmoteSchema,
     SpaceNearbyMessageSchema,
@@ -33,6 +30,16 @@ import type {
     EditorLockPayload,
 } from "../../maps/editor/types";
 import type { z } from "zod/v4";
+import type {
+    SoundboardPlayAck,
+    SoundboardStarted,
+    SoundboardStopAck,
+    SoundboardStopped,
+} from "../../soundboard/types/realtime";
+import type {
+    SoundboardPlaySchema,
+    SoundboardStopSchema,
+} from "../../soundboard/schemas/realtime.schema";
 import type {
     MediaCapabilitiesAck,
     MediaCloseProducerInput,
@@ -178,6 +185,14 @@ export type ClientToServerEvents = {
     "space:nearby-message": (payload: SpaceNearbyMessageInput) => void;
     "space:nearby-typing": (payload: SpaceNearbyTypingInput) => void;
     "chat:typing": (payload: ChatTypingInput) => void;
+    "soundboard:play": (
+        payload: z.infer<typeof SoundboardPlaySchema>,
+        ack: (response: SoundboardPlayAck) => void
+    ) => void;
+    "soundboard:stop": (
+        payload: z.infer<typeof SoundboardStopSchema>,
+        ack: (response: SoundboardStopAck) => void
+    ) => void;
     "media:get-capabilities": (
         ack: (response: MediaCapabilitiesAck) => void
     ) => void;
@@ -248,6 +263,8 @@ export type ClientToServerEvents = {
 };
 
 export type ServerToClientEvents = {
+    "soundboard:started": (payload: SoundboardStarted) => void;
+    "soundboard:stopped": (payload: SoundboardStopped) => void;
     "space:joined": (payload: SpaceJoinedPayload) => void;
     "space:peer-joined": (payload: PeerJoinedPayload) => void;
     // The owner saved the settings of the space, so the controls that depend

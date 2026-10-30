@@ -6,6 +6,8 @@ import { useReactions } from "@/features/emotes/hooks/useReactions";
 import { ReactionsRow } from "@/features/emotes/components/views/ReactionsRow";
 import { NearbyChatLayer } from "@/features/nearby-chat/components/instances/NearbyChatLayer";
 import { useNearbyChat } from "@/features/nearby-chat/hooks/useNearbyChat";
+import { SoundboardRow } from "@/features/soundboard/components/instances/SoundboardRow";
+import { useSoundboardPanel } from "@/features/soundboard/hooks/useSoundboardPanel";
 import { UserStatusRow } from "@/features/spaces/components/pages/space-page/controls/UserStatusRow";
 import { useUserStatusPanel } from "@/features/spaces/hooks/useUserStatusPanel";
 import { useControlsView } from "@/features/spaces/hooks/useControlsView";
@@ -28,6 +30,7 @@ export const MediaControlGroup = ({
     cameraError,
     sendEmote,
     nearbyChat,
+    soundboard,
 }: Props) => {
     
     const controls = useControlsView();
@@ -39,6 +42,10 @@ export const MediaControlGroup = ({
     });
     
     const userStatus = useUserStatusPanel({ controls });
+    const soundboardPanel = useSoundboardPanel({
+        controls,
+        enabled: soundboard !== null,
+    });
 
     const nearby = useNearbyChat({
         enabled: nearbyChat.isEnabled,
@@ -59,6 +66,10 @@ export const MediaControlGroup = ({
                 onClose={nearby.close}
             />
             <UserStatusRow isOpen={userStatus.isOpen} />
+            <SoundboardRow
+                isOpen={soundboardPanel.isOpen}
+                soundboard={soundboard}
+            />
             <ReactionsRow
                 isOpen={reactions.isOpen}
                 items={reactions.items}
@@ -76,6 +87,8 @@ export const MediaControlGroup = ({
                         screenShareError={screenShare.error}
                         micError={micError}
                         cameraError={cameraError}
+                        soundboard={soundboard}
+                        soundboardPanel={soundboardPanel}
                         onStartScreenShare={screenShare.start}
                         onStopScreenShare={screenShare.stop}
                         userStatus={userStatus}

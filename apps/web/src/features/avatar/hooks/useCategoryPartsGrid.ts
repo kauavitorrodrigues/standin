@@ -6,7 +6,7 @@ import {
     PART_GRID_ROW_HEIGHT,
 } from "../consts/editor/grid";
 import { useCategoryParts } from "../queries/useCategoryParts";
-import { chunkRows } from "../utils/chunkRows";
+import { chunk } from "@/utils/chunk";
 
 // The parts of a category as a virtual list of rows. Only the rows near the
 // viewport are mounted, and the next page is asked for when the last row gets
@@ -20,7 +20,7 @@ export const useCategoryPartsGrid = (
     const { items, hasNextPage, isFetchingNextPage, isFetchNextPageError } =
         query;
 
-    const rows = useMemo(() => chunkRows(items, columns), [items, columns]);
+    const rows = useMemo(() => chunk(items, columns), [items, columns]);
     // One more row after the last one while there are pages to come.
     const rowCount = hasNextPage ? rows.length + 1 : rows.length;
 

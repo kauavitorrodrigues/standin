@@ -1,4 +1,5 @@
 import {
+    AudioLinesIcon,
     BoxIcon,
     Grid2x2Icon,
     SettingsIcon,
@@ -66,6 +67,11 @@ export const AdminSidebar = () => {
                 to="/admin/areas"
                 icon={LayoutGridIcon}
                 label="Áreas"
+            />
+            <SectionSidebarLink
+                to="/admin/sounds"
+                icon={AudioLinesIcon}
+                label="Sons"
             />
             <SectionSidebarLink to="/admin/maps" icon={MapIcon} label="Mapas" />
             <SectionSidebarLink

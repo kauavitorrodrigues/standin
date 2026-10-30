@@ -195,6 +195,7 @@ without its own limit shares one bucket (30 per second, burst 60).
 | `media:consumer-ready`                                                                                          | 20         | 40       |
 | Media choices (`set-focus`, `set-pins`, `set-muted`, `set-privacy`)                                             | 4          | 8        |
 | `media:set-low-quality`                                                                                         | 1          | 4        |
+| Soundboard (`soundboard:play`, `soundboard:stop`)                                                               | 2          | 4        |
 | Door events (crossed, open, present, lock, unlock)                                                              | 2 to 5     | 10 to 20 |
 | Door join request and answer                                                                                    | 1 and 5    | 5 and 20 |
 | Map editor lock (acquire, release, heartbeat)                                                                   | 1 to 2     | 5        |
@@ -447,11 +448,11 @@ itself (water, a screen, a flag) it draws at most 4 times a second. The caps
 are constants in `consts/render-on-demand.ts` (**Code**), and the tests in
 `lib/__tests__/RenderOnDemand.test.ts` fail when the cadence goes over them.
 
-| State                                   | Budget (Code)                                  |
-| --------------------------------------- | ---------------------------------------------- |
-| Nothing changes                         | 0 render passes, 0 GL calls                    |
-| Only ambient scenery animates           | at most 4 passes per second                    |
-| Something moves (an avatar walks)       | at most 36 passes per second                   |
+| State                             | Budget (Code)                |
+| --------------------------------- | ---------------------------- |
+| Nothing changes                   | 0 render passes, 0 GL calls  |
+| Only ambient scenery animates     | at most 4 passes per second  |
+| Something moves (an avatar walks) | at most 36 passes per second |
 
 A standing avatar blinks every 2.5 to 6 s, and each blink is two passes (eyes
 closed, eyes open). So a scene with one avatar and nothing else shows 0.4 to
@@ -477,7 +478,7 @@ To see the numbers of your own space, open the game in a development build
 of seconds given (5 by default), prints one line and returns the figures:
 
 ```js
-await window.__glProfile(5)
+await window.__glProfile(5);
 ```
 
 The profiler (`utils/glCallProfiler.ts`) wraps the methods of the GL context

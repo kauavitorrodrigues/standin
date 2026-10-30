@@ -1,6 +1,4 @@
-import { v7 as uuidv7 } from "uuid";
-import { StorageProvider } from "@standin/infra";
-import { buildStorageKey } from "../../../files/utils/buildStorageKey";
+import { discardObject, storeObject } from "../../../files/utils/storeObject";
 import {
     LIBRARY_IMAGE_EXTENSION,
     LIBRARY_IMAGE_MIME_TYPE,
@@ -16,38 +14,21 @@ export type StoredImage = {
 };
 
 /**
- * Writes the PNG to storage under a name the server picks (uuid plus
- * extension). The name the client sent only goes to `files.original_name`.
- * The `files` row is inserted later, inside the transaction, so a failed
- * write leaves only this file to clean up (see `discardImage`).
+ * Writes the PNG to storage. The name the client sent only goes to
+ * `files.original_name`. The `files` row is inserted later, inside the
+ * transaction (see `discardImage` for the cleanup).
  */
 export const storeImage = async (
     buffer: Buffer,
     originalName: string
 ): Promise<StoredImage> => {
-    const id = uuidv7();
-    const storageKey = buildStorageKey(
-        LIBRARY_STORAGE_FOLDER,
-        id,
-        `${id}${LIBRARY_IMAGE_EXTENSION}`
-    );
-
-    await StorageProvider.upload(buffer, storageKey, LIBRARY_IMAGE_MIME_TYPE);
-
-    return {
-        id,
-        storageKey,
-        originalName,
+    const stored = await storeObject({
+        buffer,
+        folder: LIBRARY_STORAGE_FOLDER,
+        extension: LIBRARY_IMAGE_EXTENSION,
         mimeType: LIBRARY_IMAGE_MIME_TYPE,
-        sizeInBytes: buffer.length,
-    };
+    });
+    return { ...stored, originalName, mimeType: LIBRARY_IMAGE_MIME_TYPE };
 };
 
-/** Best effort: a file that cannot be removed is not worth hiding the cause. */
-export const discardImage = async (storageKey: string): Promise<void> => {
-    try {
-        await StorageProvider.delete(storageKey);
-    } catch (error) {
-        console.error(error);
-    }
-};
+export const discardImage = discardObject;

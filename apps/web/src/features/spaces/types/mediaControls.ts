@@ -1,4 +1,5 @@
 import type { NearbyChatConnection } from "@/features/nearby-chat/types/nearby-chat";
+import type { SpaceSoundboard } from "@/features/soundboard/types/space";
 import type { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 
 type SpaceConnection = ReturnType<typeof useSpaceConnection>;
@@ -12,4 +13,6 @@ export type SpaceMediaControls = {
     cameraError: SpaceConnection["video"]["localCameraError"];
     sendEmote: SpaceConnection["sendEmote"];
     nearbyChat: NearbyChatConnection;
+    // Null where the person cannot play clips, such as a guest.
+    soundboard: SpaceSoundboard | null;
 };

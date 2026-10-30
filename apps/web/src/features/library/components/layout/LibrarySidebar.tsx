@@ -1,4 +1,9 @@
-import { BoxIcon, Grid2x2Icon, LayoutGridIcon } from "lucide-react";
+import {
+    AudioLinesIcon,
+    BoxIcon,
+    Grid2x2Icon,
+    LayoutGridIcon,
+} from "lucide-react";
 import { SectionSidebar } from "./SectionSidebar";
 import { SectionSidebarLink } from "./SectionSidebarLink";
 
@@ -20,6 +25,11 @@ export const LibrarySidebar = () => (
             to="/library/areas"
             icon={LayoutGridIcon}
             label="Áreas"
+        />
+        <SectionSidebarLink
+            to="/library/sounds"
+            icon={AudioLinesIcon}
+            label="Sons"
         />
     </SectionSidebar>
 );

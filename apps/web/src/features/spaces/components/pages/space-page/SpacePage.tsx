@@ -112,6 +112,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const {
         localAudioError,
+        soundboard,
         onlineUserIds,
         speakingUserIds,
         video,
@@ -212,6 +213,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         micError: localAudioError,
         sendEmote,
         nearbyChat,
+        soundboard,
     });
 
     const { peerChat, peerTyping, chatPage } = usePeerChatContextValues({

@@ -32,3 +32,4 @@ export * from "./user-identities";
 export * from "./service-tokens";
 export * from "./global-settings";
 export * from "./organization-invite-links";
+export * from "./soundboard-clips";

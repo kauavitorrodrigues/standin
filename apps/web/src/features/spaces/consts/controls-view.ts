@@ -5,6 +5,7 @@ export const CONTROLS_VIEWS = {
     REACTIONS: "reactions",
     NEARBY: "nearby",
     STATUS: "status",
+    SOUNDBOARD: "soundboard",
 } as const;
 
 export type ControlsView = (typeof CONTROLS_VIEWS)[keyof typeof CONTROLS_VIEWS];

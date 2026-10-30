@@ -13,6 +13,8 @@ import { DecorateMenuItem } from "@/features/decorator/components/instances/Deco
 import type { DecorateAvailability } from "@/features/decorator/types/decorate-availability";
 import { EditMapMenuItem } from "@/features/maps/organizations/components/instances/EditMapMenuItem";
 import { ChatQueries } from "@/features/chat/queries";
+import { SoundboardManagerDialog } from "@/features/soundboard/components/dialogs/ManagerDialog";
+import { SoundboardMenuItem } from "@/features/soundboard/components/instances/SoundboardMenuItem";
 import { SettingsDialog } from "@/features/settings/components/dialogs/SettingsDialog";
 import { RailButton } from "@/features/spaces/components/pages/space-page/sidebar/RailButton";
 import { GuestsMenuItem } from "@/features/spaces/guests/components/instances/GuestsMenuItem";
@@ -57,6 +59,7 @@ export const Rail = ({
     const { total: unreadTotal } = ChatQueries.useUnreadCounts();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isSpaceSettingsOpen, setIsSpaceSettingsOpen] = useState(false);
+    const [isSoundboardOpen, setIsSoundboardOpen] = useState(false);
 
     return (
         <RailFrame>
@@ -67,6 +70,7 @@ export const Rail = ({
                 />
                 <EditMapMenuItem spaceId={space.id} mapId={space.map.id} />
                 <GuestsMenuItem onOpen={onOpenGuests} />
+                <SoundboardMenuItem onOpen={() => setIsSoundboardOpen(true)} />
                 <SpaceSettingsMenuItem
                     onOpen={() => setIsSpaceSettingsOpen(true)}
                 />
@@ -101,6 +105,10 @@ export const Rail = ({
                 label="Configurações"
                 onClick={() => setIsSettingsOpen(true)}
                 className="mt-auto"
+            />
+            <SoundboardManagerDialog
+                open={isSoundboardOpen}
+                onOpenChange={setIsSoundboardOpen}
             />
             <SpaceSettingsDialog
                 spaceId={space.id}

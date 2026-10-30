@@ -32,6 +32,7 @@ import { useOutputVolumePreference } from "@/features/media-devices/hooks/useOut
 import { useSfuMedia } from "./useSfuMedia";
 import type { RemotePrivacy } from "../types/sfuHooks";
 import { useSpeakingUsers } from "./useSpeakingUsers";
+import { useSpaceSoundboard } from "@/features/soundboard/hooks/useSpaceSoundboard";
 import { STAGE_MAX_NEARBY_PEERS } from "../consts/video";
 import { selectNearbyPeers } from "../utils/nearbyPeers";
 import { getProximityRadii } from "../utils/proximityRadii";
@@ -70,7 +71,11 @@ export function useSpaceConnection({
         stream: localStream,
         error: localAudioError,
         setProximityGate,
+        playClip,
+        stopClip,
+        stopAllClips,
     } = useLocalAudioStream();
+    
     const screenShare = useLocalScreenShare();
     // Users currently close enough to receive the local video, nearest first. Drives the stage (everyone nearby is
     // shown there, with an avatar until they turn a camera on) and whether
@@ -189,6 +194,14 @@ export function useSpaceConnection({
     const isMicEnabled = useMicEnabled();
     const isHeadphonesOn = usePrivacyMode("headphones");
     const isFocusModeOn = usePrivacyMode("focus");
+    
+    const soundboard = useSpaceSoundboard({
+        player: { playClip, stopClip, stopAllClips },
+        micError: localAudioError,
+        hasMicStream: localStream !== null,
+        isHeadphonesOn,
+    });
+    
     const sfu = useSfuMedia({
         userId,
         remoteAudioManager,
@@ -205,6 +218,7 @@ export function useSpaceConnection({
         setRemoteMicMuted,
         setRemotePrivacy,
     });
+    
     const { beginSession, endSession, rebuildSession, failures } = sfu;
 
     // Dev only failure harness, not present in production builds:
@@ -617,6 +631,7 @@ export function useSpaceConnection({
         onlineUserIds,
         speakingUserIds,
         localAudioError,
+        soundboard,
         video: {
             remoteVideos: sfu.remoteVideos,
             setActiveVideoIds: sfu.setActiveVideoIds,

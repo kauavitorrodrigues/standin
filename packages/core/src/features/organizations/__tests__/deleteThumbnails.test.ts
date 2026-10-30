@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { transactionMock, spaceDeleteMock, purgeMock, publishGuestsMock } =
-    vi.hoisted(() => ({
-        transactionMock: vi.fn(),
-        spaceDeleteMock: vi.fn(),
-        purgeMock: vi.fn(),
-        publishGuestsMock: vi.fn(),
-    }));
+const {
+    transactionMock,
+    spaceDeleteMock,
+    clipDeleteMock,
+    purgeMock,
+    publishGuestsMock,
+} = vi.hoisted(() => ({
+    transactionMock: vi.fn(),
+    spaceDeleteMock: vi.fn(),
+    clipDeleteMock: vi.fn(),
+    purgeMock: vi.fn(),
+    publishGuestsMock: vi.fn(),
+}));
 
 const returning = (rows: unknown[]) => ({
     set: () => ({ where: () => ({ returning: async () => rows }) }),
@@ -23,6 +29,9 @@ vi.mock("@standin/database", () => ({
 }));
 vi.mock("../consts/select", () => ({ organizationSelect: {} }));
 vi.mock("../../files", () => ({ FileService: { purge: purgeMock } }));
+vi.mock("../../soundboard", () => ({
+    SoundboardService: { deleteByOrganizationId: clipDeleteMock },
+}));
 vi.mock("../../spaces", () => ({
     SpaceService: { deleteByOrganizationId: spaceDeleteMock },
     SpaceGuestService: { publishRemoved: publishGuestsMock },
@@ -43,6 +52,7 @@ beforeEach(() => {
         removedGuests: [],
         storageKeys: ["spaces/s1/thumbnail.png"],
     });
+    clipDeleteMock.mockResolvedValue([]);
 });
 
 describe("deleteOrganization thumbnails", () => {
@@ -59,6 +69,19 @@ describe("deleteOrganization thumbnails", () => {
 
         expect(purgeMock).toHaveBeenCalledWith(["spaces/s1/thumbnail.png"]);
         expect(order).toEqual(["commit", "purge"]);
+    });
+
+    it("removes the clips of the organization with its photos", async () => {
+        clipDeleteMock.mockResolvedValue(["soundboard/c1.mp3"]);
+        transactionMock.mockImplementation((run) => run(tx));
+
+        await deleteOrganization("org-1");
+
+        expect(clipDeleteMock).toHaveBeenCalledWith("org-1", tx);
+        expect(purgeMock).toHaveBeenCalledWith([
+            "spaces/s1/thumbnail.png",
+            "soundboard/c1.mp3",
+        ]);
     });
 
     it("keeps the photos when the deletion rolls back", async () => {

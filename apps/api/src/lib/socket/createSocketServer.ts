@@ -31,6 +31,7 @@ import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerSpacePosition } from "@/lib/socket/handlers/spacePosition";
 import { registerSpaceEvents } from "@/lib/socket/handlers/spaceEvents";
 import { registerMedia } from "@/lib/media/handlers/registerMedia";
+import { registerSoundboard } from "@/lib/socket/handlers/soundboard";
 import { registerChatTyping } from "@/lib/socket/handlers/chatTyping";
 import { broadcastAvatarChange } from "@/lib/socket/services/broadcastAvatarChange";
 import { broadcastMemberDesksReleased } from "@/lib/socket/services/broadcastMemberDesksReleased";
@@ -104,6 +105,7 @@ export function createSocketServer(
         registerSpaceEvents(io, socket);
         registerChatTyping(socket);
         registerMedia(socket);
+        registerSoundboard(io, socket);
         registerRoomCrossed(io, socket);
         registerRoomOpen(io, socket);
         registerRoomPresent(io, socket);

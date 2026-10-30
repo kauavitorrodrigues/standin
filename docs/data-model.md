@@ -13,7 +13,8 @@ User
                                    │             └─< desk_assignments (desk ↔ user)
                                    ├─< tilesets  (private library)
                                    ├─< assets    (private library)
-                                   └─< areas     (private library)
+                                   ├─< areas     (private library)
+                                   └─< soundboard_clips (audio clips)
 
 Map
  ├─ layout (jsonb: tile layers + zones)
@@ -21,6 +22,7 @@ Map
 
 MapTemplate ── map_id ──> Map     (admin-built, published to the catalog)
 Tileset / Asset / Area ──> File   (PNG and thumbnails)
+SoundboardClip ──> File           (mp3, null organization = default clip)
 ```
 
 - A user can belong to N organizations; an organization can have N users and N spaces.
@@ -38,21 +40,22 @@ When a `Space` loads, the app asks the API for the map render payload: the layou
 
 ## Key domain entities
 
-| Entity               | Description                                                                                                                                             |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `User`               | User account; email unique among active records, hashed password                                                                                        |
-| `Organization`       | Platform tenant; has an `owner_id` and a unique `slug`                                                                                                  |
-| `OrganizationMember` | N:N link between `User` and `Organization`, with `OWNER`/`MEMBER` role                                                                                  |
-| `OrganizationInvite` | Pending invite for a user to join an organization                                                                                                       |
-| `Space`              | Navigable space; belongs to an `Organization` and owns exactly one `Map`, and has an optional photo of it (see [spaces.md](spaces.md))                  |
-| `Map`                | The world of a space or template: `layout` (tile layers and zones), dimension, `tileSize`, `sizeTier`, and a `layoutVersion` for optimistic concurrency |
-| `MapAsset`           | One object placed on a map: anchor tile, pixel offset, property overrides, and an optional parent (an item on a desk, or a piece of a bundle)           |
-| `MapTemplate`        | Catalog entry for a complete map, built by the admin, with a `DRAFT`/`PUBLISHED`/`RETIRED` status and a thumbnail                                       |
-| `Tileset`            | A PNG sheet on a 32 px grid with per-tile metadata (category, solid, wall style); global or private to an organization                                  |
-| `Asset`              | A placeable object (one PNG) with footprint, collision, placement, action, and optional animation; colors and rotations are variants of a base asset    |
-| `AssetPart`          | Bundle link: placing the root asset also places its parts at fixed offsets                                                                              |
-| `Area`               | A reusable stamp of tiles, objects, and an optional zone, placed whole by the editor                                                                    |
-| `DeskAssignment`     | Links a desk object to the member who claimed it (one person per desk, one desk per person per space)                                                   |
-| `File`               | Generic upload entity (tileset, asset sprite, thumbnail, message attachment); stores metadata, not the binary                                           |
-| `Conversation`       | Chat thread; `SPACE` (one per space, shared by its members) or `DIRECT` (between two organization members)                                              |
-| `Message`            | Text and/or attachment message in a `Conversation`, with edit/delete support                                                                            |
+| Entity               | Description                                                                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `User`               | User account; email unique among active records, hashed password                                                                                                                |
+| `Organization`       | Platform tenant; has an `owner_id` and a unique `slug`                                                                                                                          |
+| `OrganizationMember` | N:N link between `User` and `Organization`, with `OWNER`/`MEMBER` role                                                                                                          |
+| `OrganizationInvite` | Pending invite for a user to join an organization                                                                                                                               |
+| `Space`              | Navigable space; belongs to an `Organization` and owns exactly one `Map`, and has an optional photo of it (see [spaces.md](spaces.md))                                          |
+| `Map`                | The world of a space or template: `layout` (tile layers and zones), dimension, `tileSize`, `sizeTier`, and a `layoutVersion` for optimistic concurrency                         |
+| `MapAsset`           | One object placed on a map: anchor tile, pixel offset, property overrides, and an optional parent (an item on a desk, or a piece of a bundle)                                   |
+| `MapTemplate`        | Catalog entry for a complete map, built by the admin, with a `DRAFT`/`PUBLISHED`/`RETIRED` status and a thumbnail                                                               |
+| `Tileset`            | A PNG sheet on a 32 px grid with per-tile metadata (category, solid, wall style); global or private to an organization                                                          |
+| `Asset`              | A placeable object (one PNG) with footprint, collision, placement, action, and optional animation; colors and rotations are variants of a base asset                            |
+| `AssetPart`          | Bundle link: placing the root asset also places its parts at fixed offsets                                                                                                      |
+| `Area`               | A reusable stamp of tiles, objects, and an optional zone, placed whole by the editor                                                                                            |
+| `SoundboardClip`     | A short mp3 that members play into the call; private to an organization or a default clip of the platform (`organization_id IS NULL`), with the duration measured on the server |
+| `DeskAssignment`     | Links a desk object to the member who claimed it (one person per desk, one desk per person per space)                                                                           |
+| `File`               | Generic upload entity (tileset, asset sprite, thumbnail, message attachment); stores metadata, not the binary                                                                   |
+| `Conversation`       | Chat thread; `SPACE` (one per space, shared by its members) or `DIRECT` (between two organization members)                                                                      |
+| `Message`            | Text and/or attachment message in a `Conversation`, with edit/delete support                                                                                                    |

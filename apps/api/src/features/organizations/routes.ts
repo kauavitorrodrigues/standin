@@ -9,6 +9,7 @@ import { conversationsRouter } from "../chat/routes";
 import { organizationInviteLinksRouter } from "./invite-links/routes";
 import { libraryRouter } from "../library/routes";
 import { RequiresLibraryOwner } from "../library/middleware/requiresLibraryOwner";
+import { organizationSoundboardRouter } from "../soundboard/routes";
 
 const router = Router();
 
@@ -56,6 +57,13 @@ router.use(
     RequiresOrgMember,
     RequiresLibraryOwner,
     libraryRouter
+);
+
+// The soundboard: every member uses the clips of the organization.
+router.use(
+    "/:organizationId/soundboard",
+    RequiresOrgMember,
+    organizationSoundboardRouter
 );
 
 router.use(

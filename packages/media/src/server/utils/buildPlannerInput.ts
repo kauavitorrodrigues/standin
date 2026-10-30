@@ -5,6 +5,7 @@ import type {
     SimulcastLayer,
 } from "../../planner/types";
 import type { Peer } from "../spaceTypes";
+import { isSilenced } from "./isSilenced";
 
 // Who each person is, for the planner. A person with no position is left out
 // by the planner itself.
@@ -17,7 +18,7 @@ export const buildPeople = (peers: Iterable<Peer>): PersonState[] =>
         return {
             id: peer.id,
             roomKey: peer.roomKey,
-            muted: peer.muted,
+            muted: isSilenced(peer),
             headphones: peer.headphones,
             focusMode: peer.focusMode,
             producers,
