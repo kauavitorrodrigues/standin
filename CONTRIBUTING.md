@@ -12,13 +12,16 @@ files will be closed.
 The exceptions are files the maintainers already ship (the default avatar, the
 logo), tiny fixtures for tests that you created yourself, and the first-party
 content pack in [`content/`](content), which only the maintainers add and which
-is licensed under [CC BY 4.0](content/LICENSE).
+is licensed under [CC BY 4.0](content/LICENSE). The tiny example images in
+[`examples/authoring/`](examples/authoring) are also maintainers' work, under
+the same [CC BY 4.0](examples/authoring/LICENSE).
 
 ## Licensing of contributions
 
 The repository is licensed under the [AGPL-3.0](LICENSE), except the `ee/`
-directory, which has its own [license](ee/LICENSE), and the `content/`
-directory, which is licensed under [CC BY 4.0](content/LICENSE).
+directory, which has its own [license](ee/LICENSE), and the `content/` and
+`examples/authoring/` directories, which are licensed under CC BY 4.0
+([content](content/LICENSE), [examples](examples/authoring/LICENSE)).
 
 By opening a pull request you confirm that you wrote the code (or have the right
 to submit it) and you grant the project owner a perpetual, worldwide,

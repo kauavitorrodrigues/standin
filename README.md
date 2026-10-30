@@ -48,20 +48,21 @@ The product goal is to give a team a navigable "virtual office" with real-time p
 
 Longer guides live in [`docs/`](docs). Each one is for the people who use or maintain that part of the platform.
 
-| Guide                                           | What it covers                                                        |
-| ----------------------------------------------- | --------------------------------------------------------------------- |
-| [Spaces](docs/spaces.md)                        | The photo of a space on its card, when it is made and who changes it  |
-| [Map editor](docs/map-editor.md)                | Building the library, maps, rooms and templates, and the edit scopes  |
-| [Authoring spec](docs/authoring-spec.md)        | The YAML format that compiles to editor ops, and its JSON Schemas     |
-| [Avatar](docs/avatar.md)                        | How people build their avatar and how admins manage the parts library |
-| [Profile picture](docs/profile-picture.md)      | The photo shown in lists, chat and the name tag                       |
-| [Sign in with GitHub](docs/github-login.md)     | Turning on the optional GitHub login for an instance                  |
-| [Real-time and media](docs/realtime.md)         | Presence, proximity voice, camera and screen sharing, and chat        |
-| [Data model](docs/data-model.md)                | Who owns what, how a map is stored, and the entities                  |
-| [Architecture](docs/architecture.md)            | The repository layout, the stack and how the pieces fit               |
-| [Storage](docs/storage.md)                      | Where uploads live and how to change it                               |
-| [Deployment](docs/deployment.md)                | Running an instance on your own server                                |
-| [Performance and capacity](docs/performance.md) | How the real-time side scales, its limits, and how to size a server   |
+| Guide                                           | What it covers                                                             |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| [Spaces](docs/spaces.md)                        | The photo of a space on its card, when it is made and who changes it       |
+| [Map editor](docs/map-editor.md)                | Building the library, maps, rooms and templates, and the edit scopes       |
+| [Authoring spec](docs/authoring-spec.md)        | The YAML format that compiles to editor ops, and its JSON Schemas          |
+| [Avatar](docs/avatar.md)                        | How people build their avatar and how admins manage the parts library      |
+| [Profile picture](docs/profile-picture.md)      | The photo shown in lists, chat and the name tag                            |
+| [Sign in with GitHub](docs/github-login.md)     | Turning on the optional GitHub login for an instance                       |
+| [Real-time and media](docs/realtime.md)         | Presence, proximity voice, camera and screen sharing, and chat             |
+| [Data model](docs/data-model.md)                | Who owns what, how a map is stored, and the entities                       |
+| [Architecture](docs/architecture.md)            | The repository layout, the stack and how the pieces fit                    |
+| [Storage](docs/storage.md)                      | Where uploads live and how to change it                                    |
+| [Deployment](docs/deployment.md)                | Running an instance on your own server                                     |
+| [Agent guide](AGENTS.md)                        | The repository map, the CLI, the authoring skills and the rules for agents |
+| [Performance and capacity](docs/performance.md) | How the real-time side scales, its limits, and how to size a server        |
 
 ## How It Works
 
@@ -216,11 +217,12 @@ Standin is meant to be self-hosted: a server and a PostgreSQL database are the o
 
 ## License and responsibility
 
-Standin is open source under the [GNU AGPL-3.0](LICENSE). Anyone can run, study, modify and redistribute it, and anyone who offers a modified version as a service over a network must publish their changes under the same license. The `ee/` directory is the exception: it is source-visible but proprietary, see [ee/LICENSE](ee/LICENSE). To use it commercially, or to use Standin without the AGPL obligations, contact the maintainer for a commercial license. The first-party media in the `content/` directory is not covered by the AGPL: it is licensed under [CC BY 4.0](content/LICENSE), free to use, including on a self-hosted instance, with credit.
+Standin is open source under the [GNU AGPL-3.0](LICENSE). Anyone can run, study, modify and redistribute it, and anyone who offers a modified version as a service over a network must publish their changes under the same license. The `ee/` directory is the exception: it is source-visible but proprietary, see [ee/LICENSE](ee/LICENSE). To use it commercially, or to use Standin without the AGPL obligations, contact the maintainer for a commercial license. The first-party media in the `content/` directory and the example folder `examples/authoring/` are not covered by the AGPL: they are licensed under CC BY 4.0 ([content](content/LICENSE), [examples](examples/authoring/LICENSE)), free to use, including on a self-hosted instance, with credit.
 
 Whoever runs an instance is the **operator** of that instance and is solely responsible for it: the content its users upload, the terms they accept, the personal data it stores and compliance with the laws that apply where it is hosted. The authors only publish the code, provide it "as is", and have no control over, access to or liability for any third-party instance or what is hosted on it. This repository ships no assets from users and does not accept third-party media in pull requests (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Maintenance Notes
 
 - Dependencies are saved with exact versions (no `^`), via `saveExact`/`savePrefix` in `pnpm-workspace.yaml`.
+- Agents: [AGENTS.md](AGENTS.md) has the repository map, the commands and the rules, and [`skills/`](skills) has the deploy and authoring skills.
 - `packages/contracts` is the shared source of truth for schemas/types between `web` and `api`, so any API contract change goes through it first.

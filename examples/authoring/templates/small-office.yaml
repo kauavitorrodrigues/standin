@@ -1,0 +1,28 @@
+# A template has no spawn point, so none is asked for. The tilesets are found
+# by their name (a tileset has a key in library.json, but not in a spec) and
+# the assets by their key.
+kind: template
+name: Small office
+sizeTier: XS
+style:
+  floor: { tileset: Example floor, tileIndex: 0 }
+  walls: { tileset: Example brick, style: Brick }
+rooms:
+  - key: office
+    label: Office
+    x: 2
+    y: 2
+    width: 12
+    height: 8
+    doors:
+      - { side: south, door: example-door }
+desks:
+  - asset: example-desk
+    x: 4
+    y: 5
+    items:
+      - { asset: example-monitor, x: 4, y: 5 }
+    chairs:
+      - { asset: example-chair, x: 4, y: 6 }
+objects:
+  - { asset: example-crate, x: 11, y: 4 }

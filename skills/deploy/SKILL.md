@@ -97,13 +97,18 @@ Rules for this mode: idempotent (re-running changes nothing that is already righ
     - `JWT_SECRET`: `openssl rand -hex 32`.
     - `SITE_ADDRESS`: the domain. `SERVER_URL` and `FRONTEND_URL`: `https://` plus the domain, no trailing slash.
     - `MEDIA_ANNOUNCED_ADDRESS`: the public IP. `MEDIA_LISTEN_PORT`: keep `44444` unless asked.
+    - `ADMIN_EMAIL`: ask the user for the admin email and put it in the server `.env`. Leave `ADMIN_PASSWORD` out: the bootstrap in step 5 generates a strong one.
     - `STORAGE_DRIVER`: `local` unless the user wants S3 (then follow `docs/storage.md` and ask for the values).
     - Remove `DATABASE_URL` or leave it: the compose file builds the right one inside the containers.
     - `chmod 600 .env`.
       Tell the user the secrets exist only on the server and that they should keep a copy in a password manager. Do not show them.
 4. Start: `cd "$DEPLOY_PATH" && docker compose --profile app up -d --build`. The first build takes minutes; run it with a long timeout (or in the background) and read the result when it ends.
-5. Seed the global library once: `docker compose exec -T app pnpm --filter api seed:library`.
-6. Verify (below), then give the user the manual check from `docs/deployment.md` step 6 (two browsers on different networks hearing and seeing each other). The skill cannot do that part.
+5. Create the first admin and organization, then seed the global library (blank maps need the library, and the seed needs the admin):
+    - Run `docker compose exec -T app pnpm --filter api bootstrap`. With no `ADMIN_PASSWORD` it generates a strong password and prints it **once**, in this run; a later run only says `admin already exists` and shows no password. It is not saved anywhere else.
+    - Show that password to the user in your reply, tell them to store it in a password manager and to change it after the first sign in. Do not write it to a file, a log, a commit or the final report, and do not run `bootstrap` again to see it.
+    - If the user prefers to choose the password, they put `ADMIN_PASSWORD` in the server `.env` before step 4 (the container then creates the admin on start) and you never see it.
+    - Run `docker compose exec -T app pnpm --filter api seed:library`. It is idempotent, a second run prints `unchanged`.
+6. Verify (below), then tell the user that content (tilesets, assets, templates, maps) can now be authored from files with a service token, created on the admin screen of the instance: see `skills/author-content/SKILL.md` and `skills/author-map/SKILL.md`. Then give the user the manual check from `docs/deployment.md` step 8 (two browsers on different networks hearing and seeing each other). The skill cannot do that part.
 
 ## Mode: update
 
@@ -124,6 +129,8 @@ All of these must hold; report each one as pass or fail:
 - `docker compose logs --tail 80 app`: migrations applied without error and the API is listening. No stack traces.
 - A `[Media]` line appears in the app logs (the media worker started).
 - `curl -sI https://<domain>` returns a 2xx or 3xx with a valid certificate. On a first install the certificate can take a minute; retry a few times before calling it a failure. If it still fails, the usual causes are DNS not propagated, port 80/443 blocked (host or provider), or `SITE_ADDRESS` not set to the domain. Check `docker compose logs proxy`.
+- `curl -s https://<domain>/api/health` answers `"status":"ok"` (`"degraded"` is a warning, `"down"` a failure). On a first install retry it a few times too, the app can still be starting.
+- First install only, read-only: `docker compose logs app` shows the bootstrap lines (`✓ admin created: ...` or `✓ admin already exists: ...`, and the same for the organization), and the seed run printed its entries. Do not run `bootstrap` again to check, it writes when no admin exists. Never copy the password into your report.
 - Take the domain from `SITE_ADDRESS` in the server's `.env` (read that one key only).
 
 ## Report

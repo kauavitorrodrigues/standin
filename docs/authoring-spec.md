@@ -127,6 +127,8 @@ outside the map) keep their own codes and point at the step that broke them.
 
 ## Examples
 
+A complete content folder (library, wall style, door family and a template that uses them) is in [`examples/authoring`](../examples/authoring), and the workflow is in [`skills/author-map/SKILL.md`](../skills/author-map/SKILL.md).
+
 The examples below are files in `packages/authoring/examples`. The tests parse
 and compile every one of them against a test library with the keys `crate`,
 `desk`, `chair`, `monitor`, `door-n`, `door-e`, `door-s`, `door-w` and the
