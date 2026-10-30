@@ -127,6 +127,13 @@
       "when": 1793317632302,
       "tag": "0017_add_service_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793379285546,
+      "tag": "0018_add_global_settings",
+      "breakpoints": true
     }
   ]
 }
