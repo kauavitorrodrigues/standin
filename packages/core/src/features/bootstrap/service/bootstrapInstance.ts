@@ -1,7 +1,4 @@
-import {
-    BootstrapInputInvalidError,
-    BootstrapInputSchema,
-} from "@standin/contracts";
+import { parseBootstrapInput } from "@standin/contracts";
 import type { BootstrapInput } from "@standin/contracts";
 import { OrganizationService } from "../../organizations";
 import { BootstrapRepository } from "../repository";
@@ -15,15 +12,8 @@ import { resolveAdmin } from "./utils/resolveAdmin";
 export const bootstrapInstance = async (
     input: BootstrapInput
 ): Promise<BootstrapInstanceResult> => {
-    const parsed = BootstrapInputSchema.safeParse(input);
-    if (!parsed.success) {
-        // The rule that broke and the field, never the value.
-        const [issue] = parsed.error.issues;
-        throw new BootstrapInputInvalidError(
-            `${String(issue.path[0] ?? "input")}: ${issue.message}`
-        );
-    }
-    const { organizationName } = parsed.data;
+    const data = parseBootstrapInput(input);
+    const { organizationName } = data;
 
     const steps: BootstrapStep[] = [];
 
@@ -32,7 +22,7 @@ export const bootstrapInstance = async (
         await BootstrapRepository.findFirstOrganization();
 
     const resolved = await resolveAdmin(
-        parsed.data,
+        data,
         existingAdmin,
         !!existingOrganization
     );

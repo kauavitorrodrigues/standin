@@ -1,7 +1,10 @@
 import { db, usersTable, and, eq, isNull } from "@standin/database";
 import { LibrarySeedAdminNotFoundError, USER_ROLES } from "@standin/contracts";
-import { AssetService, DEFAULT_LIBRARY_SEED } from "@standin/core";
-import { readLibraryFolder } from "./utils/readLibraryFolder";
+import {
+    AssetService,
+    DEFAULT_LIBRARY_SEED,
+    readLibraryFolder,
+} from "@standin/core";
 
 // Seeds the global library through the same services the HTTP endpoints use.
 // With a folder argument it reads `library.json` and its PNGs from there (see
