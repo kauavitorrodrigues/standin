@@ -1,3 +1,4 @@
+import type { Spec } from "@standin/authoring";
 import type {
     EditorOp,
     LibraryPalette,
@@ -7,6 +8,7 @@ import type {
 import type { RemoteArgs, RemoteTarget, ConfigStore } from "./config";
 import type { HttpTransport } from "./api";
 import type { CliFiles } from "./files";
+import type { ErrorIssue } from "./errors";
 
 export type MapValidateArgs = RemoteArgs & {
     spec: string;
@@ -76,3 +78,7 @@ export type MapSeams = {
     config: ConfigStore;
     http: HttpTransport;
 };
+
+// A spec text checked against the schema: the spec, or what is wrong in it.
+export type CheckSpecResult =
+    { ok: true; spec: Spec } | { ok: false; issues: ErrorIssue[] };

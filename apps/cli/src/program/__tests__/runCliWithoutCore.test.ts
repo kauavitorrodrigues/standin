@@ -8,6 +8,10 @@ import {
     buildPalette,
     buildRender,
 } from "../../testing/mapFixtures";
+import {
+    SEED_DRY_ANSWER,
+    buildContentFiles,
+} from "../../testing/contentFixtures";
 import { REMOTE_ENV } from "../../testing/runCliFake";
 import type { FakeOptions } from "../../types";
 import type { CliRuntime } from "../../types";
@@ -53,6 +57,14 @@ describe("runCli without the core", () => {
             ["map", "validate", "--help"],
             ["map", "apply", "--help"],
             ["library", "list", "--help"],
+            ["template", "--help"],
+            ["template", "create", "--help"],
+            ["template", "get", "--help"],
+            ["template", "list", "--help"],
+            ["template", "publish", "--help"],
+            ["content", "--help"],
+            ["content", "validate", "--help"],
+            ["content", "apply", "--help"],
             ["schema", "print", "--help"],
         ]) {
             const { runtime } = build();
@@ -73,7 +85,7 @@ describe("runCli without the core", () => {
     it("runs the remote commands without loading the core", async () => {
         const options: FakeOptions = {
             env: REMOTE_ENV,
-            files: { [SPEC_PATH]: VALID_SPEC },
+            files: { [SPEC_PATH]: VALID_SPEC, ...buildContentFiles() },
             routes: {
                 [`GET /maps/${MAP_ID}/render`]: {
                     status: 200,
@@ -109,12 +121,20 @@ describe("runCli without the core", () => {
                     status: 200,
                     body: { areas: [], total: 0 },
                 },
+                "GET /templates": { status: 200, body: { templates: [] } },
+                "POST /library/seed?dryRun=true": {
+                    status: 200,
+                    body: SEED_DRY_ANSWER,
+                },
             },
         };
         for (const argv of [
             ["map", "validate", SPEC_PATH, "--map", MAP_ID],
             ["map", "apply", SPEC_PATH, "--map", MAP_ID, "--dry-run"],
             ["library", "list"],
+            ["template", "list"],
+            ["content", "validate", "/content"],
+            ["content", "apply", "/content", "--dry-run"],
             ["schema", "print", "spec"],
             ["login", "--dry-run"],
             ["logout"],

@@ -16,9 +16,9 @@ export const createFetchTransport =
         const response: Response = await fetchImpl(request.url, {
             method: request.method,
             headers: request.headers,
-            body: request.body,
+            body: request.form ?? request.body,
             redirect: "manual",
-            signal: AbortSignal.timeout(timeoutMs),
+            signal: AbortSignal.timeout(request.timeoutMs ?? timeoutMs),
         });
         const result: HttpResponse = {
             status: response.status,

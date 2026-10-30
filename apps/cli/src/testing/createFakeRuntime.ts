@@ -12,6 +12,7 @@ export const createFakeRuntime = ({
     services = {},
     routes = {},
     files = {},
+    links = {},
     saved,
 }: FakeOptions = {}) => {
     const written = { out: "", err: "" };
@@ -37,6 +38,7 @@ export const createFakeRuntime = ({
         ...services,
     };
     const fakeHttp = createFakeHttp(routes);
+    const fakeFiles = createFakeFiles(files, links);
     const fakeConfig = createMemoryConfigStore(saved);
     const runtime: CliRuntime = {
         env,
@@ -44,7 +46,7 @@ export const createFakeRuntime = ({
         services: fakeServices,
         http: fakeHttp.transport,
         config: fakeConfig.store,
-        files: createFakeFiles(files),
+        files: fakeFiles,
     };
     return {
         runtime,
@@ -53,5 +55,6 @@ export const createFakeRuntime = ({
         services: fakeServices,
         requests: fakeHttp.requests,
         config: fakeConfig,
+        files: fakeFiles,
     };
 };

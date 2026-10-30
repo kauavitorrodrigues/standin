@@ -1,6 +1,7 @@
 export * from "./api";
 export * from "./bootstrap";
 export * from "./config";
+export * from "./content";
 export * from "./errors";
 export * from "./files";
 export * from "./health";
@@ -9,5 +10,7 @@ export * from "./map";
 export * from "./runtime";
 export * from "./schema";
 export * from "./seedLibrary";
+export * from "./steps";
+export * from "./template";
 export * from "./testing";
 export * from "./token";

@@ -1,4 +1,11 @@
+// A read, and the default of a call.
 export const API_TIMEOUT_MS: number = 30_000;
+// A write that sends no files: the server may take the lock of a map.
+export const WRITE_TIMEOUT_MS: number = 60_000;
+// The thumbnail of a template: one PNG of at most 3 MB.
+export const THUMBNAIL_TIMEOUT_MS: number = 120_000;
+// The library seed: up to 64 MB, decoded and stored by the server.
+export const UPLOAD_TIMEOUT_MS: number = 300_000;
 export const API_USER_AGENT: string = "standin-cli";
 export const JSON_CONTENT_TYPE: string = "application/json";
 export const HTTP_PROTOCOL: string = "http:";

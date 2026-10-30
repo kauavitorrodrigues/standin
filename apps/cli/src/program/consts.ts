@@ -1,5 +1,5 @@
 export const PROGRAM_DESCRIPTION =
-    "Operate a Standin instance from the shell. bootstrap, seed, health and token run where the instance is hosted and read its .env. login, logout, map, library and schema work through the API with a service token.";
+    "Operate a Standin instance from the shell. bootstrap, seed, health and token run where the instance is hosted and read its .env. login, logout, map, library, template and content apply work through the API with a service token. content validate and schema print need no network.";
 
 export const PROGRAM_HELP = `
 Exit codes:
@@ -11,7 +11,7 @@ With --json the only thing on stdout is one JSON document:
   {"ok":true,"command":"...","result":{...}}
   {"ok":false,"error":{"code":"...","message":"...","fix":"..."}}
 
-Remote commands (map, library) find the instance with --url/--token, then
+Remote commands (map, library, template, content apply) find the instance with --url/--token, then
 STANDIN_URL/STANDIN_TOKEN, then the file written by \`standin login\`.
 
 Values missing from the flags are read from the environment. Only a terminal
@@ -29,5 +29,9 @@ Examples:
   pnpm -s standin map validate ./office.yaml --map <map-id>
   pnpm -s standin map apply ./office.yaml --map <map-id> --dry-run
   pnpm -s standin library list
+  pnpm -s standin template create "Open office" --spec ./open-office.yaml --thumbnail ./open-office.png --dry-run
+  pnpm -s standin template list --size-tier S
+  pnpm -s standin content validate ./content
+  pnpm -s standin content apply ./content --dry-run
   pnpm -s standin schema print spec
   pnpm -s standin bootstrap --help`;
