@@ -57,6 +57,11 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       ADMIN_NAME: ${ADMIN_NAME:-}
       ORGANIZATION_NAME: ${ORGANIZATION_NAME:-}
+      # The initial value of the global settings, read only while the instance
+      # has none saved. Empty keeps everything open.
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP:-}
+      ALLOW_ORGANIZATION_CREATION: ${ALLOW_ORGANIZATION_CREATION:-}
+      ALLOW_SPACE_CREATION: ${ALLOW_SPACE_CREATION:-}
     ports:
       # One port for all media, over UDP first and TCP as the fallback.
       - "${MEDIA_LISTEN_PORT:-44444}:${MEDIA_LISTEN_PORT:-44444}/udp"
