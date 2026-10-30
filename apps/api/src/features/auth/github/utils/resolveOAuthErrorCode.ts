@@ -1,4 +1,8 @@
-import { BaseError, OAUTH_ERROR_CODES } from "@standin/contracts";
+import {
+    BaseError,
+    OAUTH_ERROR_CODES,
+    SignupClosedError,
+} from "@standin/contracts";
 
 const KNOWN_CODES: string[] = Object.values(OAUTH_ERROR_CODES);
 
@@ -8,6 +12,9 @@ const KNOWN_CODES: string[] = Object.values(OAUTH_ERROR_CODES);
  * generic code, so no internal message or provider message leaves the server.
  */
 export const resolveOAuthErrorCode = (error: unknown): string => {
+    if (error instanceof SignupClosedError)
+        return OAUTH_ERROR_CODES.SIGNUP_CLOSED;
+
     if (error instanceof BaseError && KNOWN_CODES.includes(error.code)) {
         return error.code;
     }

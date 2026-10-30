@@ -21,3 +21,4 @@ export const OrganizationService = {
 };
 
 export * from "./members";
+export { OrganizationInviteService } from "./invite-links";

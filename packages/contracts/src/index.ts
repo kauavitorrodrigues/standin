@@ -14,3 +14,4 @@ export * from "./avatar";
 export * from "./media";
 export * from "./health";
 export * from "./service-tokens";
+export * from "./global-settings";

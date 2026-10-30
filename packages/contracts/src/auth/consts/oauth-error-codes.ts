@@ -7,4 +7,5 @@ export const OAUTH_ERROR_CODES = {
     EXCHANGE_FAILED: "oauth_exchange_failed",
     SIGN_IN_FAILED: "oauth_sign_in_failed",
     PROVIDER_DISABLED: "oauth_provider_disabled",
+    SIGNUP_CLOSED: "signup_closed",
 } as const;

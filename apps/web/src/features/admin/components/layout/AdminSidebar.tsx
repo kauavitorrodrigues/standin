@@ -1,6 +1,7 @@
 import {
     BoxIcon,
     Grid2x2Icon,
+    SettingsIcon,
     KeyRoundIcon,
     LayoutGridIcon,
     MapIcon,
@@ -86,6 +87,11 @@ export const AdminSidebar = () => {
                 to="/admin/service-tokens"
                 icon={KeyRoundIcon}
                 label="Tokens de serviço"
+            />
+            <SectionSidebarLink
+                to="/admin/global-settings"
+                icon={SettingsIcon}
+                label="Configurações globais"
             />
         </SectionSidebar>
     );

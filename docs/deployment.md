@@ -42,30 +42,43 @@ HTTPS is not optional: browsers only allow the microphone, the camera and screen
 - The container runs the command on start only when **both** `ADMIN_EMAIL` and `ADMIN_PASSWORD` are set, so a generated password never ends up in the container logs. To get a generated password, run the command by hand as in step 5 without setting `ADMIN_PASSWORD`.
 - Once the admin exists you can remove `ADMIN_PASSWORD` from `.env`.
 
+## Who can use the instance
+
+By default anyone who finds the URL can sign up, create organizations and create spaces. The admin closes any of these in the app, under **Administração > Configurações globais**, and the change applies at once, with no restart:
+
+- **Sign up** off: nobody creates an account on their own. Existing people (and the admin) keep signing in, and the sign up page says it is closed. This includes signing in with GitHub for the first time.
+- **Organization creation** off and **space creation** off: only the admin creates them. The buttons disappear for everyone else and the API answers 403 (`ORGANIZATION_CREATION_BLOCKED`, `SPACE_CREATION_BLOCKED`).
+- A closed sign up answers 403 `SIGNUP_CLOSED`.
+
+To bring people in while sign up is closed, the owner of an organization (or the admin) opens the organization menu, **Convidar pessoas**, and copies a link. Whoever opens it creates an account that goes straight into that organization, as a member (never an admin). A link lasts a week by default, can be closed at any time, and can have a limit of uses.
+
+To start a fresh server already closed, set `ALLOW_SIGNUP`, `ALLOW_ORGANIZATION_CREATION` and `ALLOW_SPACE_CREATION` in `.env` (`false` turns one off). They are only read the first time the API runs on an empty database: after that the value saved in the database wins and changing `.env` does nothing. Run the bootstrap (see [First admin](#first-admin)) so there is an admin to change them later.
+
 ## Health checks
 
 The API answers `GET /health` with no session, rate limited to 120 requests a minute per address. The body is `{"status": "ok" | "degraded" | "down", "timestamp": "<ISO date>", "responseTimeMs": <number>}`. The database is checked with a 2 second limit: `ok` when it answers within 500 ms, `degraded` when it answers slower, `down` when it fails or times out. `ok` and `degraded` answer HTTP 200 and `down` answers 503. The body never says why a check failed. Through the proxy it is `/api/health`. `compose.yml` uses it as the healthcheck of `app` (the migrations run inside its start period) and the `proxy` waits for a healthy `app` before it starts. The `proxy` check asks the admin endpoint Caddy keeps inside its container. `docker compose ps` shows the state of each.
 
 ## Environment variables
 
-| Variable                                                           | Meaning                                                                                             |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`                | The database container. `POSTGRES_PORT` is only the port it shows on the host of a dev machine      |
-| `DATABASE_URL`, `DATABASE_POOL_MAX`                                | The database. The compose file builds the URL from the `POSTGRES_*` values. The pool defaults to 20 |
-| `DB_QUERY_COUNT`                                                   | `1` logs the queries sent per join (see [performance](performance.md)). Leave it `0` in production  |
-| `SERVER_PORT`, `SERVER_URL`, `FRONTEND_URL`, `JWT_SECRET`          | The API                                                                                             |
-| `STORAGE_DRIVER`, `S3_*`                                           | Where uploads go, see the [storage guide](storage.md)                                               |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ORGANIZATION_NAME` | The first admin and organization, see [First admin](#first-admin)                                   |
-| `SITE_ADDRESS`                                                     | The domain Caddy serves                                                                             |
-| `APP_COMMIT`, `APP_COMMIT_TIME`                                    | Build arguments that show the commit in the settings of the app (step 4 above)                      |
-| `MEDIA_WORKERS`                                                    | `1` (default) runs the media server, `0` turns it off. One worker serves the whole process          |
-| `MEDIA_LISTEN_IP`                                                  | The address the media port listens on (`0.0.0.0`)                                                   |
-| `MEDIA_LISTEN_PORT`                                                | The one port for all media, over UDP and TCP (default `44444`)                                      |
-| `MEDIA_ANNOUNCED_ADDRESS`                                          | The public address clients send media to. Required behind a NAT, and on a laptop use `127.0.0.1`    |
-| `TURN_HOST`, `TURN_SECRET`, `TURN_PORT`, `TURN_TTL_SECONDS`        | The optional relay (see below). Off while `TURN_HOST` and `TURN_SECRET` are empty                   |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`  | Sign in with GitHub, see the [guide](github-login.md). Off while empty                              |
-| `VITE_BASE_API_URL`                                                | Read when the web is built. The image sets it to `/api`                                             |
-| `INTEGRATION_DATABASE_URL`                                         | Tests only. Never set it on a server                                                                |
+| Variable                                                              | Meaning                                                                                                  |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`                   | The database container. `POSTGRES_PORT` is only the port it shows on the host of a dev machine           |
+| `DATABASE_URL`, `DATABASE_POOL_MAX`                                   | The database. The compose file builds the URL from the `POSTGRES_*` values. The pool defaults to 20      |
+| `DB_QUERY_COUNT`                                                      | `1` logs the queries sent per join (see [performance](performance.md)). Leave it `0` in production       |
+| `SERVER_PORT`, `SERVER_URL`, `FRONTEND_URL`, `JWT_SECRET`             | The API                                                                                                  |
+| `STORAGE_DRIVER`, `S3_*`                                              | Where uploads go, see the [storage guide](storage.md)                                                    |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ORGANIZATION_NAME`    | The first admin and organization, see [First admin](#first-admin)                                        |
+| `ALLOW_SIGNUP`, `ALLOW_ORGANIZATION_CREATION`, `ALLOW_SPACE_CREATION` | The initial global settings, see [Who can use the instance](#who-can-use-the-instance). Open while empty |
+| `SITE_ADDRESS`                                                        | The domain Caddy serves                                                                                  |
+| `APP_COMMIT`, `APP_COMMIT_TIME`                                       | Build arguments that show the commit in the settings of the app (step 4 above)                           |
+| `MEDIA_WORKERS`                                                       | `1` (default) runs the media server, `0` turns it off. One worker serves the whole process               |
+| `MEDIA_LISTEN_IP`                                                     | The address the media port listens on (`0.0.0.0`)                                                        |
+| `MEDIA_LISTEN_PORT`                                                   | The one port for all media, over UDP and TCP (default `44444`)                                           |
+| `MEDIA_ANNOUNCED_ADDRESS`                                             | The public address clients send media to. Required behind a NAT, and on a laptop use `127.0.0.1`         |
+| `TURN_HOST`, `TURN_SECRET`, `TURN_PORT`, `TURN_TTL_SECONDS`           | The optional relay (see below). Off while `TURN_HOST` and `TURN_SECRET` are empty                        |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`     | Sign in with GitHub, see the [guide](github-login.md). Off while empty                                   |
+| `VITE_BASE_API_URL`                                                   | Read when the web is built. The image sets it to `/api`                                                  |
+| `INTEGRATION_DATABASE_URL`                                            | Tests only. Never set it on a server                                                                     |
 
 All of them are in `.env.example` with a comment.
 

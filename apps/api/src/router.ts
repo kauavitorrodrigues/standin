@@ -17,6 +17,11 @@ import {
     libraryWriteRouter,
 } from "./features/library/routes";
 import { RequiresLibraryAdmin } from "./features/library/middleware/requiresLibraryAdmin";
+import {
+    globalSettingsAdminRouter,
+    globalSettingsPublicRouter,
+} from "./features/global-settings/routes";
+import { organizationInvitePreviewRouter } from "./features/organizations/invite-links/routes";
 import { serviceTokensRouter } from "./features/service-tokens/routes";
 import {
     mapApplyRouter,
@@ -51,6 +56,9 @@ router.use("/users/me/avatar", myAvatarRouter);
 router.use("/users/me/guest-spaces", RequiresAuth, guestSpacesAccessRouter);
 router.use("/users", usersRouter);
 router.use("/organizations", organizationsRouter);
+// Open: the sign up page of an organization link, and the switches it reads.
+router.use("/organization-invites", organizationInvitePreviewRouter);
+router.use("/global-settings", globalSettingsPublicRouter);
 router.use("/ice-servers", iceRouter);
 router.use("/files", filesRouter);
 
@@ -96,6 +104,9 @@ router.use("/library", libraryReadRouter);
 // Seeding it accepts a token with library:write.
 router.use("/library", libraryWriteRouter);
 router.use("/library", RequiresAuth, RequiresLibraryAdmin, libraryRouter);
+
+// Admin session only: who may use the instance, and its people.
+router.use("/admin", RequiresAuth, globalSettingsAdminRouter);
 
 // Admin session only: the tokens of tools and agents.
 router.use("/service-tokens", RequiresAuth, serviceTokensRouter);

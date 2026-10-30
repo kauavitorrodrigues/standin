@@ -12,6 +12,8 @@ export const getOAuthErrorMessage = (code: string): string => {
             return OAUTH_ERROR_MESSAGES.EMAIL_UNVERIFIED;
         case OAUTH_ERROR_CODES.EXCHANGE_FAILED:
             return OAUTH_ERROR_MESSAGES.EXCHANGE_FAILED;
+        case OAUTH_ERROR_CODES.SIGNUP_CLOSED:
+            return OAUTH_ERROR_MESSAGES.SIGNUP_CLOSED;
         default:
             return OAUTH_ERROR_MESSAGES.FALLBACK;
     }

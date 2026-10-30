@@ -10,9 +10,27 @@ import {
 } from "@standin/contracts";
 import { TextFormField } from "@/components/fields/TextFormField";
 import { Button } from "@/components/ui/button";
+import { getApiError } from "@/features/assets/utils/getApiError";
+import { SIGN_UP_ERROR_MESSAGES } from "../../consts/messages";
 import { useSignUp } from "../../mutations/signUp";
 
-export function SignUpForm() {
+type Props = {
+    // The token of an organization link: it lets the person in even when sign up
+    // is closed, and puts them in that organization.
+    inviteToken?: string;
+};
+
+const getSignUpErrorMessage = (error: unknown): string => {
+    const code = getApiError(error).code;
+    if (code && code in SIGN_UP_ERROR_MESSAGES) {
+        return SIGN_UP_ERROR_MESSAGES[
+            code as keyof typeof SIGN_UP_ERROR_MESSAGES
+        ];
+    }
+    return SIGN_UP_ERROR_MESSAGES.FALLBACK;
+};
+
+export function SignUpForm({ inviteToken }: Props) {
     const navigate = useNavigate();
     const signUpMutation = useSignUp();
 
@@ -22,9 +40,12 @@ export function SignUpForm() {
     });
 
     const onSubmit = async (data: UserDataSchemaType) => {
-        await signUpMutation.mutateAsync(data, {
-            onSuccess: () => navigate({ to: "/home" }),
-        });
+        await signUpMutation.mutateAsync(
+            { ...data, inviteToken },
+            {
+                onSuccess: () => navigate({ to: "/home" }),
+            }
+        );
     };
 
     const isPending = signUpMutation.isPending;
@@ -65,7 +86,7 @@ export function SignUpForm() {
             />
             {signUpMutation.isError && (
                 <p className="text-sm text-destructive">
-                    Não foi possível criar sua conta. Tente novamente.
+                    {getSignUpErrorMessage(signUpMutation.error)}
                 </p>
             )}
             <Button type="submit" size="lg" disabled={isPending}>
