@@ -1,6 +1,8 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
+import { RequiresAuth } from "@/middlewares/requiresAuth";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { LibraryController } from "./controllers";
+import { RequiresLibraryAdmin } from "./middleware/requiresLibraryAdmin";
 import {
     handleLibraryUploadError,
     uploadLibraryParts,
@@ -10,6 +12,8 @@ import {
 // owner of an organization on its own. The mount decides the scope (see
 // `RequiresLibraryAdmin` and `RequiresLibraryOwner`), so both share these
 // routes. Reading it for a map goes through the maps routes.
+// On `/library` its GETs are answered first by `libraryReadRouter` below
+// (they accept a service token); here they serve the organization mount.
 const router = Router();
 
 router.get(
@@ -154,4 +158,56 @@ router.delete(
     LibraryController.areas.remove
 );
 
+// WARNING: every route on this router must carry RequiresAuth.scoped, because
+// it is mounted ahead of the session-only RequiresAuth and nothing else guards
+// it. Never add a route here without it.
+// The reads of the global library a service token may call with the
+// library:read scope. A token acts as the admin who issued it, so it goes
+// through the same admin and permission checks as a session: a token whose
+// owner is no longer an admin is refused. Writes are not here.
+const readRouter = Router();
+
+// Given per route, never with `readRouter.use`: a use would answer 401 for
+// the paths this router does not have, instead of letting them fall through.
+const LIBRARY_READ_GUARDS: RequestHandler[] = [
+    RequiresAuth.scoped("library:read"),
+    RequiresLibraryAdmin,
+    RequiresPermission("read", "asset"),
+];
+
+readRouter.get("/overview", ...LIBRARY_READ_GUARDS, LibraryController.overview);
+readRouter.get("/palette", ...LIBRARY_READ_GUARDS, LibraryController.palette);
+readRouter.get(
+    "/tilesets",
+    ...LIBRARY_READ_GUARDS,
+    LibraryController.tilesets.list
+);
+readRouter.get(
+    "/tilesets/:tilesetId",
+    ...LIBRARY_READ_GUARDS,
+    LibraryController.tilesets.details
+);
+readRouter.get(
+    "/assets",
+    ...LIBRARY_READ_GUARDS,
+    LibraryController.assets.list
+);
+readRouter.get(
+    "/assets/facets",
+    ...LIBRARY_READ_GUARDS,
+    LibraryController.assets.facets
+);
+readRouter.get(
+    "/assets/:assetId",
+    ...LIBRARY_READ_GUARDS,
+    LibraryController.assets.details
+);
+readRouter.get("/areas", ...LIBRARY_READ_GUARDS, LibraryController.areas.list);
+readRouter.get(
+    "/areas/:areaId",
+    ...LIBRARY_READ_GUARDS,
+    LibraryController.areas.details
+);
+
 export const libraryRouter = router;
+export const libraryReadRouter = readRouter;

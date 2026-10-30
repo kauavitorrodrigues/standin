@@ -1,27 +1,55 @@
 import { LayoutTemplateIcon, LibraryIcon, MapIcon } from "lucide-react";
-import type { ServiceTokenScope } from "@standin/contracts";
-import type { ServiceTokenScopeMeta } from "../types";
-
-// What each scope is called and what it lets a service do. A new scope in
-// the contracts needs one entry here, and the form and the list pick it up.
-export const SERVICE_TOKEN_SCOPE_META: Record<
+import type {
     ServiceTokenScope,
-    ServiceTokenScopeMeta
+    ServiceTokenScopeAction,
+    ServiceTokenScopeResource,
+} from "@standin/contracts";
+import type { ServiceTokenResourceMeta } from "../types";
+
+// What each resource is called and holds. A new resource in the contracts
+// needs one entry here, and the matrix picks it up as a row.
+export const SERVICE_TOKEN_RESOURCE_META: Record<
+    ServiceTokenScopeResource,
+    ServiceTokenResourceMeta
 > = {
-    "library:write": {
+    library: {
         label: "Biblioteca",
-        description:
-            "Cadastra e atualiza recursos, tilesets, áreas e peças de avatar.",
+        description: "Recursos, tilesets, áreas e peças de avatar",
         icon: LibraryIcon,
     },
-    "maps:write": {
+    maps: {
         label: "Mapas",
-        description: "Aplica alterações nos mapas já publicados.",
+        description: "Os mapas dos espaços, para ler e aplicar alterações",
         icon: MapIcon,
     },
-    "templates:write": {
+    templates: {
         label: "Modelos de mapa",
-        description: "Cria e atualiza os modelos de mapa.",
+        description: "Os modelos de mapa do catálogo",
         icon: LayoutTemplateIcon,
     },
 };
+
+// The name of each action as a column, and as a verb in a description.
+export const SERVICE_TOKEN_ACTION_LABELS: Record<
+    ServiceTokenScopeAction,
+    string
+> = {
+    read: "Leitura",
+    write: "Escrita",
+};
+
+export const SERVICE_TOKEN_ACTION_VERBS: Record<
+    ServiceTokenScopeAction,
+    string
+> = {
+    read: "Consultar",
+    write: "Alterar",
+};
+
+// The scopes no route accepts yet. They can be given to a token, but they
+// do nothing until the route exists.
+export const SERVICE_TOKEN_PENDING_SCOPES: readonly ServiceTokenScope[] = [
+    "library:write",
+    "templates:read",
+    "templates:write",
+];

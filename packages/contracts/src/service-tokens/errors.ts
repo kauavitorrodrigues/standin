@@ -23,6 +23,18 @@ export class ServiceTokenExpiredError extends BaseError {
     }
 }
 
+// The admin who issued the token was demoted or removed, and a token only
+// acts as an active admin.
+export class ServiceTokenOwnerInvalidError extends BaseError {
+    constructor() {
+        super(
+            "The admin who issued this token is no longer an active admin. Create a new token with an active admin.",
+            "SERVICE_TOKEN_OWNER_INVALID",
+            401
+        );
+    }
+}
+
 // The token is valid but was not given the scope the route needs.
 export class ServiceTokenScopeError extends BaseError {
     constructor(scope: string) {

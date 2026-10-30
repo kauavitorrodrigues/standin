@@ -53,12 +53,15 @@ export const SERVICE_TOKEN_CREATE_TEXT = {
 export const SERVICE_TOKEN_SCOPES_TEXT = {
     LEGEND: "Permissões",
     RESOURCE: "Recurso",
-    PERMISSION: "Escrita",
+    ONLY_READ: "Somente leitura",
+    ALL: "Tudo",
     CLEAR: "Limpar",
-    presetsLabel: "Atalhos de permissões",
+    PENDING_HINT: "(em breve)",
+    EMPTY_CELL: "–",
     count: (selected: number, total: number) =>
         `${selected} de ${total} permissões`,
-    rowLabel: (label: string) => `Permitir escrita em ${label}`,
+    columnLabel: (label: string) => `${label} em todos os recursos`,
+    rowLabel: (label: string) => `Todas as permissões de ${label}`,
 } as const;
 
 export const SERVICE_TOKEN_EXPIRY_TEXT = {

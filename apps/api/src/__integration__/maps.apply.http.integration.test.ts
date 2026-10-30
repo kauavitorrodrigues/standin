@@ -583,23 +583,28 @@ describe.skipIf(!enabled)("apply over HTTP (real stack)", () => {
     });
 
     describe("what a token cannot reach", () => {
+        // The reads take a token too, but only with maps:read: the write scope
+        // of this token does not reach them.
         it.each([
-            ["GET", "/export"],
-            ["GET", "/render"],
-            ["GET", "/library"],
-            ["GET", "/lock"],
-        ])("refuses it on %s /maps/:mapId%s", async (method, suffix) => {
-            const { mapId } = await newSpace();
-            const { token } = await issue();
+            ["GET", "/export", 403],
+            ["GET", "/render", 403],
+            ["GET", "/library", 403],
+            ["GET", "/lock", 401],
+        ])(
+            "refuses it on %s /maps/:mapId%s",
+            async (method, suffix, status) => {
+                const { mapId } = await newSpace();
+                const { token } = await issue();
 
-            const response = await call(
-                { bearer: token },
-                method,
-                `/maps/${mapId}${suffix}`
-            );
+                const response = await call(
+                    { bearer: token },
+                    method,
+                    `/maps/${mapId}${suffix}`
+                );
 
-            expect(response.status).toBe(401);
-        });
+                expect(response.status).toBe(status);
+            }
+        );
 
         it("refuses it on publish and on the assets routes", async () => {
             const { mapId } = await newSpace();

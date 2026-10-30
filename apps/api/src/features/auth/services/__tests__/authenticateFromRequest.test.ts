@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ServiceTokenExpiredError } from "@standin/contracts";
+import {
+    ServiceTokenExpiredError,
+    ServiceTokenOwnerInvalidError,
+} from "@standin/contracts";
 
 const mocks = vi.hoisted(() => ({
     authenticateToken: vi.fn(),
@@ -101,15 +104,15 @@ describe("authenticateFromRequest", () => {
         expect(user).toBe(false);
     });
 
-    it("is false when the creator no longer exists", async () => {
+    it("refuses when the creator no longer exists", async () => {
         mocks.authenticateToken.mockResolvedValue({ createdById: "gone" });
         mocks.findById.mockResolvedValue(null);
 
-        const user = await authenticateFromRequest(request("Bearer sit_abc"), {
-            scope: "maps:write",
-        });
-
-        expect(user).toBe(false);
+        await expect(
+            authenticateFromRequest(request("Bearer sit_abc"), {
+                scope: "maps:write",
+            })
+        ).rejects.toBeInstanceOf(ServiceTokenOwnerInvalidError);
     });
 
     it("lets the reason of a refused token through", async () => {

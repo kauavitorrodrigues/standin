@@ -24,6 +24,15 @@ describe("hasScope", () => {
         expect(hasScope(["maps:write"], "maps:write")).toBe(true);
         expect(hasScope(["maps:write"], "library:write")).toBe(false);
     });
+
+    it("keeps read and write apart: one never grants the other", () => {
+        expect(hasScope(["maps:write"], "maps:read")).toBe(false);
+        expect(hasScope(["library:write"], "library:read")).toBe(false);
+        expect(hasScope(["templates:write"], "templates:read")).toBe(false);
+        expect(hasScope(["maps:read"], "maps:write")).toBe(false);
+        expect(hasScope(["library:read"], "library:write")).toBe(false);
+        expect(hasScope(["templates:read"], "templates:write")).toBe(false);
+    });
 });
 
 describe("shouldTouchLastUsed", () => {
