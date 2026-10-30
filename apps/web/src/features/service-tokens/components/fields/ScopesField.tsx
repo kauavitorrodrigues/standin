@@ -1,17 +1,15 @@
 import { Controller, type Control } from "react-hook-form";
-import { SERVICE_TOKEN_SCOPES } from "@standin/contracts";
 import { FieldError, FieldLegend, FieldSet } from "@/components/ui/field";
 import { SERVICE_TOKEN_SCOPES_TEXT } from "../../consts/messages";
 import type { CreateTokenFormValues } from "../../types";
-import { ScopePresetBar } from "../views/ScopePresetBar";
-import { ScopesTable } from "../views/ScopesTable";
+import { ScopesMatrix } from "../views/ScopesMatrix";
 
 type Props = {
     control: Control<CreateTokenFormValues>;
     disabled?: boolean;
 };
 
-// The permissions of the token: shortcuts on top, the table below.
+// The permissions of the token: the matrix with its shortcut buttons.
 export const ScopesField = ({ control, disabled }: Props) => (
     <Controller
         control={control}
@@ -21,13 +19,7 @@ export const ScopesField = ({ control, disabled }: Props) => (
                 <FieldLegend variant="label">
                     {SERVICE_TOKEN_SCOPES_TEXT.LEGEND}
                 </FieldLegend>
-                <ScopePresetBar
-                    value={field.value}
-                    total={SERVICE_TOKEN_SCOPES.length}
-                    onChange={field.onChange}
-                    disabled={disabled}
-                />
-                <ScopesTable
+                <ScopesMatrix
                     value={field.value}
                     onChange={field.onChange}
                     disabled={disabled}

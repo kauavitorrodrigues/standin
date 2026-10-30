@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SERVICE_TOKEN_SCOPES } from "../consts";
 import { ServiceTokenCreateSchema } from "../schemas";
 
 const future = () => new Date(Date.now() + 86_400_000).toISOString();
@@ -14,6 +15,23 @@ describe("ServiceTokenCreateSchema", () => {
         expect(result.data).toEqual({ name: "CI", scopes: ["maps:write"] });
     });
 
+    it("accepts each read scope on its own", () => {
+        for (const scope of ["library:read", "maps:read", "templates:read"]) {
+            const result = ServiceTokenCreateSchema.safeParse({
+                name: "CI",
+                scopes: [scope],
+            });
+            expect(result.success).toBe(true);
+        }
+    });
+
+    it("lists a read and a write scope for every resource", () => {
+        for (const resource of ["library", "maps", "templates"]) {
+            expect(SERVICE_TOKEN_SCOPES).toContain(`${resource}:read`);
+            expect(SERVICE_TOKEN_SCOPES).toContain(`${resource}:write`);
+        }
+    });
+
     it("turns a future expiry into a date", () => {
         const result = ServiceTokenCreateSchema.safeParse({
             name: "CI",
@@ -27,6 +45,7 @@ describe("ServiceTokenCreateSchema", () => {
     it.each([
         ["no scopes", { name: "CI", scopes: [] }],
         ["an unknown scope", { name: "CI", scopes: ["tokens:admin"] }],
+        ["a scope with an unknown action", { name: "CI", scopes: ["maps:*"] }],
         ["an empty name", { name: " ", scopes: ["maps:write"] }],
         [
             "an expiry in the past",

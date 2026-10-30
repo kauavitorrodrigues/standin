@@ -7,10 +7,14 @@ import { healthRouter } from "./features/health/routes";
 import { iceRouter } from "./features/ice/routes";
 import { templatesRouter } from "./features/maps/templates/routes";
 import { TemplateController } from "./features/maps/templates/controllers";
-import { libraryRouter } from "./features/library/routes";
+import { libraryReadRouter, libraryRouter } from "./features/library/routes";
 import { RequiresLibraryAdmin } from "./features/library/middleware/requiresLibraryAdmin";
 import { serviceTokensRouter } from "./features/service-tokens/routes";
-import { mapApplyRouter, mapsRouter } from "./features/maps/routes";
+import {
+    mapApplyRouter,
+    mapReadRouter,
+    mapsRouter,
+} from "./features/maps/routes";
 import { desksRouter } from "./features/desks/routes";
 import {
     guestSpacesAccessRouter,
@@ -74,6 +78,9 @@ router.use(
     RequiresLibraryAdmin,
     avatarBasesRouter
 );
+// Reading the global library accepts a service token with the library:read
+// scope. It must come before the session-only library router below.
+router.use("/library", libraryReadRouter);
 router.use("/library", RequiresAuth, RequiresLibraryAdmin, libraryRouter);
 
 // Admin session only: the tokens of tools and agents.
@@ -85,6 +92,9 @@ router.use("/avatar", avatarCatalogRouter);
 // Applying ops to a map accepts a service token with the maps:write scope. It
 // must come before the session-only maps router below.
 router.use("/maps", mapApplyRouter);
+// Reading a map (render, palette, export) accepts a service token with the
+// maps:read scope. Also before the session-only maps router.
+router.use("/maps", mapReadRouter);
 
 // Reading and editing maps, and the desks of a space.
 router.use("/maps", RequiresAuth, mapsRouter);

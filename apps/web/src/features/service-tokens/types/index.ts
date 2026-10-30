@@ -1,21 +1,42 @@
 import type { LucideIcon } from "lucide-react";
-import type { ServiceTokenScope } from "@standin/contracts";
+import type {
+    ServiceTokenScope,
+    ServiceTokenScopeAction,
+    ServiceTokenScopeResource,
+} from "@standin/contracts";
 
 export type ServiceTokenStatus = "active" | "expired" | "revoked";
 
-// A resource a token may write to: how the form and the list show it.
+// A resource of the matrix: how the form shows its row.
+export type ServiceTokenResourceMeta = {
+    label: string;
+    description: string;
+    icon: LucideIcon;
+};
+
+// A scope a token may have: how the list and the cell of the matrix name it.
 export type ServiceTokenScopeMeta = {
     label: string;
     description: string;
     icon: LucideIcon;
 };
 
-// A shortcut of the permissions table that selects a fixed set of scopes.
-export type ServiceTokenScopePreset = {
-    id: string;
+// A row of the permissions matrix: one resource with its scopes.
+export type ServiceTokenScopeGroup = ServiceTokenResourceMeta & {
+    resource: ServiceTokenScopeResource;
+    scopes: ServiceTokenScope[];
+};
+
+// A column of the permissions matrix: one action.
+export type ServiceTokenScopeColumn = {
+    action: ServiceTokenScopeAction;
     label: string;
-    icon: LucideIcon;
-    scopes: readonly ServiceTokenScope[];
+};
+
+// What a checkbox of the matrix shows for a set of scopes.
+export type ServiceTokenScopeCheckedState = {
+    checked: boolean;
+    indeterminate: boolean;
 };
 
 export type ExpiryOptionId = "never" | "30d" | "90d" | "1y" | "custom";

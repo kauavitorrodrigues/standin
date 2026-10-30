@@ -11,7 +11,8 @@ const scopeQuerySchema = z.object({
 
 /**
  * The global library is written by the admin. The role comes from the
- * database on every request. The scope is never chosen by the client: an
+ * user cache (30s TTL, not invalidated when a role changes), so a demotion
+ * takes up to that long to apply. The scope is never chosen by the client: an
  * `organizationId` is refused with 403 `SCOPE_FORBIDDEN`, since the library of
  * an organization has its own mount (see `RequiresLibraryOwner`).
  */

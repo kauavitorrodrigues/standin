@@ -11,25 +11,6 @@ import { MapController } from "./controllers";
 // What is left is reading and editing them.
 const router = Router();
 
-// The one map route a guest of the space may call: the render, to see the map.
-router.get(
-    "/:mapId/render",
-    RequiresMapAccess(MAP_ACCESS_MODES.VIEW),
-    MapController.render
-);
-router.get(
-    "/:mapId/export",
-    RequiresMapAccess(MAP_ACCESS_MODES.READ),
-    MapController.export
-);
-
-// The palette of the editor, for whoever can read the map.
-router.get(
-    "/:mapId/library",
-    RequiresMapAccess(MAP_ACCESS_MODES.READ),
-    MapController.library
-);
-
 // The stamp of one area to place, for whoever can read the map.
 router.get(
     "/:mapId/areas/:areaId",
@@ -79,11 +60,11 @@ router.delete(
 // WARNING: every route on this router must carry RequiresAuth.scoped, because
 // it is mounted ahead of the session-only RequiresAuth and nothing else guards
 // it. Never add a route here without it.
-// The one map route a service token may call. It is mounted before the
-// session-only maps router (see router.ts), so a token reaches nothing else.
-// Reading is enough here: the service asks for canEdit. There is no lock
-// guard, because the service takes the lock itself and refuses with the
-// same 423 when an editor holds it.
+// The map write a service token may call (maps:write); its reads are on
+// readRouter below. It is mounted before the session-only maps router (see
+// router.ts). Reading is enough here: the service asks for canEdit. There is
+// no lock guard, because the service takes the lock itself and refuses with
+// the same 423 when an editor holds it.
 const applyRouter = Router();
 applyRouter.post(
     "/:mapId/apply",
@@ -93,5 +74,38 @@ applyRouter.post(
     MapController.apply
 );
 
+// WARNING: every route on this router must carry RequiresAuth.scoped, because
+// it is mounted ahead of the session-only RequiresAuth and nothing else guards
+// it. Never add a route here without it.
+// The map routes a service token may read with the maps:read scope. It is
+// mounted before the session-only maps router (see router.ts), so a token
+// reaches nothing else. A session passes too, with the same map access as
+// before. The map access follows the owner of the token, an admin, so
+// maps:read also reads the map of any template, not only the maps of spaces.
+const readRouter = Router();
+
+// The one map route a guest of the space may call: the render, to see the map.
+readRouter.get(
+    "/:mapId/render",
+    RequiresAuth.scoped("maps:read"),
+    RequiresMapAccess(MAP_ACCESS_MODES.VIEW),
+    MapController.render
+);
+readRouter.get(
+    "/:mapId/export",
+    RequiresAuth.scoped("maps:read"),
+    RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    MapController.export
+);
+
+// The palette of the editor, for whoever can read the map.
+readRouter.get(
+    "/:mapId/library",
+    RequiresAuth.scoped("maps:read"),
+    RequiresMapAccess(MAP_ACCESS_MODES.READ),
+    MapController.library
+);
+
 export const mapsRouter = router;
+export const mapReadRouter = readRouter;
 export const mapApplyRouter = applyRouter;

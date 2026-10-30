@@ -1,7 +1,15 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import express from "express";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "vitest";
 import {
     ServiceTokenRevokedError,
     ServiceTokenScopeError,
@@ -43,8 +51,7 @@ describe("RequiresAuth over a test router", () => {
 
     beforeAll(async () => {
         const app = express();
-        const whoami = (req: any, res: any) =>
-            res.json({ id: req.user.id });
+        const whoami = (req: any, res: any) => res.json({ id: req.user.id });
         app.get("/session", RequiresAuth, whoami);
         app.get("/scoped", RequiresAuth.scoped("maps:write"), whoami);
         server = http.createServer(app);
@@ -62,7 +69,10 @@ describe("RequiresAuth over a test router", () => {
         vi.resetAllMocks();
         vi.spyOn(console, "error").mockImplementation(() => {});
         UserCache.clear();
-        mocks.findById.mockImplementation(async (id: string) => ({ id }));
+        mocks.findById.mockImplementation(async (id: string) => ({
+            id,
+            role: "ADMIN",
+        }));
     });
 
     it("lets a session through both routes", async () => {
