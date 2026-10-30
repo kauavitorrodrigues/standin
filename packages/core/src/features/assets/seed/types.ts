@@ -80,6 +80,23 @@ export type LibrarySeed = {
     avatarParts?: SeedAvatarPart[];
 };
 
+// The PNGs of a library file by the path written in it.
+export type SeedImages = Map<string, Buffer>;
+
+// The text of library.json and its PNGs, as an upload carries them.
+export type LibrarySeedUpload = {
+    libraryText: string;
+    images: SeedImages;
+};
+
+export type SeedFromFilesOptions = { createdBy: string; dryRun?: boolean };
+
+// What a dry run reports: nothing was written, only the entries counted.
+export type LibrarySeedPreview = {
+    dryRun: true;
+    counts: Record<keyof LibrarySeedResult, number>;
+};
+
 export const SEED_ACTIONS = {
     CREATE: "create",
     UPDATE: "update",

@@ -1,7 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { LibrarySeedFileSchema } from "@standin/contracts";
-import type { LibrarySeed } from "./types";
+import type { LibrarySeed, SeedImages } from "./types";
+import { buildLibrarySeed } from "./utils/buildLibrarySeed";
+import { listSeedFilePaths } from "./utils/listSeedFilePaths";
 
 const LIBRARY_FILE = "library.json";
 
@@ -15,64 +17,13 @@ export const readLibraryFolder = async (
 ): Promise<LibrarySeed> => {
     const text = await readFile(path.join(folder, LIBRARY_FILE), "utf8");
     const parsed = LibrarySeedFileSchema.parse(JSON.parse(text));
-    const readImage = (file: string) => readFile(path.join(folder, file));
 
-    return {
-        tilesets: await Promise.all(
-            parsed.tilesets.map(async ({ file, ...tileset }) => ({
-                ...tileset,
-                image: await readImage(file),
-            }))
-        ),
-        assets: await Promise.all(
-            parsed.assets.map(async ({ file, variants, ...asset }) => ({
-                ...asset,
-                image: await readImage(file),
-                variants: await Promise.all(
-                    (variants ?? []).map(
-                        async ({ file: variantFile, ...variant }) => ({
-                            ...variant,
-                            image: await readImage(variantFile),
-                        })
-                    )
-                ),
-            }))
-        ),
-        bundles: parsed.bundles,
-        areas: await Promise.all(
-            parsed.areas.map(async ({ file, ...area }) => ({
-                ...area,
-                image: await readImage(file),
-            }))
-        ),
-        avatarBases: await Promise.all(
-            parsed.avatarBases.map(async ({ file, preview, ...base }) => ({
-                ...base,
-                image: await readImage(file),
-                preview: preview ? await readImage(preview) : undefined,
-            }))
-        ),
-        avatarParts: await Promise.all(
-            parsed.avatarParts.map(
-                async ({ file, preview, variations, ...part }) => ({
-                    ...part,
-                    image: await readImage(file),
-                    preview: await readImage(preview),
-                    variations: await Promise.all(
-                        (variations ?? []).map(
-                            async ({
-                                file: variationFile,
-                                preview: variationPreview,
-                                ...variation
-                            }) => ({
-                                ...variation,
-                                image: await readImage(variationFile),
-                                preview: await readImage(variationPreview),
-                            })
-                        )
-                    ),
-                })
-            )
-        ),
-    };
+    const images: SeedImages = new Map();
+    await Promise.all(
+        listSeedFilePaths(parsed).map(async (file) => {
+            images.set(file, await readFile(path.join(folder, file)));
+        })
+    );
+
+    return buildLibrarySeed(parsed, images);
 };
