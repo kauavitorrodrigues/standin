@@ -257,6 +257,37 @@ describe.skipIf(!enabled)("token write routes over HTTP (real stack)", () => {
             expect(again.body.tilesets[0].action).toBe("unchanged");
         });
 
+        // Documents the limit of the dry run: it only checks the file and the
+        // parts, so bytes that are not a PNG pass it and fail the real run.
+        it("passes a dry run that the real seed then refuses", async () => {
+            const token = await issue(["library:write"]);
+            const key = `broken-${RUN}`;
+            const files = { "tilesets/floor.png": Buffer.from("not a png") };
+
+            const dry = await call(
+                { bearer: token },
+                "POST",
+                "/library/seed?dryRun=true",
+                seedForm(library(key), files)
+            );
+            expect(dry.status).toBe(200);
+
+            const real = await call(
+                { bearer: token },
+                "POST",
+                "/library/seed",
+                seedForm(library(key), files)
+            );
+            expect(real.status).toBeGreaterThanOrEqual(400);
+
+            const tilesets = await call(
+                { as: "admin" },
+                "GET",
+                "/library/tilesets"
+            );
+            expect(JSON.stringify(tilesets.body)).not.toContain(key);
+        });
+
         it("answers 400 listing the PNGs the upload lacks", async () => {
             const token = await issue(["library:write"]);
 
