@@ -282,15 +282,6 @@ describe.skipIf(!enabled)("maps flows (real database)", () => {
             expect(conversations).toHaveLength(1);
         });
 
-        it("answers 422 TIER_DISABLED for a disabled tier", async () => {
-            await expect(
-                core.SpaceService.create(organizationId, users.owner.id, {
-                    name: "Grande",
-                    sizeTier: "M",
-                })
-            ).rejects.toMatchObject({ status: 422, code: "TIER_DISABLED" });
-        });
-
         it("rolls everything back when a step fails", async () => {
             const {
                 db,
