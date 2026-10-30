@@ -280,12 +280,12 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
             });
             expect(neither.status).toBe(400);
 
-            const disabled = await call("owner", "POST", route, {
+            // Every tier is enabled today, so only an unknown one is refused.
+            const unknown = await call("owner", "POST", route, {
                 name: "Grande",
-                sizeTier: "M",
+                sizeTier: "XXL",
             });
-            expect(disabled.status).toBe(422);
-            expect(disabled.body.error).toContain("size");
+            expect(unknown.status).toBe(400);
 
             const created = await call("owner", "POST", route, body);
             expect(created.status).toBe(201);
@@ -995,10 +995,10 @@ describe.skipIf(!enabled)("maps HTTP and socket layer (real stack)", () => {
                 (
                     await call("admin", "POST", "/templates", {
                         ...body,
-                        sizeTier: "XL",
+                        sizeTier: "XXL",
                     })
                 ).status
-            ).toBe(422);
+            ).toBe(400);
 
             const created = await call("admin", "POST", "/templates", body);
             expect(created.status).toBe(201);
