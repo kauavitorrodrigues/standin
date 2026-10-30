@@ -15,3 +15,11 @@ export const UserDataSchema = z.object({
 });
 
 export type UserDataSchemaType = z.infer<typeof UserDataSchema>;
+
+// Sign up through the link of an organization. Kept apart from `UserDataSchema`
+// because the rest of the code creates users without a link.
+export const SignUpSchema = UserDataSchema.extend({
+    inviteToken: z.string().min(1).max(200).optional(),
+});
+
+export type SignUpSchemaType = z.infer<typeof SignUpSchema>;
