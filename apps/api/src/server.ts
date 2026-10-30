@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { GlobalSettingsService } from "@standin/core";
 import { createApp } from "./app";
 import { validateEnv } from "@/utils/validateEnv";
 import { createSocketServer } from "@/lib/socket/createSocketServer";
@@ -33,6 +34,12 @@ if (mediaConfig.enabled) {
         )
         .catch((error) => console.error(MediaLogMessages.restartFailed, error));
 }
+
+// Seeds the settings of a fresh instance from the environment. A later read
+// would do it too, this only makes it happen at start.
+GlobalSettingsService.get().catch((error) =>
+    console.error("[API] - could not read the instance settings", error)
+);
 
 const PORT = process.env.SERVER_PORT || 3001;
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { MAP_ID_SOURCES } from "@/consts/mapIdSources";
 import { RequiresMapNotLocked } from "@/middlewares/requiresMapNotLocked";
+import { RequiresCreationAllowed } from "@/middlewares/requiresCreationAllowed";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { handleUploadError } from "../files/middleware/handleUploadError";
 import { SpaceController } from "./controllers";
@@ -8,7 +9,12 @@ import { uploadSpaceThumbnail } from "./middleware/createThumbnailUploadMiddlewa
 
 const router = Router({ mergeParams: true });
 
-router.post("/", RequiresPermission("create", "space"), SpaceController.create);
+router.post(
+    "/",
+    RequiresPermission("create", "space"),
+    RequiresCreationAllowed("space"),
+    SpaceController.create
+);
 
 router.get("/", RequiresPermission("read", "space"), SpaceController.list);
 

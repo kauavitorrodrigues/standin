@@ -1,6 +1,6 @@
 import { OAuthEmailUnverifiedError, OAUTH_PROVIDERS } from "@standin/contracts";
 import type { User } from "@standin/contracts";
-import { UserService } from "@standin/core";
+import { GlobalSettingsService, UserService } from "@standin/core";
 import { GithubProvider } from "@standin/infra";
 import type { GithubProfile } from "@standin/infra";
 import { buildGithubUserName } from "../utils/buildGithubUserName";
@@ -22,7 +22,8 @@ type ResolveUserInput = {
  *    is not asked for the e-mail.
  * 2. The verified primary e-mail belongs to an active person: the account is
  *    linked to them.
- * 3. Otherwise a new person is created with the GitHub name and e-mail.
+ * 3. Otherwise a new person is created with the GitHub name and e-mail, unless
+ *    sign up is closed on the instance.
  * With no verified primary e-mail, 2 and 3 are refused. A deleted person is
  * never reactivated (the core does not return them).
  */
@@ -44,6 +45,9 @@ export const resolveUser = async ({
 
     const linked = await UserService.linkIdentity({ identity, email });
     if (linked) return { user: linked, outcome: "linked" };
+
+    // Linking an account that exists is not a sign up; creating one is.
+    await GlobalSettingsService.assertSignupOpen();
 
     const { user, created } = await UserService.createFromIdentity({
         identity,
