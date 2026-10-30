@@ -6,7 +6,9 @@ import { getMeQueryOptions } from "../queries/getMe";
 
 export const useSignUp = () => {
     return useMutation({
-        mutationFn: async (data: UserDataSchemaType) => {
+        mutationFn: async (
+            data: UserDataSchemaType & { inviteToken?: string }
+        ) => {
             const { data: response } = await api.post<{ user: User }>(
                 "/auth/signup",
                 data

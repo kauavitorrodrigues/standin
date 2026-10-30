@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronsUpDownIcon, PlusIcon } from "lucide-react";
+import { ChevronsUpDownIcon, PlusIcon, UserPlusIcon } from "lucide-react";
+import { USER_ROLES } from "@standin/contracts";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -10,6 +11,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useGlobalCapabilities } from "@/features/global-settings/queries/useGlobalCapabilities";
+import { InviteLinksDialog } from "../../invite-links/components/InviteLinksDialog";
 import { OrganizationsQueries } from "../../queries";
 import { useOrganization } from "../../hooks/useOrganization";
 import { CreateOrganizationDialog } from "../dialogs/CreateDialog";
@@ -18,6 +22,12 @@ export const OrganizationSwitcher = () => {
     const { organizations } = OrganizationsQueries.useAll();
     const { organization, setOrganization } = useOrganization();
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+    const { user } = useAuth();
+    const { canCreateOrganization } = useGlobalCapabilities();
+    const canInvite =
+        !!organization &&
+        (organization.ownerId === user.id || user.role === USER_ROLES.ADMIN);
 
     if (organizations.length === 0) return null;
 
@@ -26,7 +36,10 @@ export const OrganizationSwitcher = () => {
             <DropdownMenu>
                 <DropdownMenuTrigger
                     render={
-                        <Button variant="outline" className="min-w-40 justify-between">
+                        <Button
+                            variant="outline"
+                            className="min-w-40 justify-between"
+                        >
                             <span className="truncate">
                                 {organization?.name ?? "Selecionar organização"}
                             </span>
@@ -49,12 +62,32 @@ export const OrganizationSwitcher = () => {
                         ))}
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setIsCreateDialogOpen(true)}>
-                        <PlusIcon />
-                        Criar organização
-                    </DropdownMenuItem>
+                    {canInvite && (
+                        <DropdownMenuItem
+                            onClick={() => setIsInviteDialogOpen(true)}
+                        >
+                            <UserPlusIcon />
+                            Convidar pessoas
+                        </DropdownMenuItem>
+                    )}
+                    {canCreateOrganization && (
+                        <DropdownMenuItem
+                            onClick={() => setIsCreateDialogOpen(true)}
+                        >
+                            <PlusIcon />
+                            Criar organização
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            {organization && (
+                <InviteLinksDialog
+                    organizationId={organization.id}
+                    open={isInviteDialogOpen}
+                    onOpenChange={setIsInviteDialogOpen}
+                />
+            )}
 
             <CreateOrganizationDialog
                 open={isCreateDialogOpen}
