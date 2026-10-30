@@ -11,3 +11,5 @@ export * from "./features/avatar";
 export * from "./features/bootstrap";
 export * from "./features/health";
 export * from "./features/service-tokens";
+export * from "./features/global-settings";
+export * from "./features/admin";
