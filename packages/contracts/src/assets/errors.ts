@@ -274,6 +274,109 @@ export class LibrarySeedAdminNotFoundError extends BaseError {
     }
 }
 
+const MAX_LISTED_SEED_ITEMS = 20;
+
+// The first items of a list for a message, with how many were left out.
+const summarizeSeedList = (items: string[], separator: string) => {
+    const listed = items.slice(0, MAX_LISTED_SEED_ITEMS).join(separator);
+    const rest = items.length - MAX_LISTED_SEED_ITEMS;
+    return rest > 0 ? `${listed} and ${rest} more` : listed;
+};
+
+// 400: the `library` part of a seed upload is missing, is not JSON or does not
+// match the schema. The whole list is in `issues`.
+export class LibrarySeedFileInvalidError extends LibraryError {
+    constructor(issues: string[]) {
+        super(
+            `library.json is invalid: ${summarizeSeedList(issues, " ")}`,
+            "LIBRARY_SEED_FILE_INVALID",
+            400,
+            { issues }
+        );
+    }
+}
+
+// 400: files that library.json points to were not part of the upload. The
+// whole list is in `paths`.
+export class LibrarySeedFilesMissingError extends LibraryError {
+    constructor(paths: string[]) {
+        super(
+            `library.json points to files that were not uploaded: ${summarizeSeedList(paths, ", ")}.`,
+            "LIBRARY_SEED_FILES_MISSING",
+            400,
+            { paths }
+        );
+    }
+}
+
+// 400: two file parts of a seed upload have the same name (path).
+export class LibrarySeedDuplicateFileError extends LibraryError {
+    constructor(path: string) {
+        super(
+            `The file "${path}" was uploaded twice.`,
+            "LIBRARY_SEED_DUPLICATE_FILE",
+            400,
+            { path }
+        );
+    }
+}
+
+// 413: the seed request is over `MAX_SEED_TOTAL_BYTES`.
+export class LibrarySeedTooLargeError extends BaseError {
+    constructor() {
+        super(
+            "The library upload exceeds the allowed total size.",
+            "LIBRARY_SEED_TOO_LARGE",
+            413
+        );
+    }
+}
+
+// 400: more file parts than `MAX_SEED_FILES`.
+export class LibrarySeedTooManyFilesError extends BaseError {
+    constructor() {
+        super(
+            "The library upload has too many files.",
+            "LIBRARY_SEED_TOO_MANY_FILES",
+            400
+        );
+    }
+}
+
+// 400: a form field other than a single `library` text field, or a part name
+// that is too long.
+export class LibrarySeedFieldsInvalidError extends BaseError {
+    constructor() {
+        super(
+            "Send library.json once, as the text field \"library\"; every other part must be a file named by its path.",
+            "LIBRARY_SEED_FIELDS_INVALID",
+            400
+        );
+    }
+}
+
+// 413: the `library` field is over `MAX_SEED_LIBRARY_BYTES`.
+export class LibrarySeedLibraryTooLargeError extends BaseError {
+    constructor() {
+        super(
+            "library.json exceeds the allowed size.",
+            "LIBRARY_SEED_LIBRARY_TOO_LARGE",
+            413
+        );
+    }
+}
+
+// 413: an uploaded PNG is over `MAX_UPLOAD_BYTES`.
+export class LibrarySeedFileTooLargeError extends BaseError {
+    constructor() {
+        super(
+            "A file of the library upload exceeds the allowed size.",
+            "LIBRARY_SEED_FILE_TOO_LARGE",
+            413
+        );
+    }
+}
+
 // A key written in a library file (an area stamp or a bundle) that matches no
 // tileset or asset. Every unknown key of the entry is listed with its field.
 export class LibrarySeedReferenceNotFoundError extends BaseError {

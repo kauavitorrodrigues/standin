@@ -16,6 +16,7 @@ import {
 } from "./palette";
 import { seedLibrary } from "./seed/seedLibrary";
 import { seedLibraryAsAdmin } from "./seed/seedLibraryAsAdmin";
+import { seedLibraryFromFiles } from "./seed/seedLibraryFromFiles";
 import { createLibraryTileset } from "./tilesets/createTileset";
 import { getLibraryTileset } from "./tilesets/getTileset";
 import { listLibraryTilesets } from "./tilesets/listTilesets";
@@ -48,6 +49,7 @@ export const AssetService = {
     getMapPaletteVersion,
     seed: seedLibrary,
     seedAsAdmin: seedLibraryAsAdmin,
+    seedFromFiles: seedLibraryFromFiles,
 };
 
 export {
@@ -59,4 +61,10 @@ export {
 export { readLibraryFolder } from "./seed/readLibraryFolder";
 export type { UpdatedLibraryAssets } from "./assets/updateAsset";
 export type { LibraryContext, UploadedImage } from "./types";
-export type { LibrarySeed, LibrarySeedResult } from "./seed/types";
+export type {
+    LibrarySeed,
+    LibrarySeedPreview,
+    LibrarySeedResult,
+    LibrarySeedUpload,
+    SeedImages,
+} from "./seed/types";

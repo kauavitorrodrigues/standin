@@ -4,6 +4,11 @@ import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { LibraryController } from "./controllers";
 import { RequiresLibraryAdmin } from "./middleware/requiresLibraryAdmin";
 import {
+    handleLibrarySeedUploadError,
+    limitLibrarySeedSize,
+    uploadLibrarySeed,
+} from "./middleware/uploadLibrarySeedMiddleware";
+import {
     handleLibraryUploadError,
     uploadLibraryParts,
 } from "./middleware/uploadLibraryMiddleware";
@@ -209,5 +214,26 @@ readRouter.get(
     LibraryController.areas.details
 );
 
+// WARNING: every route on this router must carry RequiresAuth.scoped, because
+// it is mounted ahead of the session-only RequiresAuth and nothing else guards
+// it. Never add a route here without it.
+// The one write of the global library a service token may call with the
+// library:write scope: seeding it from a library.json and its PNGs. It goes
+// through the same admin and permission checks as a session. The rest of the
+// writes stay session-only.
+const writeRouter = Router();
+
+writeRouter.post(
+    "/seed",
+    RequiresAuth.scoped("library:write"),
+    RequiresLibraryAdmin,
+    RequiresPermission("create", "asset"),
+    limitLibrarySeedSize,
+    uploadLibrarySeed,
+    handleLibrarySeedUploadError,
+    LibraryController.seed
+);
+
 export const libraryRouter = router;
+export const libraryWriteRouter = writeRouter;
 export const libraryReadRouter = readRouter;

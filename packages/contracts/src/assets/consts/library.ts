@@ -4,6 +4,15 @@ const BYTES_IN_MB = 1024 * BYTES_IN_KB;
 // Limit of one uploaded PNG, for tilesets and assets.
 export const MAX_UPLOAD_BYTES = 3 * BYTES_IN_MB;
 export const MAX_DATA_PART_BYTES = 256 * BYTES_IN_KB;
+// A library seed upload: `library.json` as the text field `library` (a
+// reserved name, so no file may use it) plus every PNG as a file part named by
+// its path. The total is checked by Content-Length before the body is read.
+export const MAX_SEED_FILES = 300;
+export const MAX_SEED_LIBRARY_BYTES = 4 * BYTES_IN_MB;
+export const MAX_SEED_TOTAL_BYTES = 64 * BYTES_IN_MB;
+export const MAX_SEED_PART_NAME_LENGTH = 255;
+export const SEED_LIBRARY_PART = "library";
+
 export const MAX_TILESET_IMAGE_PX = 4096;
 export const MAX_LIBRARY_KEY_LENGTH = 100;
 export const MIN_ANIMATION_FRAME_COUNT = 2;

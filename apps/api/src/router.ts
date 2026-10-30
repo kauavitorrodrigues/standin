@@ -5,9 +5,17 @@ import { usersRouter } from "./features/users/routes";
 import { organizationsRouter } from "./features/organizations/routes";
 import { healthRouter } from "./features/health/routes";
 import { iceRouter } from "./features/ice/routes";
-import { templatesRouter } from "./features/maps/templates/routes";
+import {
+    templatesReadRouter,
+    templatesRouter,
+    templatesWriteRouter,
+} from "./features/maps/templates/routes";
 import { TemplateController } from "./features/maps/templates/controllers";
-import { libraryReadRouter, libraryRouter } from "./features/library/routes";
+import {
+    libraryReadRouter,
+    libraryRouter,
+    libraryWriteRouter,
+} from "./features/library/routes";
 import { RequiresLibraryAdmin } from "./features/library/middleware/requiresLibraryAdmin";
 import { serviceTokensRouter } from "./features/service-tokens/routes";
 import {
@@ -56,6 +64,10 @@ router.get(
 
 // Template catalog (admin manages, owners read) and the asset library
 // (global for the admin, per organization for its owner).
+// Reading and writing them accepts a service token with the templates:read or
+// templates:write scope; these routers come before the session-only one.
+router.use("/templates", templatesReadRouter);
+router.use("/templates", templatesWriteRouter);
 router.use("/templates", RequiresAuth, templatesRouter);
 // The avatar parts, categories and bases are global and written by the admin only. They are mounted
 // here, ahead of the library router, because that one is shared with the
@@ -81,6 +93,8 @@ router.use(
 // Reading the global library accepts a service token with the library:read
 // scope. It must come before the session-only library router below.
 router.use("/library", libraryReadRouter);
+// Seeding it accepts a token with library:write.
+router.use("/library", libraryWriteRouter);
 router.use("/library", RequiresAuth, RequiresLibraryAdmin, libraryRouter);
 
 // Admin session only: the tokens of tools and agents.
