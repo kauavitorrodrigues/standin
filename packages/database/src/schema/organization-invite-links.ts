@@ -34,6 +34,9 @@ export const organizationInviteLinksTable = pgTable(
         // Only the SHA-256 of the token is kept. The token is shown once, when
         // the link is created.
         tokenHash: text("token_hash").notNull(),
+        // The fixed link of the organization keeps its token encrypted so the
+        // owner can copy it again. Null for the one-off links made before.
+        tokenEncrypted: text("token_encrypted"),
         // The role of the new member. Never the admin role.
         role: text("role").notNull().default("MEMBER"),
         expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
@@ -49,6 +52,12 @@ export const organizationInviteLinksTable = pgTable(
         uniqueIndex("organization_invite_links_token_hash_unique")
             .on(table.tokenHash)
             .where(sql`${table.deletedAt} IS NULL`),
+        // One fixed link alive per organization: a reset closes it first.
+        uniqueIndex("organization_invite_links_fixed_unique")
+            .on(table.organizationId)
+            .where(
+                sql`${table.deletedAt} IS NULL AND ${table.revokedAt} IS NULL AND ${table.tokenEncrypted} IS NOT NULL`
+            ),
         index("organization_invite_links_organization_id_index").on(
             table.organizationId
         ),

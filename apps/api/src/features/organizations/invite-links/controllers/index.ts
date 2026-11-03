@@ -1,11 +1,11 @@
-import { createInviteLink } from "./create";
-import { listInviteLinks } from "./list";
+import { acceptInvitation } from "./accept";
+import { getFixedLink } from "./getFixed";
+import { resetFixedLink } from "./resetFixed";
 import { previewInvite } from "./preview";
-import { revokeInviteLink } from "./revoke";
 
 export const OrganizationInviteController = {
-    create: createInviteLink,
-    list: listInviteLinks,
-    revoke: revokeInviteLink,
+    getFixed: getFixedLink,
+    resetFixed: resetFixedLink,
+    accept: acceptInvitation,
     preview: previewInvite,
 };

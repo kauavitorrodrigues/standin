@@ -48,6 +48,7 @@ type PendingValues = {
     respondedAt: null;
     requestedAt: Date;
     expiresAt: Date;
+    archivedAt: null;
 };
 
 const buildPendingValues = (
@@ -61,6 +62,7 @@ const buildPendingValues = (
     respondedAt: null,
     requestedAt: now,
     expiresAt: windowEnd(now),
+    archivedAt: null,
 });
 
 const findGuestRow = async (

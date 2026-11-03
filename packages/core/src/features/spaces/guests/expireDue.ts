@@ -24,7 +24,7 @@ export type ExpiredGuest = {
 };
 
 /**
- * Writes down the requests and admissions that outlived their 24h as denied by
+ * Writes down the requests and admissions that ran past their time as denied by
  * timeout, and tells the guests. The sweeper calls this on an interval. An
  * admitted guest also loses the sockets in the space.
  */

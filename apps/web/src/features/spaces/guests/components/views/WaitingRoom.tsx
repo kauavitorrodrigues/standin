@@ -14,7 +14,8 @@ import {
 type Props = {
     spaceName: string;
     // When the request stops waiting, as an ISO date.
-    expiresAt: string;
+    // Null reads as no deadline shown.
+    expiresAt: string | null;
 };
 
 const formatDeadline = (isoDate: string): string =>
@@ -31,6 +32,11 @@ const WaitingMark = () => (
         </span>
     </div>
 );
+
+const describeDeadline = (expiresAt: string | null): string => {
+    if (!expiresAt) return "Seu pedido segue aguardando.";
+    return `Seu pedido vale até ${formatDeadline(expiresAt)}.`;
+};
 
 // Where a person waits for a host to let them in.
 export const WaitingRoom = ({ spaceName, expiresAt }: Props) => (
@@ -54,8 +60,8 @@ export const WaitingRoom = ({ spaceName, expiresAt }: Props) => (
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
                 <p className="rounded-lg bg-muted/60 px-3 py-2 text-center text-xs text-muted-foreground">
-                    Seu pedido vale até {formatDeadline(expiresAt)}. Você pode
-                    deixar esta página aberta.
+                    {describeDeadline(expiresAt)} Você pode deixar esta página
+                    aberta.
                 </p>
                 <Button variant="ghost" size="sm" render={<Link to="/home" />}>
                     Voltar para o início

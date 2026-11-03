@@ -70,18 +70,28 @@ describe.skipIf(!enabled)("instance access over HTTP (real stack)", () => {
         ...extra,
     });
 
+    // The fixed link of the organization. A reset closes the current one, so
+    // every call after a reset gives a link of its own.
     const makeLink = async (
-        data: Record<string, unknown> = {},
+        overrides: Partial<{
+            maxUses: number | null;
+            usesCount: number;
+            expiresAt: Date;
+            revokedAt: Date | null;
+        }> = {},
         as: UserKey = "owner"
     ) => {
-        const response = await call(
-            as,
-            "POST",
-            `/organizations/${organizationId}/invite-links`,
-            data
-        );
-        expect(response.status).toBe(201);
-        return response.body.link as { id: string; token: string };
+        const route = `/organizations/${organizationId}/invite-links/fixed`;
+        const reset = await call(as, "POST", `${route}/reset`);
+        expect(reset.status).toBe(200);
+        const link = reset.body.link as { id: string; token: string };
+        if (Object.keys(overrides).length > 0) {
+            await db
+                .update(organizationInviteLinksTable)
+                .set(overrides)
+                .where(eq(organizationInviteLinksTable.id, link.id));
+        }
+        return link;
     };
 
     beforeAll(async () => {
@@ -353,25 +363,20 @@ describe.skipIf(!enabled)("instance access over HTTP (real stack)", () => {
     });
 
     describe("organization invite links", () => {
-        it("lets the owner and the admin make links, nobody else", async () => {
+        it("lets the owner and the admin reach the fixed link, nobody else", async () => {
             await makeLink({}, "owner");
             await makeLink({}, "admin");
 
-            const asMember = await call(
-                "member",
-                "POST",
-                `/organizations/${organizationId}/invite-links`,
-                {}
-            );
+            const route = `/organizations/${organizationId}/invite-links/fixed`;
+            const asMember = await call("member", "GET", route);
             expect(asMember.status).toBe(403);
 
-            // An owner of another organization has no say here.
-            const asOtherOwner = await call(
+            const resetAsMember = await call(
                 "member",
-                "GET",
-                `/organizations/${organizationId}/invite-links`
+                "POST",
+                `${route}/reset`
             );
-            expect(asOtherOwner.status).toBe(403);
+            expect(resetAsMember.status).toBe(403);
             expect(otherOrganizationId).not.toBe(organizationId);
         });
 
@@ -413,22 +418,16 @@ describe.skipIf(!enabled)("instance access over HTTP (real stack)", () => {
                     account({ inviteToken: token })
                 );
 
-            const expired = await makeLink();
-            await db
-                .update(organizationInviteLinksTable)
-                .set({ expiresAt: new Date(Date.now() - 1000) })
-                .where(eq(organizationInviteLinksTable.id, expired.id));
+            const expired = await makeLink({
+                expiresAt: new Date(Date.now() - 1000),
+            });
             const expiredAttempt = await attempt(expired.token);
             expect(expiredAttempt.status).toBe(410);
             expect(expiredAttempt.body.code).toBe("INVITE_LINK_EXPIRED");
 
+            // A reset closes the old link: its token stops working.
             const revoked = await makeLink();
-            const revoke = await call(
-                "owner",
-                "DELETE",
-                `/organizations/${organizationId}/invite-links/${revoked.id}`
-            );
-            expect(revoke.status).toBe(200);
+            await makeLink();
             expect((await attempt(revoked.token)).body.code).toBe(
                 "INVITE_LINK_REVOKED"
             );
@@ -466,34 +465,18 @@ describe.skipIf(!enabled)("instance access over HTTP (real stack)", () => {
             expect(retry.status).toBe(201);
         });
 
-        it("cannot escalate the role", async () => {
-            const asOwner = await call(
-                "owner",
-                "POST",
-                `/organizations/${organizationId}/invite-links`,
-                { role: "OWNER" }
-            );
-            expect(asOwner.status).toBe(400);
+        it("gives the same fixed link every time, until it is reset", async () => {
+            const first = await makeLink();
+            const route = `/organizations/${organizationId}/invite-links/fixed`;
 
-            const asAdmin = await call(
-                "admin",
-                "POST",
-                `/organizations/${organizationId}/invite-links`,
-                { role: "ADMIN" }
-            );
-            expect(asAdmin.status).toBe(400);
-        });
+            const again = await call("owner", "GET", route);
+            expect(again.status).toBe(200);
+            expect(again.body.link.id).toBe(first.id);
+            expect(again.body.link.token).toBe(first.token);
 
-        it("does not list revoked links, and never gives a token back", async () => {
-            const link = await makeLink();
-            const listed = await call(
-                "owner",
-                "GET",
-                `/organizations/${organizationId}/invite-links`
-            );
-            const row = listed.body.links.find((l: any) => l.id === link.id);
-            expect(row).toBeDefined();
-            expect(row).not.toHaveProperty("token");
+            const reset = await call("owner", "POST", `${route}/reset`);
+            expect(reset.body.link.id).not.toBe(first.id);
+            expect(reset.body.link.token).not.toBe(first.token);
         });
     });
 });

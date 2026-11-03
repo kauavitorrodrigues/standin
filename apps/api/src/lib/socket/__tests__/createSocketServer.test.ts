@@ -61,7 +61,7 @@ vi.mock("socket.io", () => ({
 vi.mock("@standin/core", () => ({
     AvatarService: { onSheetChanged: onSheetChangedMock },
     SpaceGuestService: { onEvent: onSpaceGuestEventMock },
-    OrganizationMemberService: { onRemoved: vi.fn() },
+    OrganizationMemberService: { onRemoved: vi.fn(), onChanged: vi.fn() },
     UserService: {
         onNameChanged: onNameChangedMock,
         onProfilePictureChanged: onProfilePictureChangedMock,
@@ -127,6 +127,7 @@ vi.mock("../handlers/chatTyping", () => ({
     registerChatTyping: registerChatTypingMock,
 }));
 
+vi.mock("../handlers/soundboard", () => ({ registerSoundboard: vi.fn() }));
 vi.mock("../handlers/roomCrossed", () => ({ registerRoomCrossed: vi.fn() }));
 vi.mock("../handlers/roomOpen", () => ({ registerRoomOpen: vi.fn() }));
 vi.mock("../handlers/roomPresent", () => ({ registerRoomPresent: vi.fn() }));

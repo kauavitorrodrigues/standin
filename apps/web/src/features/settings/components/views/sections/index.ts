@@ -2,6 +2,8 @@ import type { ComponentType } from "react";
 import type { SettingsSectionId } from "../../../consts/sections";
 import { AudioSection } from "./AudioSection";
 import { GeneralSection } from "./GeneralSection";
+import { GuestsSection } from "./GuestsSection";
+import { MembersSection } from "./MembersSection";
 import { StreamingSection } from "./StreamingSection";
 import { PerformanceSection } from "./PerformanceSection";
 import { NotificationsSection } from "./NotificationsSection";
@@ -15,4 +17,6 @@ export const SETTINGS_SECTION_VIEWS: Record<SettingsSectionId, ComponentType> =
         streaming: StreamingSection,
         notifications: NotificationsSection,
         performance: PerformanceSection,
+        members: MembersSection,
+        guests: GuestsSection,
     };

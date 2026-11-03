@@ -4,6 +4,7 @@ import {
     SPACE_GUEST_STATUSES,
 } from "@standin/contracts";
 import {
+    admissionEnd,
     effectiveState,
     hasGuestAccess,
     hasLivePass,
@@ -18,7 +19,7 @@ const at = (offsetMs: number) => new Date(now.getTime() + offsetMs);
 
 const row = (
     status: keyof typeof SPACE_GUEST_STATUSES,
-    expiresAt: Date,
+    expiresAt: Date | null,
     statusReason: keyof typeof SPACE_GUEST_STATUS_REASONS = "AWAITING_RESPONSE"
 ) => ({
     status: SPACE_GUEST_STATUSES[status],
@@ -97,6 +98,39 @@ describe("isLapsed and effectiveState", () => {
     it("keeps a live row as it is", () => {
         expect(
             effectiveState(row("ADMITTED", at(HOUR), "HOST_ADMITTED"), now)
+        ).toEqual({ status: "ADMITTED", statusReason: "HOST_ADMITTED" });
+    });
+});
+
+describe("admissionEnd", () => {
+    it("has no end without a validity", () => {
+        expect(admissionEnd(now, null)).toBeNull();
+    });
+
+    it("ends after the hours of the validity", () => {
+        expect(admissionEnd(now, 24)?.getTime()).toBe(
+            now.getTime() + 24 * HOUR
+        );
+    });
+});
+
+describe("a row without an end", () => {
+    it("never lapses", () => {
+        expect(isLapsed(row("ADMITTED", null), now)).toBe(false);
+        expect(isLapsed(row("PENDING", null), now)).toBe(false);
+    });
+
+    it("keeps an admitted guest in", () => {
+        expect(hasGuestAccess(row("ADMITTED", null), now)).toBe(true);
+    });
+
+    it("keeps a pending request waiting", () => {
+        expect(isWaiting(row("PENDING", null), now)).toBe(true);
+    });
+
+    it("keeps its state as it is", () => {
+        expect(
+            effectiveState(row("ADMITTED", null, "HOST_ADMITTED"), now)
         ).toEqual({ status: "ADMITTED", statusReason: "HOST_ADMITTED" });
     });
 });

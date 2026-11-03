@@ -1,0 +1,1 @@
+CREATE INDEX "space_guests_space_id_requested_at_index" ON "space_guests" USING btree ("space_id","requested_at");

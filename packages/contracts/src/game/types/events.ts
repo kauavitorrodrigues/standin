@@ -68,6 +68,7 @@ import type {
     MediaSpeakersPayload,
     MediaStateChangedPayload,
 } from "../../media/types";
+import type { OrganizationMembersChangedPayload } from "../../organizations/types/members-changed";
 import type { SpaceSettings } from "../../spaces/types/space-settings";
 import type {
     SpaceGuestRemovedPayload,
@@ -104,6 +105,10 @@ export const SpaceEvents = {
     SPACE_EMOTE: "space:emote",
     SPACE_NEARBY_MESSAGE: "space:nearby-message",
     SPACE_NEARBY_TYPING: "space:nearby-typing",
+} as const;
+
+export const OrganizationEvents = {
+    MEMBERS_CHANGED: "organization:members-changed",
 } as const;
 
 export const EditorEvents = {
@@ -294,6 +299,11 @@ export type ServerToClientEvents = {
     // A request of the space was answered, expired or reopened. Only the
     // hosts hear it, to refresh the list they act on.
     "space:guest-updated": (payload: SpaceGuestUpdatedPayload) => void;
+    // Someone joined the organization or its invitations changed. Only its
+    // owners hear it, to refresh the lists they act on.
+    "organization:members-changed": (
+        payload: OrganizationMembersChangedPayload
+    ) => void;
     // The guest lost the access (kicked, expired or guest access turned off).
     "space:guest-removed": (payload: SpaceGuestRemovedPayload) => void;
     // The positions that changed around this person, once per tick.

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { RateLimit } from "@/middlewares/rateLimit";
+import { RequiresAuth } from "@/middlewares/requiresAuth";
 import { RequiresInviteManager } from "@/middlewares/requiresInviteManager";
 import { OrganizationInviteController } from "./controllers";
 
@@ -10,9 +11,9 @@ const ONE_MINUTE_MS = 60 * 1000;
 const manageRouter = Router({ mergeParams: true });
 
 manageRouter.use(RequiresInviteManager);
-manageRouter.post("/", OrganizationInviteController.create);
-manageRouter.get("/", OrganizationInviteController.list);
-manageRouter.delete("/:linkId", OrganizationInviteController.revoke);
+// The fixed link.
+manageRouter.get("/fixed", OrganizationInviteController.getFixed);
+manageRouter.post("/fixed/reset", OrganizationInviteController.resetFixed);
 
 export const organizationInviteLinksRouter = manageRouter;
 
@@ -27,3 +28,11 @@ previewRouter.get(
 );
 
 export const organizationInvitePreviewRouter = previewRouter;
+
+// The person who is signed in takes an invitation made for their e-mail.
+previewRouter.post(
+    "/:token/accept",
+    RequiresAuth,
+    RateLimit({ windowMs: ONE_MINUTE_MS, max: 10 }),
+    OrganizationInviteController.accept
+);

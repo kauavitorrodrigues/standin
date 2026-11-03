@@ -1,5 +1,4 @@
 import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
-import { useState } from "react";
 import type { SpaceDetails, UserSummary } from "@standin/contracts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
@@ -66,7 +65,6 @@ import type { DecorateAvailability } from "@/features/decorator/types/decorate-a
 import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 import { GuestRequests } from "@/features/spaces/guests/components/instances/GuestRequests";
-import { GuestsDialog } from "@/features/spaces/guests/components/instances/GuestsDialog";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
     return (
@@ -96,7 +94,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     } = useSpaceSearch();
 
     const { user } = useAuth();
-    const [isGuestsOpen, setIsGuestsOpen] = useState(false);
 
     const peoplePanel = usePeoplePanel({ view, selectView });
 
@@ -242,7 +239,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     chatFooter={<ChatFooter tiles={stageTiles} media={media} />}
                     onDecorate={() => decorator.open()}
                     decorateAvailability={decorateAvailability}
-                    onOpenGuests={() => setIsGuestsOpen(true)}
                 />
                 <SpacePeoplePanel
                     isMounted={peoplePanel.isMounted}
@@ -363,11 +359,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     </LayoutPrimitive.Controls>
                 </LayoutPrimitive.Content>
             </LayoutPrimitive.Body>
-            <GuestsDialog
-                spaceId={space.id}
-                open={isGuestsOpen}
-                onOpenChange={setIsGuestsOpen}
-            />
         </SpacePageRoot>
     );
 }

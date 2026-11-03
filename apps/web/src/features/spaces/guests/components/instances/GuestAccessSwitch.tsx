@@ -1,9 +1,12 @@
 import { SPACE_GUEST_ACCESS } from "@standin/contracts";
-import { Switch } from "@/components/ui/switch";
+import { DoorOpenIcon } from "lucide-react";
+import { SettingSwitchCard } from "@/features/global-settings/components/views/SettingSwitchCard";
 import { toast } from "@/components/ui/toast";
 import { GuestMessages } from "../../consts/messages";
 import { GuestMutations } from "../../mutations";
 import { GuestQueries } from "../../queries";
+
+const SWITCH_ID = "guest-access-switch";
 
 const toGuestAccess = (allowed: boolean) => {
     if (allowed) return SPACE_GUEST_ACCESS.ALLOWED;
@@ -22,18 +25,14 @@ export const GuestAccessSwitch = ({ spaceId }: { spaceId: string }) => {
         });
 
     return (
-        <div className="flex items-center justify-between gap-3">
-            <div>
-                <p className="text-sm font-medium">Aceitar convidados</p>
-                <p className="text-xs text-muted-foreground">
-                    Desligar nega os pedidos e remove quem já está no espaço.
-                </p>
-            </div>
-            <Switch
-                checked={space?.guestAccess === SPACE_GUEST_ACCESS.ALLOWED}
-                disabled={!space || setAccess.isPending}
-                onCheckedChange={change}
-            />
-        </div>
+        <SettingSwitchCard
+            id={SWITCH_ID}
+            icon={DoorOpenIcon}
+            title="Aceitar convidados"
+            description="Desligar nega os pedidos e remove quem já está no espaço."
+            checked={space?.guestAccess === SPACE_GUEST_ACCESS.ALLOWED}
+            disabled={!space || setAccess.isPending}
+            onChange={change}
+        />
     );
 };

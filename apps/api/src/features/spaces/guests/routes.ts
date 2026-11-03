@@ -17,21 +17,22 @@ const spaceRouter = Router();
 // The space for a member or an admitted guest.
 spaceRouter.get("/:spaceId", RequiresSpaceView, SpaceGuestController.view);
 
-// The links: only the owner of the organization makes or closes them.
-spaceRouter.post(
-    "/:spaceId/invite-links",
-    RequiresSpaceOwner,
-    SpaceGuestController.inviteLinks.create
-);
+// The links: only the owner of the organization manages them.
+// The fixed link: always the same, copied any time.
 spaceRouter.get(
-    "/:spaceId/invite-links",
+    "/:spaceId/invite-links/fixed",
     RequiresSpaceOwner,
-    SpaceGuestController.inviteLinks.list
+    SpaceGuestController.inviteLinks.getFixed
 );
-spaceRouter.delete(
-    "/:spaceId/invite-links/:linkId",
+spaceRouter.post(
+    "/:spaceId/invite-links/fixed/reset",
     RequiresSpaceOwner,
-    SpaceGuestController.inviteLinks.revoke
+    SpaceGuestController.inviteLinks.resetFixed
+);
+spaceRouter.put(
+    "/:spaceId/invite-links/fixed/validity",
+    RequiresSpaceOwner,
+    SpaceGuestController.inviteLinks.setValidity
 );
 spaceRouter.put(
     "/:spaceId/guest-access",
@@ -48,6 +49,16 @@ spaceRouter.get(
     "/:spaceId/guests",
     RequiresSpaceHost,
     SpaceGuestController.list
+);
+spaceRouter.get(
+    "/:spaceId/guests/entries",
+    RequiresSpaceHost,
+    SpaceGuestController.listEntries
+);
+spaceRouter.post(
+    "/:spaceId/guests/:guestId/archive",
+    RequiresSpaceHost,
+    SpaceGuestController.archive
 );
 spaceRouter.post(
     "/:spaceId/guests/:guestId/admit",

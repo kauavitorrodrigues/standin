@@ -66,9 +66,12 @@ export const spaceGuestsTable = pgTable(
         requestedAt: timestamp("requested_at", { mode: "date" })
             .defaultNow()
             .notNull(),
-        // A pending request vanishes 24h after it was made, an admitted guest
-        // 24h after being admitted.
-        expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+        // A pending request vanishes 24h after it was made. An admitted guest
+        // keeps the access until a host ends it, unless the link set a
+        // validity: then it ends that long after the admission. Null is no end.
+        expiresAt: timestamp("expires_at", { mode: "date" }),
+        // A host moved the guest out of the lists. Kept for the record.
+        archivedAt: timestamp("archived_at", { mode: "date" }),
 
         // Date columns
         createdAt: createdAtColumn(),
@@ -82,6 +85,11 @@ export const spaceGuestsTable = pgTable(
         index("space_guests_space_id_status_index").on(
             table.spaceId,
             table.status
+        ),
+        // The list of guests of a space pages newest first.
+        index("space_guests_space_id_requested_at_index").on(
+            table.spaceId,
+            table.requestedAt
         ),
     ]
 );

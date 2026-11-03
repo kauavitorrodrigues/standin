@@ -79,3 +79,13 @@ export class SpaceGuestNotReopenableError extends BaseError {
         );
     }
 }
+
+export class SpaceGuestNotArchivableError extends BaseError {
+    constructor() {
+        super(
+            "Only a guest who is not inside can be archived.",
+            "SPACE_GUEST_NOT_ARCHIVABLE",
+            409
+        );
+    }
+}

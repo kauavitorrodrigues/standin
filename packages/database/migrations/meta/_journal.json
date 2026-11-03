@@ -141,6 +141,20 @@
       "when": 1793383763570,
       "tag": "0019_add_soundboard_clips",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793730326304,
+      "tag": "0020_add_invite_collaborators",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793733611886,
+      "tag": "0021_add_space_guests_requested_at_index",
+      "breakpoints": true
     }
   ]
 }

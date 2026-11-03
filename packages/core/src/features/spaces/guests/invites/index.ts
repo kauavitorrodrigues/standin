@@ -1,13 +1,15 @@
-import { createInviteLink } from "./create";
-import { listInviteLinks } from "./list";
+import {
+    getFixedInviteLink,
+    resetFixedInviteLink,
+    setGuestValidity,
+} from "./fixed";
 import { previewInvite } from "./preview";
 import { requestInvite } from "./request";
-import { revokeInviteLink } from "./revoke";
 
 export const SpaceInviteService = {
-    create: createInviteLink,
-    list: listInviteLinks,
-    revoke: revokeInviteLink,
+    getFixed: getFixedInviteLink,
+    resetFixed: resetFixedInviteLink,
+    setValidity: setGuestValidity,
     preview: previewInvite,
     request: requestInvite,
 };

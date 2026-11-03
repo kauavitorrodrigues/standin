@@ -52,6 +52,8 @@ export const resetSpaceGuest = async (
             respondedAt: null,
             requestedAt: now,
             expiresAt: windowEnd(now),
+            // A reopened guest is back in the active lists.
+            archivedAt: null,
         })
         .where(
             and(

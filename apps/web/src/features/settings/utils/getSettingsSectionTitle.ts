@@ -8,6 +8,8 @@ export const getSettingsSectionTitle = (id: SettingsSectionId): string => {
         streaming: "Transmissão",
         notifications: "Notificações",
         performance: "Desempenho",
+        members: "Gerenciar membros",
+        guests: "Gerenciar convidados",
     };
     return titles[id];
 };

@@ -32,6 +32,12 @@ export const spaceInviteLinksTable = pgTable(
         // Only the SHA-256 of the token is kept. The token itself is shown once,
         // when the link is created.
         tokenHash: text("token_hash").notNull(),
+        // The fixed guest link of the space keeps its token encrypted so the
+        // hosts can copy it again. Null for the one-off links made before.
+        tokenEncrypted: text("token_encrypted"),
+        // How long an admitted guest of this link keeps the access. Null means
+        // until a host sends them out.
+        guestValidityHours: integer("guest_validity_hours"),
         // Reserved for the invite by email: when set, only that account may
         // use the link. Nothing fills it yet.
         email: varchar("email", { length: 255 }),
@@ -48,6 +54,12 @@ export const spaceInviteLinksTable = pgTable(
         uniqueIndex("space_invite_links_token_hash_unique")
             .on(table.tokenHash)
             .where(sql`${table.deletedAt} IS NULL`),
+        // One fixed link alive per space: a reset closes it first.
+        uniqueIndex("space_invite_links_fixed_unique")
+            .on(table.spaceId)
+            .where(
+                sql`${table.deletedAt} IS NULL AND ${table.revokedAt} IS NULL AND ${table.tokenEncrypted} IS NOT NULL`
+            ),
         index("space_invite_links_space_id_index").on(table.spaceId),
     ]
 );
