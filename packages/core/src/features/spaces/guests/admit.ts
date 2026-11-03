@@ -10,15 +10,20 @@ import {
 } from "./utils/guestEvents";
 import { loadGuest } from "./utils/loadGuest";
 import { serializeGuestState } from "./utils/serializeGuest";
-import { windowEnd } from "./utils/guestState";
+import { admissionEnd } from "./utils/guestState";
+import { findLinkValidity } from "./utils/findLinkValidity";
 
-/** A host lets a waiting guest in, for 24 hours from now. */
+/**
+ * A host lets a waiting guest in. The access has no end, unless the link the
+ * guest came through set a validity.
+ */
 export const admitSpaceGuest = async (
     spaceId: string,
     guestId: string,
     hostId: string
 ): Promise<SpaceGuest> => {
     const now = new Date();
+    const validityHours = await findLinkValidity(spaceId, guestId);
     const row = await answerPending(
         spaceId,
         guestId,
@@ -26,7 +31,7 @@ export const admitSpaceGuest = async (
         {
             status: SPACE_GUEST_STATUSES.ADMITTED,
             statusReason: SPACE_GUEST_STATUS_REASONS.HOST_ADMITTED,
-            expiresAt: windowEnd(now),
+            expiresAt: admissionEnd(now, validityHours),
         },
         now
     );

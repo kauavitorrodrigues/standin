@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useGlobalCapabilities } from "@/features/global-settings/queries/useGlobalCapabilities";
-import { InviteLinksDialog } from "../../invite-links/components/InviteLinksDialog";
+import { InviteCollaboratorsDialog } from "@/features/invites/components/dialogs/InviteCollaboratorsDialog";
 import { OrganizationsQueries } from "../../queries";
 import { useOrganization } from "../../hooks/useOrganization";
 import { CreateOrganizationDialog } from "../dialogs/CreateDialog";
@@ -82,8 +82,9 @@ export const OrganizationSwitcher = () => {
             </DropdownMenu>
 
             {organization && (
-                <InviteLinksDialog
+                <InviteCollaboratorsDialog
                     organizationId={organization.id}
+                    spaceId={null}
                     open={isInviteDialogOpen}
                     onOpenChange={setIsInviteDialogOpen}
                 />

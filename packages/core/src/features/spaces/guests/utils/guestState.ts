@@ -11,13 +11,25 @@ const WINDOW_MS = SPACE_GUEST_WINDOW_HOURS * 60 * 60 * 1000;
 export const windowEnd = (from: Date): Date =>
     new Date(from.getTime() + WINDOW_MS);
 
-/** A pending request or an admission past its 24h. */
+/** A row with no end never lapses. */
+const isPast = (expiresAt: Date | null, now: Date): boolean =>
+    expiresAt !== null && expiresAt.getTime() <= now.getTime();
+
+/** When an admission made now stops: never, or after the validity of the link. */
+export const admissionEnd = (
+    from: Date,
+    validityHours: number | null
+): Date | null => {
+    if (validityHours === null) return null;
+    return new Date(from.getTime() + validityHours * 60 * 60 * 1000);
+};
+
+/** A pending request past its 24h, or an admission past its validity. */
 export const isLapsed = (
     row: Pick<GuestRow, "status" | "expiresAt">,
     now: Date
 ): boolean =>
-    row.status !== SPACE_GUEST_STATUSES.DENIED &&
-    row.expiresAt.getTime() <= now.getTime();
+    row.status !== SPACE_GUEST_STATUSES.DENIED && isPast(row.expiresAt, now);
 
 /**
  * The state of a row as the world sees it. A lapsed row reads as denied by
@@ -38,21 +50,19 @@ export const effectiveState = (
     return { status: row.status, statusReason: row.statusReason };
 };
 
-/** Only an admitted guest still inside the 24h is in. */
+/** Only an admitted guest whose validity has not ended is in. */
 export const hasGuestAccess = (
     row: Pick<GuestRow, "status" | "expiresAt">,
     now: Date
 ): boolean =>
-    row.status === SPACE_GUEST_STATUSES.ADMITTED &&
-    row.expiresAt.getTime() > now.getTime();
+    row.status === SPACE_GUEST_STATUSES.ADMITTED && !isPast(row.expiresAt, now);
 
 /** A request that is still waiting for a host. */
 export const isWaiting = (
     row: Pick<GuestRow, "status" | "expiresAt">,
     now: Date
 ): boolean =>
-    row.status === SPACE_GUEST_STATUSES.PENDING &&
-    row.expiresAt.getTime() > now.getTime();
+    row.status === SPACE_GUEST_STATUSES.PENDING && !isPast(row.expiresAt, now);
 
 /** Whoever has a living pass, waiting or inside, has nothing to ask again. */
 export const hasLivePass = (

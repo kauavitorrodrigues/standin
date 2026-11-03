@@ -26,7 +26,7 @@ import type { GuestRow } from "../types";
 type Answer = {
     status: SpaceGuestStatus;
     statusReason: SpaceGuestStatusReason;
-    expiresAt?: Date;
+    expiresAt?: Date | null;
 };
 
 // The spaces that take guests right now. A request answered after the space

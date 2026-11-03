@@ -18,6 +18,8 @@ type Props = {
     // The token of an organization link: it lets the person in even when sign up
     // is closed, and puts them in that organization.
     inviteToken?: string;
+    // An invitation by e-mail: the account must use this address.
+    lockedEmail?: string;
 };
 
 const getSignUpErrorMessage = (error: unknown): string => {
@@ -30,18 +32,18 @@ const getSignUpErrorMessage = (error: unknown): string => {
     return SIGN_UP_ERROR_MESSAGES.FALLBACK;
 };
 
-export function SignUpForm({ inviteToken }: Props) {
+export function SignUpForm({ inviteToken, lockedEmail }: Props) {
     const navigate = useNavigate();
     const signUpMutation = useSignUp();
 
     const form = useForm<UserDataSchemaType>({
         resolver: zodResolver(UserDataSchema),
-        defaultValues: { name: "", email: "", password: "" },
+        defaultValues: { name: "", email: lockedEmail ?? "", password: "" },
     });
 
     const onSubmit = async (data: UserDataSchemaType) => {
         await signUpMutation.mutateAsync(
-            { ...data, inviteToken },
+            { ...data, email: lockedEmail ?? data.email, inviteToken },
             {
                 onSuccess: () => navigate({ to: "/home" }),
             }
@@ -71,7 +73,7 @@ export function SignUpForm({ inviteToken }: Props) {
                 required
                 type="email"
                 placeholder="Seu e-mail"
-                disabled={isPending}
+                disabled={isPending || !!lockedEmail}
                 maxLength={MAX_USER_EMAIL_LENGTH}
             />
             <TextFormField

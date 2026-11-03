@@ -1,10 +1,10 @@
 import type { z } from "zod/v4";
-import type {
-    SpaceInviteLinkCreatedSchema,
-    SpaceInviteLinkSchema,
-} from "../schemas/space-invite-link.schema";
+import type { SpaceFixedLinkSchema } from "../schemas/space-invite-link.schema";
 import type {
     GuestSpaceSchema,
+    SpaceGuestEntriesQuerySchema,
+    SpaceGuestEntryListSchema,
+    SpaceGuestEntrySchema,
     SpaceGuestListSchema,
     SpaceGuestSchema,
     SpaceGuestStateSchema,
@@ -15,9 +15,11 @@ import type {
 } from "../schemas/invite-preview.schema";
 import type { SpaceViewSchema } from "../schemas/space-view.schema";
 
-export type SpaceInviteLink = z.infer<typeof SpaceInviteLinkSchema>;
-export type SpaceInviteLinkCreated = z.infer<
-    typeof SpaceInviteLinkCreatedSchema
+export type SpaceFixedLink = z.infer<typeof SpaceFixedLinkSchema>;
+export type SpaceGuestEntry = z.infer<typeof SpaceGuestEntrySchema>;
+export type SpaceGuestEntryList = z.infer<typeof SpaceGuestEntryListSchema>;
+export type SpaceGuestEntriesQuery = z.infer<
+    typeof SpaceGuestEntriesQuerySchema
 >;
 export type SpaceGuest = z.infer<typeof SpaceGuestSchema>;
 export type SpaceGuestList = z.infer<typeof SpaceGuestListSchema>;

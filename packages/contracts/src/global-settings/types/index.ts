@@ -20,29 +20,13 @@ export type GlobalCapabilities = {
 export type OrganizationInviteLinkRole =
     (typeof ORGANIZATION_INVITE_LINK_ROLES)[number];
 
-// A link as it is listed. The secret is kept only as a hash, so it exists once,
-// in the answer that creates the link.
-export type OrganizationInviteLink = {
-    id: string;
-    organizationId: string;
-    createdBy: string | null;
-    role: OrganizationInviteLinkRole;
-    expiresAt: string;
-    maxUses: number | null;
-    usesCount: number;
-    revokedAt: string | null;
-    createdAt: string;
-};
-
-export type OrganizationInviteLinkCreated = OrganizationInviteLink & {
-    token: string;
-};
-
 // What the page of a link shows before the person signs up.
 export type OrganizationInvitePreview = {
     organizationName: string;
     inviterName: string | null;
     role: OrganizationInviteLinkRole;
+    // Set when the invitation is for one e-mail: the account must use it.
+    email: string | null;
 };
 
 // A row of the admin lists.

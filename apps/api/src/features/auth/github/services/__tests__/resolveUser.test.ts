@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { OAuthEmailUnverifiedError } from "@standin/contracts";
+import {
+    OAuthEmailUnverifiedError,
+    SignupClosedError,
+} from "@standin/contracts";
 
 const mocks = vi.hoisted(() => ({
     findByIdentity: vi.fn(),
     linkIdentity: vi.fn(),
     createFromIdentity: vi.fn(),
     fetchVerifiedEmail: vi.fn(),
+    assertSignupOpen: vi.fn(),
 }));
 
 vi.mock("@standin/core", () => ({
@@ -14,6 +18,7 @@ vi.mock("@standin/core", () => ({
         linkIdentity: mocks.linkIdentity,
         createFromIdentity: mocks.createFromIdentity,
     },
+    GlobalSettingsService: { assertSignupOpen: mocks.assertSignupOpen },
 }));
 vi.mock("@standin/infra", () => ({
     GithubProvider: { getVerifiedEmail: mocks.fetchVerifiedEmail },
@@ -39,6 +44,7 @@ describe("resolveUser", () => {
         mocks.findByIdentity.mockResolvedValue(null);
         mocks.linkIdentity.mockResolvedValue(null);
         mocks.fetchVerifiedEmail.mockResolvedValue("ana@example.com");
+        mocks.assertSignupOpen.mockResolvedValue(undefined);
         mocks.createFromIdentity.mockResolvedValue({
             user: { id: "new" },
             created: true,
@@ -99,6 +105,28 @@ describe("resolveUser", () => {
         ).rejects.toBeInstanceOf(OAuthEmailUnverifiedError);
         expect(mocks.linkIdentity).not.toHaveBeenCalled();
         expect(mocks.createFromIdentity).not.toHaveBeenCalled();
+    });
+
+    it("creates nobody while the sign up is closed", async () => {
+        mocks.assertSignupOpen.mockRejectedValue(new SignupClosedError());
+
+        await expect(
+            resolveUser({ accessToken: "t", profile })
+        ).rejects.toBeInstanceOf(SignupClosedError);
+        expect(mocks.createFromIdentity).not.toHaveBeenCalled();
+    });
+
+    it("still signs in and links while the sign up is closed", async () => {
+        mocks.assertSignupOpen.mockRejectedValue(new SignupClosedError());
+        mocks.findByIdentity.mockResolvedValue({ id: "u1" });
+        const signedIn = await resolveUser({ accessToken: "t", profile });
+        expect(signedIn.outcome).toBe("existing");
+
+        mocks.findByIdentity.mockResolvedValue(null);
+        mocks.linkIdentity.mockResolvedValue({ id: "u2" });
+        const linked = await resolveUser({ accessToken: "t", profile });
+        expect(linked.outcome).toBe("linked");
+        expect(mocks.assertSignupOpen).not.toHaveBeenCalled();
     });
 
     it("signs in the winner when another request created the person first", async () => {

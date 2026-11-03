@@ -7,6 +7,8 @@ import { OrganizationController } from "./controllers";
 import { spacesRouter } from "../spaces/routes";
 import { conversationsRouter } from "../chat/routes";
 import { organizationInviteLinksRouter } from "./invite-links/routes";
+import { organizationInvitationsRouter } from "./invitations/routes";
+import { RequiresInviteManager } from "@/middlewares/requiresInviteManager";
 import { libraryRouter } from "../library/routes";
 import { RequiresLibraryOwner } from "../library/middleware/requiresLibraryOwner";
 import { organizationSoundboardRouter } from "../soundboard/routes";
@@ -27,6 +29,12 @@ router.get("/", OrganizationController.list);
 // The links that bring people in. The owner or the instance admin, so it comes
 // before the routes that only accept members.
 router.use("/:organizationId/invite-links", organizationInviteLinksRouter);
+router.use("/:organizationId/invitations", organizationInvitationsRouter);
+router.get(
+    "/:organizationId/member-entries",
+    RequiresInviteManager,
+    OrganizationController.members.entries
+);
 
 router.put(
     "/:organizationId",

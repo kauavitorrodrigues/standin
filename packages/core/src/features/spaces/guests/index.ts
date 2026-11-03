@@ -1,4 +1,6 @@
 import { admitSpaceGuest } from "./admit";
+import { archiveSpaceGuest } from "./archive";
+import { listSpaceGuestEntries } from "./listEntries";
 import { denySpaceGuest } from "./deny";
 import {
     deleteSpaceGuestsBySpaceIds,
@@ -17,6 +19,8 @@ import { onSpaceGuestEvent } from "./utils/guestEvents";
 
 export const SpaceGuestService = {
     list: listSpaceGuests,
+    listEntries: listSpaceGuestEntries,
+    archive: archiveSpaceGuest,
     listPending: listPendingSpaceGuests,
     listSpacesOf: listGuestSpaces,
     findAdmitted: findAdmittedSpaceGuest,

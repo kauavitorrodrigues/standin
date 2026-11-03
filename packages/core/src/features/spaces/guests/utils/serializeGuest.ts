@@ -20,7 +20,7 @@ export const serializeGuest = (
     ...effectiveState(row, now),
     respondedBy: row.respondedBy,
     respondedAt: row.respondedAt?.toISOString() ?? null,
-    expiresAt: row.expiresAt.toISOString(),
+    expiresAt: row.expiresAt?.toISOString() ?? null,
     requestedAt: row.requestedAt.toISOString(),
 });
 
@@ -42,5 +42,5 @@ export const serializeGuestState = (
     spaceId: row.spaceId,
     ...effectiveState(row, now),
     respondedAt: row.respondedAt?.toISOString() ?? null,
-    expiresAt: row.expiresAt.toISOString(),
+    expiresAt: row.expiresAt?.toISOString() ?? null,
 });

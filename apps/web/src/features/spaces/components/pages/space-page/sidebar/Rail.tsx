@@ -17,7 +17,12 @@ import { SoundboardManagerDialog } from "@/features/soundboard/components/dialog
 import { SoundboardMenuItem } from "@/features/soundboard/components/instances/SoundboardMenuItem";
 import { SettingsDialog } from "@/features/settings/components/dialogs/SettingsDialog";
 import { RailButton } from "@/features/spaces/components/pages/space-page/sidebar/RailButton";
-import { GuestsMenuItem } from "@/features/spaces/guests/components/instances/GuestsMenuItem";
+import { InviteCollaboratorsDialog } from "@/features/invites/components/dialogs/InviteCollaboratorsDialog";
+import { InviteMenuItem } from "@/features/invites/components/instances/InviteMenuItem";
+import type { ManageTarget } from "@/features/invites/types";
+import { usePermission } from "@/features/auth/hooks/usePermission";
+import { useOrganizationId } from "@/features/organizations/hooks/useOrganizationId";
+import type { SettingsSectionId } from "@/features/settings/consts/sections";
 import { SpaceSettingsDialog } from "@/features/spaces/settings/components/instances/SpaceSettingsDialog";
 import { SpaceSettingsMenuItem } from "@/features/spaces/settings/components/instances/SpaceSettingsMenuItem";
 import { SpaceMenu } from "@/features/spaces/components/pages/space-page/sidebar/SpaceMenu";
@@ -32,8 +37,6 @@ type Props = {
     // Opens the decorator with no focus, from the space menu.
     onDecorate: () => void;
     decorateAvailability: DecorateAvailability;
-    // Opens the guests dialog, from the space menu.
-    onOpenGuests: () => void;
 };
 
 type FrameProps = { children: ReactNode };
@@ -54,10 +57,23 @@ export const Rail = ({
     onTogglePeople,
     onDecorate,
     decorateAvailability,
-    onOpenGuests,
 }: Props) => {
     const { total: unreadTotal } = ChatQueries.useUnreadCounts();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isInviteOpen, setIsInviteOpen] = useState(false);
+    // The section the settings open on: the people of the space when the invite
+    // dialog sends there, the first one otherwise.
+    const [settingsSection, setSettingsSection] = useState<
+        SettingsSectionId | undefined
+    >(undefined);
+    const organizationId = useOrganizationId();
+    const canInvite = usePermission("update", "space");
+
+    const openSettings = (section?: SettingsSectionId) => {
+        setSettingsSection(section);
+        setIsSettingsOpen(true);
+    };
+    const manage = (target: ManageTarget) => openSettings(target);
     const [isSpaceSettingsOpen, setIsSpaceSettingsOpen] = useState(false);
     const [isSoundboardOpen, setIsSoundboardOpen] = useState(false);
 
@@ -69,7 +85,9 @@ export const Rail = ({
                     onDecorate={onDecorate}
                 />
                 <EditMapMenuItem spaceId={space.id} mapId={space.map.id} />
-                <GuestsMenuItem onOpen={onOpenGuests} />
+                {canInvite && (
+                    <InviteMenuItem onOpen={() => setIsInviteOpen(true)} />
+                )}
                 <SoundboardMenuItem onOpen={() => setIsSoundboardOpen(true)} />
                 <SpaceSettingsMenuItem
                     onOpen={() => setIsSpaceSettingsOpen(true)}
@@ -103,7 +121,7 @@ export const Rail = ({
             <RailButton
                 icon={SettingsIcon}
                 label="Configurações"
-                onClick={() => setIsSettingsOpen(true)}
+                onClick={() => openSettings()}
                 className="mt-auto"
             />
             <SoundboardManagerDialog
@@ -118,6 +136,23 @@ export const Rail = ({
             <SettingsDialog
                 open={isSettingsOpen}
                 onOpenChange={setIsSettingsOpen}
+                initialSection={settingsSection}
+                space={{
+                    organizationId,
+                    spaceId: space.id,
+                    canInvite,
+                    onInvite: () => {
+                        setIsSettingsOpen(false);
+                        setIsInviteOpen(true);
+                    },
+                }}
+            />
+            <InviteCollaboratorsDialog
+                organizationId={organizationId}
+                spaceId={space.id}
+                open={isInviteOpen}
+                onOpenChange={setIsInviteOpen}
+                onManage={manage}
             />
         </RailFrame>
     );

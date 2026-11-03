@@ -1,13 +1,8 @@
 import { organizationInviteLinksTable } from "@standin/database";
 
-export const linkSelect = {
+export const fixedLinkSelect = {
     id: organizationInviteLinksTable.id,
     organizationId: organizationInviteLinksTable.organizationId,
-    createdBy: organizationInviteLinksTable.createdBy,
-    role: organizationInviteLinksTable.role,
-    expiresAt: organizationInviteLinksTable.expiresAt,
-    maxUses: organizationInviteLinksTable.maxUses,
-    usesCount: organizationInviteLinksTable.usesCount,
-    revokedAt: organizationInviteLinksTable.revokedAt,
+    tokenEncrypted: organizationInviteLinksTable.tokenEncrypted,
     createdAt: organizationInviteLinksTable.createdAt,
 };

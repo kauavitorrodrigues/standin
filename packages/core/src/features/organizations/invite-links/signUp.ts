@@ -12,6 +12,7 @@ import {
 import type { Transaction } from "@standin/database";
 import {
     InviteLinkExhaustedError,
+    isOrganizationInvitationToken,
     ORGANIZATION_MEMBER_ROLES,
 } from "@standin/contracts";
 import type { User, UserDataSchemaType } from "@standin/contracts";
@@ -19,6 +20,8 @@ import { assignRandomAvatar } from "../../avatar/user/assignRandomAvatar";
 import { insertUser } from "../../users/utils/insertUser";
 import { readUser } from "../../users/utils/readUser";
 import { assertLinkUsable } from "../../spaces/guests/invites/utils/assertLinkUsable";
+import { OrganizationInvitationService } from "../invitations";
+import { publishOrganizationMembersChanged } from "../members/membersChangedEvents";
 import { lockLinkContext } from "./utils/findLinkContext";
 
 // Spending the use is the check, so two sign ups on the last use cannot both
@@ -54,7 +57,11 @@ export const signUpWithOrganizationInvite = async (
     data: UserDataSchemaType,
     token: string
 ): Promise<User> => {
-    const userId = await db.transaction(async (tx) => {
+    if (isOrganizationInvitationToken(token)) {
+        return OrganizationInvitationService.signUp(data, token);
+    }
+
+    const joined = await db.transaction(async (tx) => {
         const { link, organization } = await lockLinkContext(token, tx);
         assertLinkUsable(link, new Date());
         await spendUse(tx, link.id);
@@ -65,11 +72,14 @@ export const signUpWithOrganizationInvite = async (
             organizationId: organization.id,
             role: ORGANIZATION_MEMBER_ROLES.MEMBER,
         });
-        return id;
+        return { userId: id, organizationId: organization.id };
     });
 
     // It never fails the sign up, and an empty catalog leaves the ghost.
-    await assignRandomAvatar(userId);
+    await assignRandomAvatar(joined.userId);
+    await publishOrganizationMembersChanged({
+        organizationId: joined.organizationId,
+    });
 
-    return readUser(userId);
+    return readUser(joined.userId);
 };

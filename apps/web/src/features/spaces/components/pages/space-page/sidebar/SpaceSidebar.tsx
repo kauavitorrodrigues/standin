@@ -32,7 +32,6 @@ type Props = {
     chatFooter: ReactNode;
     onDecorate: () => void;
     decorateAvailability: DecorateAvailability;
-    onOpenGuests: () => void;
 };
 
 // The whole left side of the space: the fixed rail and the views that cover
@@ -53,7 +52,6 @@ export const SpaceSidebar = ({
     chatFooter,
     onDecorate,
     decorateAvailability,
-    onOpenGuests,
 }: Props) => {
     return (
         <>
@@ -65,7 +63,6 @@ export const SpaceSidebar = ({
                 onTogglePeople={onTogglePeople}
                 onDecorate={onDecorate}
                 decorateAvailability={decorateAvailability}
-                onOpenGuests={onOpenGuests}
             />
             <PeerChatContext.Provider value={peerChat}>
                 <PeerTypingContext.Provider value={peerTyping}>

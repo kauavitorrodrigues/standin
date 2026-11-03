@@ -7,6 +7,7 @@ import {
     eq,
     gt,
     isNull,
+    or,
 } from "@standin/database";
 import { SPACE_GUEST_ACCESS, SPACE_GUEST_STATUSES } from "@standin/contracts";
 import type { GuestSpace } from "@standin/contracts";
@@ -27,7 +28,10 @@ export const listGuestSpaces = async (
             and(
                 eq(spaceGuestsTable.userId, userId),
                 eq(spaceGuestsTable.status, SPACE_GUEST_STATUSES.ADMITTED),
-                gt(spaceGuestsTable.expiresAt, new Date()),
+                or(
+                    isNull(spaceGuestsTable.expiresAt),
+                    gt(spaceGuestsTable.expiresAt, new Date())
+                ),
                 isNull(spaceGuestsTable.deletedAt),
                 eq(spacesTable.guestAccess, SPACE_GUEST_ACCESS.ALLOWED),
                 isNull(spacesTable.deletedAt)
@@ -37,6 +41,6 @@ export const listGuestSpaces = async (
 
     return rows.map((row) => ({
         ...row,
-        expiresAt: row.expiresAt.toISOString(),
+        expiresAt: row.expiresAt?.toISOString() ?? null,
     }));
 };

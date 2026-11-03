@@ -1,16 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { answerMock, loadMock, publishMock, listChangedMock } = vi.hoisted(
-    () => ({
+const { answerMock, loadMock, publishMock, listChangedMock, linkValidityMock } =
+    vi.hoisted(() => ({
         answerMock: vi.fn(),
         loadMock: vi.fn(),
         publishMock: vi.fn(),
         listChangedMock: vi.fn(),
-    })
-);
+        linkValidityMock: vi.fn(),
+    }));
 
 vi.mock("../utils/answerPending", () => ({ answerPending: answerMock }));
 vi.mock("../utils/loadGuest", () => ({ loadGuest: loadMock }));
+vi.mock("../utils/findLinkValidity", () => ({
+    findLinkValidity: linkValidityMock,
+}));
 vi.mock("../utils/guestEvents", () => ({
     publishSpaceGuestEvent: publishMock,
     publishGuestListChanged: listChangedMock,
@@ -39,18 +42,27 @@ describe("admitSpaceGuest", () => {
         vi.clearAllMocks();
         answerMock.mockResolvedValue(row);
         loadMock.mockResolvedValue({ id: "g1", status: "ADMITTED" });
+        linkValidityMock.mockResolvedValue(null);
     });
 
-    it("admits for 24 hours from now, by the host", async () => {
+    it("admits with no end when the link sets no validity, by the host", async () => {
         await admitSpaceGuest("s1", "g1", "host");
 
-        const [, , hostId, answer, now] = answerMock.mock.calls[0];
+        const [, , hostId, answer] = answerMock.mock.calls[0];
         expect(hostId).toBe("host");
         expect(answer.status).toBe("ADMITTED");
         expect(answer.statusReason).toBe("HOST_ADMITTED");
-        expect(answer.expiresAt.getTime() - now.getTime()).toBe(
-            24 * 60 * 60 * 1000
-        );
+        expect(answer.expiresAt).toBeNull();
+    });
+
+    it("ends the access that long after the admission when the link sets a validity", async () => {
+        linkValidityMock.mockResolvedValue(24);
+
+        await admitSpaceGuest("s1", "g1", "host");
+
+        const [, , , answer, now] = answerMock.mock.calls[0];
+        expect(answer.expiresAt.getTime() - now.getTime()).toBe(24 * HOUR_MS);
+        expect(linkValidityMock).toHaveBeenCalledWith("s1", "g1");
     });
 
     it("tells the guest alone, with no sensitive field", async () => {

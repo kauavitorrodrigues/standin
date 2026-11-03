@@ -13,7 +13,12 @@ import { MediaLogMessages } from "@/lib/media/consts/messages";
 import { SocketManager } from "@/lib/socket/socketManager";
 import { ShutdownError, ShutdownTimeoutError } from "@/errors/ShutdownError";
 
-validateEnv(["JWT_SECRET", "DATABASE_URL", "FRONTEND_URL"]);
+validateEnv([
+    "JWT_SECRET",
+    "INVITE_LINK_SECRET",
+    "DATABASE_URL",
+    "FRONTEND_URL",
+]);
 
 const server = createServer(createApp());
 

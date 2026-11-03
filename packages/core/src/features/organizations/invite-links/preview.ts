@@ -1,8 +1,13 @@
+import {
+    isOrganizationInvitationToken,
+    ORGANIZATION_MEMBER_ROLES,
+} from "@standin/contracts";
 import type {
     OrganizationInvitePreview,
     OrganizationInviteLinkRole,
 } from "@standin/contracts";
 import { assertLinkUsable } from "../../spaces/guests/invites/utils/assertLinkUsable";
+import { OrganizationInvitationService } from "../invitations";
 import { findLinkContext } from "./utils/findLinkContext";
 
 /**
@@ -12,6 +17,16 @@ import { findLinkContext } from "./utils/findLinkContext";
 export const previewOrganizationInvite = async (
     token: string
 ): Promise<OrganizationInvitePreview> => {
+    if (isOrganizationInvitationToken(token)) {
+        const invitation = await OrganizationInvitationService.preview(token);
+        return {
+            organizationName: invitation.organizationName,
+            inviterName: invitation.inviterName,
+            role: ORGANIZATION_MEMBER_ROLES.MEMBER,
+            email: invitation.email,
+        };
+    }
+
     const { link, organization, inviterName } = await findLinkContext(token);
     assertLinkUsable(link, new Date());
 
@@ -19,5 +34,6 @@ export const previewOrganizationInvite = async (
         organizationName: organization.name,
         inviterName,
         role: link.role as OrganizationInviteLinkRole,
+        email: null,
     };
 };

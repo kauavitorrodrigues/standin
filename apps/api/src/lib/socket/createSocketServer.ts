@@ -35,6 +35,7 @@ import { registerSoundboard } from "@/lib/socket/handlers/soundboard";
 import { registerChatTyping } from "@/lib/socket/handlers/chatTyping";
 import { broadcastAvatarChange } from "@/lib/socket/services/broadcastAvatarChange";
 import { broadcastMemberDesksReleased } from "@/lib/socket/services/broadcastMemberDesksReleased";
+import { broadcastOrganizationMembersChanged } from "@/lib/socket/services/broadcastOrganizationMembersChanged";
 import { broadcastMemberRemoved } from "@/lib/socket/services/broadcastMemberRemoved";
 import { broadcastNameChange } from "@/lib/socket/services/broadcastNameChange";
 import { broadcastSpaceGuestEvent } from "@/lib/socket/services/broadcastSpaceGuestEvent";
@@ -76,6 +77,10 @@ export function createSocketServer(
     // Registered once per server. Runs after a membership ends, so the person
     // loses the spaces of that organization at once.
     OrganizationMemberService.onRemoved(broadcastMemberRemoved);
+
+    // Registered once per server. Runs when someone joins an organization or
+    // its invitations change, so its owners see the lists with no refresh.
+    OrganizationMemberService.onChanged(broadcastOrganizationMembersChanged);
 
     // Registered once per server. Runs after a membership ends, so the desks
     // the person held in that organization become free.

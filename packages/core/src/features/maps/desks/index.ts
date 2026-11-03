@@ -1,6 +1,7 @@
 import { assignDesk } from "./assign";
 import { claimDesk } from "./claim";
 import { listDesks } from "./list";
+import { listFreeDesks } from "./listFree";
 import { releaseDesk } from "./release";
 import { releaseMemberDesks } from "./releaseForMember";
 
@@ -9,6 +10,7 @@ export type { DeskActor } from "./types/desk-actor";
 
 export const DeskService = {
     list: listDesks,
+    listFree: listFreeDesks,
     claim: claimDesk,
     release: releaseDesk,
     assign: assignDesk,

@@ -1,5 +1,10 @@
 import { z } from "zod/v4";
-import { SPACE_GUEST_STATUS_REASONS, SPACE_GUEST_STATUSES } from "../consts";
+import { PageQuerySchema } from "../../../__shared__";
+import {
+    SPACE_GUEST_LIST_STATES,
+    SPACE_GUEST_STATUS_REASONS,
+    SPACE_GUEST_STATUSES,
+} from "../consts";
 
 export const SpaceGuestSchema = z.object({
     id: z.string(),
@@ -12,7 +17,8 @@ export const SpaceGuestSchema = z.object({
     statusReason: z.enum(SPACE_GUEST_STATUS_REASONS),
     respondedBy: z.string().nullable(),
     respondedAt: z.iso.datetime().nullable(),
-    expiresAt: z.iso.datetime(),
+    // Null: no end, a host sends the guest out.
+    expiresAt: z.iso.datetime().nullable(),
     requestedAt: z.iso.datetime(),
 });
 
@@ -30,7 +36,7 @@ export const SpaceGuestStateSchema = SpaceGuestSchema.pick({
 export const GuestSpaceSchema = z.object({
     id: z.string(),
     name: z.string(),
-    expiresAt: z.iso.datetime(),
+    expiresAt: z.iso.datetime().nullable(),
 });
 
 // What the hosts see: grouped by what they can do with each one, the closed
@@ -39,4 +45,21 @@ export const SpaceGuestListSchema = z.object({
     pending: z.array(SpaceGuestSchema),
     admitted: z.array(SpaceGuestSchema),
     closed: z.array(SpaceGuestSchema),
+});
+
+// A row of the full list of guests of the space.
+export const SpaceGuestEntrySchema = SpaceGuestSchema.extend({
+    state: z.enum(SPACE_GUEST_LIST_STATES),
+    archivedAt: z.iso.datetime().nullable(),
+});
+
+// One page of the full list and how many guests match in all.
+export const SpaceGuestEntryListSchema = z.object({
+    guests: z.array(SpaceGuestEntrySchema),
+    total: z.number().int().min(0),
+});
+
+// The page, the search by name and the state chip of the full list.
+export const SpaceGuestEntriesQuerySchema = PageQuerySchema.extend({
+    state: z.enum(SPACE_GUEST_LIST_STATES).optional(),
 });

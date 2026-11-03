@@ -15,3 +15,43 @@ export class OrganizationAccessDeniedError extends BaseError {
         );
     }
 }
+
+export class OrganizationInvitationNotFoundError extends BaseError {
+    constructor() {
+        super(
+            "Invitation not found.",
+            "ORGANIZATION_INVITATION_NOT_FOUND",
+            404
+        );
+    }
+}
+
+export class OrganizationInvitationExpiredError extends BaseError {
+    constructor() {
+        super(
+            "This invitation has expired.",
+            "ORGANIZATION_INVITATION_EXPIRED",
+            410
+        );
+    }
+}
+
+export class OrganizationInvitationEmailMismatchError extends BaseError {
+    constructor() {
+        super(
+            "This invitation is for another e-mail.",
+            "ORGANIZATION_INVITATION_EMAIL_MISMATCH",
+            403
+        );
+    }
+}
+
+export class OrganizationInvitationDeskUnavailableError extends BaseError {
+    constructor() {
+        super(
+            "This desk is not free to keep for an invitation.",
+            "ORGANIZATION_INVITATION_DESK_UNAVAILABLE",
+            409
+        );
+    }
+}

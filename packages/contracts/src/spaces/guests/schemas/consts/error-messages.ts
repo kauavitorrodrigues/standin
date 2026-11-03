@@ -2,11 +2,8 @@ export const SpaceGuestErrorMessages = {
     token: {
         required: "The invite token is required.",
     },
-    expiresInHours: {
-        invalid: "The expiration must be a whole number of hours.",
-    },
-    maxUses: {
-        invalid: "The maximum uses must be a whole number.",
+    validity: {
+        invalid: "The validity must be 24 hours, 7 days, 30 days or none.",
     },
     guestAccess: {
         invalid: "The guest access must be ALLOWED or DISABLED.",

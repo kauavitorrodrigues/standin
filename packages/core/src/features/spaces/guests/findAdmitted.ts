@@ -6,13 +6,14 @@ import {
     eq,
     gt,
     isNull,
+    or,
 } from "@standin/database";
 import { SPACE_GUEST_ACCESS, SPACE_GUEST_STATUSES } from "@standin/contracts";
 import type { AdmittedGuest } from "./types";
 
 /**
  * The guest pass that lets a person into a space right now, or null: admitted,
- * inside the 24h, and the space still takes guests. A pending request never
+ * inside its validity, and the space still takes guests. A pending request never
  * counts.
  */
 export const findAdmittedSpaceGuest = async (
@@ -33,7 +34,10 @@ export const findAdmittedSpaceGuest = async (
                 eq(spaceGuestsTable.userId, userId),
                 eq(spaceGuestsTable.spaceId, spaceId),
                 eq(spaceGuestsTable.status, SPACE_GUEST_STATUSES.ADMITTED),
-                gt(spaceGuestsTable.expiresAt, new Date()),
+                or(
+                    isNull(spaceGuestsTable.expiresAt),
+                    gt(spaceGuestsTable.expiresAt, new Date())
+                ),
                 isNull(spaceGuestsTable.deletedAt),
                 eq(spacesTable.guestAccess, SPACE_GUEST_ACCESS.ALLOWED),
                 isNull(spacesTable.deletedAt)

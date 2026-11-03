@@ -147,6 +147,40 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             );
     };
 
+    // An extra link of the space, made straight in the database: the API keeps
+    // one fixed link per space, but the limits (uses, expiry, revoked) are
+    // checked on the same rows, so a test can set them here.
+    const makeLink = async (
+        spaceId: string,
+        overrides: Partial<
+            typeof database.spaceInviteLinksTable.$inferInsert
+        > = {}
+    ) => {
+        const { createHash, randomBytes } = await import("node:crypto");
+        const { db, spaceInviteLinksTable } = database;
+        const token = randomBytes(32).toString("base64url");
+        const [row] = await db
+            .insert(spaceInviteLinksTable)
+            .values({
+                spaceId,
+                createdBy: users.owner.id,
+                tokenHash: createHash("sha256").update(token).digest("hex"),
+                expiresAt: new Date(Date.now() + 24 * HOUR),
+                ...overrides,
+            })
+            .returning({ id: spaceInviteLinksTable.id });
+        return { id: row.id, token };
+    };
+
+    const linkRow = async (id: string) => {
+        const { db, spaceInviteLinksTable, eq } = database;
+        const [stored] = await db
+            .select()
+            .from(spaceInviteLinksTable)
+            .where(eq(spaceInviteLinksTable.id, id));
+        return stored;
+    };
+
     const request = (as: UserKey, token = link.token) =>
         call(as, "POST", `/invites/${token}/request`);
 
@@ -187,6 +221,7 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
     beforeAll(async () => {
         process.env.DATABASE_URL = url;
         process.env.JWT_SECRET = "integration-secret";
+        process.env.INVITE_LINK_SECRET = "integration-invite-secret";
         process.env.FRONTEND_URL = "http://localhost:5173";
         process.env.SERVER_URL = "http://localhost:3000";
         process.env.STORAGE_DRIVER = "local";
@@ -278,9 +313,8 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
         it("answers 401 without a session on every guest route", async () => {
             for (const [method, route] of [
                 ["GET", `/spaces/${space.id}`],
-                ["POST", `/spaces/${space.id}/invite-links`],
-                ["GET", `/spaces/${space.id}/invite-links`],
-                ["DELETE", `/spaces/${space.id}/invite-links/x`],
+                ["GET", `/spaces/${space.id}/invite-links/fixed`],
+                ["POST", `/spaces/${space.id}/invite-links/fixed/reset`],
                 ["PUT", `/spaces/${space.id}/guest-access`],
                 ["GET", `/spaces/${space.id}/guests`],
                 ["GET", `/spaces/${space.id}/guests/me`],
@@ -299,42 +333,30 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
     });
 
     describe("the invite link", () => {
-        it("is made only by the owner of the organization", async () => {
-            const route = `/spaces/${space.id}/invite-links`;
+        it("is reached only by the owner of the organization", async () => {
+            const route = `/spaces/${space.id}/invite-links/fixed`;
 
-            expect((await call("member", "POST", route, {})).status).toBe(403);
-            expect((await call("ana", "POST", route, {})).status).toBe(403);
-            expect((await call("limited", "GET", route)).status).toBe(403);
+            expect((await call("member", "GET", route)).status).toBe(403);
+            expect((await call("ana", "GET", route)).status).toBe(403);
+            expect(
+                (await call("limited", "POST", `${route}/reset`)).status
+            ).toBe(403);
 
-            const created = await call("owner", "POST", route, {});
-            expect(created.status).toBe(201);
+            const created = await call("owner", "GET", route);
+            expect(created.status).toBe(200);
             expect(created.body.link.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
-            expect(created.body.link.usesCount).toBe(0);
-            expect(created.body.link.maxUses).toBeNull();
+            const stored = await linkRow(created.body.link.id);
+            expect(stored.usesCount).toBe(0);
+            expect(stored.maxUses).toBeNull();
             link = created.body.link;
         });
 
-        it("validates the expiration and the use limit", async () => {
-            const route = `/spaces/${space.id}/invite-links`;
+        it("is the same every time, until it is reset", async () => {
+            const route = `/spaces/${space.id}/invite-links/fixed`;
 
-            expect(
-                (await call("owner", "POST", route, { expiresInHours: 0 }))
-                    .status
-            ).toBe(400);
-            expect(
-                (await call("owner", "POST", route, { maxUses: 0 })).status
-            ).toBe(400);
-        });
-
-        it("is listed only to the owner, with the token to copy", async () => {
-            const route = `/spaces/${space.id}/invite-links`;
-
-            expect((await call("member", "GET", route)).status).toBe(403);
-            const listed = await call("owner", "GET", route);
-            expect(listed.status).toBe(200);
-            expect(listed.body.links.map((entry: Json) => entry.id)).toContain(
-                link.id
-            );
+            const again = await call("owner", "GET", route);
+            expect(again.body.link.id).toBe(link.id);
+            expect(again.body.link.token).toBe(link.token);
         });
 
         it("tells the guest where the link leads, before asking", async () => {
@@ -429,12 +451,7 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             const again = await request("ana");
 
             expect(again.body.guest.id).toBe(first.id);
-            const links = (
-                await call("owner", "GET", `/spaces/${space.id}/invite-links`)
-            ).body.links;
-            expect(
-                links.find((entry: Json) => entry.id === link.id).usesCount
-            ).toBe(1);
+            expect((await linkRow(link.id)).usesCount).toBe(1);
         });
     });
 
@@ -518,7 +535,7 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             expect(seenByGuest).toEqual([]);
         });
 
-        it("admits for 24 hours and tells the guest alone", async () => {
+        it("admits with no end and tells the guest alone", async () => {
             const waiting = await listen("ana");
             const bystander = await listen("limited");
 
@@ -530,10 +547,8 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
                 statusReason: "HOST_ADMITTED",
                 respondedBy: users.member.id,
             });
-            const left =
-                new Date(admitted.body.guest.expiresAt).getTime() - Date.now();
-            expect(left).toBeGreaterThan(23 * HOUR);
-            expect(left).toBeLessThanOrEqual(24 * HOUR);
+            // No validity on the link: the access has no end.
+            expect(admitted.body.guest.expiresAt).toBeNull();
             expect(
                 await waitFor(
                     () => heard(waiting, "space:guest-status").length > 0
@@ -688,7 +703,7 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
                 {
                     id: space.id,
                     name: "Party",
-                    expiresAt: expect.any(String),
+                    expiresAt: null,
                 },
             ]);
         });
@@ -726,8 +741,8 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
 
         it("cannot make links, run guests or change the guest access", async () => {
             for (const [method, route] of [
-                ["POST", `/spaces/${space.id}/invite-links`],
-                ["GET", `/spaces/${space.id}/invite-links`],
+                ["GET", `/spaces/${space.id}/invite-links/fixed`],
+                ["POST", `/spaces/${space.id}/invite-links/fixed/reset`],
                 ["PUT", `/spaces/${space.id}/guest-access`],
                 ["GET", `/spaces/${space.id}/guests`],
             ]) {
@@ -1056,12 +1071,17 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
     describe("the limits of a link", () => {
         it("refuses a revoked link with its own error, and keeps who is already in", async () => {
             await admit("ana");
-            const revoked = await call(
+            // A reset closes the link and makes another.
+            const reset = await call(
                 "owner",
-                "DELETE",
-                `/spaces/${space.id}/invite-links/${link.id}`
+                "POST",
+                `/spaces/${space.id}/invite-links/fixed/reset`
             );
-            expect(revoked.body.link.revokedAt).toEqual(expect.any(String));
+            expect(reset.status).toBe(200);
+            expect(reset.body.link.id).not.toBe(link.id);
+            expect((await linkRow(link.id)).revokedAt).toEqual(
+                expect.any(Date)
+            );
 
             const refused = await request("dani");
             expect(refused.status).toBe(410);
@@ -1073,48 +1093,27 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             expect(
                 (await call("ana", "GET", `/spaces/${space.id}`)).status
             ).toBe(200);
-            const left = (
-                await call("owner", "GET", `/spaces/${space.id}/invite-links`)
-            ).body.links;
-            expect(left.map((entry: Json) => entry.id)).not.toContain(link.id);
-            expect(
-                (
-                    await call(
-                        "owner",
-                        "DELETE",
-                        `/spaces/${space.id}/invite-links/${link.id}`
-                    )
-                ).status
-            ).toBe(404);
+            const current = await call(
+                "owner",
+                "GET",
+                `/spaces/${space.id}/invite-links/fixed`
+            );
+            expect(current.body.link.id).toBe(reset.body.link.id);
         });
 
         it("refuses an expired link", async () => {
-            const made = await call(
-                "owner",
-                "POST",
-                `/spaces/${space.id}/invite-links`,
-                { expiresInHours: 1 }
-            );
-            const { db, spaceInviteLinksTable, eq } = database;
-            await db
-                .update(spaceInviteLinksTable)
-                .set({ expiresAt: new Date(Date.now() - 1000) })
-                .where(eq(spaceInviteLinksTable.id, made.body.link.id));
+            const made = await makeLink(space.id, {
+                expiresAt: new Date(Date.now() - 1000),
+            });
 
-            const refused = await request("dani", made.body.link.token);
+            const refused = await request("dani", made.token);
 
             expect(refused.status).toBe(410);
             expect(refused.body.code).toBe("INVITE_LINK_EXPIRED");
         });
 
         it("spends one use per request and refuses past the limit", async () => {
-            const made = await call(
-                "owner",
-                "POST",
-                `/spaces/${space.id}/invite-links`,
-                { maxUses: 1 }
-            );
-            const token = made.body.link.token;
+            const { token } = await makeLink(space.id, { maxUses: 1 });
 
             const first = await request("dani", token);
             const second = await request("bia", token);
@@ -1127,13 +1126,7 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
         });
 
         it("lets only one of two simultaneous requests take the last use", async () => {
-            const made = await call(
-                "owner",
-                "POST",
-                `/spaces/${space.id}/invite-links`,
-                { maxUses: 1 }
-            );
-            const token = made.body.link.token;
+            const { token } = await makeLink(space.id, { maxUses: 1 });
 
             const answers = await Promise.all([
                 request("bia", token),
@@ -1150,9 +1143,8 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
         it("keeps both accesses apart", async () => {
             const made = await call(
                 "otherOwner",
-                "POST",
-                `/spaces/${foreign.id}/invite-links`,
-                {}
+                "GET",
+                `/spaces/${foreign.id}/invite-links/fixed`
             );
             await request("owner", made.body.link.token);
             const { id } = (
@@ -1227,9 +1219,8 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             const doomed = await createSpace("owner", organizationId, "Doomed");
             const made = await call(
                 "owner",
-                "POST",
-                `/spaces/${doomed.id}/invite-links`,
-                {}
+                "GET",
+                `/spaces/${doomed.id}/invite-links/fixed`
             );
             await request("bia", made.body.link.token);
             const id = (
@@ -1272,31 +1263,18 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
     });
 
     describe("what the review of the code asked for", () => {
-        const freshLink = async (spaceId = space.id) =>
-            (await call("owner", "POST", `/spaces/${spaceId}/invite-links`, {}))
-                .body.link as Json;
+        const freshLink = (spaceId = space.id) => makeLink(spaceId);
 
-        it("keeps only the hash of the token and never lists the token again", async () => {
+        it("keeps only the hash of the token", async () => {
             const { createHash } = await import("node:crypto");
             const made = await freshLink();
-            const { db, spaceInviteLinksTable, eq } = database;
-            const [stored] = await db
-                .select()
-                .from(spaceInviteLinksTable)
-                .where(eq(spaceInviteLinksTable.id, made.id));
+            const stored = await linkRow(made.id);
 
             expect(stored.tokenHash).toBe(
                 createHash("sha256").update(made.token).digest("hex")
             );
             expect(JSON.stringify(stored)).not.toContain(made.token);
 
-            const listed = await call(
-                "owner",
-                "GET",
-                `/spaces/${space.id}/invite-links`
-            );
-            expect(JSON.stringify(listed.body)).not.toContain(made.token);
-            expect(listed.body.links[0]).not.toHaveProperty("token");
             // The hash is not a way in: only the token opens the invite.
             expect(
                 (await call("eli", "GET", `/invites/${stored.tokenHash}`))
@@ -1321,12 +1299,7 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             ]);
             const ids = new Set(answers.map((answer) => answer.body.guest.id));
             expect(ids.size).toBe(1);
-            const links = (
-                await call("owner", "GET", `/spaces/${space.id}/invite-links`)
-            ).body.links;
-            expect(
-                links.find((entry: Json) => entry.id === made.id).usesCount
-            ).toBe(1);
+            expect((await linkRow(made.id)).usesCount).toBe(1);
             expect(
                 (await guestsOf()).filter(
                     (guest) => guest.userId === users.eli.id
@@ -1348,12 +1321,7 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             ]);
 
             expect(answers.map((answer) => answer.status)).toEqual([200, 200]);
-            const links = (
-                await call("owner", "GET", `/spaces/${space.id}/invite-links`)
-            ).body.links;
-            expect(
-                links.find((entry: Json) => entry.id === made.id).usesCount
-            ).toBe(1);
+            expect((await linkRow(made.id)).usesCount).toBe(1);
             expect((await row(space.id, "eli")).status).toBe("PENDING");
         });
 
@@ -1502,9 +1470,8 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
             const doomed = await createSpace("tmpOwner", org.id, "Gone");
             const made = await call(
                 "tmpOwner",
-                "POST",
-                `/spaces/${doomed.id}/invite-links`,
-                {}
+                "GET",
+                `/spaces/${doomed.id}/invite-links/fixed`
             );
             await request("fabi", made.body.link.token);
             const id = (
