@@ -127,6 +127,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5436/standin?schema=publi
 SERVER_PORT=3001
 SERVER_URL="http://localhost:3001"
 JWT_SECRET="change-me"
+INVITE_LINK_SECRET="change-me-too"
 FRONTEND_URL="http://localhost:5173"
 
 # Connections the API may hold open to Postgres. Defaults to 20.

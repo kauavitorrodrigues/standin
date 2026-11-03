@@ -2,18 +2,18 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { InviteLinkSecretMissingError } from "@standin/contracts";
 import { openToken, readSealedToken, sealToken } from "..";
 
-const original = process.env.JWT_SECRET;
+const original = process.env.INVITE_LINK_SECRET;
 
 beforeEach(() => {
-    process.env.JWT_SECRET = "test-secret-one";
+    process.env.INVITE_LINK_SECRET = "test-secret-one";
 });
 
 afterEach(() => {
     if (original === undefined) {
-        delete process.env.JWT_SECRET;
+        delete process.env.INVITE_LINK_SECRET;
         return;
     }
-    process.env.JWT_SECRET = original;
+    process.env.INVITE_LINK_SECRET = original;
 });
 
 describe("sealToken and openToken", () => {
@@ -50,7 +50,7 @@ describe("sealToken and openToken", () => {
 
     it("refuses a value sealed with another secret", () => {
         const sealed = sealToken("inv_abc123");
-        process.env.JWT_SECRET = "test-secret-two";
+        process.env.INVITE_LINK_SECRET = "test-secret-two";
 
         expect(openToken(sealed)).toBeNull();
     });
@@ -62,8 +62,19 @@ describe("sealToken and openToken", () => {
         expect(openToken("a.b.c")).toBeNull();
     });
 
-    it("throws when the server secret is missing", () => {
-        delete process.env.JWT_SECRET;
+    it("does not depend on the secret that signs sessions", () => {
+        const originalJwt = process.env.JWT_SECRET;
+        const sealed = sealToken("inv_abc123");
+
+        process.env.JWT_SECRET = "another-session-secret";
+        expect(openToken(sealed)).toBe("inv_abc123");
+
+        if (originalJwt === undefined) delete process.env.JWT_SECRET;
+        else process.env.JWT_SECRET = originalJwt;
+    });
+
+    it("throws when the invite link secret is missing", () => {
+        delete process.env.INVITE_LINK_SECRET;
 
         expect(() => sealToken("inv_abc123")).toThrow(
             InviteLinkSecretMissingError

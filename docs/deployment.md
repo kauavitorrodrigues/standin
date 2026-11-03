@@ -21,6 +21,7 @@ The page, the API and the sockets share one origin (`/api` is forwarded to the A
 2. **Get the code** and copy `.env.example` to `.env`. Set at least:
     - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
     - `JWT_SECRET` (a long random value, `openssl rand -hex 32`)
+    - `INVITE_LINK_SECRET` (another long random value, `openssl rand -hex 32`, never the same as `JWT_SECRET`)
     - `SITE_ADDRESS` (the domain, which makes Caddy get the HTTPS certificate by itself)
     - `SERVER_URL` and `FRONTEND_URL` (both `https://` plus the domain)
     - `MEDIA_ANNOUNCED_ADDRESS` (the **public IP** of the server, the address clients send media to)
@@ -50,9 +51,22 @@ By default anyone who finds the URL can sign up, create organizations and create
 - **Organization creation** off and **space creation** off: only the admin creates them. The buttons disappear for everyone else and the API answers 403 (`ORGANIZATION_CREATION_BLOCKED`, `SPACE_CREATION_BLOCKED`).
 - A closed sign up answers 403 `SIGNUP_CLOSED`.
 
-To bring people in while sign up is closed, the owner of an organization (or the admin) opens the organization menu, **Convidar pessoas**, and copies a link. Whoever opens it creates an account that goes straight into that organization, as a member (never an admin). A link lasts a week by default, can be closed at any time, and can have a limit of uses.
+To bring people in while sign up is closed, the owner of an organization (or the admin) invites them, see [Invite links](#invite-links).
 
 To start a fresh server already closed, set `ALLOW_SIGNUP`, `ALLOW_ORGANIZATION_CREATION` and `ALLOW_SPACE_CREATION` in `.env` (`false` turns one off). They are only read the first time the API runs on an empty database: after that the value saved in the database wins and changing `.env` does nothing. Run the bootstrap (see [First admin](#first-admin)) so there is an admin to change them later.
+
+## Invite links
+
+The owner of an organization (or the admin) brings people in from **Convidar pessoas**, in two ways:
+
+- **The fixed link** of the organization. It is always the same until the owner resets it, and whoever opens it creates an account that goes straight into that organization, as a member (never an admin). Resetting it closes the old one. A space has its own fixed link for guests.
+- **An invitation by e-mail**, for one address, valid for 30 days. It can keep a desk of a space for the person.
+
+To show a fixed link again, the server keeps it sealed (AES-256-GCM) in the database, with a key made from `INVITE_LINK_SECRET`. The variable is **required**: the API does not start without it. Use a long random value, `openssl rand -hex 32`, and keep it apart from `JWT_SECRET`, so rotating one never touches the other.
+
+- **Upgrading a server** that was installed before this variable existed: add it to `.env` before the deploy, for example `echo "INVITE_LINK_SECRET=$(openssl rand -hex 32)" >> .env` on the server (the value is not shown). `deploy/update.sh` and the deploy skill stop or ask when it is missing.
+- **Changing it later** does not delete anything, but the fixed links already made can no longer be read. The next time an owner opens the screen the link is replaced by a new one, and the old one stops working. E-mail invitations already sent still work, because they are found by a hash, but their link can no longer be copied from the list.
+- **Back it up** with the rest of `.env`.
 
 ## Health checks
 
@@ -66,6 +80,7 @@ The API answers `GET /health` with no session, rate limited to 120 requests a mi
 | `DATABASE_URL`, `DATABASE_POOL_MAX`                                   | The database. The compose file builds the URL from the `POSTGRES_*` values. The pool defaults to 20      |
 | `DB_QUERY_COUNT`                                                      | `1` logs the queries sent per join (see [performance](performance.md)). Leave it `0` in production       |
 | `SERVER_PORT`, `SERVER_URL`, `FRONTEND_URL`, `JWT_SECRET`             | The API                                                                                                  |
+| `INVITE_LINK_SECRET`                                                  | Required. Seals the fixed invite links, see [Invite links](#invite-links)                                |
 | `STORAGE_DRIVER`, `S3_*`                                              | Where uploads go, see the [storage guide](storage.md)                                                    |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ORGANIZATION_NAME`    | The first admin and organization, see [First admin](#first-admin)                                        |
 | `ALLOW_SIGNUP`, `ALLOW_ORGANIZATION_CREATION`, `ALLOW_SPACE_CREATION` | The initial global settings, see [Who can use the instance](#who-can-use-the-instance). Open while empty |
@@ -146,7 +161,7 @@ Every deploy drops every connection, so do it when nobody is in a space.
 
 1. **Check it is empty.** Read the last `[Media] - Usage` line (`docker compose logs --tail 20 app | grep Usage`): `peers` should be 0 or the people agreed to be dropped. Write down the `peers` number if it is not 0.
 2. **Back up first**: `deploy/backup.sh <folder>` (the commands to restore it are in the Backups section) and note the commit now running (`git rev-parse --short HEAD`).
-3. **Deploy**: `git pull`, then `deploy/up.sh`. The `app` container applies the migrations before it starts. From your own machine, `pnpm run deploy` does the pull, the build and the health check over ssh (see the header of `deploy/deploy.sh` for `deploy.local.env`); on the server, `sh deploy/update.sh` does the same.
+3. **Check the variables**: `.env` on the server must have every key of `.env.example` that the new version added, for example `INVITE_LINK_SECRET`. `grep -c "^INVITE_LINK_SECRET=." .env` prints `1` when it is there (it does not show the value); if it is `0`, add it as in [Invite links](#invite-links). Without it `app` stops at start, and `deploy/update.sh` refuses to continue. Then **deploy**: `git pull`, then `deploy/up.sh`. The `app` container applies the migrations before it starts. From your own machine, `pnpm run deploy` does the pull, the build and the health check over ssh (see the header of `deploy/deploy.sh` for `deploy.local.env`); on the server, `sh deploy/update.sh` does the same.
 4. **Check**: `docker compose ps` shows `app` and `proxy` up, the logs of `app` have no error, and the Usage line shows the media worker started. Open the domain in two browsers and check they hear and see each other. After a deploy with people in the space, the `peers` number must come back to the one noted in step 1 within a minute, which is the check that everyone reconnected.
 5. **Roll back** if a check fails: `git checkout <previous commit>` and `deploy/up.sh` again. The migrations only go forward, so if the new version changed the database and the old code cannot read it, restore the dump of step 2 (Backups section) after stopping `app`.
 

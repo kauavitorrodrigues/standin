@@ -13,18 +13,18 @@ import {
 } from "../utils";
 import type { InvitationRow } from "../types";
 
-const original = process.env.JWT_SECRET;
+const original = process.env.INVITE_LINK_SECRET;
 
 beforeEach(() => {
-    process.env.JWT_SECRET = "test-secret-one";
+    process.env.INVITE_LINK_SECRET = "test-secret-one";
 });
 
 afterEach(() => {
     if (original === undefined) {
-        delete process.env.JWT_SECRET;
+        delete process.env.INVITE_LINK_SECRET;
         return;
     }
-    process.env.JWT_SECRET = original;
+    process.env.INVITE_LINK_SECRET = original;
 });
 
 const rowWith = (tokenEncrypted: string | null): InvitationRow => ({
@@ -101,7 +101,7 @@ describe("serializeInvitation", () => {
 
     it("is null when the token cannot be opened", () => {
         const row = rowWith(sealToken("inv_abc"));
-        process.env.JWT_SECRET = "test-secret-two";
+        process.env.INVITE_LINK_SECRET = "test-secret-two";
 
         expect(serializeInvitation(row)).toBeNull();
     });

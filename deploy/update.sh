@@ -24,6 +24,17 @@ if [ "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$branch")" ]; then
     exit 0
 fi
 
+# The API does not start without these, so a missing one stops the deploy now,
+# while the running version is untouched. Only the names are printed.
+for name in JWT_SECRET INVITE_LINK_SECRET; do
+    if ! grep -q "^$name=." .env; then
+        echo "$name is missing in .env on the server, stopping." >&2
+        echo "Add it (a long random value, not the same as the others), for example:" >&2
+        echo "  echo \"$name=\$(openssl rand -hex 32)\" >> .env" >&2
+        exit 1
+    fi
+done
+
 echo "Arriving:"
 git log --oneline "HEAD..origin/$branch"
 

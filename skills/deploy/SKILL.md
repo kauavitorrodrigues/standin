@@ -95,6 +95,7 @@ Rules for this mode: idempotent (re-running changes nothing that is already righ
 3. Create `.env` from `.env.example` on the server, generating secrets there so they never cross the terminal:
     - `POSTGRES_USER`, `POSTGRES_DB`: keep the example values or ask. `POSTGRES_PASSWORD`: `openssl rand -hex 24`.
     - `JWT_SECRET`: `openssl rand -hex 32`.
+    - `INVITE_LINK_SECRET`: `openssl rand -hex 32`, a different value from `JWT_SECRET`. The API does not start without it.
     - `SITE_ADDRESS`: the domain. `SERVER_URL` and `FRONTEND_URL`: `https://` plus the domain, no trailing slash.
     - `MEDIA_ANNOUNCED_ADDRESS`: the public IP. `MEDIA_LISTEN_PORT`: keep `44444` unless asked.
     - `ADMIN_EMAIL`: ask the user for the admin email and put it in the server `.env`. Leave `ADMIN_PASSWORD` out: the bootstrap in step 5 generates a strong one.
@@ -115,6 +116,7 @@ Rules for this mode: idempotent (re-running changes nothing that is already righ
 1. `cd "$DEPLOY_PATH"`; `git fetch origin "$DEPLOY_BRANCH"`.
 2. Record the current commit: `OLD=$(git rev-parse --short HEAD)`. If `HEAD` already equals `origin/$DEPLOY_BRANCH`, say there is nothing new and stop, unless the user asked to rebuild anyway.
 3. Show what is arriving: `git log --oneline HEAD..origin/$DEPLOY_BRANCH`.
+   Then compare the keys of `.env.example` as it will be after the pull (`git show origin/$DEPLOY_BRANCH:.env.example`) with the keys in the server `.env`, printing **key names only**, never values. A key the new version needs and the server lacks stops `app` at start. For `INVITE_LINK_SECRET` (required), tell the user and, with their go-ahead, generate it on the server so it never crosses the terminal: `grep -q '^INVITE_LINK_SECRET=.' .env || printf 'INVITE_LINK_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env`. Any other missing key: ask the user for the value or the go-ahead to use the example's default.
 4. Check for new migrations: `git diff --name-only HEAD..origin/$DEPLOY_BRANCH -- packages/database/migrations`. If any, say so and **run a backup first**: `set -a; . ./.env; set +a; ./deploy/backup.sh <backup folder>`. Ask the user for the backup folder if none is known (suggest `/opt/backups/standin`). Do not continue if the backup fails.
 5. `git pull --ff-only origin "$DEPLOY_BRANCH"`. If it is not a fast-forward, stop and report; never merge, reset or force on the server.
 6. `docker compose --profile app up -d --build`.

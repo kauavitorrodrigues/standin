@@ -75,6 +75,7 @@ describe.skipIf(!enabled)("invites (real stack)", () => {
     beforeAll(async () => {
         process.env.DATABASE_URL = url;
         process.env.JWT_SECRET = "integration-secret";
+        process.env.INVITE_LINK_SECRET = "integration-invite-secret";
         process.env.FRONTEND_URL = "http://localhost:5173";
         process.env.SERVER_URL = "http://localhost:3000";
         process.env.STORAGE_DRIVER = "local";
