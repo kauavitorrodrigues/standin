@@ -57,6 +57,14 @@ const resolveBuildInfo = () => {
 
 const buildInfo = resolveBuildInfo();
 
+// The public origin of the site, used for the absolute og:image url that link
+// previews need. Empty keeps the url relative, which is fine for local dev.
+// Defined here so index.html never keeps the literal placeholder.
+process.env.VITE_SITE_URL = (process.env.VITE_SITE_URL ?? "").replace(
+    /\/+$/,
+    ""
+);
+
 export default defineConfig({
     define: {
         __APP_VERSION__: JSON.stringify(buildInfo.version),

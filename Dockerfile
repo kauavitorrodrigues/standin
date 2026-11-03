@@ -22,6 +22,9 @@ ENV VITE_BASE_API_URL=/api
 #   docker build --build-arg APP_COMMIT=$(git rev-parse --short HEAD) ...
 ARG APP_COMMIT=""
 ARG APP_COMMIT_TIME=""
+# The public origin (https:// plus the domain), for the og:image url.
+ARG SITE_URL=""
+ENV VITE_SITE_URL=$SITE_URL
 ENV VITE_APP_COMMIT=$APP_COMMIT
 ENV VITE_APP_COMMIT_TIME=$APP_COMMIT_TIME
 RUN pnpm build
