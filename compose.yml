@@ -96,6 +96,7 @@ services:
       args:
         APP_COMMIT: ${APP_COMMIT:-}
         APP_COMMIT_TIME: ${APP_COMMIT_TIME:-}
+        SITE_URL: ${FRONTEND_URL:-}
     container_name: standin_proxy
     # Waits for a healthy app so the first requests are not answered with a
     # bad gateway while the migrations run.

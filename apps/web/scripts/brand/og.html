@@ -1,0 +1,76 @@
+<!doctype html>
+<meta charset="utf-8" />
+<!-- Source of public/og.png. Render with: node scripts/brand/render.mjs -->
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+    }
+    body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        position: relative;
+        background: #0a0a0a;
+        color: #fff;
+        font-family: system-ui, sans-serif;
+    }
+    .glow {
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(
+                560px 460px at 80% 50%,
+                rgba(54, 82, 245, 0.5),
+                transparent 70%
+            ),
+            radial-gradient(
+                600px 300px at 10% 0%,
+                rgba(54, 82, 245, 0.22),
+                transparent 70%
+            );
+    }
+    .dots {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(
+            rgba(255, 255, 255, 0.09) 1px,
+            transparent 1px
+        );
+        background-size: 26px 26px;
+        mask-image: linear-gradient(90deg, black, transparent 80%);
+    }
+    .logo {
+        position: absolute;
+        left: 80px;
+        top: 200px;
+        height: 64px;
+    }
+    p {
+        position: absolute;
+        left: 80px;
+        top: 310px;
+        width: 520px;
+        font-size: 32px;
+        line-height: 1.35;
+        color: #a3a3a3;
+    }
+    .mark {
+        position: absolute;
+        right: 100px;
+        top: 145px;
+        height: 340px;
+        box-shadow:
+            0 30px 80px rgba(0, 0, 0, 0.6),
+            0 0 90px rgba(54, 82, 245, 0.4);
+        border-radius: 76px;
+    }
+</style>
+<div class="glow"></div>
+<div class="dots"></div>
+<img class="logo" src="../../public/brand/wordmark.png" alt="" />
+<p>
+    Open source virtual office with voice, video, screen share and chat in one
+    place.
+</p>
+<img class="mark" src="../../public/brand/logo.svg" alt="" />
