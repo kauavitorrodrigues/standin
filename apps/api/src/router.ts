@@ -37,6 +37,7 @@ import {
 } from "./features/spaces/guests/routes";
 import { spaceSettingsRouter } from "./features/spaces/settings/routes";
 import { filesRouter } from "./features/files/routes";
+import { onboardingRouter } from "./features/onboarding/routes";
 import {
     avatarBasesRouter,
     avatarCatalogRouter,
@@ -62,6 +63,8 @@ router.use("/organization-invites", organizationInvitePreviewRouter);
 router.use("/global-settings", globalSettingsPublicRouter);
 router.use("/ice-servers", iceRouter);
 router.use("/files", filesRouter);
+// The onboarding progress of the signed in person.
+router.use("/onboarding", RequiresAuth, onboardingRouter);
 
 // How a published template, or a blank map of a tier, looks. Open to anyone so
 // the page that starts a space can show it. It must come before the guarded catalog below.

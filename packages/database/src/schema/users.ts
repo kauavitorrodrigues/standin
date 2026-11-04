@@ -6,13 +6,14 @@ import {
     uuidPrimaryKeyColumn,
 } from "./common";
 import {
+    jsonb,
     text,
     varchar,
     pgEnum,
     pgTable,
     uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { USER_ROLES } from "@standin/contracts";
+import { USER_ROLES, type OnboardingProgress } from "@standin/contracts";
 import { organizationsTable } from "./organizations";
 import { organizationMembersTable } from "./organization-members";
 import { organizationInvitesTable } from "./organization-invites";
@@ -38,6 +39,12 @@ export const usersTable = pgTable(
         // Null for a person who only signs in with a provider (GitHub).
         password: text("password"),
         role: userRoleEnum("role").notNull().default(USER_ROLES.USER),
+        // The onboarding tasks the person completed, once for the whole
+        // account. A key that is not a task anymore is dropped on read.
+        onboardingTasks: jsonb("onboarding_tasks")
+            .$type<OnboardingProgress>()
+            .notNull()
+            .default({}),
 
         // Date columns
         createdAt: createdAtColumn(),

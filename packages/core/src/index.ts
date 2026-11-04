@@ -14,3 +14,4 @@ export * from "./features/service-tokens";
 export * from "./features/global-settings";
 export * from "./features/admin";
 export * from "./features/soundboard";
+export * from "./features/onboarding";
