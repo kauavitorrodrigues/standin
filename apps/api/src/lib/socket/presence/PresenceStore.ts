@@ -15,6 +15,9 @@ export type PresenceEntry = {
     // When the person started announcing, in ms since the epoch, or null when
     // they are not. It lives only in memory, like the rest of the presence.
     announcingSince: number | null;
+    // When the person started showing their camera to whoever announces near
+    // them, or null when they do not. Memory only.
+    sharingVideoWithAnnouncerSince: number | null;
     // When the person raised a hand, in ms since the epoch, or null when the
     // hand is down. Memory only, like the rest of the presence.
     handRaisedSince: number | null;
@@ -181,6 +184,29 @@ const setAnnouncing = (
     return true;
 };
 
+// Returns whether the state changed. Sharing again keeps the first start.
+const setSharingVideoWithAnnouncer = (
+    spaceId: string,
+    socketId: string,
+    sharingSince: number | null
+): boolean => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry) return false;
+    if (
+        (entry.sharingVideoWithAnnouncerSince === null) ===
+        (sharingSince === null)
+    ) {
+        return false;
+    }
+
+    space.bySocket.set(socketId, {
+        ...entry,
+        sharingVideoWithAnnouncerSince: sharingSince,
+    });
+    return true;
+};
+
 // Returns whether the state changed. Raising again keeps the first time, so
 // the order of the hands does not change under a repeated request.
 const setHandRaised = (
@@ -226,6 +252,7 @@ export const PresenceStore = {
     setMuted,
     setPrivacy,
     setAnnouncing,
+    setSharingVideoWithAnnouncer,
     setHandRaised,
     listRaisedHands,
     listAnnouncers,

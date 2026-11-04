@@ -23,6 +23,7 @@ import type {
     SpacePositionSchema,
     SpaceSetAnnouncingSchema,
     SpaceSetHandRaisedSchema,
+    SpaceShareVideoWithAnnouncerSchema,
 } from "../schemas/realtime";
 import type { EnteredTuple, PositionTuple } from "../position-codec";
 import type {
@@ -109,6 +110,7 @@ export const SpaceEvents = {
     SPACE_NEARBY_TYPING: "space:nearby-typing",
     SPACE_SET_ANNOUNCING: "space:set-announcing",
     SPACE_ANNOUNCERS: "space:announcers",
+    SPACE_SHARE_VIDEO_WITH_ANNOUNCER: "space:share-video-with-announcer",
     SPACE_SET_HAND_RAISED: "space:set-hand-raised",
     SPACE_RAISED_HANDS: "space:raised-hands",
 } as const;
@@ -135,6 +137,9 @@ export type SpaceEmoteInput = z.infer<typeof SpaceEmoteSchema>;
 export type SpaceNearbyMessageInput = z.infer<typeof SpaceNearbyMessageSchema>;
 export type SpaceNearbyTypingInput = z.infer<typeof SpaceNearbyTypingSchema>;
 export type SpaceSetAnnouncingInput = z.infer<typeof SpaceSetAnnouncingSchema>;
+export type SpaceShareVideoWithAnnouncerInput = z.infer<
+    typeof SpaceShareVideoWithAnnouncerSchema
+>;
 export type SpaceSetHandRaisedInput = z.infer<typeof SpaceSetHandRaisedSchema>;
 
 // One person who is announcing within earshot of the receiver.
@@ -154,6 +159,10 @@ export type SpaceAnnouncersPayload = {
 
 export type SpaceSetAnnouncingAck =
     { ok: true; announcingSince: number | null } | { ok: false; code: string };
+
+// The answer says since when the video is shared, null when it is not.
+export type SpaceShareVideoWithAnnouncerAck =
+    { ok: true; sharingSince: number | null } | { ok: false; code: string };
 
 // One person with a raised hand within earshot of the receiver.
 export type SpaceRaisedHand = {
@@ -241,6 +250,10 @@ export type ClientToServerEvents = {
     "space:set-announcing": (
         payload: SpaceSetAnnouncingInput,
         ack: (response: SpaceSetAnnouncingAck) => void
+    ) => void;
+    "space:share-video-with-announcer": (
+        payload: SpaceShareVideoWithAnnouncerInput,
+        ack: (response: SpaceShareVideoWithAnnouncerAck) => void
     ) => void;
     "soundboard:play": (
         payload: z.infer<typeof SoundboardPlaySchema>,

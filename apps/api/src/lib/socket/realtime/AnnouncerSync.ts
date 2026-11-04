@@ -5,6 +5,7 @@ import {
 } from "@standin/contracts";
 import { PresenceStore } from "../presence/PresenceStore";
 import { RoomStates } from "../utils/roomStates";
+import { AnnouncerVideo } from "./AnnouncerVideo";
 import { SpaceInterests } from "./SpaceInterests";
 import type { AnnouncersSender } from "./types";
 
@@ -56,8 +57,13 @@ const refresh = (
 
     if (next.length === 0) lastSent.delete(socketId);
     else lastSent.set(socketId, next);
+    // Nobody announces near the socket anymore, so its camera goes private.
+    if (next.length === 0) AnnouncerVideo.stopSharing(spaceId, socketId);
     send(socketId, { announcers: next } satisfies SpaceAnnouncersPayload);
 };
+
+// Whether someone announces within earshot of the socket, as last told.
+const hasAnnouncers = (socketId: string): boolean => lastSent.has(socketId);
 
 const holders = (announcerSocketId: string): string[] =>
     [...lastSent.entries()]
@@ -113,6 +119,7 @@ const clear = (): void => lastSent.clear();
 
 export const AnnouncerSync = {
     refresh,
+    hasAnnouncers,
     refreshAround,
     refreshOnMove,
     forget,

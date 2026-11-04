@@ -33,6 +33,7 @@ const presence = (socketId: string) => ({
     headphones: false,
     focus: false,
     announcingSince: null,
+    sharingVideoWithAnnouncerSince: null,
     handRaisedSince: null,
 });
 

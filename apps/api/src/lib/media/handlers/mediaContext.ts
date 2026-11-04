@@ -1,5 +1,6 @@
 import type { Socket } from "socket.io";
 import { MediaNotJoinedError, MediaUnavailableError } from "@standin/contracts";
+import { AnnouncerVideo } from "@/lib/socket/realtime/AnnouncerVideo";
 import { MediaRuntime } from "../MediaRuntime";
 import type { MediaContext } from "../types";
 
@@ -29,7 +30,11 @@ export const requireMediaContext = async (
         throw new MediaNotJoinedError();
     }
 
+    const isNew = !room.hasPeer(socket.id);
     room.addPeer(socket.id, socket.data.userId as string);
+    // Someone may already announce, or have chosen to show the camera, before
+    // the media session starts.
+    if (isNew) AnnouncerVideo.apply(spaceId, socket.id);
     return { spaceId, room };
 };
 

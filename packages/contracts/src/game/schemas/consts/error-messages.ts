@@ -55,6 +55,11 @@ export const GameErrorMessages = {
             invalid: "The announcing state must be true or false.",
         },
     },
+    shareVideo: {
+        sharing: {
+            invalid: "The video sharing state must be true or false.",
+        },
+    },
     handRaise: {
         raised: {
             invalid: "The raised hand state must be true or false.",
