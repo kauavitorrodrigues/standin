@@ -1,14 +1,15 @@
-import { useCallback, useLayoutEffect, useRef } from "react";
-import type { KeyboardEvent } from "react";
+import type { Ref } from "react";
 import {
     Controller,
-    useWatch,
     type Control,
     type FieldPath,
     type FieldValues,
 } from "react-hook-form";
 import { MAX_MESSAGE_CONTENT_LENGTH } from "@standin/contracts";
-import { Textarea } from "@/components/ui/textarea";
+import {
+    MessageEditor,
+    type MessageEditorHandle,
+} from "@/components/markdown/editor";
 
 type MessageContentFieldProps<
     TFieldValues extends FieldValues,
@@ -18,7 +19,7 @@ type MessageContentFieldProps<
     name: TName;
     disabled?: boolean;
     onSubmit: () => void;
-    onTextareaRef?: (element: HTMLTextAreaElement | null) => void;
+    editorRef?: Ref<MessageEditorHandle>;
     placeholder?: string;
 };
 
@@ -26,11 +27,6 @@ type MessageContentFieldProps<
 // the message specific limits live in the field instead of in every caller.
 // Rendered bare: the send button is disabled instead of showing a validation
 // message, and MessageComposerFrame owns the visible chrome around it.
-//
-// Height is grown by JS (measuring scrollHeight) rather than the CSS
-// `field-sizing: content` property, which is too recent to rely on across
-// browsers. `field-sizing-fixed` turns that CSS behaviour off so it can't
-// fight the manual resize.
 export function MessageContentField<
     TFieldValues extends FieldValues,
     TName extends FieldPath<TFieldValues>,
@@ -39,54 +35,25 @@ export function MessageContentField<
     name,
     disabled,
     onSubmit,
-    onTextareaRef,
+    editorRef,
     placeholder = "Escreva uma mensagem...",
 }: MessageContentFieldProps<TFieldValues, TName>) {
-    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-    const value = useWatch({ control, name });
-
-    const resize = useCallback(() => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-        textarea.style.height = "auto";
-        textarea.style.height = `${textarea.scrollHeight}px`;
-    }, []);
-
-    useLayoutEffect(() => {
-        resize();
-    }, [value, resize]);
-
-    const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-        if (event.key !== "Enter" || event.shiftKey) return;
-        // While an IME composition is active (accents via dead keys,
-        // Japanese/Chinese/Korean input), Enter confirms the candidate
-        // instead of submitting the message.
-        if (event.nativeEvent.isComposing) return;
-        event.preventDefault();
-        onSubmit();
-    };
-
     return (
         <Controller
             control={control}
             name={name}
-            render={({ field: { ref, ...field } }) => (
-                <Textarea
-                    {...field}
-                    ref={(element) => {
-                        ref(element);
-                        textareaRef.current = element;
-                        onTextareaRef?.(element);
-                    }}
-                    id={name}
+            render={({ field }) => (
+                <MessageEditor.Root
+                    ref={editorRef}
                     value={field.value ?? ""}
-                    disabled={disabled}
-                    onKeyDown={handleKeyDown}
+                    onChange={field.onChange}
+                    onSubmit={onSubmit}
                     placeholder={placeholder}
                     maxLength={MAX_MESSAGE_CONTENT_LENGTH}
-                    rows={1}
-                    className="field-sizing-fixed max-h-40 min-h-0 resize-none overflow-y-auto wrap-anywhere border-0 bg-transparent p-0 shadow-none outline-none focus-visible:ring-0 disabled:bg-transparent dark:bg-transparent dark:disabled:bg-transparent"
-                />
+                    disabled={disabled}
+                >
+                    <MessageEditor.Content className="max-h-40 overflow-y-auto" />
+                </MessageEditor.Root>
             )}
         />
     );

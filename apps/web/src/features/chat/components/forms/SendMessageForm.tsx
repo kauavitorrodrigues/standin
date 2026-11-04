@@ -10,6 +10,7 @@ import {
     type SendMessageFormInput,
     type SendMessageFormOutput,
 } from "@standin/contracts";
+import type { MessageEditorHandle } from "@/components/markdown/editor";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { FileUpload } from "@/components/ui/file-upload";
@@ -39,7 +40,7 @@ export const SendMessageForm = ({ conversationId, threadParentId }: Props) => {
     
     const { broadcastTyping } = usePeerChat();
     
-    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const editorRef = useRef<MessageEditorHandle | null>(null);
     const composerFrameRef = useRef<HTMLDivElement | null>(null);
 
     const form = useForm<SendMessageFormInput, unknown, SendMessageFormOutput>({
@@ -73,12 +74,12 @@ export const SendMessageForm = ({ conversationId, threadParentId }: Props) => {
         } catch {
             toast.add({ title: SendMessageMessages.error, type: "error" });
         } finally {
-            // The textarea is disabled while isSubmitting, which the
-            // browser blurs on its own, so without this the composer loses
-            // focus to whatever's behind it (the game canvas) on every
-            // single send. One frame after the field re-enables, so
-            // focus() lands after the DOM actually reflects that.
-            requestAnimationFrame(() => textareaRef.current?.focus());
+            // The field is disabled while isSubmitting, which the browser
+            // blurs on its own, so without this the composer loses focus to
+            // whatever's behind it (the game canvas) on every single send.
+            // One frame after the field re-enables, so focus() lands after
+            // the DOM actually reflects that.
+            requestAnimationFrame(() => editorRef.current?.focus());
         }
     };
 
@@ -96,22 +97,7 @@ export const SendMessageForm = ({ conversationId, threadParentId }: Props) => {
     useTypingBroadcast({ conversationId, content, broadcastTyping });
 
     const insertEmoji = (emoji: string) => {
-        const textarea = textareaRef.current;
-        const current = content ?? "";
-        const start = textarea?.selectionStart ?? current.length;
-        const end = textarea?.selectionEnd ?? current.length;
-        const next = current.slice(0, start) + emoji + current.slice(end);
-
-        form.setValue("content", next, {
-            shouldDirty: true,
-            shouldValidate: true,
-        });
-
-        requestAnimationFrame(() => {
-            textarea?.focus();
-            const cursor = start + emoji.length;
-            textarea?.setSelectionRange(cursor, cursor);
-        });
+        editorRef.current?.insertText(emoji);
     };
 
     return (
@@ -145,9 +131,7 @@ export const SendMessageForm = ({ conversationId, threadParentId }: Props) => {
                                 disabled={isSubmitting}
                                 placeholder={placeholder}
                                 onSubmit={submit}
-                                onTextareaRef={(element) => {
-                                    textareaRef.current = element;
-                                }}
+                                editorRef={editorRef}
                             />
                             <ShowInChannelField
                                 control={form.control}
