@@ -62,6 +62,10 @@ export type GameEngineHandle = {
         claims: readonly { mapAssetId: string; userId: string }[],
         userId: string
     ) => void;
+    // How many desks the map has, held or free.
+    getDeskCount: () => number;
+    // Outlines the free desks, or stops outlining them.
+    setDeskGuide: (isOn: boolean) => void;
     // Walks to the own desk, or to the tile next to a person. False when the
     // walk could not be planned (the page is told as well).
     walkToOwnDesk: () => boolean;

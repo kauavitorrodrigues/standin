@@ -167,6 +167,8 @@ export const createGameEngine = ({
         pinHover: (event, id) => pinHover(game, event, id),
         setDeskClaims: (claims, userId) =>
             getMapScene(game)?.setDeskClaims(claims, userId),
+        getDeskCount: () => getMapScene(game)?.getDeskCount() ?? 0,
+        setDeskGuide: (isOn) => getMapScene(game)?.setDeskGuide(isOn),
         walkToOwnDesk: () => getMapScene(game)?.walkToOwnDesk() ?? false,
         walkToPerson: (userId) =>
             getMapScene(game)?.walkToPerson(userId) ?? false,
