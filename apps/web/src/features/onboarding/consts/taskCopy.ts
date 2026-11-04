@@ -33,13 +33,13 @@ export const ONBOARDING_TASK_COPY: Record<
         actionLabel: "Entendi",
     },
     [ONBOARDING_TASKS.CUSTOMIZE_OFFICE]: {
-        title: "Deixe o escritório do seu jeito",
-        doneTitle: "Escritório personalizado",
+        title: "Deixe a sua mesa com a sua cara",
+        doneTitle: "Você já decorou o escritório",
         description:
-            "Quem pode editar o mapa troca o chão, as paredes e os móveis para o espaço combinar com o time.",
+            "Ponha uma caneca, uma planta ou um porta-retrato na sua mesa. Quem passa por perto vê que o lugar é seu.",
         doneDescription:
-            "Você já mexeu no mapa. Dá para voltar ao editor quando quiser.",
-        actionLabel: "Abrir o editor",
+            "Você já mexeu no escritório. Dá para voltar a decorar quando quiser.",
+        actionLabel: "Decorar a minha mesa",
     },
     [ONBOARDING_TASKS.HANG_OUT]: {
         title: "Circule pelo escritório",

@@ -107,6 +107,16 @@ import {
     type SeatArea,
 } from "@/features/game/utils/buildSeatAreas";
 import { buildDeskAreas } from "@/features/game/utils/buildDeskAreas";
+import {
+    TRAVEL_EVENTS,
+    TRAVEL_MAX_STEP_PX,
+    TRAVEL_MIN_DISTANCE_PX,
+} from "@/features/game/consts/travel";
+import { DeskGuideHighlight } from "@/features/game/lib/DeskGuideHighlight";
+import { findFreeDeskAreas } from "@/features/game/utils/findFreeDeskAreas";
+import { buildCommonAreas } from "@/features/game/utils/buildCommonAreas";
+import { resolveAreaEntry } from "@/features/game/utils/resolveAreaEntry";
+import { createTravelTracker } from "@/features/game/utils/createTravelTracker";
 import { RoomDoorController } from "@/features/game/lib/RoomDoorController";
 import { RoomDoorColliders } from "@/features/game/lib/RoomDoorColliders";
 import { RoomDoorView } from "@/features/game/renderers/RoomDoorView";
@@ -219,6 +229,16 @@ export class MapScene extends Phaser.Scene {
     private otherDeskAreas: HoverTarget[] = [];
     // What the page was last told about the avatar being at its own desk.
     private isAtOwnDeskReported = false;
+    // Outlines the free desks while the onboarding points at them.
+    private deskGuide: DeskGuideHighlight | null = null;
+    private isDeskGuideOn = false;
+    private commonAreas: GameRoom[] = [];
+    private currentAreaKey: string | null = null;
+    private hasTraveled = false;
+    private readonly travelTracker = createTravelTracker({
+        minDistance: TRAVEL_MIN_DISTANCE_PX,
+        maxStep: TRAVEL_MAX_STEP_PX,
+    });
     // The remote person the page was last told is selected.
     private reportedSelectedUserId: string | null = null;
     private playerHoverController: HoverTargetController | null = null;
@@ -534,6 +554,7 @@ export class MapScene extends Phaser.Scene {
         );
         const zones = readTilemapZones(tilemap);
         this.zoneAreas = buildZoneAreas(zones);
+        this.commonAreas = buildCommonAreas(zones);
         this.zoneHoverController?.setTargets(this.zoneAreas);
         const wallRectsAt = buildWallRectsAt(tilemap);
         this.rooms = buildRooms(zones);
@@ -667,6 +688,9 @@ export class MapScene extends Phaser.Scene {
             this.roomDimOverlay?.destroy();
             this.wallTiles?.destroy();
             this.wallTiles = null;
+            this.deskGuide?.destroy();
+            this.deskGuide = null;
+            this.isDeskGuideOn = false;
         });
 
         this.game.events.emit(SCENE_EVENTS.MAP_READY);
@@ -684,6 +708,7 @@ export class MapScene extends Phaser.Scene {
         this.updatePlayerHover();
         this.updateTileCursor();
         this.updateAtOwnDesk();
+        this.updateTravel();
         this.frameDelta = delta;
         this.remoteAvatars.forEach(this.updateRemoteAvatar);
         this.updateNameTags();
@@ -958,6 +983,28 @@ export class MapScene extends Phaser.Scene {
         this.refreshDeskClaims();
     }
 
+    // How many desks the map has, held or free.
+    getDeskCount(): number {
+        return this.deskAreas.length;
+    }
+
+    // Outlines the desks nobody holds, or stops. The page turns it on for a
+    // guide and off when the guide ends.
+    setDeskGuide(isOn: boolean): void {
+        this.isDeskGuideOn = isOn;
+        this.refreshDeskGuide();
+    }
+
+    private refreshDeskGuide(): void {
+        if (!this.isDeskGuideOn) {
+            this.deskGuide?.hide();
+            return;
+        }
+
+        this.deskGuide ??= new DeskGuideHighlight(this);
+        this.deskGuide.show(findFreeDeskAreas(this.deskAreas, this.deskClaims));
+    }
+
     private refreshDeskClaims(): void {
         const { own, others } = splitDeskAreas(
             this.deskAreas,
@@ -966,6 +1013,7 @@ export class MapScene extends Phaser.Scene {
         );
         this.ownDeskArea = own;
         this.otherDeskAreas = others;
+        this.refreshDeskGuide();
         this.updateAtOwnDesk();
     }
 
@@ -1706,6 +1754,33 @@ export class MapScene extends Phaser.Scene {
         listener: ((distances: ReadonlyMap<string, number>) => void) | null
     ): void {
         this.peerDistanceListener = listener;
+    }
+
+    // Tells the page, once, that the avatar walked a real distance.
+    private updateTravel(): void {
+        const { player } = this;
+        if (!player) return;
+
+        if (this.travelTracker.update(player.x, player.y)) {
+            this.hasTraveled = true;
+            this.game.events.emit(TRAVEL_EVENTS.TRAVELED);
+        }
+        this.updateCommonArea(player);
+    }
+
+    // Tells the page when the avatar walks into a named common area.
+    private updateCommonArea(point: { x: number; y: number }): void {
+        const currentKey = getRoomAt(this.commonAreas, point)?.key ?? null;
+        const previousKey = this.currentAreaKey;
+        if (currentKey === previousKey) return;
+
+        this.currentAreaKey = currentKey;
+        const isEntry = resolveAreaEntry({
+            previousKey,
+            currentKey,
+            hasTraveled: this.hasTraveled,
+        });
+        if (isEntry) this.game.events.emit(TRAVEL_EVENTS.AREA_ENTERED);
     }
 
     private emitLocalPosition(): void {

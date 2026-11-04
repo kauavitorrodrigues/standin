@@ -12,8 +12,13 @@ import { AvatarEditorContent } from "../instances/AvatarEditorContent";
 import { AvatarDiscardDialog } from "./AvatarDiscardDialog";
 
 type AvatarEditorDialogProps = {
-    // The trigger, a `DialogTrigger` that opens the editor.
-    children: ReactNode;
+    // The trigger, a `DialogTrigger` that opens the editor. Missing when the
+    // page opens it by `isOpen`.
+    children?: ReactNode;
+    // Lets the page open and close the editor. Without them it keeps its own
+    // state and the trigger opens it.
+    isOpen?: boolean;
+    onOpenChange?: (isOpen: boolean) => void;
     // Called with the saved avatar. The game does not need it: saving updates
     // the cached avatar, which redraws the local player (useLocalAvatarSheet),
     // and the server tells the other players.
@@ -26,9 +31,16 @@ type AvatarEditorDialogProps = {
 // them away.
 export const AvatarEditorDialog = ({
     children,
+    isOpen: isOpenProp,
+    onOpenChange,
     onSaved,
 }: AvatarEditorDialogProps) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [ownIsOpen, setOwnIsOpen] = useState(false);
+    const isOpen = isOpenProp ?? ownIsOpen;
+    const setIsOpen = (next: boolean) => {
+        setOwnIsOpen(next);
+        onOpenChange?.(next);
+    };
     const [isDiscardOpen, setIsDiscardOpen] = useState(false);
     const isDirtyRef = useRef(false);
 

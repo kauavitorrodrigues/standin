@@ -9,7 +9,8 @@ type FlowKind =
 
 export type OnboardingFlow =
     | { kind: typeof ONBOARDING_FLOW_KINDS.CHECKLIST }
-    | { kind: typeof ONBOARDING_FLOW_KINDS.TASK; taskKey: OnboardingTaskKey };
+    | { kind: typeof ONBOARDING_FLOW_KINDS.TASK; taskKey: OnboardingTaskKey }
+    | { kind: typeof ONBOARDING_FLOW_KINDS.DESK_GUIDE };
 
 // Only one flow is on screen at a time.
 export type OnboardingFlowState = { active: OnboardingFlow | null };
