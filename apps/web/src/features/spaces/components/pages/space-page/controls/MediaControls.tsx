@@ -15,6 +15,8 @@ import { SoundboardControl } from "@/features/soundboard/components/instances/So
 import type { ReactionsButtonState } from "@/features/emotes/types/reactions";
 import type { UserStatusPanelState } from "@/features/spaces/hooks/useUserStatusPanel";
 import type { NearbyChatButtonState } from "@/features/nearby-chat/types/nearby-chat";
+import { AnnounceButton } from "@/features/announcing/components/AnnounceButton";
+import type { SpaceAnnouncing } from "@/features/announcing/types/announcing";
 import { ReactionsControl } from "@/features/emotes/components/instances/ReactionsControl";
 import { ProximityChatButton } from "@/features/spaces/components/pages/space-page/controls/ProximityChatButton";
 import { LeaveSpaceButton } from "@/features/spaces/components/pages/space-page/controls/LeaveSpaceButton";
@@ -35,6 +37,7 @@ type Props = {
     nearbyChat: NearbyChatButtonState;
     soundboard: SpaceSoundboard | null;
     soundboardPanel: SoundboardPanelState;
+    announcing: SpaceAnnouncing | null;
 };
 
 // The media and presence controls. Rendered in the floating bar over the
@@ -54,6 +57,7 @@ export const MediaControls = ({
     nearbyChat,
     soundboard,
     soundboardPanel,
+    announcing,
 }: Props) => {
     return (
         <TooltipProvider delay={SPACE_CONTROLS_TOOLTIP_DELAY_MS}>
@@ -68,6 +72,7 @@ export const MediaControls = ({
                 isOpen={soundboardPanel.isOpen}
                 onToggle={soundboardPanel.onToggle}
             />
+            <AnnounceButton announcing={announcing} />
             <ReactionsControl visible={isMeetingContext} {...reactions} />
             <ProximityChatButton {...nearbyChat} />
             <ScreenShareButton

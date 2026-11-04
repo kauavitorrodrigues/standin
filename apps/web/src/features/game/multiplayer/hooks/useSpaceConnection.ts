@@ -32,6 +32,7 @@ import { useOutputVolumePreference } from "@/features/media-devices/hooks/useOut
 import { useSfuMedia } from "./useSfuMedia";
 import type { RemotePrivacy } from "../types/sfuHooks";
 import { useSpeakingUsers } from "./useSpeakingUsers";
+import { useAnnouncing } from "@/features/announcing/hooks/useAnnouncing";
 import { useSpaceSoundboard } from "@/features/soundboard/hooks/useSpaceSoundboard";
 import { STAGE_MAX_NEARBY_PEERS } from "../consts/video";
 import { selectNearbyPeers } from "../utils/nearbyPeers";
@@ -202,6 +203,8 @@ export function useSpaceConnection({
         isHeadphonesOn,
     });
     
+    const announcing = useAnnouncing({ isMicEnabled });
+
     const sfu = useSfuMedia({
         userId,
         remoteAudioManager,
@@ -632,6 +635,7 @@ export function useSpaceConnection({
         speakingUserIds,
         localAudioError,
         soundboard,
+        announcing,
         video: {
             remoteVideos: sfu.remoteVideos,
             setActiveVideoIds: sfu.setActiveVideoIds,

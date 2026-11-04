@@ -1,0 +1,126 @@
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import type { SpaceAnnouncer } from "@standin/contracts";
+import { toast } from "@/components/ui/toast";
+import { socket } from "@/features/game/multiplayer/socket";
+import { useSocketEvent } from "@/features/game/multiplayer/hooks/useSocketEvent";
+import { playNotificationSound } from "@/features/notifications/lib/playNotificationSound";
+import { ANNOUNCING_REQUESTS } from "../consts/announcing";
+import { emitSetAnnouncing } from "../lib/emitSetAnnouncing";
+import type {
+    AnnouncingRequestKind,
+    SpaceAnnouncing,
+    UseAnnouncingOptions,
+} from "../types/announcing";
+import {
+    announcingReducer,
+    INITIAL_ANNOUNCING_STATE,
+} from "../utils/announcingState";
+import { findNewAnnouncers } from "../utils/findNewAnnouncers";
+import { resolveAnnounceDisabledReason } from "../utils/resolveAnnounceDisabledReason";
+import { shouldAutoStopAnnouncing } from "../utils/shouldAutoStopAnnouncing";
+
+const NO_ANNOUNCERS: SpaceAnnouncer[] = [];
+
+// Announcing to the people near me. The server keeps who announces and who is
+// within earshot of whom: the list that arrives is the whole truth, so it is
+// shown as it is, never sorted, filtered or measured here. My own state comes
+// from the answer to my request.
+export function useAnnouncing({
+    isMicEnabled,
+}: UseAnnouncingOptions): SpaceAnnouncing {
+    const [state, dispatch] = useReducer(
+        announcingReducer,
+        INITIAL_ANNOUNCING_STATE
+    );
+    // What the listeners read, since they live longer than a render.
+    const announcersRef = useRef<SpaceAnnouncer[]>(NO_ANNOUNCERS);
+    const isRequestPendingRef = useRef(false);
+
+    const reset = useCallback(() => {
+        announcersRef.current = NO_ANNOUNCERS;
+        dispatch({ type: "reset" });
+    }, []);
+
+    useSocketEvent("space:announcers", ({ announcers }) => {
+        // A ding for someone who just came into earshot, never for the ones
+        // already there, for who left, or for myself (I am not in the list).
+        if (findNewAnnouncers(announcersRef.current, announcers).length > 0)
+            playNotificationSound();
+        announcersRef.current = announcers;
+        dispatch({ type: "announcers-received", announcers });
+    });
+
+    // The server presence is rebuilt on a join and on a reconnect, so nobody
+    // announces afterwards, me included.
+    useSocketEvent("space:joined", reset);
+    useEffect(() => {
+        socket.on("disconnect", reset);
+        socket.on("connect", reset);
+        return () => {
+            socket.off("disconnect", reset);
+            socket.off("connect", reset);
+        };
+    }, [reset]);
+
+    const request = useCallback(async (kind: AnnouncingRequestKind) => {
+        if (isRequestPendingRef.current) return;
+
+        isRequestPendingRef.current = true;
+        const { announcing, failedTitle } = ANNOUNCING_REQUESTS[kind];
+
+        try {
+            const ack = await emitSetAnnouncing(announcing);
+            isRequestPendingRef.current = false;
+
+            if (!ack.ok) {
+                toast.add({ title: failedTitle, type: "error" });
+                return;
+            }
+
+            dispatch({
+                type: "own-state-set",
+                announcingSince: ack.announcingSince,
+            });
+        } catch {
+            isRequestPendingRef.current = false;
+            toast.add({ title: failedTitle, type: "error" });
+        }
+    }, []);
+
+    const disabledReason = resolveAnnounceDisabledReason(isMicEnabled);
+    const isAnnouncing = state.announcingSince !== null;
+
+    const start = useCallback(() => {
+        if (disabledReason !== null) return;
+        void request("start");
+    }, [disabledReason, request]);
+
+    const stop = useCallback(() => void request("stop"), [request]);
+
+    useEffect(() => {
+        if (
+            !shouldAutoStopAnnouncing({
+                isMicEnabled,
+                isAnnouncing,
+                isRequestPending: isRequestPendingRef.current,
+            })
+        ) {
+            return;
+        }
+
+        // Announcing never turns the microphone or the camera on by itself, so
+        // there is nothing to turn back off here: only the announcement ends.
+        stop();
+    }, [isMicEnabled, isAnnouncing, stop]);
+
+    return useMemo(
+        () => ({
+            announcers: state.announcers,
+            isAnnouncing,
+            disabledReason,
+            start,
+            stop,
+        }),
+        [state.announcers, isAnnouncing, disabledReason, start, stop]
+    );
+}

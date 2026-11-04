@@ -1,5 +1,6 @@
 import type { NearbyChatConnection } from "@/features/nearby-chat/types/nearby-chat";
 import type { SpaceSoundboard } from "@/features/soundboard/types/space";
+import type { SpaceAnnouncing } from "@/features/announcing/types/announcing";
 import type { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 
 type SpaceConnection = ReturnType<typeof useSpaceConnection>;
@@ -15,4 +16,6 @@ export type SpaceMediaControls = {
     nearbyChat: NearbyChatConnection;
     // Null where the person cannot play clips, such as a guest.
     soundboard: SpaceSoundboard | null;
+    // Null where the person cannot announce, such as a guest.
+    announcing: SpaceAnnouncing | null;
 };

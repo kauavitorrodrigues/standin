@@ -1,6 +1,7 @@
 import type { NearbyChatConnection } from "@/features/nearby-chat/types/nearby-chat";
 import type { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 import { useScreenShareAvailability } from "@/features/spaces/hooks/useScreenShareAvailability";
+import type { SpaceAnnouncing } from "@/features/announcing/types/announcing";
 import type { SpaceSoundboard } from "@/features/soundboard/types/space";
 import type { SpaceMediaControls } from "@/features/spaces/types/mediaControls";
 
@@ -12,6 +13,7 @@ type SpaceMediaControlsOptions = {
     sendEmote: SpaceConnection["sendEmote"];
     nearbyChat: NearbyChatConnection;
     soundboard: SpaceSoundboard | null;
+    announcing: SpaceAnnouncing | null;
 };
 
 // Called once per page: the share availability hook has side effects (it
@@ -22,6 +24,7 @@ export const useSpaceMediaControls = ({
     sendEmote,
     nearbyChat,
     soundboard,
+    announcing,
 }: SpaceMediaControlsOptions): SpaceMediaControls => {
     const { canShareScreen } = useScreenShareAvailability({
         isSharing: video.screenShare.isSharing,
@@ -37,5 +40,6 @@ export const useSpaceMediaControls = ({
         sendEmote,
         nearbyChat,
         soundboard,
+        announcing,
     };
 };
