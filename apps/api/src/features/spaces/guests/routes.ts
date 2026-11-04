@@ -2,6 +2,7 @@ import { Router } from "express";
 import { RateLimit } from "@/middlewares/rateLimit";
 import {
     RequiresSpaceHost,
+    RequiresSpaceInviter,
     RequiresSpaceOwner,
 } from "@/middlewares/requiresSpaceHost";
 import { RequiresSpaceView } from "@/middlewares/requiresSpaceView";
@@ -17,11 +18,11 @@ const spaceRouter = Router();
 // The space for a member or an admitted guest.
 spaceRouter.get("/:spaceId", RequiresSpaceView, SpaceGuestController.view);
 
-// The links: only the owner of the organization manages them.
-// The fixed link: always the same, copied any time.
+// The links: the owner manages them. The fixed link is always the same, copied
+// any time by the owner, or by a member when the space lets members invite.
 spaceRouter.get(
     "/:spaceId/invite-links/fixed",
-    RequiresSpaceOwner,
+    RequiresSpaceInviter,
     SpaceGuestController.inviteLinks.getFixed
 );
 spaceRouter.post(

@@ -1,0 +1,1 @@
+ALTER TABLE "spaces" ADD COLUMN "members_can_invite" boolean DEFAULT false NOT NULL;

@@ -55,6 +55,9 @@ export const spacesTable = pgTable(
         proximityPreset: spaceProximityPresetEnum("proximity_preset")
             .notNull()
             .default(DEFAULT_PROXIMITY_PRESET),
+        membersCanInvite: boolean("members_can_invite")
+            .notNull()
+            .default(false),
 
         // Relations columns
         organizationId: text("organization_id")

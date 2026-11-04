@@ -9,6 +9,7 @@ describe("SpaceSettingsSchema", () => {
         expect(SpaceSettingsSchema.parse({})).toEqual({
             enableSendNearbyInMapView: true,
             proximityPreset: "Long",
+            membersCanInvite: false,
         });
     });
 
@@ -18,6 +19,7 @@ describe("SpaceSettingsSchema", () => {
         ).toEqual({
             enableSendNearbyInMapView: false,
             proximityPreset: "Long",
+            membersCanInvite: false,
         });
     });
 
@@ -28,6 +30,17 @@ describe("SpaceSettingsSchema", () => {
         ).toBe("Short");
         expect(
             SpaceSettingsSchema.safeParse({ proximityPreset: "Huge" }).success
+        ).toBe(false);
+    });
+
+    it("keeps members from inviting until the setting is saved", () => {
+        expect(SpaceSettingsSchema.parse({}).membersCanInvite).toBe(false);
+        expect(
+            SpaceSettingsSchema.parse({ membersCanInvite: true })
+                .membersCanInvite
+        ).toBe(true);
+        expect(
+            SpaceSettingsSchema.safeParse({ membersCanInvite: "yes" }).success
         ).toBe(false);
     });
 
