@@ -203,6 +203,14 @@ describe.skipIf(!enabled)("chat mentions (real stack)", () => {
         expect(response.status).toBe(400);
     });
 
+    it("rejects a mention of the sender", async () => {
+        const response = await send(
+            "owner",
+            `oi ${link("owner", users.owner.id)}`
+        );
+        expect(response.status).toBe(400);
+    });
+
     it("rejects a mention in a direct conversation", async () => {
         const response = await send(
             "owner",

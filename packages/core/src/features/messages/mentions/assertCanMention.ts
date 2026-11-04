@@ -10,13 +10,12 @@ import {
     CONVERSATION_TYPES,
     MAX_MESSAGE_MENTIONS,
     MentionLimitExceededError,
+    MentionSelfError,
     MentionInDirectConversationError,
     MentionInvalidUserError,
 } from "@standin/contracts";
 import type { ConversationRow } from "../../conversations/utils/assertAccessible";
 
-// Only a space conversation takes mentions, and only of people who can read
-// it: any active member of the organization. One query for the whole list.
 // Checked on every mention of the message, kept ones included, so an edit
 // cannot grow past the cap either.
 export const assertMentionLimit = (userIds: string[]): void => {
@@ -25,6 +24,17 @@ export const assertMentionLimit = (userIds: string[]): void => {
     }
 };
 
+// Nobody mentions themselves. Checked on a new message and on the people an
+// edit adds.
+export const assertNotSelfMention = (
+    senderId: string,
+    userIds: string[]
+): void => {
+    if (userIds.includes(senderId)) throw new MentionSelfError();
+};
+
+// Only a space conversation takes mentions, and only of people who can read
+// it: any active member of the organization. One query for the whole list.
 export const assertCanMention = async (
     conversation: ConversationRow,
     userIds: string[]
