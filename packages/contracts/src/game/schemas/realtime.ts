@@ -59,3 +59,9 @@ export const SpaceSetAnnouncingSchema = z.object({
         error: GameErrorMessages.announcing.announcing.invalid,
     }),
 });
+
+export const SpaceSetHandRaisedSchema = z.object({
+    raised: z.boolean({
+        error: GameErrorMessages.handRaise.raised.invalid,
+    }),
+});
