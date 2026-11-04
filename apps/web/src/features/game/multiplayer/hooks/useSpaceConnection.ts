@@ -32,7 +32,7 @@ import { useOutputVolumePreference } from "@/features/media-devices/hooks/useOut
 import { useSfuMedia } from "./useSfuMedia";
 import type { RemotePrivacy } from "../types/sfuHooks";
 import { useSpeakingUsers } from "./useSpeakingUsers";
-import { useAnnouncing } from "@/features/announcing/hooks/useAnnouncing";
+import { useAnnouncing } from "@/features/spaces/announcing/hooks/useAnnouncing";
 import { useHandRaise } from "@/features/spaces/hand-raise/hooks/useHandRaise";
 import { useSpaceSoundboard } from "@/features/soundboard/hooks/useSpaceSoundboard";
 import { STAGE_MAX_NEARBY_PEERS } from "../consts/video";

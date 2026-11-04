@@ -1,7 +1,7 @@
 import type { NearbyChatConnection } from "@/features/nearby-chat/types/nearby-chat";
 import type { useSpaceConnection } from "@/features/game/multiplayer/hooks/useSpaceConnection";
 import { useScreenShareAvailability } from "@/features/spaces/hooks/useScreenShareAvailability";
-import type { SpaceAnnouncing } from "@/features/announcing/types/announcing";
+import type { SpaceAnnouncing } from "@/features/spaces/announcing/types/announcing";
 import type { SpaceHandRaise } from "@/features/spaces/hand-raise/types/handRaise";
 import type { SpaceSoundboard } from "@/features/soundboard/types/space";
 import type { SpaceMediaControls } from "@/features/spaces/types/mediaControls";

@@ -71,7 +71,7 @@ import { handRaiseInGrid } from "@/features/spaces/hand-raise/utils/handRaiseInG
 import { RaisedHandsContext } from "@/features/spaces/hand-raise/contexts/RaisedHandsContext";
 import { useHandRaiseToasts } from "@/features/spaces/hand-raise/hooks/useHandRaiseToasts";
 import { useLowerHandOutsideGrid } from "@/features/spaces/hand-raise/hooks/useLowerHandOutsideGrid";
-import { AnnouncingBanner } from "@/features/announcing/components/AnnouncingBanner";
+import { AnnouncingBanner } from "@/features/spaces/announcing/components/AnnouncingBanner";
 import { GuestRequests } from "@/features/spaces/guests/components/instances/GuestRequests";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
