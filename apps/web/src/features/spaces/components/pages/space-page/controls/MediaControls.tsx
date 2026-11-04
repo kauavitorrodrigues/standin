@@ -15,8 +15,8 @@ import { SoundboardControl } from "@/features/soundboard/components/instances/So
 import type { ReactionsButtonState } from "@/features/emotes/types/reactions";
 import type { UserStatusPanelState } from "@/features/spaces/hooks/useUserStatusPanel";
 import type { NearbyChatButtonState } from "@/features/nearby-chat/types/nearby-chat";
-import { AnnounceButton } from "@/features/announcing/components/AnnounceButton";
-import type { SpaceAnnouncing } from "@/features/announcing/types/announcing";
+import { AnnounceButton } from "@/features/spaces/announcing/components/AnnounceButton";
+import type { SpaceAnnouncing } from "@/features/spaces/announcing/types/announcing";
 import { HandRaiseButton } from "@/features/spaces/hand-raise/components/HandRaiseButton";
 import type { SpaceHandRaise } from "@/features/spaces/hand-raise/types/handRaise";
 import { ReactionsControl } from "@/features/emotes/components/instances/ReactionsControl";
