@@ -162,6 +162,13 @@
       "when": 1793816530170,
       "tag": "0022_add_message_mentions",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793820449007,
+      "tag": "0023_add_onboarding_tasks",
+      "breakpoints": true
     }
   ]
 }

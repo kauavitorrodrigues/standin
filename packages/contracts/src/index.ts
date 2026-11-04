@@ -16,3 +16,4 @@ export * from "./health";
 export * from "./service-tokens";
 export * from "./global-settings";
 export * from "./soundboard";
+export * from "./onboarding";
