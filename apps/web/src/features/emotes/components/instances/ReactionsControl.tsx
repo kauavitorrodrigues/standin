@@ -8,21 +8,10 @@ import {
 import type { ReactionsButtonState } from "@/features/emotes/types/reactions";
 import { SentEmoteBadge } from "@/features/emotes/components/views/SentEmoteBadge";
 
-type Props = ReactionsButtonState & {
-    // Emotes only mean something on the office, where there are avatars to see
-    // them. Over the chat the button is not rendered.
-    visible: boolean;
-};
+type Props = ReactionsButtonState;
 
 // The button of the control bar that opens and closes the reactions bar.
-export const ReactionsControl = ({
-    visible,
-    isOpen,
-    onToggle,
-    sentEmoji,
-}: Props) => {
-    if (!visible) return null;
-
+export const ReactionsControl = ({ isOpen, onToggle, sentEmoji }: Props) => {
     return (
         <span className="relative">
             <SentEmoteBadge emoji={sentEmoji} />

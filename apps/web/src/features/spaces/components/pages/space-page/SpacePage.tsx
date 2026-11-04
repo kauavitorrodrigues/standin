@@ -64,6 +64,7 @@ import { useDecoratorSession } from "@/features/decorator/hooks/useDecoratorSess
 import type { DecorateAvailability } from "@/features/decorator/types/decorate-availability";
 import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
+import { AnnouncingBanner } from "@/features/announcing/components/AnnouncingBanner";
 import { GuestRequests } from "@/features/spaces/guests/components/instances/GuestRequests";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
@@ -110,6 +111,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const {
         localAudioError,
         soundboard,
+        announcing,
         onlineUserIds,
         speakingUserIds,
         video,
@@ -211,6 +213,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         sendEmote,
         nearbyChat,
         soundboard,
+        announcing,
     });
 
     const { peerChat, peerTyping, chatPage } = usePeerChatContextValues({
@@ -324,6 +327,12 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         session={decorator}
                         handle={handle}
                         mapId={space.map.id}
+                    />
+                    <AnnouncingBanner
+                        announcers={announcing.announcers}
+                        isAnnouncing={announcing.isAnnouncing}
+                        names={names}
+                        onStop={announcing.stop}
                     />
                     <LockBanner
                         locked={mapLock.locked}

@@ -149,6 +149,7 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
         sendEmote,
         nearbyChat,
         soundboard: null,
+        announcing: null,
     });
 
     return (
