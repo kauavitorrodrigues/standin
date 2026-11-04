@@ -8,6 +8,8 @@ import { StreamingSection } from "./StreamingSection";
 import { PerformanceSection } from "./PerformanceSection";
 import { NotificationsSection } from "./NotificationsSection";
 import { VideoSection } from "./VideoSection";
+import { ConversationsSection } from "./ConversationsSection";
+import { SecuritySection } from "./SecuritySection";
 
 export const SETTINGS_SECTION_VIEWS: Record<SettingsSectionId, ComponentType> =
     {
@@ -19,4 +21,6 @@ export const SETTINGS_SECTION_VIEWS: Record<SettingsSectionId, ComponentType> =
         performance: PerformanceSection,
         members: MembersSection,
         guests: GuestsSection,
+        conversations: ConversationsSection,
+        security: SecuritySection,
     };

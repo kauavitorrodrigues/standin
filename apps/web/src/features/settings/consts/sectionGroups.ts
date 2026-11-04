@@ -1,6 +1,8 @@
 import {
     BellIcon,
     BoltIcon,
+    LockIcon,
+    MessagesSquareIcon,
     MonitorUpIcon,
     MicIcon,
     SettingsIcon,
@@ -36,6 +38,8 @@ export const SETTINGS_SECTION_GROUPS: SettingsSectionGroup[] = [
         sections: [
             { id: "members", icon: UsersRoundIcon },
             { id: "guests", icon: UserRoundIcon },
+            { id: "conversations", icon: MessagesSquareIcon },
+            { id: "security", icon: LockIcon },
         ],
     },
 ];

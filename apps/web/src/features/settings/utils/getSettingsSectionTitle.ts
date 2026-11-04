@@ -10,6 +10,8 @@ export const getSettingsSectionTitle = (id: SettingsSectionId): string => {
         performance: "Desempenho",
         members: "Gerenciar membros",
         guests: "Gerenciar convidados",
+        conversations: "Conversas",
+        security: "Segurança",
     };
     return titles[id];
 };

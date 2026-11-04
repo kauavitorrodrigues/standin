@@ -24,8 +24,6 @@ import { usePermission } from "@/features/auth/hooks/usePermission";
 import { useCanInviteGuests } from "@/features/invites/hooks/useCanInviteGuests";
 import { useOrganizationId } from "@/features/organizations/hooks/useOrganizationId";
 import type { SettingsSectionId } from "@/features/settings/consts/sections";
-import { SpaceSettingsDialog } from "@/features/spaces/settings/components/instances/SpaceSettingsDialog";
-import { SpaceSettingsMenuItem } from "@/features/spaces/settings/components/instances/SpaceSettingsMenuItem";
 import { SpaceMenu } from "@/features/spaces/components/pages/space-page/sidebar/SpaceMenu";
 import { SPACE_VIEWS, type SpaceView } from "@/features/spaces/consts/view";
 
@@ -76,7 +74,6 @@ export const Rail = ({
         setIsSettingsOpen(true);
     };
     const manage = (target: ManageTarget) => openSettings(target);
-    const [isSpaceSettingsOpen, setIsSpaceSettingsOpen] = useState(false);
     const [isSoundboardOpen, setIsSoundboardOpen] = useState(false);
 
     return (
@@ -91,9 +88,6 @@ export const Rail = ({
                     <InviteMenuItem onOpen={() => setIsInviteOpen(true)} />
                 )}
                 <SoundboardMenuItem onOpen={() => setIsSoundboardOpen(true)} />
-                <SpaceSettingsMenuItem
-                    onOpen={() => setIsSpaceSettingsOpen(true)}
-                />
             </SpaceMenu>
             <RailButton icon={SearchIcon} label="Buscar" disabled />
             <RailButton
@@ -130,11 +124,6 @@ export const Rail = ({
                 open={isSoundboardOpen}
                 onOpenChange={setIsSoundboardOpen}
             />
-            <SpaceSettingsDialog
-                spaceId={space.id}
-                open={isSpaceSettingsOpen}
-                onOpenChange={setIsSpaceSettingsOpen}
-            />
             <SettingsDialog
                 open={isSettingsOpen}
                 onOpenChange={setIsSettingsOpen}
@@ -143,6 +132,7 @@ export const Rail = ({
                     organizationId,
                     spaceId: space.id,
                     canInvite,
+                    canManage: canInvite,
                     canInviteGuests,
                     onInvite: () => {
                         setIsSettingsOpen(false);
