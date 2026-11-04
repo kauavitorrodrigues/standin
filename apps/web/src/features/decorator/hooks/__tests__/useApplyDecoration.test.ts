@@ -26,12 +26,16 @@ const mocks = vi.hoisted(() => ({
     mutateAsync: vi.fn(),
     clearDraft: vi.fn(async () => ({ ok: true, value: undefined })),
     toastAdd: vi.fn(),
+    completeTask: vi.fn(),
 }));
 
 vi.mock("@/lib/axios/api", () => ({ api: {} }));
 vi.mock("@/lib/api/url", () => ({ API_BASE_URL: "" }));
 vi.mock("@/features/desks/queries/useSpaceDesks", () => ({
     SPACE_DESKS_QUERY_KEY: "spaceDesks",
+}));
+vi.mock("@/features/onboarding/hooks/useCompleteTask", () => ({
+    useCompleteTask: () => mocks.completeTask,
 }));
 vi.mock("@/components/ui/toast", () => ({ toast: { add: mocks.toastAdd } }));
 vi.mock("@/features/auth/hooks/useAuth", () => ({
@@ -117,6 +121,7 @@ describe("useApplyDecoration", () => {
         mocks.mutateAsync.mockReset();
         mocks.clearDraft.mockClear();
         mocks.toastAdd.mockClear();
+        mocks.completeTask.mockClear();
         onApplied.mockClear();
         control.markLost.mockClear();
         root = createRoot(document.createElement("div"));
@@ -150,6 +155,7 @@ describe("useApplyDecoration", () => {
             PUBLISH_PHASE.PUBLISHED
         );
         expect(onApplied).toHaveBeenCalledTimes(1);
+        expect(mocks.completeTask).toHaveBeenCalledWith("customize-office");
     });
 
     it.each([
@@ -182,6 +188,7 @@ describe("useApplyDecoration", () => {
         expect(draftStore.getState().ops).toHaveLength(1);
         expect(mocks.clearDraft).not.toHaveBeenCalled();
         expect(onApplied).not.toHaveBeenCalled();
+        expect(mocks.completeTask).not.toHaveBeenCalled();
     });
 
     it("marks the lock as lost with no dialog on a 423", async () => {

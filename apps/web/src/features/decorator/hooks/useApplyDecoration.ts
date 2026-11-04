@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { EDIT_SCOPES } from "@standin/contracts";
+import { EDIT_SCOPES, ONBOARDING_TASKS } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { mapPaletteQueryOptions } from "@/features/assets/queries/useMapPalette";
@@ -11,6 +11,7 @@ import { useDraftStore } from "@/features/editor/hooks/useDraftStore";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import type { ClassifiedPublishError } from "@/features/editor/types/publish-error";
 import { DECORATOR_MESSAGES } from "@/features/decorator/consts/messages";
+import { useCompleteTask } from "@/features/onboarding/hooks/useCompleteTask";
 import { useLockControl } from "@/features/maps/__shared__/hooks/useLockControl";
 import { clearDraft } from "@/features/maps/__shared__/lib/draftDb";
 import { EditorMutations } from "@/features/maps/__shared__/mutations";
@@ -37,6 +38,7 @@ export const useApplyDecoration = (onApplied: () => void) => {
     const draftStore = useDraftStore();
     const editorStore = useEditorStore();
     const lockControl = useLockControl();
+    const completeTask = useCompleteTask();
     const { mutateAsync } = EditorMutations.publish();
     const attemptRef = useRef<PublishAttempt | null>(null);
 
@@ -85,6 +87,10 @@ export const useApplyDecoration = (onApplied: () => void) => {
         }
 
         attemptRef.current = null;
+        // An apply with nothing in it changed nothing in the office.
+        if (attempt.ops.length > 0) {
+            completeTask(ONBOARDING_TASKS.CUSTOMIZE_OFFICE);
+        }
         void queryClient.invalidateQueries({
             queryKey: mapRenderQueryOptions(mapId).queryKey,
         });
@@ -100,6 +106,7 @@ export const useApplyDecoration = (onApplied: () => void) => {
         onApplied();
         return true;
     }, [
+        completeTask,
         draftStore,
         editorStore,
         fail,

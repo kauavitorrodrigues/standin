@@ -1,5 +1,7 @@
 import { useForm } from "react-hook-form";
+import { ONBOARDING_TASKS } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
+import { useCompleteTask } from "@/features/onboarding/hooks/useCompleteTask";
 import { getRootErrorMessage } from "@/features/assets/utils/getRootErrorMessage";
 import { AVATAR_EDITOR_MESSAGES } from "../consts/editor/messages";
 import { useSaveAvatar } from "../mutations/saveAvatar";
@@ -21,6 +23,7 @@ type Params = {
 // closes the dialog and the draft is thrown away with the form.
 export const useAvatarEditorForm = ({ editor, onDone, onSaved }: Params) => {
     const saveAvatar = useSaveAvatar();
+    const completeTask = useCompleteTask();
     const form = useForm<AvatarEditorFormValues>({
         defaultValues: buildFormValues(editor),
     });
@@ -28,6 +31,7 @@ export const useAvatarEditorForm = ({ editor, onDone, onSaved }: Params) => {
     const submit = form.handleSubmit(async (values) => {
         try {
             const saved = await saveAvatar.mutateAsync(buildConfig(values));
+            completeTask(ONBOARDING_TASKS.PERSONALIZE_AVATAR);
             onSaved?.(saved);
             onDone();
         } catch (error) {
