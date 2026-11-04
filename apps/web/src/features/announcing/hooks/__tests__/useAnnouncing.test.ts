@@ -5,13 +5,17 @@ import type { SpaceAnnouncer } from "@standin/contracts";
 import { renderHook, unmountAllHooks } from "@/test-utils/renderHook";
 
 const listeners = new Map<string, (payload?: unknown) => void>();
-const { emitSetAnnouncing, playNotificationSound, toastAdd } = vi.hoisted(
-    () => ({
-        emitSetAnnouncing: vi.fn(),
-        playNotificationSound: vi.fn(),
-        toastAdd: vi.fn(),
-    })
-);
+const {
+    emitSetAnnouncing,
+    emitShareVideoWithAnnouncer,
+    playNotificationSound,
+    toastAdd,
+} = vi.hoisted(() => ({
+    emitSetAnnouncing: vi.fn(),
+    emitShareVideoWithAnnouncer: vi.fn(),
+    playNotificationSound: vi.fn(),
+    toastAdd: vi.fn(),
+}));
 
 vi.mock("@/features/game/multiplayer/hooks/useSocketEvent", async () => {
     const { useEffect } = await import("react");
@@ -27,6 +31,10 @@ vi.mock("@/features/game/multiplayer/socket", () => ({
 }));
 vi.mock("../../lib/emitSetAnnouncing", () => ({
     emitSetAnnouncing: (announcing: boolean) => emitSetAnnouncing(announcing),
+}));
+vi.mock("../../lib/emitShareVideoWithAnnouncer", () => ({
+    emitShareVideoWithAnnouncer: (sharing: boolean) =>
+        emitShareVideoWithAnnouncer(sharing),
 }));
 vi.mock("@/features/notifications/lib/playNotificationSound", () => ({
     playNotificationSound: () => playNotificationSound(),
@@ -55,22 +63,43 @@ const useTestMic = () =>
         () => micEnabled
     );
 
+let cameraEnabled = true;
+const cameraSubscribers = new Set<() => void>();
+const useTestCamera = () =>
+    useSyncExternalStore(
+        (onChange) => {
+            cameraSubscribers.add(onChange);
+            return () => cameraSubscribers.delete(onChange);
+        },
+        () => cameraEnabled
+    );
+
 const mount = (initialMic: boolean) => {
     micEnabled = initialMic;
+    cameraEnabled = true;
     const view = renderHook(() =>
-        useAnnouncing({ isMicEnabled: useTestMic() })
+        useAnnouncing({
+            isMicEnabled: useTestMic(),
+            isCameraEnabled: useTestCamera(),
+        })
     );
+    const setCamera = (value: boolean) =>
+        view.act(() => {
+            cameraEnabled = value;
+            cameraSubscribers.forEach((notify) => notify());
+        });
     const setMic = (value: boolean) =>
         view.act(() => {
             micEnabled = value;
             micSubscribers.forEach((notify) => notify());
         });
-    return { ...view, setMic };
+    return { ...view, setMic, setCamera };
 };
 
 beforeEach(() => {
     listeners.clear();
     emitSetAnnouncing.mockReset();
+    emitShareVideoWithAnnouncer.mockReset();
     playNotificationSound.mockReset();
     toastAdd.mockReset();
 });
@@ -195,5 +224,76 @@ describe("useAnnouncing", () => {
 
         expect(emitSetAnnouncing).toHaveBeenLastCalledWith(false);
         expect(result.current.isAnnouncing).toBe(false);
+    });
+
+    it("shares the camera from the ack and ends it when the list empties", async () => {
+        emitShareVideoWithAnnouncer.mockResolvedValueOnce({
+            ok: true,
+            sharingSince: 20,
+        });
+        const { result, act } = mount(true);
+
+        await act(async () => {
+            result.current.toggleVideoSharing();
+            await flush();
+        });
+        expect(emitShareVideoWithAnnouncer).toHaveBeenLastCalledWith(true);
+        expect(result.current.isSharingVideo).toBe(true);
+
+        act(() => listeners.get("space:announcers")?.({ announcers: [] }));
+        expect(result.current.isSharingVideo).toBe(false);
+    });
+
+    it("asks to stop sharing when it is on, and warns when it fails", async () => {
+        emitShareVideoWithAnnouncer.mockResolvedValueOnce({
+            ok: true,
+            sharingSince: 20,
+        });
+        const { result, act } = mount(true);
+        await act(async () => {
+            result.current.toggleVideoSharing();
+            await flush();
+        });
+
+        emitShareVideoWithAnnouncer.mockResolvedValueOnce({
+            ok: false,
+            code: "SHARE_VIDEO_INVALID",
+        });
+        await act(async () => {
+            result.current.toggleVideoSharing();
+            await flush();
+        });
+
+        expect(emitShareVideoWithAnnouncer).toHaveBeenLastCalledWith(false);
+        expect(result.current.isSharingVideo).toBe(true);
+        expect(toastAdd).toHaveBeenCalledTimes(1);
+    });
+
+    it("offers the sharing only while the camera is on and ends it when it goes off", async () => {
+        emitShareVideoWithAnnouncer.mockResolvedValue({
+            ok: true,
+            sharingSince: 20,
+        });
+        const { result, act, setCamera } = mount(true);
+        expect(result.current.canShareVideo).toBe(true);
+
+        await act(async () => {
+            result.current.toggleVideoSharing();
+            await flush();
+        });
+        expect(result.current.isSharingVideo).toBe(true);
+
+        emitShareVideoWithAnnouncer.mockResolvedValue({
+            ok: true,
+            sharingSince: null,
+        });
+        await act(async () => {
+            setCamera(false);
+            await flush();
+        });
+
+        expect(emitShareVideoWithAnnouncer).toHaveBeenLastCalledWith(false);
+        expect(result.current.canShareVideo).toBe(false);
+        expect(result.current.isSharingVideo).toBe(false);
     });
 });
