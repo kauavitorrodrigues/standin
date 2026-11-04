@@ -3,9 +3,11 @@ import { Toast as ToastPrimitive } from "@base-ui/react/toast"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import type { ToastData } from "@/components/ui/toast-data"
+import { UserAvatar } from "@/features/users/components/UserAvatar"
 import { XIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-const toast = ToastPrimitive.createToastManager()
+const toast = ToastPrimitive.createToastManager<ToastData>()
 
 function ToastProvider({ ...props }: ToastPrimitive.Provider.Props) {
     return <ToastPrimitive.Provider {...props} />
@@ -177,13 +179,28 @@ function ToastIcon({ type }: { type: string | undefined }) {
     )
 }
 
+function ToastLeading({ toast: toastItem }: { toast: ToastPrimitive.Root.ToastObject<ToastData> }) {
+    const avatar = toastItem.data?.avatar
+    if (!avatar) return <ToastIcon type={toastItem.type} />
+
+    return (
+        <UserAvatar
+            id={avatar.id}
+            name={avatar.name}
+            avatar={avatar.src}
+            size="md"
+            className="shrink-0"
+        />
+    )
+}
+
 function ToastList() {
-    const { toasts } = ToastPrimitive.useToastManager()
+    const { toasts } = ToastPrimitive.useToastManager<ToastData>()
 
     return toasts.map((toastItem) => (
         <Toast key={toastItem.id} toast={toastItem}>
             <ToastContent>
-                <ToastIcon type={toastItem.type} />
+                <ToastLeading toast={toastItem} />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <ToastTitle />
                     <ToastDescription />

@@ -150,6 +150,7 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
         nearbyChat,
         soundboard: null,
         announcing: null,
+        handRaise: null,
     });
 
     return (

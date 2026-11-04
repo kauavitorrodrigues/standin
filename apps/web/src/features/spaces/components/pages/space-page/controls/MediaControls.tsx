@@ -17,15 +17,17 @@ import type { UserStatusPanelState } from "@/features/spaces/hooks/useUserStatus
 import type { NearbyChatButtonState } from "@/features/nearby-chat/types/nearby-chat";
 import { AnnounceButton } from "@/features/announcing/components/AnnounceButton";
 import type { SpaceAnnouncing } from "@/features/announcing/types/announcing";
+import { HandRaiseButton } from "@/features/spaces/hand-raise/components/HandRaiseButton";
+import type { SpaceHandRaise } from "@/features/spaces/hand-raise/types/handRaise";
 import { ReactionsControl } from "@/features/emotes/components/instances/ReactionsControl";
 import { ProximityChatButton } from "@/features/spaces/components/pages/space-page/controls/ProximityChatButton";
 import { LeaveSpaceButton } from "@/features/spaces/components/pages/space-page/controls/LeaveSpaceButton";
 
 type Props = {
-    // The screen share, the soundboard and the announcement only exist where
-    // there is an office to meet people in. Over the chat the bar sits next to
-    // the conversation and is narrow, so they would push the leave button out
-    // of sight.
+    // The screen share, the soundboard, the announcement and the raised hand
+    // only exist where there is an office to meet people in. Over the chat the
+    // bar sits next to the conversation and is narrow, so they would push the
+    // leave button out of sight.
     isMeetingContext: boolean;
     canShareScreen: boolean;
     isSharingScreen: boolean;
@@ -40,6 +42,7 @@ type Props = {
     soundboard: SpaceSoundboard | null;
     soundboardPanel: SoundboardPanelState;
     announcing: SpaceAnnouncing | null;
+    handRaise: SpaceHandRaise | null;
 };
 
 // The media and presence controls. Rendered in the floating bar over the
@@ -60,6 +63,7 @@ export const MediaControls = ({
     soundboard,
     soundboardPanel,
     announcing,
+    handRaise,
 }: Props) => {
     return (
         <TooltipProvider delay={SPACE_CONTROLS_TOOLTIP_DELAY_MS}>
@@ -78,6 +82,7 @@ export const MediaControls = ({
             )}
             {isMeetingContext && <AnnounceButton announcing={announcing} />}
             <ReactionsControl {...reactions} />
+            {isMeetingContext && <HandRaiseButton handRaise={handRaise} />}
             <ProximityChatButton {...nearbyChat} />
             <ScreenShareButton
                 visible={isMeetingContext && canShareScreen}

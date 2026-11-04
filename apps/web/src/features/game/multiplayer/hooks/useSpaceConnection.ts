@@ -33,6 +33,7 @@ import { useSfuMedia } from "./useSfuMedia";
 import type { RemotePrivacy } from "../types/sfuHooks";
 import { useSpeakingUsers } from "./useSpeakingUsers";
 import { useAnnouncing } from "@/features/announcing/hooks/useAnnouncing";
+import { useHandRaise } from "@/features/spaces/hand-raise/hooks/useHandRaise";
 import { useSpaceSoundboard } from "@/features/soundboard/hooks/useSpaceSoundboard";
 import { STAGE_MAX_NEARBY_PEERS } from "../consts/video";
 import { selectNearbyPeers } from "../utils/nearbyPeers";
@@ -204,6 +205,7 @@ export function useSpaceConnection({
     });
     
     const announcing = useAnnouncing({ isMicEnabled });
+    const handRaise = useHandRaise();
 
     const sfu = useSfuMedia({
         userId,
@@ -636,6 +638,7 @@ export function useSpaceConnection({
         localAudioError,
         soundboard,
         announcing,
+        handRaise,
         video: {
             remoteVideos: sfu.remoteVideos,
             setActiveVideoIds: sfu.setActiveVideoIds,

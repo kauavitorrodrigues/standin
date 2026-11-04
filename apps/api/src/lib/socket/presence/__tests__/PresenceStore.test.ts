@@ -11,6 +11,7 @@ const entry = (socketId: string, userId: string): PresenceEntry => ({
     headphones: false,
     focus: false,
     announcingSince: null,
+    handRaisedSince: null,
 });
 
 describe("PresenceStore", () => {
@@ -103,5 +104,29 @@ describe("PresenceStore", () => {
         expect(PresenceStore.setAnnouncing("space-1", "s1", null)).toBe(false);
         expect(PresenceStore.setAnnouncing("space-1", "nobody", 1)).toBe(false);
         expect(PresenceStore.listAnnouncers("space-1")).toEqual([]);
+    });
+
+    it("keeps the first time of a raised hand and lists the oldest first", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.add("space-1", entry("s2", "u2"));
+
+        expect(PresenceStore.setHandRaised("space-1", "s2", 100)).toBe(true);
+        expect(PresenceStore.setHandRaised("space-1", "s2", 500)).toBe(false);
+        expect(PresenceStore.setHandRaised("space-1", "s1", 300)).toBe(true);
+
+        expect(
+            PresenceStore.listRaisedHands("space-1").map((e) => e.socketId)
+        ).toEqual(["s2", "s1"]);
+        expect(PresenceStore.get("space-1", "s2")?.handRaisedSince).toBe(100);
+    });
+
+    it("lowers a hand and ignores a socket that is not there", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.setHandRaised("space-1", "s1", 100);
+
+        expect(PresenceStore.setHandRaised("space-1", "s1", null)).toBe(true);
+        expect(PresenceStore.setHandRaised("space-1", "s1", null)).toBe(false);
+        expect(PresenceStore.setHandRaised("space-1", "nobody", 1)).toBe(false);
+        expect(PresenceStore.listRaisedHands("space-1")).toEqual([]);
     });
 });

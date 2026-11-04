@@ -18,6 +18,8 @@ import { PresenceStore } from "../presence/PresenceStore";
 import { SpaceInterests } from "../realtime/SpaceInterests";
 import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
+import { RaisedHandSync } from "../realtime/RaisedHandSync";
+import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
 import type { PresenceEntry } from "../presence/PresenceStore";
 
@@ -40,6 +42,7 @@ const resolveSelfEntry = async (
         headphones: false,
         focus: false,
         announcingSince: null,
+        handRaisedSince: null,
         ...profile,
     };
 };
@@ -123,6 +126,11 @@ const leavePreviousSpace = async (
         previousSpaceId,
         socket.id,
         buildAnnouncersSender(io)
+    );
+    RaisedHandSync.forget(
+        previousSpaceId,
+        socket.id,
+        buildRaisedHandsSender(io)
     );
     socket.to(previousRoom).emit(SpaceEvents.SPACE_PEER_LEFT, {
         socketId: socket.id,
@@ -209,6 +217,11 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                         spaceId,
                         socket.id,
                         buildAnnouncersSender(io)
+                    );
+                    RaisedHandSync.forget(
+                        spaceId,
+                        socket.id,
+                        buildRaisedHandsSender(io)
                     );
                     await socket.leave(room);
                     socket.data.spaceId = null;

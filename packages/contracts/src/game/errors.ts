@@ -50,3 +50,20 @@ export class AnnouncingInvalidError extends BaseError {
         super("The announcing request is invalid.", "ANNOUNCING_INVALID", 422);
     }
 }
+
+// Guests are not members, and raising a hand is for members.
+export class HandRaiseNotAllowedError extends BaseError {
+    constructor() {
+        super(
+            "You cannot raise a hand in this space.",
+            "HAND_RAISE_NOT_ALLOWED",
+            403
+        );
+    }
+}
+
+export class HandRaiseInvalidError extends BaseError {
+    constructor() {
+        super("The hand raise request is invalid.", "HAND_RAISE_INVALID", 422);
+    }
+}

@@ -55,4 +55,9 @@ export const GameErrorMessages = {
             invalid: "The announcing state must be true or false.",
         },
     },
+    handRaise: {
+        raised: {
+            invalid: "The raised hand state must be true or false.",
+        },
+    },
 } as const;

@@ -1,11 +1,16 @@
 import { NOTIFICATION_SOUND } from "@/features/notifications/consts/notificationSettings";
-import { SPEAKER_TEST_SOUND } from "@/features/sounds/consts/soundTones";
+import {
+    HAND_RAISE_SOUND,
+    SPEAKER_TEST_SOUND,
+} from "@/features/sounds/consts/soundTones";
+import { createChimeUrl } from "@/features/sounds/lib/createChimeUrl";
 import { createToneUrl } from "@/features/sounds/lib/createToneUrl";
 import { SoundEffect } from "@/features/sounds/lib/SoundEffect";
 
 type SoundCatalog = {
     notification: SoundEffect;
     speakerTest: SoundEffect;
+    handRaise: SoundEffect;
 };
 
 let catalog: SoundCatalog | null = null;
@@ -28,6 +33,7 @@ export const getSoundCatalog = (): SoundCatalog => {
                 SPEAKER_TEST_SOUND.durationSeconds
             )
         ),
+        handRaise: new SoundEffect(createChimeUrl(HAND_RAISE_SOUND)),
     };
     return catalog;
 };
