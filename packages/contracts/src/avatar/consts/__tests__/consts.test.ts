@@ -58,7 +58,12 @@ describe("dimensions", () => {
             // The blink is an idle frame with the eyes closed.
             BLINK: [AVATAR_FRAME_KINDS.IDLE],
             WALK: [AVATAR_FRAME_KINDS.WALK],
-            SIT: [AVATAR_FRAME_KINDS.SIT_LEGS, AVATAR_FRAME_KINDS.SIT_CROSSED],
+            // The first frame is the last standing pose, before the seated one.
+            SIT: [
+                AVATAR_FRAME_KINDS.IDLE,
+                AVATAR_FRAME_KINDS.SIT_LEGS,
+                AVATAR_FRAME_KINDS.SIT_CROSSED,
+            ],
             EMOTE: [AVATAR_FRAME_KINDS.EMOTE],
         } as const;
 
