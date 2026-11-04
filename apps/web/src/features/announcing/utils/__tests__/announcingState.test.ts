@@ -21,6 +21,7 @@ describe("announcingReducer", () => {
         expect(INITIAL_ANNOUNCING_STATE).toEqual({
             announcers: [],
             announcingSince: null,
+            sharingVideoSince: null,
         });
     });
 
@@ -56,11 +57,45 @@ describe("announcingReducer", () => {
             announcers: [ana],
         });
 
-        expect(state).toEqual({ announcers: [ana], announcingSince: 99 });
+        expect(state).toEqual({
+            announcers: [ana],
+            announcingSince: 99,
+            sharingVideoSince: null,
+        });
     });
 
-    it("resets both on a rejoin", () => {
-        const busy = { announcers: [ana], announcingSince: 5 };
+    it("keeps the camera sharing while someone still announces", () => {
+        const sharing = announcingReducer(INITIAL_ANNOUNCING_STATE, {
+            type: "video-sharing-set",
+            sharingVideoSince: 5,
+        });
+        const state = announcingReducer(sharing, {
+            type: "announcers-received",
+            announcers: [ana],
+        });
+
+        expect(state.sharingVideoSince).toBe(5);
+    });
+
+    it("ends the camera sharing when nobody announces near me", () => {
+        const sharing = announcingReducer(INITIAL_ANNOUNCING_STATE, {
+            type: "video-sharing-set",
+            sharingVideoSince: 5,
+        });
+        const state = announcingReducer(sharing, {
+            type: "announcers-received",
+            announcers: [],
+        });
+
+        expect(state.sharingVideoSince).toBeNull();
+    });
+
+    it("resets everything on a rejoin", () => {
+        const busy = {
+            announcers: [ana],
+            announcingSince: 5,
+            sharingVideoSince: 7,
+        };
 
         expect(announcingReducer(busy, { type: "reset" })).toEqual(
             INITIAL_ANNOUNCING_STATE

@@ -42,6 +42,7 @@ const resolveSelfEntry = async (
         headphones: false,
         focus: false,
         announcingSince: null,
+        sharingVideoWithAnnouncerSince: null,
         handRaisedSince: null,
         ...profile,
     };

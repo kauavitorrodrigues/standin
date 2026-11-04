@@ -24,6 +24,11 @@ export type PersonState = {
     headphones: boolean;
     // Focus mode. Stored and shown, it does not change strong connections.
     focusMode: boolean;
+    // The person is announcing. An announcer gets no camera from people who
+    // did not choose to share it.
+    announcing: boolean;
+    // The person chose to show their camera to whoever announces near them.
+    sharingVideoWithAnnouncer: boolean;
     // Active producer id per kind, absent when the person is not producing it.
     producers: Partial<Record<ProducerKind, string>>;
 };

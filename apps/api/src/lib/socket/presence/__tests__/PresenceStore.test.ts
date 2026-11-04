@@ -11,6 +11,7 @@ const entry = (socketId: string, userId: string): PresenceEntry => ({
     headphones: false,
     focus: false,
     announcingSince: null,
+    sharingVideoWithAnnouncerSince: null,
     handRaisedSince: null,
 });
 

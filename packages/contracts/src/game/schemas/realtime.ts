@@ -60,6 +60,12 @@ export const SpaceSetAnnouncingSchema = z.object({
     }),
 });
 
+export const SpaceShareVideoWithAnnouncerSchema = z.object({
+    sharing: z.boolean({
+        error: GameErrorMessages.shareVideo.sharing.invalid,
+    }),
+});
+
 export const SpaceSetHandRaisedSchema = z.object({
     raised: z.boolean({
         error: GameErrorMessages.handRaise.raised.invalid,

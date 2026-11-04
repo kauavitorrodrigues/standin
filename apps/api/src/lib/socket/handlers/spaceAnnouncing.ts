@@ -9,6 +9,7 @@ import {
 import type { SpaceSetAnnouncingAck } from "@standin/contracts";
 import { PresenceStore } from "../presence/PresenceStore";
 import { AnnouncerSync } from "../realtime/AnnouncerSync";
+import { AnnouncerVideo } from "../realtime/AnnouncerVideo";
 import { replyAck } from "../utils/replyAck";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 
@@ -47,6 +48,7 @@ export function registerSpaceAnnouncing(io: Server, socket: Socket) {
                 wanted
             );
             if (changed) {
+                AnnouncerVideo.apply(spaceId, socket.id);
                 AnnouncerSync.refreshAround(
                     spaceId,
                     socket.id,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveAnnounceDisabledReason } from "../resolveAnnounceDisabledReason";
 import { shouldAutoStopAnnouncing } from "../shouldAutoStopAnnouncing";
+import { shouldAutoStopVideoSharing } from "../shouldAutoStopVideoSharing";
 import { listAnnouncerNames } from "../listAnnouncerNames";
 import { resolveAnnouncingVerb } from "../resolveAnnouncingVerb";
 
@@ -88,5 +89,44 @@ describe("resolveAnnouncingVerb", () => {
     it("uses the plural for several", () => {
         expect(resolveAnnouncingVerb(2)).toBe("estão anunciando");
         expect(resolveAnnouncingVerb(5)).toBe("estão anunciando");
+    });
+});
+
+describe("shouldAutoStopVideoSharing", () => {
+    it("stops when the camera goes off while sharing", () => {
+        expect(
+            shouldAutoStopVideoSharing({
+                isCameraEnabled: false,
+                isSharingVideo: true,
+                isRequestPending: false,
+            })
+        ).toBe(true);
+    });
+
+    it("does not stop while the camera is on", () => {
+        expect(
+            shouldAutoStopVideoSharing({
+                isCameraEnabled: true,
+                isSharingVideo: true,
+                isRequestPending: false,
+            })
+        ).toBe(false);
+    });
+
+    it("does nothing when nothing is shared or a request is in flight", () => {
+        expect(
+            shouldAutoStopVideoSharing({
+                isCameraEnabled: false,
+                isSharingVideo: false,
+                isRequestPending: false,
+            })
+        ).toBe(false);
+        expect(
+            shouldAutoStopVideoSharing({
+                isCameraEnabled: false,
+                isSharingVideo: true,
+                isRequestPending: true,
+            })
+        ).toBe(false);
     });
 });

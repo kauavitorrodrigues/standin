@@ -26,6 +26,10 @@ export const RATE_LIMITS: Record<string, RateLimit> = {
     [SpaceEvents.SPACE_NEARBY_MESSAGE]: { perSecond: 3, burst: 6 },
     [SpaceEvents.SPACE_NEARBY_TYPING]: { perSecond: 4, burst: 8 },
     [SpaceEvents.SPACE_SET_ANNOUNCING]: { perSecond: 2, burst: 6 },
+    [SpaceEvents.SPACE_SHARE_VIDEO_WITH_ANNOUNCER]: {
+        perSecond: 2,
+        burst: 6,
+    },
     [SpaceEvents.SPACE_SET_HAND_RAISED]: { perSecond: 2, burst: 6 },
     [ChatEvents.TYPING]: { perSecond: 4, burst: 8 },
     // Negotiating media is a handful of requests per connection. The room for

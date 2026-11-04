@@ -12,6 +12,7 @@ import {
     VIDEO_PAUSE_MAGNITUDE,
 } from "../consts/planner";
 import { radiiForPreset } from "./utils/radiiForPreset";
+import { withholdsCamera } from "./utils/withholdsCamera";
 import { DEFAULT_MAGNITUDE_RULES, applyMagnitudeRules } from "./magnitudeRules";
 import type {
     CurrentConsumer,
@@ -51,6 +52,8 @@ type Candidate = {
     videoReachable: boolean;
     // The receiver already hears this person.
     holdsAudio: boolean;
+    // The receiver announces and this person did not share their camera.
+    withholdsCamera: boolean;
 };
 
 type VideoEntry = {
@@ -207,6 +210,7 @@ const buildDesired = (
             audioReachable,
             videoReachable,
             holdsAudio,
+            withholdsCamera: withholdsCamera(receiver, person),
         });
     });
 
@@ -254,6 +258,9 @@ const buildDesired = (
             (["camera", "screen"] as const).forEach((source) => {
                 const producerId = candidate.person.producers[source];
                 if (!producerId) return;
+                // A screen is content the person chose to show, so only the
+                // camera is held back.
+                if (source === "camera" && candidate.withholdsCamera) return;
                 entries.push({
                     candidate,
                     source,

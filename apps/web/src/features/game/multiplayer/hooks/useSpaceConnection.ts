@@ -204,7 +204,11 @@ export function useSpaceConnection({
         isHeadphonesOn,
     });
     
-    const announcing = useAnnouncing({ isMicEnabled });
+    const announcing = useAnnouncing({
+        isMicEnabled,
+        // The stream is released when the camera is turned off.
+        isCameraEnabled: localCameraStream !== null,
+    });
     const handRaise = useHandRaise();
 
     const sfu = useSfuMedia({

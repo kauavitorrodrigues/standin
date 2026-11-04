@@ -21,6 +21,7 @@ const join = (spaceId: string, socketId: string, userId: string) =>
         headphones: false,
         focus: false,
         announcingSince: null,
+        sharingVideoWithAnnouncerSince: null,
         handRaisedSince: null,
     });
 

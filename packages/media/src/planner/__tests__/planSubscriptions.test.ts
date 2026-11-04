@@ -15,13 +15,20 @@ const person = (
     kinds: ProducerKind[] = ["audio"],
     roomKey: string | null = null,
     muted = false,
-    privacy: { headphones?: boolean; focusMode?: boolean } = {}
+    privacy: {
+        headphones?: boolean;
+        focusMode?: boolean;
+        announcing?: boolean;
+        sharingVideoWithAnnouncer?: boolean;
+    } = {}
 ): PersonState => ({
     id,
     roomKey,
     muted,
     headphones: privacy.headphones ?? false,
     focusMode: privacy.focusMode ?? false,
+    announcing: privacy.announcing ?? false,
+    sharingVideoWithAnnouncer: privacy.sharingVideoWithAnnouncer ?? false,
     producers: Object.fromEntries(kinds.map((kind) => [kind, `${id}:${kind}`])),
 });
 
@@ -671,5 +678,70 @@ describe("planSubscriptions proximity preset", () => {
             config: { preset: "Long", ...SMALL_RADII },
         });
         expect(result.desired).toEqual([]);
+    });
+});
+
+describe("planSubscriptions announcer video", () => {
+    const spots = { me: at(0), a: at(60), b: at(80) };
+    const announcing = { announcing: true };
+
+    it("gives an announcer no camera from people who did not opt in", () => {
+        const people = [
+            person("me", [], null, false, announcing),
+            person("a", ["audio", "camera"]),
+            person("b", ["audio", "camera"]),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual([
+            "a:audio",
+            "b:audio",
+        ]);
+    });
+
+    it("gives the announcer the camera of the people who opted in", () => {
+        const people = [
+            person("me", [], null, false, announcing),
+            person("a", ["audio", "camera"], null, false, {
+                sharingVideoWithAnnouncer: true,
+            }),
+            person("b", ["audio", "camera"]),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual([
+            "a:audio",
+            "b:audio",
+            "a:camera",
+        ]);
+    });
+
+    it("keeps the screen of people who did not opt in", () => {
+        const people = [
+            person("me", [], null, false, announcing),
+            person("a", ["screen", "camera"]),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual(["a:screen"]);
+    });
+
+    it("closes a camera the announcer already holds", () => {
+        const people = [
+            person("me", [], null, false, announcing),
+            person("a", ["camera"]),
+        ];
+        const result = plan(spots, people, {
+            current: new Map([["me", [held("a", "camera")]]]),
+        });
+        expect(ids(result.close)).toEqual(["a:camera"]);
+    });
+
+    it("does not change what people see of the announcer", () => {
+        const people = [
+            person("me", ["camera"], null, false, announcing),
+            person("a", []),
+        ];
+        const result = plan(spots, people, { dirtyIds: new Set(["a"]) });
+        expect(ids(result.desired)).toEqual(["me:camera"]);
+    });
+
+    it("gives the camera back when the announcement ends", () => {
+        const people = [person("me", []), person("a", ["camera"])];
+        expect(ids(plan(spots, people).desired)).toEqual(["a:camera"]);
     });
 });

@@ -314,6 +314,20 @@ export class SpaceMedia {
         peer.focusMode = privacy.focus;
     }
 
+    /**
+     * Whether a person announces and whether they show their camera to the
+     * announcers. The caller marks the neighbours dirty so the planner runs.
+     */
+    setAnnouncerVideo(
+        peerId: string,
+        state: { announcing: boolean; sharingVideoWithAnnouncer: boolean }
+    ): void {
+        const peer = this.peers.get(peerId);
+        if (!peer) return;
+        peer.announcing = state.announcing;
+        peer.sharingVideoWithAnnouncer = state.sharingVideoWithAnnouncer;
+    }
+
     /** The layer a receiver asks for per person it sees in a tile. */
     setFocus(peerId: string, views: ReadonlyMap<string, SimulcastLayer>): void {
         const peer = this.peers.get(peerId);

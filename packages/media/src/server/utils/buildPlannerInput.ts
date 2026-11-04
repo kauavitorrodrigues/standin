@@ -21,6 +21,8 @@ export const buildPeople = (peers: Iterable<Peer>): PersonState[] =>
             muted: isSilenced(peer),
             headphones: peer.headphones,
             focusMode: peer.focusMode,
+            announcing: peer.announcing,
+            sharingVideoWithAnnouncer: peer.sharingVideoWithAnnouncer,
             producers,
         };
     });

@@ -356,12 +356,6 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         handle={handle}
                         mapId={space.map.id}
                     />
-                    <AnnouncingBanner
-                        announcers={announcing.announcers}
-                        isAnnouncing={announcing.isAnnouncing}
-                        names={names}
-                        onStop={announcing.stop}
-                    />
                     <LockBanner
                         locked={mapLock.locked}
                         by={mapLock.by}
@@ -381,6 +375,19 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                             onFocusChange={video.setFocus}
                             onHideVideo={video.hideVideo}
                             onShowVideo={video.showVideo}
+                            notice={
+                                <AnnouncingBanner
+                                    announcers={announcing.announcers}
+                                    isAnnouncing={announcing.isAnnouncing}
+                                    isSharingVideo={announcing.isSharingVideo}
+                                    canShareVideo={announcing.canShareVideo}
+                                    names={names}
+                                    onStop={announcing.stop}
+                                    onToggleVideo={
+                                        announcing.toggleVideoSharing
+                                    }
+                                />
+                            }
                         />
                     </RaisedHandsContext.Provider>
                     <LayoutPrimitive.TopControls

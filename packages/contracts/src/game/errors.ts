@@ -51,6 +51,38 @@ export class AnnouncingInvalidError extends BaseError {
     }
 }
 
+// Guests are not members, and sharing video is for members.
+export class ShareVideoNotAllowedError extends BaseError {
+    constructor() {
+        super(
+            "You cannot share your video with an announcer in this space.",
+            "SHARE_VIDEO_NOT_ALLOWED",
+            403
+        );
+    }
+}
+
+export class ShareVideoInvalidError extends BaseError {
+    constructor() {
+        super(
+            "The video sharing request is invalid.",
+            "SHARE_VIDEO_INVALID",
+            422
+        );
+    }
+}
+
+// There is nobody announcing within earshot to share with.
+export class ShareVideoNoAnnouncerError extends BaseError {
+    constructor() {
+        super(
+            "Nobody is announcing near you.",
+            "SHARE_VIDEO_NO_ANNOUNCER",
+            409
+        );
+    }
+}
+
 // Guests are not members, and raising a hand is for members.
 export class HandRaiseNotAllowedError extends BaseError {
     constructor() {

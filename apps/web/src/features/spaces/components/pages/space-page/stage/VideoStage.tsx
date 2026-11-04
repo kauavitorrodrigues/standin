@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { STAGE_VIEW_TRANSITION_MS } from "@/features/spaces/consts/stage";
 import { useStageCarousel } from "@/features/spaces/hooks/useStageCarousel";
 import { usePresence } from "@/hooks/usePresence";
@@ -8,6 +8,7 @@ import { StageFrame } from "@/features/spaces/components/pages/space-page/stage/
 import { AllTilesView } from "@/features/spaces/components/pages/space-page/stage/AllTilesView";
 import { CarouselControls } from "@/features/spaces/components/pages/space-page/stage/CarouselControls";
 import { StageVideoActionsContext } from "@/features/spaces/components/pages/space-page/stage/StageVideoActions";
+import { StageNoticeFrame } from "@/features/spaces/components/pages/space-page/stage/StageNoticeFrame";
 import { VideoTile } from "@/features/spaces/components/pages/space-page/stage/VideoTile";
 
 type VideoStageProps = {
@@ -28,6 +29,10 @@ type VideoStageProps = {
     // Hides the video of a person, who is still heard, or shows it again.
     onHideVideo?: (userId: string) => void;
     onShowVideo?: (userId: string) => void;
+    // A notice of the space (such as the announcing banner). It sits under the
+    // strip of videos so it never covers a tile, and at the top when there is
+    // no strip.
+    notice?: ReactNode;
 };
 
 export const VideoStage = ({
@@ -42,6 +47,7 @@ export const VideoStage = ({
     onFocusChange,
     onHideVideo,
     onShowVideo,
+    notice,
 }: VideoStageProps) => {
     const {
         visible,
@@ -100,7 +106,11 @@ export const VideoStage = ({
                             onClick={goToNextPage}
                         />
                     </div>
+                    {notice}
                 </StageFrame>
+            )}
+            {!isStripVisible && notice && (
+                <StageNoticeFrame>{notice}</StageNoticeFrame>
             )}
             {isGridMounted && (
                 <AllTilesView

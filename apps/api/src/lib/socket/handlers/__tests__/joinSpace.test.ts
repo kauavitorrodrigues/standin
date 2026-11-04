@@ -86,6 +86,7 @@ function createFakeIo(
             headphones: false,
             focus: false,
             announcingSince: null,
+            sharingVideoWithAnnouncerSince: null,
             handRaisedSince: null,
             ...(PROFILES[peer.data.userId] ?? {
                 name: "",
@@ -282,6 +283,7 @@ describe("registerJoinSpace", () => {
             headphones: false,
             focus: false,
             announcingSince: null,
+            sharingVideoWithAnnouncerSince: null,
             handRaisedSince: null,
         });
 

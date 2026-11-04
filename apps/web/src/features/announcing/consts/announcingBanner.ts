@@ -1,6 +1,8 @@
 export const ANNOUNCING_BANNER_TEXTS = {
     self: "Você está anunciando",
     stopButton: "Parar",
+    shareVideoButton: "Compartilhar vídeo",
+    stopShareVideoButton: "Parar de compartilhar",
     // Shown for someone whose name is not known.
     unknownName: "Alguém",
 } as const;
