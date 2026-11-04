@@ -32,6 +32,7 @@ export const MediaControlGroup = ({
     nearbyChat,
     soundboard,
     announcing,
+    handRaise,
 }: Props) => {
     
     const controls = useControlsView();
@@ -91,6 +92,7 @@ export const MediaControlGroup = ({
                         cameraError={cameraError}
                         soundboard={soundboard}
                         announcing={announcing}
+                        handRaise={handRaise}
                         soundboardPanel={soundboardPanel}
                         onStartScreenShare={screenShare.start}
                         onStopScreenShare={screenShare.stop}

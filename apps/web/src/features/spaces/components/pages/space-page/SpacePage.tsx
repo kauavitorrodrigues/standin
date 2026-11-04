@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import { STAGE_VIEWS } from "@/features/spaces/consts/stage";
+import { SPACE_VIEWS } from "@/features/spaces/consts/view";
 import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
 import type { SpaceDetails, UserSummary } from "@standin/contracts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -64,6 +67,10 @@ import { useDecoratorSession } from "@/features/decorator/hooks/useDecoratorSess
 import type { DecorateAvailability } from "@/features/decorator/types/decorate-availability";
 import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
+import { handRaiseInGrid } from "@/features/spaces/hand-raise/utils/handRaiseInGrid";
+import { RaisedHandsContext } from "@/features/spaces/hand-raise/contexts/RaisedHandsContext";
+import { useHandRaiseToasts } from "@/features/spaces/hand-raise/hooks/useHandRaiseToasts";
+import { useLowerHandOutsideGrid } from "@/features/spaces/hand-raise/hooks/useLowerHandOutsideGrid";
 import { AnnouncingBanner } from "@/features/announcing/components/AnnouncingBanner";
 import { GuestRequests } from "@/features/spaces/guests/components/instances/GuestRequests";
 
@@ -112,6 +119,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         localAudioError,
         soundboard,
         announcing,
+        handRaise,
         onlineUserIds,
         speakingUserIds,
         video,
@@ -149,6 +157,10 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
 
     const { members } = OrganizationsQueries.useMembers();
     const names = buildNameLookup(members);
+    const peopleById = useMemo(
+        () => new Map(members.map((member) => [member.id, member])),
+        [members]
+    );
     // The owner of the organization manages the desks of the others from the
     // list of people.
     const canManageDesks = mapRender.data?.access.canEdit ?? false;
@@ -189,6 +201,21 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         changeStageView,
     } = useVideoGrid(stageTiles.length);
 
+    // The hand belongs to the view of all participants, where one raises it to
+    // speak, as in a meeting. Near someone on the map one just talks.
+    const isGridView =
+        stageView === STAGE_VIEWS.GRID && view === SPACE_VIEWS.SPACE;
+    useLowerHandOutsideGrid({ handRaise, isGridView });
+    useHandRaiseToasts({
+        hands: handRaise.hands,
+        personOf: (userId) => peopleById.get(userId),
+    });
+    const raisedHandUserIds = useMemo(() => {
+        const ids = new Set(handRaise.hands.map((hand) => hand.userId));
+        if (handRaise.isRaised) ids.add(user.id);
+        return ids;
+    }, [handRaise.hands, handRaise.isRaised, user.id]);
+
     const pinnedVideos = usePinnedVideos(stageTiles);
     useAutoPinScreen({
         tiles: stageTiles,
@@ -214,6 +241,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         nearbyChat,
         soundboard,
         announcing,
+        handRaise,
     });
 
     const { peerChat, peerTyping, chatPage } = usePeerChatContextValues({
@@ -340,19 +368,21 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         mode={mapLock.mode}
                         currentUserId={user.id}
                     />
-                    <VideoStage
-                        tiles={stageTiles}
-                        isGridOpen={isGridOpen}
-                        gridTileId={gridTileId}
-                        onOpenGrid={openGrid}
-                        onCloseGrid={closeGrid}
-                        pinnedIds={pinnedVideos.pinnedIds}
-                        onTogglePin={pinnedVideos.togglePin}
-                        onActiveVideosChange={video.setActiveVideoIds}
-                        onFocusChange={video.setFocus}
-                        onHideVideo={video.hideVideo}
-                        onShowVideo={video.showVideo}
-                    />
+                    <RaisedHandsContext.Provider value={raisedHandUserIds}>
+                        <VideoStage
+                            tiles={stageTiles}
+                            isGridOpen={isGridOpen}
+                            gridTileId={gridTileId}
+                            onOpenGrid={openGrid}
+                            onCloseGrid={closeGrid}
+                            pinnedIds={pinnedVideos.pinnedIds}
+                            onTogglePin={pinnedVideos.togglePin}
+                            onActiveVideosChange={video.setActiveVideoIds}
+                            onFocusChange={video.setFocus}
+                            onHideVideo={video.hideVideo}
+                            onShowVideo={video.showVideo}
+                        />
+                    </RaisedHandsContext.Provider>
                     <LayoutPrimitive.TopControls
                         visible={layout.isStageToggleVisible}
                     >
@@ -364,7 +394,14 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     <LayoutPrimitive.Controls
                         visible={layout.isControlsVisible}
                     >
-                        <MediaControlGroup {...media} isMeetingContext />
+                        <MediaControlGroup
+                            {...media}
+                            handRaise={handRaiseInGrid(
+                                isGridView,
+                                media.handRaise
+                            )}
+                            isMeetingContext
+                        />
                     </LayoutPrimitive.Controls>
                 </LayoutPrimitive.Content>
             </LayoutPrimitive.Body>

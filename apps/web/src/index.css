@@ -183,3 +183,37 @@ html[data-reduce-motion]::view-transition-old(*),
 html[data-reduce-motion]::view-transition-new(*) {
     animation: none !important;
 }
+
+/* A raised hand: it waves once in place, and a ring spreads
+   out of its badge. The "reduce animations" setting above covers both. */
+@theme {
+    --animate-hand-raise: hand-raise 700ms ease-in-out 1;
+    --animate-hand-ripple: hand-ripple 800ms ease-out 1;
+
+    @keyframes hand-raise {
+        0%,
+        100% {
+            transform: rotate(0deg);
+        }
+        25% {
+            transform: rotate(16deg);
+        }
+        50% {
+            transform: rotate(-12deg);
+        }
+        75% {
+            transform: rotate(8deg);
+        }
+    }
+
+    @keyframes hand-ripple {
+        0% {
+            transform: scale(1);
+            opacity: 0.55;
+        }
+        100% {
+            transform: scale(1.9);
+            opacity: 0;
+        }
+    }
+}
