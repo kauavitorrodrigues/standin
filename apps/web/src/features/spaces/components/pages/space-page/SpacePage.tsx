@@ -72,6 +72,9 @@ import { RaisedHandsContext } from "@/features/spaces/hand-raise/contexts/Raised
 import { useHandRaiseToasts } from "@/features/spaces/hand-raise/hooks/useHandRaiseToasts";
 import { useLowerHandOutsideGrid } from "@/features/spaces/hand-raise/hooks/useLowerHandOutsideGrid";
 import { AnnouncingBanner } from "@/features/spaces/announcing/components/AnnouncingBanner";
+import { OnboardingFlowProvider } from "@/features/onboarding/components/instances/OnboardingFlowProvider";
+import { OnboardingLauncher } from "@/features/onboarding/components/instances/OnboardingLauncher";
+import { OnboardingPanels } from "@/features/onboarding/components/instances/OnboardingPanels";
 import { GuestRequests } from "@/features/spaces/guests/components/instances/GuestRequests";
 
 export function SpacePage({ spaceId }: { spaceId: string }) {
@@ -87,7 +90,11 @@ function SpaceGate({ spaceId }: { spaceId: string }) {
     const availability = useSpaceAvailability(spaceId);
     if (availability.status === SPACE_AVAILABILITY_STATUS.UNAVAILABLE)
         return <SpaceUnavailable reason={availability.reason} />;
-    return <SpacePageContent space={availability.space} />;
+    return (
+        <OnboardingFlowProvider>
+            <SpacePageContent space={availability.space} />
+        </OnboardingFlowProvider>
+    );
 }
 
 function SpacePageContent({ space }: { space: SpaceDetails }) {
@@ -284,7 +291,10 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                 />
                 <LayoutPrimitive.Content style={layout.contentStyle}>
                     <GameCanvas ref={containerRef} />
-                    <GameControls handle={handle} />
+                    <GameControls
+                        handle={handle}
+                        topSlot={<OnboardingLauncher />}
+                    />
                     <RoomHeader
                         roomLabel={currentRoom.roomLabel}
                         state={currentRoom.state}
@@ -351,6 +361,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                             onAnswer={currentRoom.onAnswer}
                         />
                         <GuestRequests spaceId={space.id} />
+                        <OnboardingPanels />
                     </LayoutPrimitive.RightStack>
                     <Decorator
                         session={decorator}

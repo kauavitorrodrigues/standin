@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { LocateFixedIcon, MinusIcon, PlusIcon } from "lucide-react";
 import { FloatingIconButton } from "@/components/FloatingIconButton";
 import { useHotkey } from "@/hooks/useHotkey";
@@ -11,9 +12,11 @@ import type { GameEngineHandle } from "@/features/game/types/game";
 
 type GameControlsProps = {
     handle: GameEngineHandle | null;
+    // Goes above the camera buttons, in the same column.
+    topSlot?: ReactNode;
 };
 
-export const GameControls = ({ handle }: GameControlsProps) => {
+export const GameControls = ({ handle, topSlot }: GameControlsProps) => {
     const cameraState = useCameraState(handle);
 
     useHotkey(FOCUS_PLAYER_SHORTCUT.keys, () => handle?.focusOnPlayer(), {
@@ -30,6 +33,7 @@ export const GameControls = ({ handle }: GameControlsProps) => {
 
     return (
         <div className="absolute right-3 bottom-3 z-10 flex flex-col items-center gap-2">
+            {topSlot}
             <FloatingIconButton
                 icon={<LocateFixedIcon />}
                 label="Centralizar no personagem"
