@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { STAGE_VIEWS } from "@/features/spaces/consts/stage";
 import { SPACE_VIEWS } from "@/features/spaces/consts/view";
 import { useNearbyChatConnection } from "@/features/nearby-chat/hooks/useNearbyChatConnection";
@@ -74,6 +74,11 @@ import { useLowerHandOutsideGrid } from "@/features/spaces/hand-raise/hooks/useL
 import { AnnouncingBanner } from "@/features/spaces/announcing/components/AnnouncingBanner";
 import { OnboardingFlowProvider } from "@/features/onboarding/components/instances/OnboardingFlowProvider";
 import { OnboardingLauncher } from "@/features/onboarding/components/instances/OnboardingLauncher";
+import { useCompleteOnTravel } from "@/features/onboarding/hooks/useCompleteOnTravel";
+import { AvatarEditorDialog } from "@/features/avatar/components/dialogs/AvatarEditorDialog";
+import { useCompleteOnOwnDesk } from "@/features/onboarding/hooks/useCompleteOnOwnDesk";
+import { DeskGuide } from "@/features/onboarding/components/instances/DeskGuide";
+import { useTaskActions } from "@/features/onboarding/hooks/useTaskActions";
 import { OnboardingPanels } from "@/features/onboarding/components/instances/OnboardingPanels";
 import { GuestRequests } from "@/features/spaces/guests/components/instances/GuestRequests";
 
@@ -154,7 +159,18 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const selectedPersonId = useSelectedPerson(handle?.game ?? null);
     const { isAtOwnDesk, desks } = useSceneDesks(handle, space.id, user.id);
     const assignPick = useAssignPick();
+    useCompleteOnTravel(handle?.game ?? null);
+    useCompleteOnOwnDesk(desks, user.id);
     const lockedDoor = useLockedDoorPrompt(handle?.game ?? null, currentRoom);
+
+    const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
+    const taskActions = useTaskActions({
+        userId: user.id,
+        desks,
+        decorateAvailability,
+        openDecorator: decorator.open,
+        openAvatarEditor: () => setIsAvatarEditorOpen(true),
+    });
 
     const stageTiles = useStageTiles({
         video,
@@ -306,6 +322,11 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         text={walkText}
                         onCancel={walk.cancel}
                     />
+                    <DeskGuide handle={handle} desks={desks} userId={user.id} />
+                    <AvatarEditorDialog
+                        isOpen={isAvatarEditorOpen}
+                        onOpenChange={setIsAvatarEditorOpen}
+                    />
                     <AssignDeskBanner
                         name={assignPick.target?.name ?? null}
                         onCancel={assignPick.cancel}
@@ -361,7 +382,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                             onAnswer={currentRoom.onAnswer}
                         />
                         <GuestRequests spaceId={space.id} />
-                        <OnboardingPanels />
+                        <OnboardingPanels actions={taskActions} />
                     </LayoutPrimitive.RightStack>
                     <Decorator
                         session={decorator}
