@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
     ChatEvents,
+    type ChatMessageCreatedPayload,
     type ConversationsListResponse,
     type UnreadCounts,
 } from "@standin/contracts";
@@ -15,6 +16,9 @@ import {
     shouldPlayChatSound,
 } from "@/features/notifications/utils/shouldNotifyChat";
 import { realtimeSocket } from "@/features/realtime/socket";
+import { buildMentionNotification } from "@/features/chat/utils/buildMentionNotification";
+import { previewMentions } from "@/features/chat/utils/previewMentions";
+import { OrganizationsQueries } from "@/features/organizations/queries";
 import { applyUnreadCount } from "@/features/chat/utils/applyUnreadCount";
 import { applyMessageToConversations } from "@/features/chat/utils/applyMessageToConversations";
 import { useSocketEvent } from "@/features/realtime/hooks/useSocketEvent";
@@ -59,6 +63,7 @@ export const useChatRealtimeEvents = () => {
     const queryClient = useQueryClient();
     const organizationId = useOrganization().organization?.id ?? "";
     const { user } = useAuth();
+    const { members } = OrganizationsQueries.useMembers();
 
     // The cached conversation list, already patched with the new message,
     // gives the kind of conversation and how to title it. Only matters to
@@ -92,6 +97,27 @@ export const useChatRealtimeEvents = () => {
                 conversation.type
             ),
         });
+    };
+
+    const notifyMention = (
+        messageId: string,
+        senderName: string,
+        body: string | null
+    ) =>
+        notifyWhenAway(buildMentionNotification(messageId, senderName, body));
+
+    // A mention is told apart from a plain message: it has its own text and
+    // is never also announced as a message of the conversation.
+    const notifyNewMessage = (payload: ChatMessageCreatedPayload) => {
+        if (!payload.mentionsMe) {
+            void notifyIncomingMessage(payload.conversationId);
+            return;
+        }
+        notifyMention(
+            payload.message.id,
+            payload.sender.name,
+            previewMentions(payload.message.content, payload.message.mentions)
+        );
     };
 
     // Events missed while the socket was down are not replayed, so the counts
@@ -141,7 +167,7 @@ export const useChatRealtimeEvents = () => {
                     queryKey: conversationsQueryKey(organizationId),
                 });
             }
-            void notifyIncomingMessage(conversationId);
+            notifyNewMessage(payload);
 
             applyCreatedMessageToMessages(queryClient, payload);
         }
@@ -158,7 +184,16 @@ export const useChatRealtimeEvents = () => {
             content,
             editedAt,
             mentions,
+            mentionsMe,
         }) => {
+            if (mentionsMe) {
+                notifyMention(
+                    messageId,
+                    members.find(({ id }) => id === editingUserId)?.name ??
+                        "Alguém",
+                    previewMentions(content, mentions)
+                );
+            }
             queryClient.setQueriesData<MessagesData>(
                 { queryKey: messagesQueryKey(conversationId) },
                 (data) =>

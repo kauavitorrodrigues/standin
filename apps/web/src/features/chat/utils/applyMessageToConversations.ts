@@ -2,6 +2,7 @@ import type {
     ChatMessageCreatedPayload,
     ConversationsListResponse,
 } from "@standin/contracts";
+import { previewMentions } from "@/features/chat/utils/previewMentions";
 
 // Puts a new message into the cached conversation list: it becomes the last
 // message and the count the server sent for this user replaces the old one.
@@ -29,7 +30,10 @@ export const applyMessageToConversations = (
                         ? conversation.lastMessage
                         : {
                             id: message.id,
-                            content: message.content,
+                            content: previewMentions(
+                                message.content,
+                                message.mentions
+                            ),
                             senderId: message.senderId,
                             createdAt: message.createdAt,
                         },

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { MessageWithDetails } from "@standin/contracts";
+import { MessageContent } from "@/features/chat/components/views/messages/MessageContent";
 import { MessageReactionPills } from "@/features/chat/components/views/messages/MessageReactionPills";
 import { MessageAttachments } from "@/features/chat/components/views/messages/MessageAttachments";
 import { MessageSeenByLabel } from "@/features/chat/components/views/messages/MessageSeenByLabel";
@@ -57,7 +58,10 @@ export const MessageLineContent = ({
         <div className="relative pr-14">
             {message.content && (
                 <p className="text-sm wrap-break-word whitespace-pre-wrap text-foreground">
-                    {message.content}
+                    <MessageContent
+                        content={message.content}
+                        mentions={message.mentions}
+                    />
                     <MessageEditedTag editedAt={message.editedAt} />
                 </p>
             )}
