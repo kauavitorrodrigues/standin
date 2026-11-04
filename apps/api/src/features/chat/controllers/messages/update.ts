@@ -21,13 +21,19 @@ export const updateMessage = async (req: ExtendedRequest, res: Response) => {
         const data = parseSchema(MessageUpdateSchema, req.body, res);
         if (!data) return;
 
-        const message = await MessageService.update(
+        const { message, addedUserIds } = await MessageService.update(
             params.conversationId,
+            params.organizationId,
             params.messageId,
             req.user.id,
             data
         );
-        void notifyMessageUpdated(params.organizationId, message, req.user.id);
+        void notifyMessageUpdated(
+            params.organizationId,
+            message,
+            req.user.id,
+            addedUserIds
+        );
         res.status(200).json({ message });
     } catch (error) {
         return sendError({

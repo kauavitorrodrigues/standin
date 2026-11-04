@@ -23,6 +23,9 @@ export const notifyNewMessage = async (
     threadSummary: ThreadSummary | null = null
 ): Promise<void> => {
     const { seenBy: _seenBy, ...created } = message;
+    const mentionedUserIds = new Set(
+        message.mentions.map((mention) => mention.userId)
+    );
 
     try {
         const conversation = await ConversationService.findById(
@@ -46,6 +49,7 @@ export const notifyNewMessage = async (
                 sender,
                 unreadCount: unreadCounts[userId] ?? 0,
                 threadSummary,
+                mentionsMe: mentionedUserIds.has(userId),
             });
         });
     } catch (error) {

@@ -31,6 +31,7 @@ export const buildTempMessage = ({
     showThreadReplyInChannel,
     createdAt: new Date().toISOString(),
     editedAt: null,
+    mentions: [],
     attachments: [],
     reactions: [],
     seenBy: [],

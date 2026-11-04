@@ -24,7 +24,12 @@ vi.mock("@standin/core", () => ({
 import { notifyNewMessage } from "../notifyNewMessage";
 
 const sender = { id: "ana", name: "Ana", profilePictureUrl: null } as MessageSender;
-const message = { id: "m1", senderId: "ana", seenBy: [] } as unknown as MessageWithDetails;
+const message = {
+    id: "m1",
+    senderId: "ana",
+    seenBy: [],
+    mentions: [],
+} as unknown as MessageWithDetails;
 
 describe("notifyNewMessage", () => {
     beforeEach(() => {
@@ -58,6 +63,25 @@ describe("notifyNewMessage", () => {
         countMock.mockResolvedValueOnce({ bia: 1 });
         await notifyNewMessage("c1", "org", sender, message);
         expect(emitToNotifyMock.mock.calls[0][2].message).not.toHaveProperty("seenBy");
+    });
+
+    it("tells each recipient whether they were mentioned", async () => {
+        recipientsMock.mockResolvedValueOnce(["bia", "caio"]);
+        countMock.mockResolvedValueOnce({});
+        await notifyNewMessage("c1", "org", sender, {
+            ...message,
+            mentions: [{ userId: "bia", name: "Bia" }],
+        });
+        expect(emitToNotifyMock).toHaveBeenCalledWith(
+            "bia",
+            "chat:message-created",
+            expect.objectContaining({ mentionsMe: true })
+        );
+        expect(emitToNotifyMock).toHaveBeenCalledWith(
+            "caio",
+            "chat:message-created",
+            expect.objectContaining({ mentionsMe: false })
+        );
     });
 
     it("sends the thread summary of a reply with the event", async () => {

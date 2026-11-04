@@ -34,7 +34,7 @@ export const useUpdateMessage = () => {
             meta: undefined,
         }),
         // The update endpoint only returns the bare Message row (content and
-        // editedAt), so merge just those two fields instead of replacing
+        // editedAt, mentions), so merge just those fields instead of replacing
         // the cached message wholesale, which would wipe out its
         // attachments and any reaction change that landed meanwhile.
         reconcile: (data, message) =>
@@ -42,6 +42,7 @@ export const useUpdateMessage = () => {
                 ...existing,
                 content: message.content,
                 editedAt: message.editedAt,
+                mentions: message.mentions,
             })),
     });
 };
