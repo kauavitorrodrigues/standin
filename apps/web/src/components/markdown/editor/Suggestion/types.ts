@@ -22,6 +22,9 @@ export type SuggestionOptions<TItem> = {
     command: (params: { editor: Editor; range: Range; item: TItem }) => void;
     List: ComponentType<SuggestionListProps<TItem>>;
     getContainer: () => HTMLElement | null;
+    // Asked on every key, so the list can be turned off without rebuilding
+    // the editor. Missing means always on.
+    isEnabled?: () => boolean;
 };
 
 export type SuggestionStorage = {

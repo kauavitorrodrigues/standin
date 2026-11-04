@@ -11,6 +11,7 @@ import { buildMessage } from "./builders";
 import {
     assertCanMention,
     assertMentionLimit,
+    assertNotSelfMention,
     deleteMentions,
     diffMentions,
     groupMentionsByMessage,
@@ -48,6 +49,7 @@ export const updateMessage = async (
         );
         // Only who is added is checked: a person who has since left the
         // organization stays mentioned in a message that keeps the mention.
+        assertNotSelfMention(senderId, diff.added);
         await assertCanMention(conversation, diff.added);
 
         // Single UPDATE...RETURNING scoped to the sender, instead of a SELECT

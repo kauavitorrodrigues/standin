@@ -1,11 +1,18 @@
 import type { AnyExtension, Editor } from "@tiptap/core";
 
-export type InlineNode = { type: "text"; text: string } | { type: "hardBreak" };
+export type MentionAttrs = { id: string; label: string };
+
+export type InlineNode =
+    | { type: "text"; text: string }
+    | { type: "hardBreak" }
+    | { type: "mention"; attrs: MentionAttrs };
 
 // What a caller can do with the field without knowing about the editor.
 export type MessageEditorHandle = {
     focus: () => void;
     insertText: (text: string) => void;
+    // Types the trigger character, which opens the list of mentions.
+    openMentions: () => void;
 };
 
 export type EditorContextValue = {

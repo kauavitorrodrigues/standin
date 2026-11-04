@@ -11,6 +11,7 @@ type PeerChatContextValuesOptions = Pick<
 > & {
     typingByConversation: TypingByConversation;
     onlineUserIds: ChatPageContextType["onlineUserIds"];
+    spaceConversationId: ChatPageContextType["spaceConversationId"];
     getConversationLink: ChatPageContextType["getConversationLink"];
 };
 
@@ -19,6 +20,7 @@ type PeerChatContextValuesOptions = Pick<
 export const usePeerChatContextValues = ({
     typingByConversation,
     onlineUserIds,
+    spaceConversationId,
     getConversationLink,
     sendChatTyping,
 }: PeerChatContextValuesOptions) => {
@@ -41,8 +43,8 @@ export const usePeerChatContextValues = ({
     );
 
     const chatPage: ChatPageContextType = useMemo(
-        () => ({ onlineUserIds, getConversationLink }),
-        [onlineUserIds, getConversationLink]
+        () => ({ onlineUserIds, spaceConversationId, getConversationLink }),
+        [onlineUserIds, spaceConversationId, getConversationLink]
     );
 
     return { peerChat, peerTyping, chatPage };

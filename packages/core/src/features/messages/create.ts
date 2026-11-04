@@ -14,6 +14,7 @@ import { buildMessageAttachments } from "./attachments/builders";
 import {
     assertCanMention,
     assertMentionLimit,
+    assertNotSelfMention,
     groupMentionsByMessage,
     insertMentions,
     listMentionsByMessageIds,
@@ -38,6 +39,7 @@ export const createMessage = async (
         organizationId
     );
     assertMentionLimit(mentionedUserIds);
+    assertNotSelfMention(senderId, mentionedUserIds);
     await assertCanMention(conversation, mentionedUserIds);
 
     if (threadParentId) {

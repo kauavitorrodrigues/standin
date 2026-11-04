@@ -2,6 +2,7 @@ import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { UndoRedo } from "@tiptap/extensions";
 import { Markdown } from "tiptap-markdown";
+import { Mention } from "../extensions/Mention";
 import { MessageHardBreak, MessageText } from "./messageNodes";
 
 // One paragraph of plain text: no marks and no blocks, so what is typed is
@@ -12,6 +13,7 @@ export const createCoreExtensions = () => [
     Paragraph,
     MessageText,
     MessageHardBreak,
+    Mention,
     UndoRedo,
     Markdown.configure({
         html: false,

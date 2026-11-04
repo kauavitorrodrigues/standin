@@ -9,6 +9,7 @@ import { MAX_MESSAGE_CONTENT_LENGTH } from "@standin/contracts";
 import {
     MessageEditor,
     type MessageEditorHandle,
+    type SuggestionExtensionsFactory,
 } from "@/components/markdown/editor";
 
 type MessageContentFieldProps<
@@ -21,6 +22,7 @@ type MessageContentFieldProps<
     onSubmit: () => void;
     editorRef?: Ref<MessageEditorHandle>;
     placeholder?: string;
+    suggestions?: SuggestionExtensionsFactory;
 };
 
 // Enter sends and Shift+Enter breaks the line, so the keyboard behaviour and
@@ -37,6 +39,7 @@ export function MessageContentField<
     onSubmit,
     editorRef,
     placeholder = "Escreva uma mensagem...",
+    suggestions,
 }: MessageContentFieldProps<TFieldValues, TName>) {
     return (
         <Controller
@@ -51,6 +54,7 @@ export function MessageContentField<
                     placeholder={placeholder}
                     maxLength={MAX_MESSAGE_CONTENT_LENGTH}
                     disabled={disabled}
+                    suggestions={suggestions}
                 >
                     <MessageEditor.Content className="max-h-40 overflow-y-auto" />
                 </MessageEditor.Root>

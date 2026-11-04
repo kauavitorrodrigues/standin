@@ -16,11 +16,13 @@ import {
 
 type Props = {
     onInsertEmoji: (emoji: string) => void;
+    onMention: () => void;
+    // A conversation that takes no mentions has no button.
+    isMentionable: boolean;
     composerFrameRef: RefObject<HTMLDivElement | null>;
 };
 
-// Mentions are not implemented yet, so that one stays a visible, disabled
-// placeholder. The attachment trigger relies on being rendered inside the
+// The attachment trigger relies on being rendered inside the
 // composer's FileUpload root (see SendMessageForm) to reach the shared
 // file-picker context. Emoji insertion reuses the same Popover + EmojiPicker
 // used for message reactions (see MessageReactionPicker), but is anchored to
@@ -28,6 +30,8 @@ type Props = {
 // never covers the field the user is typing in.
 export const MessageComposerToolbar = ({
     onInsertEmoji,
+    onMention,
+    isMentionable,
     composerFrameRef,
 }: Props) => (
     <div className="flex items-center gap-1">
@@ -73,14 +77,16 @@ export const MessageComposerToolbar = ({
                 </EmojiPicker>
             </PopoverContent>
         </Popover>
-        <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Mencionar alguém"
-            disabled
-        >
-            <AtSignIcon />
-        </Button>
+        {isMentionable && (
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Mencionar alguém"
+                onClick={onMention}
+            >
+                <AtSignIcon />
+            </Button>
+        )}
     </div>
 );

@@ -87,3 +87,13 @@ export class MentionLimitExceededError extends BaseError {
         );
     }
 }
+
+export class MentionSelfError extends BaseError {
+    constructor() {
+        super(
+            "A message cannot mention the person who writes it.",
+            "MENTION_SELF",
+            400
+        );
+    }
+}

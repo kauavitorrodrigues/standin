@@ -12,6 +12,7 @@ const payload = {
         content: "oi",
         senderId: "other",
         createdAt: "2026-01-01T00:00:00.000Z",
+        mentions: [],
     },
     sender: { id: "other" },
     unreadCount: 3,
@@ -56,5 +57,18 @@ describe("applyMessageToConversations", () => {
 
         expect(a.lastMessage).toBeNull();
         expect(a.unreadCount).toBe(3);
+    });
+
+    it("shows @Name in the last message instead of the link", () => {
+        const mention = {
+            ...payload,
+            message: {
+                ...payload.message,
+                content: "oi [@Ana Velha](mention:u1)",
+                mentions: [{ userId: "u1", name: "Ana Nova" }],
+            },
+        } as unknown as ChatMessageCreatedPayload;
+        const [a] = applyMessageToConversations(data, mention)!.conversations;
+        expect(a.lastMessage?.content).toBe("oi @Ana Nova");
     });
 });
