@@ -17,6 +17,7 @@ const buildMessage = (
     attachments: [],
     reactions: [],
     seenBy: [],
+    mentions: [],
     ...overrides,
 });
 

@@ -18,3 +18,4 @@ export * from "./conversation.schema";
 export * from "./direct-conversation.data.schema";
 export * from "./direct-conversation.response.schema";
 export * from "./typing.schema";
+export * from "./message-mention.schema";

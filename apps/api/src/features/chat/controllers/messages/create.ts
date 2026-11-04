@@ -41,6 +41,7 @@ export const createMessage = async (req: ExtendedRequest, res: Response) => {
 
         const message = await MessageService.create(
             params.conversationId,
+            params.organizationId,
             req.user.id,
             {
                 content: data.content,

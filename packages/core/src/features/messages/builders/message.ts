@@ -1,5 +1,6 @@
 import type {
     MessageAttachment,
+    MessageMention,
     MessageReactionSummary,
     SeenByEntry,
     MessageWithDetails,
@@ -13,9 +14,10 @@ export const buildMessageWithDetails = (
     attachments: MessageAttachment[],
     reactions: MessageReactionSummary[],
     seenBy: SeenByEntry[],
+    mentions: MessageMention[],
     thread: ThreadSummary = EMPTY_THREAD_SUMMARY
 ): MessageWithDetails => ({
-    ...buildMessage(row),
+    ...buildMessage(row, mentions),
     attachments,
     reactions,
     seenBy,
@@ -33,7 +35,10 @@ export type MessageRow = {
     editedAt: Date | null;
 };
 
-export const buildMessage = (row: MessageRow): Message => ({
+export const buildMessage = (
+    row: MessageRow,
+    mentions: MessageMention[]
+): Message => ({
     id: row.id,
     conversationId: row.conversationId,
     senderId: row.senderId,
@@ -42,4 +47,5 @@ export const buildMessage = (row: MessageRow): Message => ({
     showThreadReplyInChannel: row.showThreadReplyInChannel,
     createdAt: row.createdAt.toISOString(),
     editedAt: toISOStringOrNull(row.editedAt),
+    mentions,
 });

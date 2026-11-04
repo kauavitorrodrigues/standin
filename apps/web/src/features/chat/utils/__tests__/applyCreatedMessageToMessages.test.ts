@@ -23,6 +23,7 @@ const build = (overrides: Partial<MessageWithDetails>): MessageWithDetails => ({
     attachments: [],
     reactions: [],
     seenBy: [],
+    mentions: [],
     replyCount: 0,
     lastReplyAt: null,
     lastReplyPreview: null,
@@ -44,6 +45,7 @@ const payload = (
         message: created,
         sender: { id: "ana", name: "Ana", profilePictureUrl: null },
         unreadCount: 1,
+        mentionsMe: false,
         threadSummary: withSummary
             ? {
                 parentId: "p1",

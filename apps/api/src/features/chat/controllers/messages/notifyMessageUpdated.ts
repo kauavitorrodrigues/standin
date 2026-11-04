@@ -6,7 +6,8 @@ import { notifyConversation } from "../../utils/notifyConversation";
 export const notifyMessageUpdated = (
     organizationId: string,
     message: Message,
-    actorId: string
+    actorId: string,
+    addedUserIds: string[]
 ): Promise<void> =>
     notifyConversation(
         message.conversationId,
@@ -19,5 +20,9 @@ export const notifyMessageUpdated = (
                 userId: actorId,
                 content: message.content,
                 editedAt: message.editedAt ?? message.createdAt,
+                mentions: message.mentions,
+                // Only who the edit added hears about it: a kept mention
+                // does not notify again.
+                mentionsMe: addedUserIds.includes(userId),
             })
     );

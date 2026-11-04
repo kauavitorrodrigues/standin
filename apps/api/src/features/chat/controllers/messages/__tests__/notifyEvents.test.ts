@@ -49,14 +49,40 @@ describe("chat notifications", () => {
                 content: "oi",
                 editedAt: "2026-01-01T00:00:00.000Z",
                 createdAt: "2025-01-01T00:00:00.000Z",
+                mentions: [{ userId: "u2", name: "Bia" }],
             } as never,
-            "u1"
+            "u1",
+            []
         );
 
         expect(emitToNotifyMock).toHaveBeenCalledWith(
             "u2",
             "chat:message-updated",
-            expect.objectContaining({ messageId: "m1", content: "oi" })
+            expect.objectContaining({
+                messageId: "m1",
+                content: "oi",
+                mentions: [{ userId: "u2", name: "Bia" }],
+                mentionsMe: false,
+            })
+        );
+    });
+
+    it("notifies only the people an edit added", async () => {
+        const edited = {
+            id: "m1",
+            conversationId: "c1",
+            content: "oi",
+            editedAt: "2026-01-01T00:00:00.000Z",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            mentions: [{ userId: "u2", name: "Bia" }],
+        } as never;
+
+        await notifyMessageUpdated("o1", edited, "u1", ["u2"]);
+
+        expect(emitToNotifyMock).toHaveBeenCalledWith(
+            "u2",
+            "chat:message-updated",
+            expect.objectContaining({ mentionsMe: true })
         );
     });
 

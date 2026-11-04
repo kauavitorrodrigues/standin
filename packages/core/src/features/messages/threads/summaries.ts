@@ -7,8 +7,18 @@ import {
     isNull,
     sql,
 } from "@standin/database";
-import { MessageNotFoundError, NestedThreadError } from "@standin/contracts";
+import {
+    MessageNotFoundError,
+    NestedThreadError,
+    replaceMentionsWithNames,
+} from "@standin/contracts";
+import type { MessageMention } from "@standin/contracts";
 import { THREAD_REPLY_PREVIEW_LENGTH } from "../consts/thread";
+import {
+    groupMentionsByMessage,
+    listMentionsByMessageIds,
+    namesByUserId,
+} from "../mentions";
 
 export type ThreadSummary = {
     replyCount: number;
@@ -20,6 +30,17 @@ export const EMPTY_THREAD_SUMMARY: ThreadSummary = {
     replyCount: 0,
     lastReplyAt: null,
     lastReplyPreview: null,
+};
+
+// A preview shows `@Name`, with the name the person has now, never the link.
+const previewOf = (
+    reply: { id: string; content: string | null } | undefined,
+    mentionsByReply: Map<string, MessageMention[]>
+): string | null => {
+    if (!reply) return null;
+    const names = namesByUserId(mentionsByReply.get(reply.id) ?? []);
+    if (reply.content === null) return null;
+    return buildReplyPreview(replaceMentionsWithNames(reply.content, names));
 };
 
 export const buildReplyPreview = (content: string | null): string | null => {
@@ -69,6 +90,9 @@ export const listThreadSummaries = async (
             )
         );
     const lastReplyById = new Map(lastReplies.map((row) => [row.id, row]));
+    const mentionsByReply = groupMentionsByMessage(
+        await listMentionsByMessageIds(lastReplies.map((row) => row.id))
+    );
 
     for (const row of grouped) {
         if (!row.parentId) continue;
@@ -76,7 +100,7 @@ export const listThreadSummaries = async (
         summaries.set(row.parentId, {
             replyCount: row.replyCount,
             lastReplyAt: last ? last.createdAt.toISOString() : null,
-            lastReplyPreview: last ? buildReplyPreview(last.content) : null,
+            lastReplyPreview: previewOf(last, mentionsByReply),
         });
     }
 

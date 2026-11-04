@@ -151,7 +151,14 @@ export const useChatRealtimeEvents = () => {
     // conversation, since a reply can sit in both.
     useSocketEvent(
         ChatEvents.MESSAGE_UPDATED,
-        ({ conversationId, messageId, userId: editingUserId, content, editedAt }) => {
+        ({
+            conversationId,
+            messageId,
+            userId: editingUserId,
+            content,
+            editedAt,
+            mentions,
+        }) => {
             queryClient.setQueriesData<MessagesData>(
                 { queryKey: messagesQueryKey(conversationId) },
                 (data) =>
@@ -159,7 +166,7 @@ export const useChatRealtimeEvents = () => {
                     updateMessage(data, messageId, (message) =>
                         // Only the sender may edit, the same rule the API holds.
                         message.senderId === editingUserId
-                            ? { ...message, content, editedAt }
+                            ? { ...message, content, editedAt, mentions }
                             : message
                     )
             );

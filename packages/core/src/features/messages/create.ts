@@ -1,17 +1,27 @@
 import { db, messagesTable } from "@standin/database";
+import { parseMentionUserIds } from "@standin/contracts";
 import type {
     CreateMessageInput,
     MessageWithDetails,
 } from "@standin/contracts";
 import { FileService } from "../files";
+import { findConversationById } from "../conversations/findById";
 import { messageSelect, MESSAGE_ATTACHMENTS_STORAGE_FOLDER } from "./consts";
 import { MessageAttachmentService } from "./attachments";
 import { buildMessageWithDetails } from "./builders";
 import { assertThreadParent } from "./threads";
 import { buildMessageAttachments } from "./attachments/builders";
+import {
+    assertCanMention,
+    assertMentionLimit,
+    groupMentionsByMessage,
+    insertMentions,
+    listMentionsByMessageIds,
+} from "./mentions";
 
 export const createMessage = async (
     conversationId: string,
+    organizationId: string,
     senderId: string,
     {
         content,
@@ -20,7 +30,16 @@ export const createMessage = async (
         showThreadReplyInChannel,
     }: CreateMessageInput
 ): Promise<MessageWithDetails> => {
-    // Checked before any upload so a rejected reply leaves nothing in storage.
+    // Checked before any upload so a rejected reply or mention leaves nothing
+    // in storage. The ids come from the content, never from the client.
+    const mentionedUserIds = parseMentionUserIds(content ?? null);
+    const conversation = await findConversationById(
+        conversationId,
+        organizationId
+    );
+    assertMentionLimit(mentionedUserIds);
+    await assertCanMention(conversation, mentionedUserIds);
+
     if (threadParentId) {
         await assertThreadParent(threadParentId, conversationId);
     }
@@ -53,6 +72,8 @@ export const createMessage = async (
                 })
                 .returning(messageSelect);
 
+            await insertMentions(message.id, mentionedUserIds, tx);
+
             const attachmentRows = await MessageAttachmentService.createMany(
                 message.id,
                 uploadedFiles.map((file) => file.id),
@@ -71,10 +92,15 @@ export const createMessage = async (
             throw error;
         });
 
+    const mentions = groupMentionsByMessage(
+        await listMentionsByMessageIds([message.id])
+    );
+
     return buildMessageWithDetails(
         message,
         buildMessageAttachments(attachmentRows, uploadedFiles),
         [],
-        []
+        [],
+        mentions.get(message.id) ?? []
     );
 };

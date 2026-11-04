@@ -1,3 +1,4 @@
+import type { MessageMention } from "./message-mention";
 import type { MessageSender } from "./message-sender";
 import type { MessageWithDetails } from "./message-with-details";
 import type { ThreadSummary } from "./thread-summary";
@@ -32,6 +33,8 @@ export type ChatMessageCreatedPayload = {
     unreadCount: number;
     // Only for a thread reply: the parent's new count and last reply.
     threadSummary: ThreadSummary | null;
+    // Whether this recipient is one of the people mentioned.
+    mentionsMe: boolean;
 };
 
 export type ChatMessageUpdatedPayload = {
@@ -40,6 +43,9 @@ export type ChatMessageUpdatedPayload = {
     userId: string;
     content: string | null;
     editedAt: string;
+    mentions: MessageMention[];
+    // Whether the edit added this recipient. Keeping a mention does not count.
+    mentionsMe: boolean;
 };
 
 export type ChatMessageDeletedPayload = {
