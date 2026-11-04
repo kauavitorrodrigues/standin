@@ -3,6 +3,7 @@ import type {
     File,
     UserSummary,
     SeenByEntry,
+    MessageMention,
 } from "@standin/contracts";
 import type { ThreadSummary } from "../threads";
 import { groupReactionsByMessage } from "../utils";
@@ -21,6 +22,7 @@ type BuildConversationMessagesListResponseInput = {
     reactionRows: ReactionRow[];
     seenByMessage: Map<string, SeenByEntry[]>;
     threadSummaries: Map<string, ThreadSummary>;
+    mentionsByMessage: Map<string, MessageMention[]>;
     currentUserId: string;
     nextCursor: string | null;
 };
@@ -47,6 +49,7 @@ export const buildConversationMessagesListResponse = ({
     reactionRows,
     seenByMessage,
     threadSummaries,
+    mentionsByMessage,
     currentUserId,
     nextCursor,
 }: BuildConversationMessagesListResponseInput): ConversationMessagesListResponse => {
@@ -69,6 +72,7 @@ export const buildConversationMessagesListResponse = ({
             ),
             reactionsByMessage.get(row.id) ?? [],
             seenByMessage.get(row.id) ?? [],
+            mentionsByMessage.get(row.id) ?? [],
             threadSummaries.get(row.id)
         )
     );

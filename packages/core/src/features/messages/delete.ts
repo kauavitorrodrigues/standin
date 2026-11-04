@@ -51,7 +51,7 @@ export const deleteMessage = async (
         return message;
     });
 
-    if (message) return buildMessage(message);
+    if (message) return buildMessage(message, []);
 
     // Distinguish not-found from access-denied for the right error.
     const [existing] = await db

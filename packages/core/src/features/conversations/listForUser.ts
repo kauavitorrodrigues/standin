@@ -11,13 +11,22 @@ import {
     desc,
     spacesTable,
 } from "@standin/database";
-import { CONVERSATION_TYPES } from "@standin/contracts";
+import {
+    CONVERSATION_TYPES,
+    replaceMentionsWithNames,
+} from "@standin/contracts";
 import type {
     ConversationsListQuery,
     ConversationsListResponse,
     ConversationSummary,
+    MessageMention,
 } from "@standin/contracts";
 import { findAccessibleConversations } from "./findAccessible";
+import {
+    groupMentionsByMessage,
+    listMentionsByMessageIds,
+    namesByUserId,
+} from "../messages/mentions";
 import { computeUnreadCounts } from "./reads/computeUnreadCounts";
 import { UserService } from "../users";
 import { sortConversationSummaries } from "./utils/sortSummaries";
@@ -35,6 +44,14 @@ type LastMessageRow = {
     content: string | null;
     senderId: string;
     createdAt: Date;
+};
+
+const showMentionNames = (
+    content: string | null,
+    mentions: MessageMention[]
+): string | null => {
+    if (content === null) return null;
+    return replaceMentionsWithNames(content, namesByUserId(mentions));
 };
 
 const findLastMessageByConversation = async (
@@ -64,7 +81,23 @@ const findLastMessageByConversation = async (
         // by createdAt while staying tie-free.
         .orderBy(messagesTable.conversationId, desc(messagesTable.id));
 
-    return new Map(rows.map((row) => [row.conversationId, row]));
+    // The preview shows `@Name` with the current name, never the link.
+    const mentionsByMessage = groupMentionsByMessage(
+        await listMentionsByMessageIds(rows.map((row) => row.id))
+    );
+
+    return new Map(
+        rows.map((row) => [
+            row.conversationId,
+            {
+                ...row,
+                content: showMentionNames(
+                    row.content,
+                    mentionsByMessage.get(row.id) ?? []
+                ),
+            },
+        ])
+    );
 };
 
 // Only DIRECT conversations need this: SPACE conversations resolve their

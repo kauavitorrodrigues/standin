@@ -19,6 +19,7 @@ export * from "./conversation-participants";
 export * from "./conversation-reads";
 export * from "./messages";
 export * from "./message-attachments";
+export * from "./message-mentions";
 export * from "./message-reactions";
 export * from "./message-reads";
 export * from "./avatar-parts";

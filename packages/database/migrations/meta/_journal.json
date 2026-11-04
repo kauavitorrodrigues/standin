@@ -155,6 +155,13 @@
       "when": 1793733611886,
       "tag": "0021_add_space_guests_requested_at_index",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793816530170,
+      "tag": "0022_add_message_mentions",
+      "breakpoints": true
     }
   ]
 }

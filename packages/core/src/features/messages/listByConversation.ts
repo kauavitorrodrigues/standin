@@ -20,6 +20,7 @@ import { MessageAttachmentService } from "./attachments";
 import { MessageReactionService } from "./reactions";
 import { MessageReadService } from "./reads";
 import { listThreadSummaries } from "./threads";
+import { groupMentionsByMessage, listMentionsByMessageIds } from "./mentions";
 import { assertMessageInConversation } from "./utils";
 import { buildConversationMessagesListResponse } from "./builders";
 
@@ -74,6 +75,7 @@ export const listMessagesByConversation = async (
         reactionRows,
         seenByMessage,
         threadSummaries,
+        mentionRows,
     ] =
         await Promise.all([
             UserService.findManyByIds(senderIds),
@@ -81,6 +83,7 @@ export const listMessagesByConversation = async (
             MessageReactionService.listByMessageIds(messageIds),
             MessageReadService.listSeenBy(messageIds),
             listThreadSummaries(messageIds),
+            listMentionsByMessageIds(messageIds),
         ]);
 
     const files = await FileService.findManyByIds(
@@ -95,6 +98,7 @@ export const listMessagesByConversation = async (
         reactionRows,
         seenByMessage,
         threadSummaries,
+        mentionsByMessage: groupMentionsByMessage(mentionRows),
         currentUserId,
         nextCursor,
     });

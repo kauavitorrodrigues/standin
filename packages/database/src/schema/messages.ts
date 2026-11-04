@@ -9,6 +9,7 @@ import { text, pgTable, index, boolean, type AnyPgColumn } from "drizzle-orm/pg-
 import { conversationsTable } from "./conversations";
 import { usersTable } from "./users";
 import { messageAttachmentsTable } from "./message-attachments";
+import { messageMentionsTable } from "./message-mentions";
 import { messageReactionsTable } from "./message-reactions";
 import { messageReadsTable } from "./message-reads";
 
@@ -63,6 +64,7 @@ export const messagesRelations = relations(messagesTable, ({ one, many }) => ({
         references: [usersTable.id],
     }),
     attachments: many(messageAttachmentsTable),
+    mentions: many(messageMentionsTable),
     reactions: many(messageReactionsTable),
     reads: many(messageReadsTable),
 }));
