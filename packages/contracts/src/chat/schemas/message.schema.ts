@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
 import { MessageErrorMessages } from "./consts/error-messages";
+import { MessageMentionSchema } from "./message-mention.schema";
 
 // A persisted message's content can be null (attachment-only message), so
 // this is defined independently from MessageDataSchema, whose `content` is
@@ -20,4 +21,5 @@ export const MessageSchema = z.object({
     editedAt: z.iso
         .datetime({ error: MessageErrorMessages.editedAt.invalid })
         .nullable(),
+    mentions: z.array(MessageMentionSchema),
 });

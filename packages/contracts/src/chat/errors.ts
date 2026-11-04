@@ -57,3 +57,33 @@ export class NestedThreadError extends BaseError {
         );
     }
 }
+
+export class MentionInvalidUserError extends BaseError {
+    constructor() {
+        super(
+            "A mentioned person does not have access to this conversation.",
+            "MENTION_INVALID_USER",
+            400
+        );
+    }
+}
+
+export class MentionInDirectConversationError extends BaseError {
+    constructor() {
+        super(
+            "A direct conversation does not accept mentions.",
+            "MENTION_IN_DIRECT_CONVERSATION",
+            400
+        );
+    }
+}
+
+export class MentionLimitExceededError extends BaseError {
+    constructor() {
+        super(
+            "A message cannot mention that many people.",
+            "MENTION_LIMIT_EXCEEDED",
+            400
+        );
+    }
+}

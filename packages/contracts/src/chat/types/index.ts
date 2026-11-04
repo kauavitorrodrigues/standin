@@ -13,3 +13,4 @@ export * from "./conversation";
 export * from "./direct-conversation-response";
 export * from "./thread-summary";
 export * from "./events";
+export * from "./message-mention";
