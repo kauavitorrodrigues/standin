@@ -984,6 +984,96 @@ describe.skipIf(!enabled)("space guests (real stack)", () => {
         });
     });
 
+    describe("members who may invite", () => {
+        const linkRoute = () => `/spaces/${space.id}/invite-links/fixed`;
+        const settingsRoute = () => `/spaces/${space.id}/settings`;
+        const setMembersCanInvite = (value: boolean) =>
+            call("owner", "PATCH", settingsRoute(), {
+                membersCanInvite: value,
+            });
+
+        afterAll(async () => {
+            await setMembersCanInvite(false);
+        });
+
+        it("is off by default and the host reads it", async () => {
+            const read = await call("member", "GET", settingsRoute());
+
+            expect(read.status).toBe(200);
+            expect(read.body.settings.membersCanInvite).toBe(false);
+        });
+
+        it("is changed only by the owner", async () => {
+            const asMember = await call("member", "PATCH", settingsRoute(), {
+                membersCanInvite: true,
+            });
+            const asGuest = await call("ana", "PATCH", settingsRoute(), {
+                membersCanInvite: true,
+            });
+            const invalid = await call("owner", "PATCH", settingsRoute(), {
+                membersCanInvite: "yes",
+            });
+
+            expect(asMember.status).toBe(403);
+            expect(asGuest.status).toBe(403);
+            expect(invalid.status).toBe(400);
+            expect(
+                (await call("owner", "GET", settingsRoute())).body.settings
+                    .membersCanInvite
+            ).toBe(false);
+        });
+
+        it("keeps the link from a member while it is off, and gives it to the owner", async () => {
+            expect((await call("member", "GET", linkRoute())).status).toBe(403);
+            expect((await call("owner", "GET", linkRoute())).status).toBe(200);
+        });
+
+        it("gives the same link to a member once it is on", async () => {
+            const turned = await setMembersCanInvite(true);
+            const asMember = await call("member", "GET", linkRoute());
+            const asOwner = await call("owner", "GET", linkRoute());
+
+            expect(turned.status).toBe(200);
+            expect(turned.body.settings.membersCanInvite).toBe(true);
+            expect(asMember.status).toBe(200);
+            expect(asMember.body.link.token).toBe(asOwner.body.link.token);
+        });
+
+        it("keeps guests and strangers out even when it is on", async () => {
+            expect((await call("ana", "GET", linkRoute())).status).toBe(403);
+            expect((await call("otherOwner", "GET", linkRoute())).status).toBe(
+                403
+            );
+        });
+
+        it("leaves the reset, the validity and the guest access to the owner", async () => {
+            const asMember = (route: string, method: string, body?: unknown) =>
+                call("member", method, `${linkRoute()}${route}`, body);
+
+            expect((await asMember("/reset", "POST")).status).toBe(403);
+            expect(
+                (await asMember("/validity", "PUT", { guestValidityHours: 24 }))
+                    .status
+            ).toBe(403);
+            expect(
+                (
+                    await call(
+                        "member",
+                        "PUT",
+                        `/spaces/${space.id}/guest-access`,
+                        { guestAccess: "DISABLED" }
+                    )
+                ).status
+            ).toBe(403);
+        });
+
+        it("takes the link back when it is turned off", async () => {
+            await setMembersCanInvite(false);
+
+            expect((await call("member", "GET", linkRoute())).status).toBe(403);
+        });
+    });
+
     describe("the guest access of the space", () => {
         it("is changed only by the owner", async () => {
             const route = `/spaces/${space.id}/guest-access`;

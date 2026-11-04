@@ -19,6 +19,11 @@ export const SpaceSettingsSchema = z.object({
     // How far people hear and see each other. Short is a close conversation,
     // Long is a whole room.
     proximityPreset: proximityPreset.default(DEFAULT_PROXIMITY_PRESET),
+    // Off by default: only the owner creates the guest invite link. On, any
+    // member of the organization can.
+    membersCanInvite: z
+        .boolean({ error: SpaceErrorMessages.settings.invalid })
+        .default(false),
 });
 
 // A partial save: only the keys sent change, the rest keep their value.
@@ -28,6 +33,9 @@ export const SpaceSettingsUpdateSchema = z.strictObject({
         .boolean({ error: SpaceErrorMessages.settings.invalid })
         .optional(),
     proximityPreset: proximityPreset.optional(),
+    membersCanInvite: z
+        .boolean({ error: SpaceErrorMessages.settings.invalid })
+        .optional(),
 });
 
 export type SpaceSettingsSchemaType = z.infer<typeof SpaceSettingsSchema>;

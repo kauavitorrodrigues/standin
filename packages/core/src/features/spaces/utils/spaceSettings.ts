@@ -6,6 +6,7 @@ import type { SpaceSettings } from "@standin/contracts";
 export const spaceSettingsSelect = {
     enableSendNearbyInMapView: spacesTable.enableSendNearbyInMapView,
     proximityPreset: spacesTable.proximityPreset,
+    membersCanInvite: spacesTable.membersCanInvite,
 };
 
 // Parsed again so what leaves the core always has the shape of the contract.

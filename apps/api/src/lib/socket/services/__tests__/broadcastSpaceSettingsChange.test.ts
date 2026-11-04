@@ -31,6 +31,7 @@ describe("broadcastSpaceSettingsChange", () => {
         const settings = {
             enableSendNearbyInMapView: false,
             proximityPreset: "Long" as const,
+            membersCanInvite: false,
         };
 
         broadcastSpaceSettingsChange("space-1", settings);
@@ -53,6 +54,7 @@ describe("broadcastSpaceSettingsChange", () => {
         broadcastSpaceSettingsChange("space-1", {
             enableSendNearbyInMapView: true,
             proximityPreset: "Short",
+            membersCanInvite: false,
         });
 
         expect(getRoomMock).toHaveBeenCalledWith("space-1");
@@ -66,6 +68,7 @@ describe("broadcastSpaceSettingsChange", () => {
         broadcastSpaceSettingsChange("space-1", {
             enableSendNearbyInMapView: true,
             proximityPreset: "Short",
+            membersCanInvite: false,
         });
 
         expect(markReceiversMock).not.toHaveBeenCalled();

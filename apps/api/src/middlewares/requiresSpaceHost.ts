@@ -1,6 +1,7 @@
 import type { NextFunction, Response } from "express";
 import { OrganizationService, SpaceService } from "@standin/core";
 import {
+    canInviteGuests,
     ORGANIZATION_MEMBER_ROLES,
     SpaceNotFoundError,
 } from "@standin/contracts";
@@ -21,14 +22,29 @@ const findSpaceRef = async (spaceId: string) => {
     }
 };
 
+type SpaceRef = NonNullable<ExtendedRequest["spaceRef"]>;
+type Membership = NonNullable<ExtendedRequest["organizationMembership"]>;
+
+// Who a route lets in, from the role and the space.
+type Rule = (membership: Membership, ref: SpaceRef) => boolean;
+
+const anyHost: Rule = () => true;
+
+const ownerOnly: Rule = ({ role }) => role === ORGANIZATION_MEMBER_ROLES.OWNER;
+
+// The owner always; a member when the space lets members invite.
+const inviter: Rule = ({ role }, { membersCanInvite }) =>
+    canInviteGuests(role, membersCanInvite);
+
 /**
  * For the routes that run the guests of a space. A host is a member of the
- * organization of the space, and only the owner makes the links and turns guest
- * access on or off. A guest, a stranger and a space that does not exist all get
- * the same 403, so the answer does not say which spaces exist.
+ * organization of the space. Only the owner turns guest access on or off and
+ * resets the link; the link itself is also open to members when the space
+ * allows it. A guest, a stranger and a space that does not exist all get the
+ * same 403, so the answer does not say which spaces exist.
  */
 const requiresSpaceMembership =
-    (ownerOnly: boolean) =>
+    (allows: Rule) =>
     async (req: ExtendedRequest, res: Response, next: NextFunction) => {
         if (!req.user) return sendForbiddenError(res);
 
@@ -44,12 +60,7 @@ const requiresSpaceMembership =
                 ref.organizationId
             );
             if (!membership) return sendForbiddenError(res);
-            if (
-                ownerOnly &&
-                membership.role !== ORGANIZATION_MEMBER_ROLES.OWNER
-            ) {
-                return sendForbiddenError(res);
-            }
+            if (!allows(membership, ref)) return sendForbiddenError(res);
 
             req.spaceRef = ref;
             req.organizationMembership = membership;
@@ -64,5 +75,6 @@ const requiresSpaceMembership =
         }
     };
 
-export const RequiresSpaceHost = requiresSpaceMembership(false);
-export const RequiresSpaceOwner = requiresSpaceMembership(true);
+export const RequiresSpaceHost = requiresSpaceMembership(anyHost);
+export const RequiresSpaceOwner = requiresSpaceMembership(ownerOnly);
+export const RequiresSpaceInviter = requiresSpaceMembership(inviter);

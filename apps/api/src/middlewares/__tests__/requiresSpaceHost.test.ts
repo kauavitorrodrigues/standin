@@ -11,9 +11,18 @@ vi.mock("@standin/core", () => ({
 }));
 
 import { SpaceNotFoundError } from "@standin/contracts";
-import { RequiresSpaceHost, RequiresSpaceOwner } from "../requiresSpaceHost";
+import {
+    RequiresSpaceHost,
+    RequiresSpaceInviter,
+    RequiresSpaceOwner,
+} from "../requiresSpaceHost";
 
-const REF = { id: "space-1", mapId: "map-1", organizationId: "org-1" };
+const REF = {
+    id: "space-1",
+    mapId: "map-1",
+    organizationId: "org-1",
+    membersCanInvite: false,
+};
 
 const buildRes = () => {
     const res = { status: vi.fn(), json: vi.fn() };
@@ -48,6 +57,7 @@ describe("space host guards", () => {
     it.each([
         ["host", RequiresSpaceHost],
         ["owner", RequiresSpaceOwner],
+        ["inviter", RequiresSpaceInviter],
     ])(
         "answers 403 to a guest or a stranger on the %s routes",
         async (_, guard) => {
@@ -61,6 +71,7 @@ describe("space host guards", () => {
     it.each([
         ["host", RequiresSpaceHost],
         ["owner", RequiresSpaceOwner],
+        ["inviter", RequiresSpaceInviter],
     ])(
         "answers a space that does not exist like any other 403 on the %s routes",
         async (_, guard) => {
@@ -95,6 +106,35 @@ describe("space host guards", () => {
         expect(asMember.res.status).toHaveBeenCalledWith(403);
         expect(asMember.next).not.toHaveBeenCalled();
         expect(asOwner.next).toHaveBeenCalled();
+    });
+
+    it("lets a member on the inviter routes only when the space allows it", async () => {
+        findMembershipMock.mockResolvedValue({ role: "MEMBER" });
+        const whenOff = await run(RequiresSpaceInviter, request());
+        findRefMock.mockResolvedValue({ ...REF, membersCanInvite: true });
+        const whenOn = await run(RequiresSpaceInviter, request());
+
+        expect(whenOff.res.status).toHaveBeenCalledWith(403);
+        expect(whenOff.next).not.toHaveBeenCalled();
+        expect(whenOn.next).toHaveBeenCalled();
+    });
+
+    it("always lets the owner on the inviter routes", async () => {
+        findMembershipMock.mockResolvedValue({ role: "OWNER" });
+
+        const { next } = await run(RequiresSpaceInviter, request());
+
+        expect(next).toHaveBeenCalled();
+    });
+
+    it("keeps a member out of the owner routes even when the space lets members invite", async () => {
+        findRefMock.mockResolvedValue({ ...REF, membersCanInvite: true });
+        findMembershipMock.mockResolvedValue({ role: "MEMBER" });
+
+        const { res, next } = await run(RequiresSpaceOwner, request());
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(next).not.toHaveBeenCalled();
     });
 
     it("asks for the membership in the organization of the space, not one from the request", async () => {

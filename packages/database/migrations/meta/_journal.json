@@ -169,6 +169,13 @@
       "when": 1793820449007,
       "tag": "0023_add_onboarding_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793826376696,
+      "tag": "0024_add_space_members_can_invite",
+      "breakpoints": true
     }
   ]
 }

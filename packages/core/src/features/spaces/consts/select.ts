@@ -26,4 +26,5 @@ export const spaceRefSelect = {
     id: spacesTable.id,
     mapId: spacesTable.mapId,
     organizationId: spacesTable.organizationId,
+    membersCanInvite: spacesTable.membersCanInvite,
 };
