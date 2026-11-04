@@ -79,6 +79,23 @@ describe("media utils", () => {
         ]);
     });
 
+    it("carries the announcer video flags of each peer to the planner", () => {
+        const people = buildPeople([
+            receiver("a", { announcing: true }),
+            receiver("b", { sharingVideoWithAnnouncer: true }),
+        ]);
+        expect(
+            people.map((entry) => [
+                entry.id,
+                entry.announcing,
+                entry.sharingVideoWithAnnouncer,
+            ])
+        ).toEqual([
+            ["a", true, false],
+            ["b", false, true],
+        ]);
+    });
+
     it("carries the privacy flags of each peer to the planner", () => {
         const people = buildPeople([
             receiver("a", { headphones: true, focusMode: true }),

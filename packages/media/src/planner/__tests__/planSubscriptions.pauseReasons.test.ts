@@ -14,6 +14,8 @@ const person = (id: string, kinds: ProducerKind[] = []): PersonState => ({
     muted: false,
     headphones: false,
     focusMode: false,
+    announcing: false,
+    sharingVideoWithAnnouncer: false,
     producers: Object.fromEntries(kinds.map((kind) => [kind, `${id}:${kind}`])),
 });
 

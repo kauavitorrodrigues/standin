@@ -35,6 +35,11 @@ export type Peer = {
     soundboardActive: boolean;
     // Headphones on: no connection with anybody, in both directions.
     headphones: boolean;
+    // The person is announcing, so the planner holds back the camera of the
+    // people who did not opt in.
+    announcing: boolean;
+    // The person opted in to show their camera to whoever announces.
+    sharingVideoWithAnnouncer: boolean;
     // Focus mode, stored and shown, with no effect on strong connections.
     focusMode: boolean;
     // The layer the person asks for per peer id seen in a tile.
