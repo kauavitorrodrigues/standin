@@ -53,3 +53,9 @@ export const SpaceNearbyMessageSchema = z.object({
 export const SpaceNearbyTypingSchema = z.object({
     isTyping: z.boolean({ error: GameErrorMessages.nearby.isTyping.invalid }),
 });
+
+export const SpaceSetAnnouncingSchema = z.object({
+    announcing: z.boolean({
+        error: GameErrorMessages.announcing.announcing.invalid,
+    }),
+});

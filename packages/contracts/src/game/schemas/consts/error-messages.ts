@@ -50,4 +50,9 @@ export const GameErrorMessages = {
             invalid: "The typing state must be true or false.",
         },
     },
+    announcing: {
+        announcing: {
+            invalid: "The announcing state must be true or false.",
+        },
+    },
 } as const;

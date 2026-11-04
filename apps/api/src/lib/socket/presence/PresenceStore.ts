@@ -12,6 +12,9 @@ export type PresenceEntry = {
     headphones: boolean;
     // Whether the person is in focus mode.
     focus: boolean;
+    // When the person started announcing, in ms since the epoch, or null when
+    // they are not. It lives only in memory, like the rest of the presence.
+    announcingSince: number | null;
 };
 
 export type PresenceProfile = Pick<
@@ -157,6 +160,30 @@ const setPrivacy = (
     return true;
 };
 
+// Returns whether the state changed. Announcing again keeps the first start,
+// so the order of the announcers does not change under a repeated request.
+const setAnnouncing = (
+    spaceId: string,
+    socketId: string,
+    announcingSince: number | null
+): boolean => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry) return false;
+    if ((entry.announcingSince === null) === (announcingSince === null)) {
+        return false;
+    }
+
+    space.bySocket.set(socketId, { ...entry, announcingSince });
+    return true;
+};
+
+// Who is announcing in the space, the oldest first.
+const listAnnouncers = (spaceId: string): PresenceEntry[] =>
+    list(spaceId)
+        .filter((entry) => entry.announcingSince !== null)
+        .sort((a, b) => (a.announcingSince ?? 0) - (b.announcingSince ?? 0));
+
 const clear = () => spaces.clear();
 
 export const PresenceStore = {
@@ -171,5 +198,7 @@ export const PresenceStore = {
     updateUser,
     setMuted,
     setPrivacy,
+    setAnnouncing,
+    listAnnouncers,
     clear,
 };

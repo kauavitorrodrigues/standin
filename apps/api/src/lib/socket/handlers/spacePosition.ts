@@ -2,6 +2,8 @@ import type { Socket } from "socket.io";
 import { SpaceEvents, SpacePositionSchema } from "@standin/contracts";
 import { mediaDirty } from "@/lib/media/MediaRuntime";
 import { SpaceInterests } from "../realtime/SpaceInterests";
+import { AnnouncerSync } from "../realtime/AnnouncerSync";
+import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 
 // The position of the avatar of this socket. The person is the one the socket
 // authenticated and the space is the one it joined, so nothing about who or
@@ -28,6 +30,12 @@ export function registerSpacePosition(socket: Socket) {
         // repeated position changes nothing and is not marked.
         if (previous?.x !== next.x || previous?.y !== next.y) {
             mediaDirty.markMoved(spaceId, socket.id);
+            // Moving can bring an announcer into earshot or take one out.
+            AnnouncerSync.refreshOnMove(
+                spaceId,
+                socket.id,
+                buildAnnouncersSender(socket.nsp)
+            );
         }
     });
 }
