@@ -61,7 +61,9 @@ export type AvatarAnimationConfig = {
 export const AVATAR_ANIMATIONS = {
     IDLE: { fps: 1 },
     WALK: { fps: 8 },
-    SIT: { fps: 1 },
+    // Plays once, 2 frames: the pose of getting down and then the seated one,
+    // which it holds.
+    SIT: { fps: 7, repeat: 0 },
     BLINK: { fps: 1 },
     EMOTE: { fps: 8, repeat: 1 },
 } as const satisfies Record<string, AvatarAnimationConfig>;
@@ -71,11 +73,12 @@ export type AvatarAnimation = keyof typeof AVATAR_ANIMATIONS;
 // The column of the sheet of each frame of each animation, in the order they
 // play. Read from the sheet of 72 frames: the standing poses start each
 // direction (down 0, left 9, up 18, right 23), the walks are four frames per
-// direction (down 32, left 40, up 48, right 56), and the sitting frames are
-// down 68, left 14, up 21 and right 28. The emote is the arms up pose, which
-// the sheet only has facing down, so every direction plays those frames and
-// the avatar turns to the viewer for the gesture. The other frames of the
-// sheet (run and the rest of the poses) are not used yet.
+// direction (down 32, left 40, up 48, right 56), and sitting is two frames, the
+// last standing pose and then the seated one (down 4 and 68, left 13 and 14, up
+// 20 and 21, right 27 and 28). The emote is the arms up pose, which the sheet
+// only has facing down, so every direction plays those frames and the avatar
+// turns to the viewer for the gesture. The other frames of the sheet (run and
+// the rest of the poses) are not used yet.
 export const AVATAR_FRAMES = {
     IDLE: {
         [PLAYER_DIRECTIONS.DOWN]: [0],
@@ -90,10 +93,10 @@ export const AVATAR_FRAMES = {
         [PLAYER_DIRECTIONS.RIGHT]: [56, 57, 58, 59],
     },
     SIT: {
-        [PLAYER_DIRECTIONS.DOWN]: [68],
-        [PLAYER_DIRECTIONS.LEFT]: [14],
-        [PLAYER_DIRECTIONS.UP]: [21],
-        [PLAYER_DIRECTIONS.RIGHT]: [28],
+        [PLAYER_DIRECTIONS.DOWN]: [4, 68],
+        [PLAYER_DIRECTIONS.LEFT]: [13, 14],
+        [PLAYER_DIRECTIONS.UP]: [20, 21],
+        [PLAYER_DIRECTIONS.RIGHT]: [27, 28],
     },
     // The idle frame with the eyes closed, step 3 of each standing group. Up
     // shows no face, so it keeps its idle frame and the blink goes unseen.

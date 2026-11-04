@@ -72,7 +72,7 @@ describe("registerAvatarAnimations", () => {
         expect(repeatOf("EMOTE")).toBe(AVATAR_ANIMATIONS.EMOTE.repeat);
         expect(repeatOf("WALK")).toBe(-1);
         expect(repeatOf("IDLE")).toBe(-1);
-        expect(repeatOf("SIT")).toBe(-1);
+        expect(repeatOf("SIT")).toBe(0);
         expect(repeatOf("BLINK")).toBe(-1);
     });
 
