@@ -35,6 +35,7 @@ import { useSpeakingUsers } from "./useSpeakingUsers";
 import { useAnnouncing } from "@/features/spaces/announcing/hooks/useAnnouncing";
 import { useHandRaise } from "@/features/spaces/hand-raise/hooks/useHandRaise";
 import { useSpaceSoundboard } from "@/features/soundboard/hooks/useSpaceSoundboard";
+import { SPACE_SETTINGS_QUERY_KEY } from "@/features/spaces/settings/consts/queryKeys";
 import { STAGE_MAX_NEARBY_PEERS } from "../consts/video";
 import { selectNearbyPeers } from "../utils/nearbyPeers";
 import { getProximityRadii } from "../utils/proximityRadii";
@@ -292,6 +293,8 @@ export function useSpaceConnection({
 
     useSocketEvent("space:settings-changed", ({ settings: changed }) => {
         setSettings(changed);
+        // The invite menu reads the same settings from the query.
+        queryClient.setQueryData([SPACE_SETTINGS_QUERY_KEY, spaceId], changed);
     });
 
     useSocketEvent("space:joined", ({ peers, settings: joined }) => {

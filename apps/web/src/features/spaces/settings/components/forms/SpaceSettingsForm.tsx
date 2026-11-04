@@ -11,6 +11,7 @@ import { SpaceSettingsMessages } from "../../consts/messages";
 import { SpaceSettingsMutations } from "../../mutations";
 import { SendNearbyField } from "../fields/SendNearbyField";
 import { ProximityPresetField } from "../fields/ProximityPresetField";
+import { MembersCanInviteField } from "../fields/MembersCanInviteField";
 
 type Props = {
     spaceId: string;
@@ -47,6 +48,10 @@ export const SpaceSettingsForm = ({ spaceId, settings, onClose }: Props) => {
         >
             <SendNearbyField control={form.control} disabled={isSubmitting} />
             <ProximityPresetField
+                control={form.control}
+                disabled={isSubmitting}
+            />
+            <MembersCanInviteField
                 control={form.control}
                 disabled={isSubmitting}
             />

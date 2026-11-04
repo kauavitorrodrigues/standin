@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { usePermission } from "@/features/auth/hooks/usePermission";
 import { INVITE_TABS } from "../../consts/view";
 import type { InviteTab, ManageTarget } from "../../types";
 import { InviteScreen } from "../instances/InviteScreen";
@@ -29,6 +30,9 @@ export const InviteCollaboratorsDialog = ({
     onManage,
 }: Props) => {
     const [tab, setTab] = useState<InviteTab>(INVITE_TABS.MEMBERS);
+    // A person who is not the owner is here only because the space lets
+    // members invite, and gets the guest link alone.
+    const isOwner = usePermission("update", "space");
 
     const manage =
         onManage &&
@@ -48,6 +52,7 @@ export const InviteCollaboratorsDialog = ({
                         tab={tab}
                         onTabChange={setTab}
                         onManage={manage}
+                        isOwner={isOwner}
                     />
                 </InviteDialogBody>
             </DialogContent>

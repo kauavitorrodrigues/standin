@@ -17,6 +17,9 @@ type Props = {
     onTabChange: (tab: InviteTab) => void;
     // Opens the settings on the section that manages the people.
     onManage?: (target: ManageTarget) => void;
+    // The owner brings in members and guests. A member the space lets invite
+    // only gets the guest link.
+    isOwner: boolean;
 };
 
 // One short line each, so the dialog keeps its height from tab to tab.
@@ -57,7 +60,7 @@ const TabCards = ({
             )}
         >
             {spaceId ? (
-                <GuestInviteCard spaceId={spaceId} />
+                <GuestInviteCard spaceId={spaceId} isOwner />
             ) : (
                 <NoSpaceNotice />
             )}
@@ -99,6 +102,36 @@ const ManageSection = (props: Pick<Props, "tab" | "spaceId" | "onManage">) => {
     return <div className="px-2 py-1.5">{row}</div>;
 };
 
+// What a member sees: the link of the guests and nothing of the members, whose
+// link and e-mails stay with the owner.
+const MemberScreen = ({
+    spaceId,
+    onManage,
+}: Pick<Props, "spaceId" | "onManage">) => (
+    <div className="flex flex-col">
+        <div className="px-4 pb-4">
+            <Alert role="note">
+                <InfoIcon />
+                <AlertDescription>
+                    {DESCRIPTIONS[INVITE_TABS.GUESTS]}
+                </AlertDescription>
+            </Alert>
+        </div>
+        <div className="border-y bg-muted/20 p-4">
+            {spaceId ? (
+                <GuestInviteCard spaceId={spaceId} isOwner={false} />
+            ) : (
+                <NoSpaceNotice />
+            )}
+        </div>
+        <ManageSection
+            tab={INVITE_TABS.GUESTS}
+            spaceId={spaceId}
+            onManage={onManage}
+        />
+    </div>
+);
+
 // The main screen of the dialog: Members and Guests tabs, the card of the tab
 // and the row that goes on to manage the people.
 export const InviteScreen = ({
@@ -107,22 +140,27 @@ export const InviteScreen = ({
     tab,
     onTabChange,
     onManage,
-}: Props) => (
-    <div className="flex flex-col">
-        <div className="flex flex-col gap-3 px-4 pb-4">
-            <InviteTabs tab={tab} onTabChange={onTabChange} />
-            <Alert role="note">
-                <InfoIcon />
-                <AlertDescription>{DESCRIPTIONS[tab]}</AlertDescription>
-            </Alert>
+    isOwner,
+}: Props) => {
+    if (!isOwner) return <MemberScreen spaceId={spaceId} onManage={onManage} />;
+
+    return (
+        <div className="flex flex-col">
+            <div className="flex flex-col gap-3 px-4 pb-4">
+                <InviteTabs tab={tab} onTabChange={onTabChange} />
+                <Alert role="note">
+                    <InfoIcon />
+                    <AlertDescription>{DESCRIPTIONS[tab]}</AlertDescription>
+                </Alert>
+            </div>
+            <div className="border-y bg-muted/20 p-4">
+                <TabCards
+                    tab={tab}
+                    organizationId={organizationId}
+                    spaceId={spaceId}
+                />
+            </div>
+            <ManageSection tab={tab} spaceId={spaceId} onManage={onManage} />
         </div>
-        <div className="border-y bg-muted/20 p-4">
-            <TabCards
-                tab={tab}
-                organizationId={organizationId}
-                spaceId={spaceId}
-            />
-        </div>
-        <ManageSection tab={tab} spaceId={spaceId} onManage={onManage} />
-    </div>
-);
+    );
+};

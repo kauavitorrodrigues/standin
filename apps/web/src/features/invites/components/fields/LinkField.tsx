@@ -7,7 +7,8 @@ type Props = {
     // Null while the link is loading.
     url: string | null;
     isResetting: boolean;
-    onReset: () => void;
+    // Absent for who may copy the link but not reset it.
+    onReset?: () => void;
 };
 
 // The read-only address with Copy and Reset next to it, as in the reference.
@@ -31,15 +32,17 @@ export const LinkField = ({ url, isResetting, onReset }: Props) => {
             >
                 Copiar
             </Button>
-            <Button
-                variant="outline"
-                icon={RotateCcwIcon}
-                isLoading={isResetting}
-                disabled={!url}
-                onClick={onReset}
-            >
-                Redefinir
-            </Button>
+            {onReset && (
+                <Button
+                    variant="outline"
+                    icon={RotateCcwIcon}
+                    isLoading={isResetting}
+                    disabled={!url}
+                    onClick={onReset}
+                >
+                    Redefinir
+                </Button>
+            )}
         </div>
     );
 };

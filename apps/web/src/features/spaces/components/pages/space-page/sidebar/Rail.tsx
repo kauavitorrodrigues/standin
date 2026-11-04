@@ -21,6 +21,7 @@ import { InviteCollaboratorsDialog } from "@/features/invites/components/dialogs
 import { InviteMenuItem } from "@/features/invites/components/instances/InviteMenuItem";
 import type { ManageTarget } from "@/features/invites/types";
 import { usePermission } from "@/features/auth/hooks/usePermission";
+import { useCanInviteGuests } from "@/features/invites/hooks/useCanInviteGuests";
 import { useOrganizationId } from "@/features/organizations/hooks/useOrganizationId";
 import type { SettingsSectionId } from "@/features/settings/consts/sections";
 import { SpaceSettingsDialog } from "@/features/spaces/settings/components/instances/SpaceSettingsDialog";
@@ -68,6 +69,7 @@ export const Rail = ({
     >(undefined);
     const organizationId = useOrganizationId();
     const canInvite = usePermission("update", "space");
+    const canInviteGuests = useCanInviteGuests(space.id);
 
     const openSettings = (section?: SettingsSectionId) => {
         setSettingsSection(section);
@@ -85,7 +87,7 @@ export const Rail = ({
                     onDecorate={onDecorate}
                 />
                 <EditMapMenuItem spaceId={space.id} mapId={space.map.id} />
-                {canInvite && (
+                {canInviteGuests && (
                     <InviteMenuItem onOpen={() => setIsInviteOpen(true)} />
                 )}
                 <SoundboardMenuItem onOpen={() => setIsSoundboardOpen(true)} />
@@ -141,6 +143,7 @@ export const Rail = ({
                     organizationId,
                     spaceId: space.id,
                     canInvite,
+                    canInviteGuests,
                     onInvite: () => {
                         setIsSettingsOpen(false);
                         setIsInviteOpen(true);
