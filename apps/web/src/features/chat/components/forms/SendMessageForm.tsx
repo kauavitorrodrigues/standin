@@ -22,6 +22,7 @@ import { MessageComposerToolbar } from "@/features/chat/components/layout/Messag
 import { MessageAttachmentPreviewList } from "@/features/chat/components/layout/MessageAttachmentPreviewList";
 import { SendMessageMessages } from "@/features/chat/components/forms/Messages";
 import { usePeerChat } from "@/features/chat/contexts/PeerChatContext";
+import { useMentionSuggestions } from "@/features/chat/hooks/useMentionSuggestions";
 import { useTypingBroadcast } from "@/features/chat/hooks/useTypingBroadcast";
 import {
     canSendMessage,
@@ -96,6 +97,9 @@ export const SendMessageForm = ({ conversationId, threadParentId }: Props) => {
 
     useTypingBroadcast({ conversationId, content, broadcastTyping });
 
+    const { suggestions, isMentionable } = useMentionSuggestions(conversationId);
+    const openMentions = () => editorRef.current?.openMentions();
+
     const insertEmoji = (emoji: string) => {
         editorRef.current?.insertText(emoji);
     };
@@ -132,6 +136,7 @@ export const SendMessageForm = ({ conversationId, threadParentId }: Props) => {
                                 placeholder={placeholder}
                                 onSubmit={submit}
                                 editorRef={editorRef}
+                                suggestions={suggestions}
                             />
                             <ShowInChannelField
                                 control={form.control}
@@ -142,6 +147,8 @@ export const SendMessageForm = ({ conversationId, threadParentId }: Props) => {
                             <div className="flex items-center justify-between">
                                 <MessageComposerToolbar
                                     onInsertEmoji={insertEmoji}
+                                    isMentionable={isMentionable}
+                                    onMention={openMentions}
                                     composerFrameRef={composerFrameRef}
                                 />
                                 <Button

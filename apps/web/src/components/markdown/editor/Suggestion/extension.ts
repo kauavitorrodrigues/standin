@@ -51,6 +51,7 @@ export const createSuggestionExtension = <TItem>(
                 Suggestion<TItem>({
                     editor: this.editor,
                     char: options.char,
+                    allow: () => options.isEnabled?.() ?? true,
                     allowSpaces: false,
                     startOfLine: false,
                     allowedPrefixes: [" ", "\n"],

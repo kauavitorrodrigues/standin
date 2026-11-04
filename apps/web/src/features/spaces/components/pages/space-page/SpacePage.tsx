@@ -248,6 +248,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         ...broadcasts,
         typingByConversation,
         onlineUserIds,
+        spaceConversationId: space.conversationId,
         getConversationLink,
     });
 
