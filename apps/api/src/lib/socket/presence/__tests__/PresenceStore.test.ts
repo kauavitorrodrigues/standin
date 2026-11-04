@@ -10,6 +10,7 @@ const entry = (socketId: string, userId: string): PresenceEntry => ({
     muted: true,
     headphones: false,
     focus: false,
+    announcingSince: null,
 });
 
 describe("PresenceStore", () => {
@@ -77,5 +78,30 @@ describe("PresenceStore", () => {
         expect(PresenceStore.setPrivacy("space-1", "nobody", privacy)).toBe(
             false
         );
+    });
+
+    it("keeps the first start of an announcement and lists the oldest first", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.add("space-1", entry("s2", "u2"));
+        PresenceStore.add("space-1", entry("s3", "u3"));
+
+        expect(PresenceStore.setAnnouncing("space-1", "s2", 100)).toBe(true);
+        expect(PresenceStore.setAnnouncing("space-1", "s2", 500)).toBe(false);
+        expect(PresenceStore.setAnnouncing("space-1", "s1", 300)).toBe(true);
+
+        expect(
+            PresenceStore.listAnnouncers("space-1").map((e) => e.socketId)
+        ).toEqual(["s2", "s1"]);
+        expect(PresenceStore.get("space-1", "s2")?.announcingSince).toBe(100);
+    });
+
+    it("stops announcing and ignores a socket that is not there", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.setAnnouncing("space-1", "s1", 100);
+
+        expect(PresenceStore.setAnnouncing("space-1", "s1", null)).toBe(true);
+        expect(PresenceStore.setAnnouncing("space-1", "s1", null)).toBe(false);
+        expect(PresenceStore.setAnnouncing("space-1", "nobody", 1)).toBe(false);
+        expect(PresenceStore.listAnnouncers("space-1")).toEqual([]);
     });
 });

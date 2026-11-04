@@ -20,6 +20,7 @@ const join = (spaceId: string, socketId: string, userId: string) =>
         muted: true,
         headphones: false,
         focus: false,
+        announcingSince: null,
     });
 
 describe("broadcastNameChange", () => {

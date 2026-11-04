@@ -30,6 +30,7 @@ import { registerRoomJoinRequest } from "@/lib/socket/handlers/roomJoinRequest";
 import { registerRoomJoinAnswer } from "@/lib/socket/handlers/roomJoinAnswer";
 import { registerSpacePosition } from "@/lib/socket/handlers/spacePosition";
 import { registerSpaceEvents } from "@/lib/socket/handlers/spaceEvents";
+import { registerSpaceAnnouncing } from "@/lib/socket/handlers/spaceAnnouncing";
 import { registerMedia } from "@/lib/media/handlers/registerMedia";
 import { registerSoundboard } from "@/lib/socket/handlers/soundboard";
 import { registerChatTyping } from "@/lib/socket/handlers/chatTyping";
@@ -108,6 +109,7 @@ export function createSocketServer(
         registerEditorRelease(socket);
         registerSpacePosition(socket);
         registerSpaceEvents(io, socket);
+        registerSpaceAnnouncing(io, socket);
         registerChatTyping(socket);
         registerMedia(socket);
         registerSoundboard(io, socket);

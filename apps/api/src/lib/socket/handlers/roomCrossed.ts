@@ -2,6 +2,8 @@ import type { Server, Socket } from "socket.io";
 import { RoomEvents, RoomCrossedSchema } from "@standin/contracts";
 import { RoomStates } from "../utils/roomStates";
 import { applyRoomChange } from "../utils/applyRoomChange";
+import { AnnouncerSync } from "../realtime/AnnouncerSync";
+import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 
 export function registerRoomCrossed(io: Server, socket: Socket) {
     socket.on(RoomEvents.ROOM_CROSSED, (payload) => {
@@ -15,6 +17,12 @@ export function registerRoomCrossed(io: Server, socket: Socket) {
             const { roomKey } = parsed.data;
             const change = RoomStates.cross(spaceId, roomKey, socket.id, socket.data.userId, parsed.data.direction);
             applyRoomChange(io, socket, spaceId, roomKey, change);
+            // A private room closes its sound to the ones outside.
+            AnnouncerSync.refreshOnMove(
+                spaceId,
+                socket.id,
+                buildAnnouncersSender(io)
+            );
         } catch (error) {
             console.error(error);
         }

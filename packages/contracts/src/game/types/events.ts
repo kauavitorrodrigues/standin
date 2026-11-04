@@ -21,6 +21,7 @@ import type {
     SpaceNearbyMessageSchema,
     SpaceNearbyTypingSchema,
     SpacePositionSchema,
+    SpaceSetAnnouncingSchema,
 } from "../schemas/realtime";
 import type { EnteredTuple, PositionTuple } from "../position-codec";
 import type {
@@ -105,6 +106,8 @@ export const SpaceEvents = {
     SPACE_EMOTE: "space:emote",
     SPACE_NEARBY_MESSAGE: "space:nearby-message",
     SPACE_NEARBY_TYPING: "space:nearby-typing",
+    SPACE_SET_ANNOUNCING: "space:set-announcing",
+    SPACE_ANNOUNCERS: "space:announcers",
 } as const;
 
 export const OrganizationEvents = {
@@ -128,6 +131,25 @@ export type SpacePositionInput = z.infer<typeof SpacePositionSchema>;
 export type SpaceEmoteInput = z.infer<typeof SpaceEmoteSchema>;
 export type SpaceNearbyMessageInput = z.infer<typeof SpaceNearbyMessageSchema>;
 export type SpaceNearbyTypingInput = z.infer<typeof SpaceNearbyTypingSchema>;
+export type SpaceSetAnnouncingInput = z.infer<typeof SpaceSetAnnouncingSchema>;
+
+// One person who is announcing within earshot of the receiver.
+export type SpaceAnnouncer = {
+    socketId: string;
+    userId: string;
+    // When the announcement started, in ms since the epoch.
+    announcingSince: number;
+};
+
+// Everyone announcing within earshot of the receiver, the oldest first. It is
+// the whole list every time, so a person who walked out of range, stopped or
+// left simply is not in it.
+export type SpaceAnnouncersPayload = {
+    announcers: SpaceAnnouncer[];
+};
+
+export type SpaceSetAnnouncingAck =
+    { ok: true; announcingSince: number | null } | { ok: false; code: string };
 
 // What changed around one person since the last tick, and nothing else. `entered`
 // carries the full state of someone who came into their interest area, `moved`
@@ -190,6 +212,10 @@ export type ClientToServerEvents = {
     "space:nearby-message": (payload: SpaceNearbyMessageInput) => void;
     "space:nearby-typing": (payload: SpaceNearbyTypingInput) => void;
     "chat:typing": (payload: ChatTypingInput) => void;
+    "space:set-announcing": (
+        payload: SpaceSetAnnouncingInput,
+        ack: (response: SpaceSetAnnouncingAck) => void
+    ) => void;
     "soundboard:play": (
         payload: z.infer<typeof SoundboardPlaySchema>,
         ack: (response: SoundboardPlayAck) => void
@@ -311,6 +337,7 @@ export type ServerToClientEvents = {
     "space:emote": (payload: SpaceEmoteOutput) => void;
     "space:nearby-message": (payload: SpaceNearbyMessageOutput) => void;
     "space:nearby-typing": (payload: SpaceNearbyTypingOutput) => void;
+    "space:announcers": (payload: SpaceAnnouncersPayload) => void;
     "room:state": (payload: RoomStatePayload) => void;
     "room:states": (payload: RoomStatesPayload) => void;
     "room:join-requested": (payload: RoomJoinRequestedPayload) => void;

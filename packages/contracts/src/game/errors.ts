@@ -33,3 +33,20 @@ export class DuplicateSessionError extends BaseError {
         );
     }
 }
+
+// Guests are not members, and announcing is for members.
+export class AnnouncingNotAllowedError extends BaseError {
+    constructor() {
+        super(
+            "You cannot announce in this space.",
+            "ANNOUNCING_NOT_ALLOWED",
+            403
+        );
+    }
+}
+
+export class AnnouncingInvalidError extends BaseError {
+    constructor() {
+        super("The announcing request is invalid.", "ANNOUNCING_INVALID", 422);
+    }
+}

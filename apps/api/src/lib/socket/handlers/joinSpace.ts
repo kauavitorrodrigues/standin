@@ -16,6 +16,8 @@ import { resolveUserProfile } from "../services/resolveUserProfile";
 import { applyJoinEffects, sendEntitlements } from "../utils/applyJoinEffects";
 import { PresenceStore } from "../presence/PresenceStore";
 import { SpaceInterests } from "../realtime/SpaceInterests";
+import { AnnouncerSync } from "../realtime/AnnouncerSync";
+import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
 import type { PresenceEntry } from "../presence/PresenceStore";
 
@@ -37,6 +39,7 @@ const resolveSelfEntry = async (
         muted: true,
         headphones: false,
         focus: false,
+        announcingSince: null,
         ...profile,
     };
 };
@@ -116,6 +119,11 @@ const leavePreviousSpace = async (
     PresenceStore.remove(previousSpaceId, socket.id);
     SpaceInterests.remove(previousSpaceId, socket.id);
     MediaRuntime.leave(previousSpaceId, socket.id);
+    AnnouncerSync.forget(
+        previousSpaceId,
+        socket.id,
+        buildAnnouncersSender(io)
+    );
     socket.to(previousRoom).emit(SpaceEvents.SPACE_PEER_LEFT, {
         socketId: socket.id,
         userId,
@@ -197,6 +205,11 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                     PresenceStore.remove(spaceId, socket.id);
                     SpaceInterests.remove(spaceId, socket.id);
                     MediaRuntime.leave(spaceId, socket.id);
+                    AnnouncerSync.forget(
+                        spaceId,
+                        socket.id,
+                        buildAnnouncersSender(io)
+                    );
                     await socket.leave(room);
                     socket.data.spaceId = null;
                     return;
