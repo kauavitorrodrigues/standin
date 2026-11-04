@@ -13,6 +13,7 @@ import type { Editor } from "@tiptap/core";
 import { EditorContext } from "./Context";
 import { getMarkdown, textToDoc, textToInline } from "./consts/plainText";
 import { createCoreExtensions } from "./consts/coreExtensions";
+import { MENTION_TRIGGER } from "./consts/mention";
 import { LimitLength } from "./extensions/LimitLength";
 import { SubmitOnEnter } from "./extensions/SubmitOnEnter";
 import type { MessageEditorHandle, SuggestionExtensionsFactory } from "./types";
@@ -123,6 +124,21 @@ export function Root({
             focus: () => editor?.commands.focus(),
             insertText: (text) => {
                 editor?.chain().focus().insertContent(textToInline(text)).run();
+            },
+            openMentions: () => {
+                if (!editor) return;
+                const { from } = editor.state.selection;
+                const before = editor.state.doc.textBetween(
+                    Math.max(0, from - 1),
+                    from,
+                    "\n",
+                    "\n"
+                );
+                // The list only opens after a space or a line break.
+                const needsSpace = before !== "" && !/\s/.test(before);
+                const nodes = textToInline(MENTION_TRIGGER);
+                if (needsSpace) nodes.unshift({ type: "text", text: " " });
+                editor.chain().focus().insertContent(nodes).run();
             },
         }),
         [editor]

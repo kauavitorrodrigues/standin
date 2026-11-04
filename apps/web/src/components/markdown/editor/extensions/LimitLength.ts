@@ -1,6 +1,7 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { clipToLimit } from "../consts/limit";
+import { storedLength, storedText } from "../consts/measureText";
 import { textToInline } from "../consts/plainText";
 
 type LimitLengthOptions = {
@@ -25,25 +26,10 @@ export const LimitLength = Extension.create<LimitLengthOptions>({
                 key: new PluginKey("limitLength"),
                 filterTransaction: (transaction, state) => {
                     if (!transaction.docChanged) return true;
-                    const next = transaction.doc;
-                    const length = next.textBetween(
-                        0,
-                        next.content.size,
-                        LINE_BREAK,
-                        LINE_BREAK
-                    ).length;
+                    const length = storedLength(transaction.doc);
                     if (length <= max) return true;
                     // Cutting text is always allowed, so a long stored message can still be edited.
-                    const before = state.doc;
-                    return (
-                        length <=
-                        before.textBetween(
-                            0,
-                            before.content.size,
-                            LINE_BREAK,
-                            LINE_BREAK
-                        ).length
-                    );
+                    return length <= storedLength(state.doc);
                 },
                 props: {
                     // Pasting is always plain text, whatever the clipboard holds.
@@ -53,18 +39,8 @@ export const LimitLength = Extension.create<LimitLengthOptions>({
                         if (pasted.length === 0) return false;
                         const { state } = view;
                         const { from, to } = state.selection;
-                        const current = state.doc.textBetween(
-                            0,
-                            state.doc.content.size,
-                            LINE_BREAK,
-                            LINE_BREAK
-                        ).length;
-                        const selected = state.doc.textBetween(
-                            from,
-                            to,
-                            LINE_BREAK,
-                            LINE_BREAK
-                        ).length;
+                        const current = storedLength(state.doc);
+                        const selected = storedText(state.doc, from, to).length;
                         const text = clipToLimit(
                             pasted.replace(/\r\n?/g, LINE_BREAK),
                             current,

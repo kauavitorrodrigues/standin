@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parseMentionUserIds, replaceMentionsWithNames } from "../mentions";
+import {
+    buildMentionLink,
+    formatMentionLink,
+    parseMentionUserIds,
+    replaceMentionsWithNames,
+    splitContentByMentions,
+} from "../mentions";
 
 describe("parseMentionUserIds", () => {
     it("reads the ids from the links", () => {
@@ -38,5 +44,52 @@ describe("replaceMentionsWithNames", () => {
         expect(
             replaceMentionsWithNames("oi [@Ana](mention:u9)", new Map())
         ).toBe("oi @Ana");
+    });
+});
+
+describe("splitContentByMentions", () => {
+    it("splits the text around each mention in order", () => {
+        expect(
+            splitContentByMentions("oi [@Ana](mention:u1), tudo bem?")
+        ).toEqual([
+            { type: "text", text: "oi " },
+            { type: "mention", label: "@Ana", userId: "u1" },
+            { type: "text", text: ", tudo bem?" },
+        ]);
+    });
+
+    it("keeps content with no mention as one text", () => {
+        expect(splitContentByMentions("a [site](https://x.dev)")).toEqual([
+            { type: "text", text: "a [site](https://x.dev)" },
+        ]);
+        expect(splitContentByMentions("")).toEqual([]);
+    });
+
+    it("handles two mentions side by side", () => {
+        expect(
+            splitContentByMentions("[@Ana](mention:u1)[@Bia](mention:u2)")
+        ).toEqual([
+            { type: "mention", label: "@Ana", userId: "u1" },
+            { type: "mention", label: "@Bia", userId: "u2" },
+        ]);
+    });
+});
+
+describe("buildMentionLink", () => {
+    it("builds a link the server reads back", () => {
+        const link = buildMentionLink("u1", "Ana Lima");
+        expect(link).toBe("[@Ana Lima](mention:u1)");
+        expect(parseMentionUserIds(link)).toEqual(["u1"]);
+    });
+
+    it("drops brackets and line breaks from the name", () => {
+        const link = buildMentionLink("u1", "A[n]a\n");
+        expect(link).toBe("[@Ana](mention:u1)");
+    });
+});
+
+describe("formatMentionLink", () => {
+    it("writes the label as given", () => {
+        expect(formatMentionLink("@Ana", "u1")).toBe("[@Ana](mention:u1)");
     });
 });
