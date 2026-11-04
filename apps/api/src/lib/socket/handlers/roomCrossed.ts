@@ -4,6 +4,8 @@ import { RoomStates } from "../utils/roomStates";
 import { applyRoomChange } from "../utils/applyRoomChange";
 import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
+import { RaisedHandSync } from "../realtime/RaisedHandSync";
+import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
 
 export function registerRoomCrossed(io: Server, socket: Socket) {
     socket.on(RoomEvents.ROOM_CROSSED, (payload) => {
@@ -22,6 +24,11 @@ export function registerRoomCrossed(io: Server, socket: Socket) {
                 spaceId,
                 socket.id,
                 buildAnnouncersSender(io)
+            );
+            RaisedHandSync.refreshOnMove(
+                spaceId,
+                socket.id,
+                buildRaisedHandsSender(io)
             );
         } catch (error) {
             console.error(error);

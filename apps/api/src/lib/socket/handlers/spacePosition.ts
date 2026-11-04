@@ -4,6 +4,8 @@ import { mediaDirty } from "@/lib/media/MediaRuntime";
 import { SpaceInterests } from "../realtime/SpaceInterests";
 import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
+import { RaisedHandSync } from "../realtime/RaisedHandSync";
+import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
 
 // The position of the avatar of this socket. The person is the one the socket
 // authenticated and the space is the one it joined, so nothing about who or
@@ -35,6 +37,11 @@ export function registerSpacePosition(socket: Socket) {
                 spaceId,
                 socket.id,
                 buildAnnouncersSender(socket.nsp)
+            );
+            RaisedHandSync.refreshOnMove(
+                spaceId,
+                socket.id,
+                buildRaisedHandsSender(socket.nsp)
             );
         }
     });

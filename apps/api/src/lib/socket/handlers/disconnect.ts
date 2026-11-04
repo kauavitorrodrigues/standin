@@ -8,6 +8,8 @@ import { PresenceStore } from "../presence/PresenceStore";
 import { SpaceInterests } from "../realtime/SpaceInterests";
 import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
+import { RaisedHandSync } from "../realtime/RaisedHandSync";
+import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
 
 export function registerDisconnect(socket: Socket) {
@@ -32,6 +34,7 @@ export function registerDisconnect(socket: Socket) {
         // The announcement ends with the connection, and whoever heard it is
         // told, even though the presence is already gone.
         AnnouncerSync.forget(spaceId, socket.id, buildAnnouncersSender(socket.nsp));
+        RaisedHandSync.forget(spaceId, socket.id, buildRaisedHandsSender(socket.nsp));
 
         const room = buildSpaceRoom(spaceId);
         socket.to(room).emit(SpaceEvents.SPACE_PEER_LEFT, {

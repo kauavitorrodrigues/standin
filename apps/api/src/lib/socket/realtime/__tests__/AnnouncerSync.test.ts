@@ -19,6 +19,7 @@ const entry = (socketId: string): PresenceEntry => ({
     headphones: false,
     focus: false,
     announcingSince: null,
+    handRaisedSince: null,
 });
 
 const stand = (socketId: string, x: number) => {

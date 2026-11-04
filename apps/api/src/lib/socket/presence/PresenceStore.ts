@@ -15,6 +15,9 @@ export type PresenceEntry = {
     // When the person started announcing, in ms since the epoch, or null when
     // they are not. It lives only in memory, like the rest of the presence.
     announcingSince: number | null;
+    // When the person raised a hand, in ms since the epoch, or null when the
+    // hand is down. Memory only, like the rest of the presence.
+    handRaisedSince: number | null;
 };
 
 export type PresenceProfile = Pick<
@@ -178,6 +181,30 @@ const setAnnouncing = (
     return true;
 };
 
+// Returns whether the state changed. Raising again keeps the first time, so
+// the order of the hands does not change under a repeated request.
+const setHandRaised = (
+    spaceId: string,
+    socketId: string,
+    handRaisedSince: number | null
+): boolean => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry) return false;
+    if ((entry.handRaisedSince === null) === (handRaisedSince === null)) {
+        return false;
+    }
+
+    space.bySocket.set(socketId, { ...entry, handRaisedSince });
+    return true;
+};
+
+// Who has a hand up in the space, the oldest first.
+const listRaisedHands = (spaceId: string): PresenceEntry[] =>
+    list(spaceId)
+        .filter((entry) => entry.handRaisedSince !== null)
+        .sort((a, b) => (a.handRaisedSince ?? 0) - (b.handRaisedSince ?? 0));
+
 // Who is announcing in the space, the oldest first.
 const listAnnouncers = (spaceId: string): PresenceEntry[] =>
     list(spaceId)
@@ -199,6 +226,8 @@ export const PresenceStore = {
     setMuted,
     setPrivacy,
     setAnnouncing,
+    setHandRaised,
+    listRaisedHands,
     listAnnouncers,
     clear,
 };

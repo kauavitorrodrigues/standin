@@ -86,6 +86,7 @@ function createFakeIo(
             headphones: false,
             focus: false,
             announcingSince: null,
+            handRaisedSince: null,
             ...(PROFILES[peer.data.userId] ?? {
                 name: "",
                 profilePictureUrl: null,
@@ -281,6 +282,7 @@ describe("registerJoinSpace", () => {
             headphones: false,
             focus: false,
             announcingSince: null,
+            handRaisedSince: null,
         });
 
         socket.data.spaceId = "space-1";
