@@ -12,9 +12,16 @@ import { LinkLoadError } from "../views/LinkLoadError";
 const LINK_HINT =
     "Quem abrir o link pede para entrar e um anfitrião precisa admitir.";
 
-// The guests tab: the fixed link of the space, how long a guest keeps the
-// access once admitted, and the switch that turns guests off.
-export const GuestInviteCard = ({ spaceId }: { spaceId: string }) => {
+type Props = {
+    spaceId: string;
+    // The owner resets the link, sets the validity and turns guests off. A
+    // member the space lets invite only copies the link.
+    isOwner: boolean;
+};
+
+// The guests tab: the fixed link of the space, and for the owner also how long
+// a guest keeps the access once admitted and the switch that turns guests off.
+export const GuestInviteCard = ({ spaceId, isOwner }: Props) => {
     const link = InviteQueries.useSpaceFixedLink(spaceId, true);
     const reset = InviteMutations.resetSpaceLink(spaceId);
     const setValidity = InviteMutations.setGuestValidity(spaceId);
@@ -48,14 +55,18 @@ export const GuestInviteCard = ({ spaceId }: { spaceId: string }) => {
             <LinkField
                 url={url}
                 isResetting={reset.isPending}
-                onReset={resetLink}
+                onReset={isOwner ? resetLink : undefined}
             />
             {link.isError && <LinkLoadError />}
-            <GuestValidityField
-                hours={link.data?.guestValidityHours}
-                onChange={changeValidity}
-            />
-            <GuestAccessSwitch spaceId={spaceId} />
+            {isOwner && (
+                <>
+                    <GuestValidityField
+                        hours={link.data?.guestValidityHours}
+                        onChange={changeValidity}
+                    />
+                    <GuestAccessSwitch spaceId={spaceId} />
+                </>
+            )}
         </InviteSection>
     );
 };
