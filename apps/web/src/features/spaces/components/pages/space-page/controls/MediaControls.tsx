@@ -22,8 +22,10 @@ import { ProximityChatButton } from "@/features/spaces/components/pages/space-pa
 import { LeaveSpaceButton } from "@/features/spaces/components/pages/space-page/controls/LeaveSpaceButton";
 
 type Props = {
-    // The screen share and the reactions only exist where there is an office to
-    // meet people in. Over the chat they would only crowd the bar.
+    // The screen share, the soundboard and the announcement only exist where
+    // there is an office to meet people in. Over the chat the bar sits next to
+    // the conversation and is narrow, so they would push the leave button out
+    // of sight.
     isMeetingContext: boolean;
     canShareScreen: boolean;
     isSharingScreen: boolean;
@@ -67,13 +69,15 @@ export const MediaControls = ({
             />
             <MicToggleButton error={micError} />
             <CameraToggleButton error={cameraError} />
-            <SoundboardControl
-                soundboard={soundboard}
-                isOpen={soundboardPanel.isOpen}
-                onToggle={soundboardPanel.onToggle}
-            />
-            <AnnounceButton announcing={announcing} />
-            <ReactionsControl visible={isMeetingContext} {...reactions} />
+            {isMeetingContext && (
+                <SoundboardControl
+                    soundboard={soundboard}
+                    isOpen={soundboardPanel.isOpen}
+                    onToggle={soundboardPanel.onToggle}
+                />
+            )}
+            {isMeetingContext && <AnnounceButton announcing={announcing} />}
+            <ReactionsControl {...reactions} />
             <ProximityChatButton {...nearbyChat} />
             <ScreenShareButton
                 visible={isMeetingContext && canShareScreen}

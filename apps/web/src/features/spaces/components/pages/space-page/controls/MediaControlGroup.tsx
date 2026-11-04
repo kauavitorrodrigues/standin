@@ -37,7 +37,8 @@ export const MediaControlGroup = ({
     const controls = useControlsView();
     
     const reactions = useReactions({
-        enabled: isMeetingContext,
+        enabled: true,
+        hotkeys: isMeetingContext,
         onSendEmote: sendEmote,
         controls,
     });
