@@ -5,6 +5,7 @@ import {
     type SpacePositionsPayload,
 } from "@standin/contracts";
 import { createSpaceInterest, type SpaceInterest } from "./createSpaceInterest";
+import { DanceCap } from "./DanceCap";
 
 // The interest of every space that has someone with a position in it, built
 // when the first position comes in and dropped when the last one leaves.
@@ -29,6 +30,9 @@ const update = (
 ): void => ensure(spaceId).update(socketId, position);
 
 const remove = (spaceId: string, socketId: string): void => {
+    // Whoever leaves, by closing the tab or by joining another space, stops
+    // dancing with them.
+    DanceCap.forget(socketId);
     const space = spaces.get(spaceId);
     if (!space) return;
 
@@ -72,7 +76,10 @@ const flushAll = (
     });
 };
 
-const clear = (): void => spaces.clear();
+const clear = (): void => {
+    DanceCap.clear();
+    spaces.clear();
+};
 
 export const SpaceInterests = {
     update,

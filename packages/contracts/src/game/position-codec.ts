@@ -2,7 +2,7 @@ import { PLAYER_DIRECTIONS, type PlayerDirection } from "./enums/player";
 import type { PlayerPosition } from "./types/player";
 
 // The wire form of a position inside a batch: a short id the space gave the
-// person, x, y and one number for the direction and the sitting bit. Much
+// person, x, y and one number for the direction and the sitting and dancing bits. Much
 // smaller than an object with four named keys or a 20 char socket id, and a
 // space sends many of these every tick.
 export type PositionTuple = [
@@ -25,20 +25,28 @@ const DIRECTION_ORDER: PlayerDirection[] = [
 
 const DIRECTION_MASK = 0b11;
 const SITTING_BIT = 0b100;
+const DANCING_BIT = 0b1000;
 
 export const encodePositionFlags = (
     direction: PlayerDirection,
-    isSitting: boolean
+    isSitting: boolean,
+    isDancing: boolean
 ): number => {
     const index = DIRECTION_ORDER.indexOf(direction);
-    return (isSitting ? SITTING_BIT : 0) | (index < 0 ? 1 : index);
+    const stateBits =
+        Number(isDancing) * DANCING_BIT + Number(isSitting) * SITTING_BIT;
+    // A direction the order does not know reads as right, like the decoder.
+    if (index < 0) return stateBits | 1;
+
+    return stateBits | index;
 };
 
 export const decodePositionFlags = (
     flags: number
-): Pick<PlayerPosition, "direction" | "isSitting"> => ({
+): Pick<PlayerPosition, "direction" | "isSitting" | "isDancing"> => ({
     direction: DIRECTION_ORDER[flags & DIRECTION_MASK] ?? PLAYER_DIRECTIONS.DOWN,
     isSitting: (flags & SITTING_BIT) !== 0,
+    isDancing: (flags & DANCING_BIT) !== 0,
 });
 
 export const encodePosition = (
@@ -48,7 +56,11 @@ export const encodePosition = (
     shortId,
     position.x,
     position.y,
-    encodePositionFlags(position.direction, position.isSitting),
+    encodePositionFlags(
+        position.direction,
+        position.isSitting,
+        position.isDancing
+    ),
 ];
 
 export const encodeEnteredPosition = (

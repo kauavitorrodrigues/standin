@@ -41,6 +41,13 @@ const relayNearby = (
     io.to(receivers).emit(event, { socketId: socket.id, ...body });
 };
 
+const isDancing = (socket: Socket): boolean => {
+    const { spaceId } = socket.data;
+    if (!spaceId) return false;
+
+    return SpaceInterests.get(spaceId, socket.id)?.isDancing === true;
+};
+
 // Relays a nearby event unless the space turned it off. A rejected event is
 // dropped, since nobody waits for an answer to it.
 const relayIfSendNearbyEnabled = async (
@@ -69,6 +76,8 @@ export function registerSpaceEvents(io: Server, socket: Socket) {
     socket.on(SpaceEvents.SPACE_EMOTE, (payload) => {
         const parsed = SpaceEmoteSchema.safeParse(payload);
         if (!parsed.success) return;
+        // A person who dances makes no other gesture.
+        if (isDancing(socket)) return;
 
         relayNearby(io, socket, SpaceEvents.SPACE_EMOTE, parsed.data);
     });

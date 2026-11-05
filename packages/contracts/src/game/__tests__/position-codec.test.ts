@@ -9,14 +9,21 @@ import { SpacePositionSchema } from "../schemas/realtime";
 
 describe("position codec", () => {
     it.each(Object.values(PLAYER_DIRECTIONS))(
-        "round trips %s, standing and sitting",
+        "round trips %s, in every mix of sitting and dancing",
         (direction) => {
             [false, true].forEach((isSitting) => {
-                const position = { x: 120, y: 340, direction, isSitting };
+                [false, true].forEach((isDancing) => {
+                    const position = {
+                        x: 120,
+                        y: 340,
+                        direction,
+                        isSitting,
+                        isDancing,
+                    };
 
-                expect(decodePosition(encodePosition(7, position))).toEqual({
-                    shortId: 7,
-                    position,
+                    expect(decodePosition(encodePosition(7, position))).toEqual(
+                        { shortId: 7, position }
+                    );
                 });
             });
         }
@@ -28,6 +35,7 @@ describe("position codec", () => {
             y: 6,
             direction: PLAYER_DIRECTIONS.UP,
             isSitting: false,
+            isDancing: true,
         };
         const tuple = encodeEnteredPosition(3, "abc", position);
 
@@ -43,10 +51,22 @@ describe("position codec", () => {
 });
 
 describe("SpacePositionSchema", () => {
-    const valid = { x: 10, y: 20, direction: "up", isSitting: false };
+    const valid = {
+        x: 10,
+        y: 20,
+        direction: "up",
+        isSitting: false,
+        isDancing: false,
+    };
 
     it("accepts a position inside the world", () => {
         expect(SpacePositionSchema.safeParse(valid).success).toBe(true);
+    });
+
+    it("reads a position without the dancing state as not dancing", () => {
+        const { isDancing: _omitted, ...legacy } = valid;
+
+        expect(SpacePositionSchema.parse(legacy).isDancing).toBe(false);
     });
 
     it.each([
@@ -55,6 +75,7 @@ describe("SpacePositionSchema", () => {
         { ...valid, x: 1_000_000 },
         { ...valid, direction: "diagonal" },
         { ...valid, isSitting: "yes" },
+        { ...valid, isDancing: "yes" },
     ])("rejects %j", (candidate) => {
         expect(SpacePositionSchema.safeParse(candidate).success).toBe(false);
     });

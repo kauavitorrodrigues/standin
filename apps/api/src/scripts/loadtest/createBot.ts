@@ -129,6 +129,7 @@ export const createBot = ({
             y: walker.y,
             direction: walker.direction,
             isSitting: false,
+            isDancing: false,
         });
     };
 

@@ -62,6 +62,7 @@ class Client {
             y: this.y,
             direction: PLAYER_DIRECTIONS.DOWN,
             isSitting: this.isSitting,
+            isDancing: false,
         };
     }
 }

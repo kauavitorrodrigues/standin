@@ -33,6 +33,9 @@ export const GameErrorMessages = {
         isSitting: {
             invalid: "The sitting state must be true or false.",
         },
+        isDancing: {
+            invalid: "The dancing state must be true or false.",
+        },
     },
     emote: {
         emoji: {

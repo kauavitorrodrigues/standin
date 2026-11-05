@@ -16,6 +16,8 @@ import { playAvatarAnimation } from "@/features/game/utils/playAvatarAnimation";
 import { AvatarBlink } from "@/features/game/lib/AvatarBlink";
 import { NameTag } from "@/features/game/lib/NameTag";
 import { EmoteState } from "@/features/game/lib/EmoteState";
+import { DanceState } from "@/features/game/lib/DanceState";
+import { prefersReducedMotion } from "@/features/game/utils/prefersReducedMotion";
 import { resolveAvatarAnimation } from "@/features/game/utils/resolveAvatarAnimation";
 
 // The local avatar. Its position is the anchor of the sprite, the point where
@@ -31,6 +33,7 @@ export class Player {
     private readonly blink = new AvatarBlink();
     private readonly nameTag: NameTag;
     private readonly emote = new EmoteState();
+    private readonly dance = new DanceState();
     // What the movement keys ask for right now, each axis -1, 0 or 1.
     moveAxis = { x: 0, y: 0 };
 
@@ -116,6 +119,25 @@ export class Player {
         this.updateAnimation();
     }
 
+    get isDancing(): boolean {
+        return this.dance.isActive;
+    }
+
+    // The key went down. Only an avatar that stands still starts to dance.
+    startDance(): void {
+        this.dance.start(
+            this.gameObject.scene.time.now,
+            this.canStand(),
+            this.gameObject
+        );
+        this.updateAnimation();
+    }
+
+    stopDance(): void {
+        this.dance.stop();
+        this.updateAnimation();
+    }
+
     // Draws another sheet, the ghost or the one of the avatar of the user.
     setTexture(textureKey: string): void {
         if (textureKey === this.textureKey) return;
@@ -168,6 +190,10 @@ export class Player {
         );
     }
 
+    private canStand(): boolean {
+        return !this.isSitting && !this.isMoving();
+    }
+
     private isMoving(): boolean {
         return this.moveAxis.x !== 0 || this.moveAxis.y !== 0;
     }
@@ -176,8 +202,12 @@ export class Player {
         const isMoving = this.isMoving();
         const now = this.gameObject.scene.time.now;
         const canStand = !this.isSitting && !isMoving;
+        const isDancing = this.dance.update(now, canStand, this.gameObject);
         const isEmoting = this.emote.update(now, canStand);
-        const isBlinking = this.blink.update(now, canStand && !isEmoting);
+        const isBlinking = this.blink.update(
+            now,
+            canStand && !isEmoting && !isDancing
+        );
         playAvatarAnimation(
             this.gameObject,
             this.textureKey,
@@ -186,6 +216,9 @@ export class Player {
                 isMoving,
                 isBlinking,
                 isEmoting,
+                isDancing,
+                // Asked only while dancing, since this runs every frame.
+                isReducedMotion: isDancing && prefersReducedMotion(),
             }),
             this.direction
         );

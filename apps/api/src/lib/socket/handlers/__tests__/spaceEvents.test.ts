@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { neighborsMock, settingsMock } = vi.hoisted(() => ({
+const { neighborsMock, getMock, settingsMock } = vi.hoisted(() => ({
     neighborsMock: vi.fn(),
+    getMock: vi.fn(),
     settingsMock: vi.fn(),
 }));
 
 vi.mock("../../realtime/SpaceInterests", () => ({
-    SpaceInterests: { neighbors: neighborsMock },
+    SpaceInterests: { neighbors: neighborsMock, get: getMock },
 }));
 
 vi.mock("../../services/resolveSpaceSettings", () => ({
@@ -70,6 +71,17 @@ describe("registerSpaceEvents", () => {
         socket.handlers.get("space:emote")?.(EMOTE);
 
         expect(to).toHaveBeenCalledWith(["near-1"]);
+    });
+
+    it("drops an emote from a person who is dancing", () => {
+        getMock.mockReturnValue({ isDancing: true });
+        const socket = createSocket();
+        const { io, to } = createIo();
+        registerSpaceEvents(io as never, socket as never);
+
+        socket.handlers.get("space:emote")?.(EMOTE);
+
+        expect(to).not.toHaveBeenCalled();
     });
 
     it("relays confetti to the neighbors with nothing but the sender", () => {

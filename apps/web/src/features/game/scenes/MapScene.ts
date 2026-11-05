@@ -276,6 +276,7 @@ export class MapScene extends Phaser.Scene {
         y: 0,
         direction: PLAYER_DIRECTIONS.DOWN,
         isSitting: false,
+        isDancing: false,
     };
     private readonly remoteHoverPool = new Map<string, HoverTarget>();
     private emoteParticles: EmoteParticles | null = null;
@@ -1571,6 +1572,7 @@ export class MapScene extends Phaser.Scene {
         avatar.move(position.x, position.y);
         avatar.updateAnimation(position.direction);
         avatar.setSitting(position.isSitting);
+        avatar.setDancing(position.isDancing);
         avatar.setSeatDepth(
             position.isSitting ? findSeatDepth(this.seatAreas, position) : null
         );
@@ -1619,6 +1621,24 @@ export class MapScene extends Phaser.Scene {
 
     private burstConfetti(feet: { x: number; y: number }): void {
         this.confettiParticles?.burst(feet);
+    }
+
+    // The dance key went down or up. Only an avatar that stands still starts.
+    // The position goes out at once: on a hidden tab no frame runs to send it.
+    setLocalDancing(isDancing: boolean): void {
+        if (!this.player) return;
+        if (!isDancing) {
+            this.player.stopDance();
+            this.emitLocalPosition();
+            return;
+        }
+
+        this.player.startDance();
+        this.emitLocalPosition();
+    }
+
+    get isLocalDancing(): boolean {
+        return this.player?.isDancing === true;
     }
 
     // The local emote goes through the same display as a remote one, since the
@@ -1837,6 +1857,7 @@ export class MapScene extends Phaser.Scene {
         position.y = this.player.y;
         position.direction = this.player.direction;
         position.isSitting = this.player.isSitting;
+        position.isDancing = this.player.isDancing;
         this.broadcastLocalPosition(position);
     }
 

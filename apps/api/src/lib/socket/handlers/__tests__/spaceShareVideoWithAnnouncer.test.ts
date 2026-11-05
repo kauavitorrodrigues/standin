@@ -38,6 +38,7 @@ const stand = (socketId: string, x: number) => {
         y: 0,
         direction: "down",
         isSitting: false,
+        isDancing: false,
     });
 };
 
@@ -147,6 +148,7 @@ describe("registerSpaceShareVideoWithAnnouncer", () => {
             y: 0,
             direction: "down",
             isSitting: false,
+            isDancing: false,
         });
         AnnouncerSync.refresh("space-1", "listener", vi.fn());
 

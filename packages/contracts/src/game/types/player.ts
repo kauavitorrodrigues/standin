@@ -6,6 +6,9 @@ export type PlayerPosition = {
     y: number;
     direction: PlayerDirection;
     isSitting: boolean;
+    // Held while the key is down. Replicated with the position, so whoever
+    // comes into sight later gets it with the rest.
+    isDancing: boolean;
 };
 
 export type RemotePlayer = {

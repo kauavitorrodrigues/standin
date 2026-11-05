@@ -20,7 +20,8 @@ const isSamePosition = (a: PlayerPosition, b: PlayerPosition): boolean =>
     Math.round(a.x) === Math.round(b.x) &&
     Math.round(a.y) === Math.round(b.y) &&
     a.direction === b.direction &&
-    a.isSitting === b.isSitting;
+    a.isSitting === b.isSitting &&
+    a.isDancing === b.isDancing;
 
 // What the client says to the server inside a space: where the avatar is, and
 // the discrete things (emote, nearby message, typing). The server decides who
@@ -45,13 +46,21 @@ export class SpaceChannel {
     // gives it to whoever comes near.
     sendPosition(position: PlayerPosition): void {
         const current = this.now();
-        if (current - this.lastSentAt < SEND_INTERVAL_MS) return;
         if (this.lastSent && isSamePosition(this.lastSent, position)) return;
+        // A dance starting or ending is not held back by the interval: a hidden
+        // tab runs no later frame to send it again.
+        const isDanceFlip =
+            this.lastSent !== null &&
+            this.lastSent.isDancing !== position.isDancing;
+        if (!isDanceFlip && current - this.lastSentAt < SEND_INTERVAL_MS)
+            return;
 
         // The first position after a join is reliable: the server only knows
         // who already sent one, so a lost one would leave a person standing
         // still invisible to everybody. The ones that follow replace each other.
-        const isFirst = this.lastSent === null;
+        // The start and the end of a dance are reliable too: a lost end would
+        // leave the avatar dancing for the others until the cap.
+        const isFirst = this.lastSent === null || isDanceFlip;
         this.lastSent = { ...position };
         this.lastSentAt = current;
         if (isFirst) {

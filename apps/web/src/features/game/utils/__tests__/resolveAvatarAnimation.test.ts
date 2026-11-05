@@ -102,4 +102,41 @@ describe("resolveAvatarAnimation", () => {
             })
         ).toBe("SIT");
     });
+
+    it("loops the dance when standing and dancing", () => {
+        expect(
+            resolveAvatarAnimation({
+                isSitting: false,
+                isMoving: false,
+                isBlinking: true,
+                isEmoting: true,
+                isDancing: true,
+            })
+        ).toBe("DANCE");
+    });
+
+    it("holds the emote pose instead of looping with reduced motion", () => {
+        expect(
+            resolveAvatarAnimation({
+                isSitting: false,
+                isMoving: false,
+                isBlinking: false,
+                isEmoting: false,
+                isDancing: true,
+                isReducedMotion: true,
+            })
+        ).toBe("EMOTE");
+    });
+
+    it("sits over the dance", () => {
+        expect(
+            resolveAvatarAnimation({
+                isSitting: true,
+                isMoving: false,
+                isBlinking: false,
+                isEmoting: false,
+                isDancing: true,
+            })
+        ).toBe("SIT");
+    });
 });
