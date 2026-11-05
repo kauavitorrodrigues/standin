@@ -15,3 +15,4 @@ export * from "./findDoorRoom";
 export * from "./readWallCells";
 export * from "./findDoorSlots";
 export * from "./getLayoutZones";
+export * from "./getFloorMaterialAt";
