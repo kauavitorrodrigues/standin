@@ -46,6 +46,7 @@ export const usePartChoice = (slot: AvatarSlot) => {
     };
 
     const removePart = () => {
+        dropCostume();
         setValue(`parts.${slot}`, null, { shouldDirty: true });
     };
 
