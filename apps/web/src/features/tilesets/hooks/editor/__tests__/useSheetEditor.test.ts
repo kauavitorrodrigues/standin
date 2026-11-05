@@ -266,11 +266,15 @@ describe("useTileSheetEditor", () => {
         expect(result.current.meta["0"]).toEqual({
             category: "FLOOR",
             solid: true,
+            material: "WOOD",
         });
         key("q");
         down(0);
         up();
-        expect(result.current.meta["0"]).toEqual({ category: "FLOOR" });
+        expect(result.current.meta["0"]).toEqual({
+            category: "FLOOR",
+            material: "WOOD",
+        });
 
         act(() => result.current.editor.setTool("picker"));
         down(3);

@@ -210,6 +210,7 @@ export const useTileSheetEditor = ({
         clearSelection: actions.clearSelection,
         selectNextUntagged: selection.selectNextUntagged,
         pointerHandlers,
+        setMaterial: actions.setMaterialOfSelected,
         wall: {
             setPiece: actions.setWallPieceOfSelected,
             setStyle: actions.setWallStyleOfSelected,

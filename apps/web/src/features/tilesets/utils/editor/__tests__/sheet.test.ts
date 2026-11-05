@@ -66,7 +66,12 @@ describe("tile meta edits", () => {
             "0": { category: "CEILING", solid: true },
         });
         expect(setTileCategory(meta, [0], "FLOOR", anyone)).toEqual({
-            "0": { category: "FLOOR", solid: true, blankDefault: true },
+            "0": {
+                category: "FLOOR",
+                solid: true,
+                blankDefault: true,
+                material: "WOOD",
+            },
         });
         expect(setTileCategory(meta, [0], "EMPTY", anyone)).toEqual({
             "0": { category: "EMPTY", solid: true },
