@@ -76,6 +76,7 @@ describe("buildFormValues", () => {
                         slot: AVATAR_SLOTS.HAIR,
                         partId: "hair-1",
                         familyId: "hair",
+                        colorKey: "black",
                         url: "/files/hair-1",
                     },
                 ],
@@ -86,7 +87,7 @@ describe("buildFormValues", () => {
         expect(values.parts.HAIR).toEqual({
             partId: "hair-1",
             familyId: "hair",
-            colorKey: null,
+            colorKey: "black",
             url: "/files/hair-1",
         });
         expect(values.parts.TOP).toBeNull();

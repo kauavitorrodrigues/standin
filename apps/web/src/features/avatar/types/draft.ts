@@ -7,8 +7,7 @@ export type DraftPartChoice = {
     partId: string;
     // The id of the family the row belongs to, to mark the tile in the grid.
     familyId: string;
-    // The color picked from the list, null for a part that came from the
-    // saved avatar until the person picks a color.
+    // The color of the row, null for a part with no colors.
     colorKey: string | null;
     url: string;
 };

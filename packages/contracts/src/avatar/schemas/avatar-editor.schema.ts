@@ -27,6 +27,9 @@ export const AvatarEditorCurrentPartSchema = z.object({
     slot,
     partId: z.string(),
     familyId: z.string(),
+    // The color of the row, null for a part with no colors. The editor keeps
+    // it so a new part takes the same color after reopening.
+    colorKey: z.string().nullable(),
     url: z.string(),
 });
 

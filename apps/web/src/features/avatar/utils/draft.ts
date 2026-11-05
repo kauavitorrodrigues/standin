@@ -18,8 +18,9 @@ export const createEmptyParts = (): DraftPartsBySlot =>
         AVATAR_SLOT_VALUES.map((slot) => [slot, null])
     ) as DraftPartsBySlot;
 
-// The form starts with the avatar the person has now. A part that was deleted
-// stays in the draft, so it keeps being drawn until the person removes it.
+// The form starts with the avatar the person has now, colors included. A part
+// that was deleted stays in the draft, so it keeps being drawn until the
+// person removes it.
 export const buildFormValues = (
     editor: AvatarEditor
 ): AvatarEditorFormValues => {
@@ -29,7 +30,7 @@ export const buildFormValues = (
         parts[part.slot] = {
             partId: part.partId,
             familyId: part.familyId,
-            colorKey: null,
+            colorKey: part.colorKey,
             url: part.url,
         };
     }

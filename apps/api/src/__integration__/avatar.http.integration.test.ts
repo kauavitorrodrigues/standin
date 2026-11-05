@@ -88,9 +88,7 @@ describe.skipIf(!enabled)("user avatar over HTTP (real stack)", () => {
     const newPart = async (
         name: string,
         slot: string,
-        {
-            color,
-        }: { color?: { key: string; hex: string } } = {}
+        { color }: { color?: { key: string; hex: string } } = {}
     ): Promise<Created> => {
         const { part: created } = await core.AvatarService.createPart(
             { buffer: sheet(100) },
@@ -262,7 +260,7 @@ describe.skipIf(!enabled)("user avatar over HTTP (real stack)", () => {
             expect(ids).not.toContain(base.doll.id);
         });
 
-        it("answers what the person uses, with the family of each part", async () => {
+        it("answers what the person uses, with the family and color of each part", async () => {
             await call("ana", "PUT", "/users/me/avatar", {
                 baseId: base.b.id,
                 parts: [{ slot: "HAIR", partId: redHair.id }],
@@ -276,6 +274,7 @@ describe.skipIf(!enabled)("user avatar over HTTP (real stack)", () => {
                     slot: "HAIR",
                     partId: redHair.id,
                     familyId: part.hair.id,
+                    colorKey: "red",
                     url: expect.stringMatching(/^\/files\//),
                 },
             ]);
