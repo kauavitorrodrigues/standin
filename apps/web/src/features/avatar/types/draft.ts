@@ -26,3 +26,9 @@ export type AvatarDraft = {
 export type AvatarEditorFormValues = AvatarDraft & {
     activeSlot: AvatarSlot;
 };
+
+// How a random draw applies to the draft.
+export type RandomizeOptions = {
+    // The draft as it was when the start draw began, null to always apply.
+    untouchedKey: string | null;
+};
