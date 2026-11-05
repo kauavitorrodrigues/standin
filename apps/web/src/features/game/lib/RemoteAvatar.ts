@@ -224,4 +224,9 @@ export class RemoteAvatar {
     private isMoving(): boolean {
         return this.glide.isMoving(this.gameObject.scene.time.now);
     }
+
+    // On its feet and walking, which is when its steps sound.
+    get isWalking(): boolean {
+        return this.hasReceivedPosition && !this.isSitting && this.isMoving();
+    }
 }

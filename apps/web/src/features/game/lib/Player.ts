@@ -198,6 +198,11 @@ export class Player {
         return this.moveAxis.x !== 0 || this.moveAxis.y !== 0;
     }
 
+    // On its feet and walking, which is when its steps sound.
+    get isWalking(): boolean {
+        return !this.isSitting && this.isMoving();
+    }
+
     private updateAnimation(): void {
         const isMoving = this.isMoving();
         const now = this.gameObject.scene.time.now;
