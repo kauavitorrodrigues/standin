@@ -29,6 +29,7 @@ export const MediaControlGroup = ({
     micError,
     cameraError,
     sendEmote,
+    sendConfetti,
     nearbyChat,
     soundboard,
     announcing,
@@ -41,6 +42,7 @@ export const MediaControlGroup = ({
         enabled: true,
         hotkeys: isMeetingContext,
         onSendEmote: sendEmote,
+        onConfetti: sendConfetti,
         controls,
     });
     

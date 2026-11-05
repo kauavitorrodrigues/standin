@@ -6,12 +6,13 @@ import type { ControlsViewState } from "@/features/spaces/hooks/useControlsView"
 import { listReactionBarEmotes } from "@/features/emotes/utils/getReactionBarItems";
 
 type Options = {
-    // Off, the bar is closed and the keys 1 to 8 are not bound.
+    // Off, the bar is closed and the keys 1 to 8 and F are not bound.
     enabled: boolean;
-    // Whether the keys 1 to 8 send the emojis. They are left off over the chat,
+    // Whether the keys 1 to 8 send the emojis and F throws confetti. They are left off over the chat,
     // where the bar still opens but a number is more likely to be typed.
     hotkeys?: boolean;
     onSendEmote: (emoji: string) => void;
+    onConfetti: () => void;
     // The view open over the bar, shared with the nearby panel so only one is
     // open at a time.
     controls: Pick<ControlsViewState, "view" | "toggle">;
@@ -24,6 +25,7 @@ export const useReactions = ({
     enabled,
     hotkeys = enabled,
     onSendEmote,
+    onConfetti,
     controls,
 }: Options) => {
     const { items, record } = useEmoteHistory();
@@ -36,7 +38,7 @@ export const useReactions = ({
         badge.show(emoji);
     };
 
-    useEmoteHotkeys(listReactionBarEmotes(items), send, {
+    useEmoteHotkeys(listReactionBarEmotes(items), send, onConfetti, {
         enabled: enabled && hotkeys,
     });
 

@@ -8,6 +8,7 @@ import { DEFAULT_SPACE_SETTINGS, JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getSoundCatalog } from "@/features/sounds/lib/soundCatalog";
 import { getMapScene } from "@/features/game/utils/map";
 import { EmoteSender } from "@/features/game/lib/EmoteSender";
+import { ConfettiThrottle } from "@/features/game/lib/ConfettiThrottle";
 import { SpaceChannel, type SpaceChannelTransport } from "../lib/SpaceChannel";
 import { SCENE_EVENTS } from "@/features/game/consts/scene-keys";
 import { simulateScenario } from "../utils/simulateScenario";
@@ -383,6 +384,10 @@ export function useSpaceConnection({
         });
     });
 
+    useSocketEvent("space:confetti", ({ socketId }) => {
+        (game ? getMapScene(game) : null)?.applyRemoteConfetti(socketId);
+    });
+
     useSocketEvent("space:nearby-message", ({ socketId, text }) => {
         (game ? getMapScene(game) : null)?.applyRemoteNearbyMessage(socketId, {
             text,
@@ -619,6 +624,25 @@ export function useSpaceConnection({
         []
     );
 
+    // The key throws one burst, sent to the peers and shown on the local avatar
+    // at once. The throttle is rebuilt with the scene, like the emote sender.
+    const confettiThrottleRef = useRef<ConfettiThrottle | null>(null);
+    useEffect(() => {
+        confettiThrottleRef.current = new ConfettiThrottle(() => {
+            channel.sendConfetti();
+            const scene = game ? getMapScene(game) : null;
+            scene?.playLocalConfetti();
+        });
+
+        return () => {
+            confettiThrottleRef.current = null;
+        };
+    }, [channel, game]);
+    const sendConfetti = useCallback(
+        () => confettiThrottleRef.current?.fire(),
+        []
+    );
+
     // A nearby message goes to the server and is shown at once on the local
     // avatar and in the list, since the server never sends it back. The text was
     // already validated by the form that sent it.
@@ -663,6 +687,7 @@ export function useSpaceConnection({
         },
         sendChatTyping,
         sendEmote,
+        sendConfetti,
         sendNearbyMessage,
         sendNearbyTyping,
         isSendNearbyEnabled: settings.enableSendNearbyInMapView,

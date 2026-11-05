@@ -44,4 +44,13 @@ describe("applyRateLimit", () => {
 
         expect(() => send(["editor:acquire", {}])).not.toThrow();
     });
+
+    it("drops a confetti flood past its burst, below the fallback limit", () => {
+        const send = setup();
+
+        for (let i = 0; i < 6; i++) send(["space:confetti", {}]);
+        const next = send(["space:confetti", {}]);
+
+        expect(next).not.toHaveBeenCalled();
+    });
 });

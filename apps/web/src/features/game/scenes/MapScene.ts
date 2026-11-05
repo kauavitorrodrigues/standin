@@ -74,8 +74,13 @@ import { InteractionController } from "@/features/game/lib/InteractionController
 import { RemoteAvatar } from "@/features/game/lib/RemoteAvatar";
 import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
+import { ConfettiParticles } from "@/features/game/lib/ConfettiParticles";
 import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
 import { EMOTE_EVENTS } from "@/features/game/consts/emote";
+import {
+    CONFETTI_PARTY_EMOJI,
+    CONFETTI_RATE_LIMIT,
+} from "@/features/game/consts/confetti";
 import type { FireEmojiEvent } from "@/features/game/types/emote";
 import { getEmoteRadius } from "@/features/game/utils/getEmoteRadius";
 import {
@@ -274,8 +279,12 @@ export class MapScene extends Phaser.Scene {
     };
     private readonly remoteHoverPool = new Map<string, HoverTarget>();
     private emoteParticles: EmoteParticles | null = null;
+    private confettiParticles: ConfettiParticles | null = null;
     private emoteTextures: EmojiTextureCache | null = null;
     private readonly emoteRateLimiter = new EmoteRateLimiter();
+    private readonly confettiRateLimiter = new EmoteRateLimiter(
+        CONFETTI_RATE_LIMIT
+    );
     // Nearby messages: the store is owned by the page and handed in, the bubbles
     // are drawn by the scene. A peer has a limit of its own for the text and
     // another for the typing dots.
@@ -532,6 +541,8 @@ export class MapScene extends Phaser.Scene {
             this.particleBudget
         );
 
+        this.confettiParticles = new ConfettiParticles(this);
+
         const onFireEmoji = ({ x, y, emoji, count }: FireEmojiEvent) =>
             this.emoteParticles?.emitAt(x, y, emoji, count);
         this.game.events.on(EMOTE_EVENTS.FIRE_EMOJI, onFireEmoji);
@@ -540,9 +551,12 @@ export class MapScene extends Phaser.Scene {
             this.game.events.off(EMOTE_EVENTS.FIRE_EMOJI, onFireEmoji);
             this.emoteParticles?.destroy();
             this.emoteParticles = null;
+            this.confettiParticles?.destroy();
+            this.confettiParticles = null;
             this.emoteTextures?.destroy();
             this.emoteTextures = null;
             this.emoteRateLimiter.clear();
+            this.confettiRateLimiter.clear();
             this.game.events.off(PLAYER_EVENTS.HOVER_CHANGED, onPlayerHover);
             this.game.events.off(selectedEvent, onPlayerSelected);
             this.playerOutline?.destroy();
@@ -716,6 +730,7 @@ export class MapScene extends Phaser.Scene {
         this.updateTypingMarks();
         this.updateRemoteHover();
         this.emoteParticles?.update(delta);
+        this.confettiParticles?.update(delta);
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
     }
@@ -1519,6 +1534,7 @@ export class MapScene extends Phaser.Scene {
         this.remoteUserIds.delete(socketId);
         this.nearbySocketIds.clear();
         this.emoteRateLimiter.remove(socketId);
+        this.confettiRateLimiter.remove(socketId);
         this.nearbyRateLimiter.remove(socketId);
         this.nearbyTypingRateLimiter.remove(socketId);
     }
@@ -1576,6 +1592,33 @@ export class MapScene extends Phaser.Scene {
             payload.emoji,
             payload.count
         );
+        // The party emoji shares the confetti limit of the peer, so it cannot
+        // be used to throw more bursts than the key allows.
+        if (payload.emoji !== CONFETTI_PARTY_EMOJI) return;
+        if (!this.confettiRateLimiter.allow(socketId, this.time.now)) return;
+
+        this.burstConfetti(avatar.gameObject);
+    }
+
+    // A peer threw confetti. Same range, room and rate rules as an emote.
+    applyRemoteConfetti(socketId: string): void {
+        const avatar = this.remoteAvatars.get(socketId);
+        if (!avatar || !this.player) return;
+        if (!this.confettiRateLimiter.allow(socketId, this.time.now)) return;
+        const emoteRadius = getEmoteRadius(this.proximityPreset);
+        if (this.getCommunicationDistanceTo(avatar) > emoteRadius) return;
+
+        this.burstConfetti(avatar.gameObject);
+    }
+
+    playLocalConfetti(): void {
+        if (!this.player) return;
+
+        this.burstConfetti(this.player.gameObject);
+    }
+
+    private burstConfetti(feet: { x: number; y: number }): void {
+        this.confettiParticles?.burst(feet);
     }
 
     // The local emote goes through the same display as a remote one, since the
@@ -1588,6 +1631,9 @@ export class MapScene extends Phaser.Scene {
             payload.emoji,
             payload.count
         );
+        if (payload.emoji === CONFETTI_PARTY_EMOJI) {
+            this.burstConfetti(this.player.gameObject);
+        }
     }
 
     // Hands in the store of the nearby messages, or null to let it go. The page
