@@ -2,6 +2,7 @@ import {
     ASSET_ACTIONS,
     ASSET_PLACEMENTS,
     ASSET_TYPES,
+    FLOOR_MATERIALS,
     SEAT_FACINGS,
     TILE_CATEGORIES,
     TILE_SIZE,
@@ -9,10 +10,7 @@ import {
 import { buildColorSprite } from "../utils/buildColorSprite";
 import { buildColorTileset } from "../utils/buildColorTileset";
 import type { LibrarySeed } from "../../seed/types";
-import {
-    WALL_SHEET_IMAGE,
-    WALL_SHEET_META,
-} from "./defaultWallSheet";
+import { WALL_SHEET_IMAGE, WALL_SHEET_META } from "./defaultWallSheet";
 import type { Rgba } from "../types";
 
 export const DEFAULT_LIBRARY_KEYS = {
@@ -53,10 +51,23 @@ export const DEFAULT_LIBRARY_SEED: LibrarySeed = {
             name: "Pisos",
             image: buildColorTileset(FLOOR_COLORS),
             tileMeta: {
-                "0": { category: TILE_CATEGORIES.FLOOR, blankDefault: true },
-                "1": { category: TILE_CATEGORIES.FLOOR },
-                "2": { category: TILE_CATEGORIES.FLOOR },
-                "3": { category: TILE_CATEGORIES.FLOOR },
+                "0": {
+                    category: TILE_CATEGORIES.FLOOR,
+                    blankDefault: true,
+                    material: FLOOR_MATERIALS.WOOD,
+                },
+                "1": {
+                    category: TILE_CATEGORIES.FLOOR,
+                    material: FLOOR_MATERIALS.WOOD,
+                },
+                "2": {
+                    category: TILE_CATEGORIES.FLOOR,
+                    material: FLOOR_MATERIALS.WOOD,
+                },
+                "3": {
+                    category: TILE_CATEGORIES.FLOOR,
+                    material: FLOOR_MATERIALS.WOOD,
+                },
             },
         },
         {

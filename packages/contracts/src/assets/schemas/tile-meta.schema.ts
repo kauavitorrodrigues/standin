@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { FLOOR_MATERIALS } from "../enums/floor-material";
 import { TILE_CATEGORIES } from "../enums/tile-category";
 import { WALL_EDGE_VALUES } from "../enums/wall-edge";
 import { WALL_OVERLAP_MAX, WALL_STYLE_NAME_MAX } from "../consts/wall";
@@ -24,6 +25,13 @@ export const TileMetaEntrySchema = z
         // one WALL tile across the global images.
         blankDefault: z
             .boolean({ error: TileMetaErrorMessages.blankDefault.invalid })
+            .optional(),
+        // What the floor sounds like under the feet. Only for a FLOOR tile,
+        // and absent reads as wood.
+        material: z
+            .enum(FLOOR_MATERIALS, {
+                error: TileMetaErrorMessages.material.invalid,
+            })
             .optional(),
         // Local index of the tile drawn above a WALL tile.
         top: z
@@ -68,6 +76,16 @@ export const TileMetaEntrySchema = z
         ).optional(),
     })
     .superRefine((entry, context) => {
+        if (
+            entry.material !== undefined &&
+            entry.category !== TILE_CATEGORIES.FLOOR
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["material"],
+                message: TileMetaErrorMessages.floorOnly.invalid,
+            });
+        }
         const hasWallFields =
             entry.edges !== undefined ||
             entry.style !== undefined ||
@@ -80,10 +98,7 @@ export const TileMetaEntrySchema = z
             });
             return;
         }
-        if (
-            entry.edges !== undefined &&
-            getWallPiece(entry.edges) === null
-        ) {
+        if (entry.edges !== undefined && getWallPiece(entry.edges) === null) {
             context.addIssue({
                 code: "custom",
                 path: ["edges"],

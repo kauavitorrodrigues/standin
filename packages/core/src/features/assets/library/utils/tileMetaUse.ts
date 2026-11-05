@@ -1,7 +1,8 @@
 import type { TileMeta } from "@standin/contracts";
 
+// `blankDefault` and `material` do not change what a painted tile means.
 const withoutBlankDefault = (entry: TileMeta[string]) => {
-    const { blankDefault: _blankDefault, ...rest } = entry;
+    const { blankDefault: _blankDefault, material: _material, ...rest } = entry;
     return JSON.stringify(
         Object.fromEntries(
             Object.entries(rest).sort(([a], [b]) => (a < b ? -1 : 1))
@@ -11,7 +12,7 @@ const withoutBlankDefault = (entry: TileMeta[string]) => {
 
 /**
  * Maps already painted with this image, so its `tileMeta` can only grow or
- * move `blankDefault`. Changing or removing an entry would change what the
+ * move `blankDefault`, or have a `material` set or changed. Changing or removing an entry would change what the
  * painted tiles mean.
  */
 export const isTileMetaAppendOnly = (

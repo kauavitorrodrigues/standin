@@ -6,10 +6,12 @@
             "file": "tilesets/floor.png",
             "tileMeta": {
                 "0": {
-                    "category": "FLOOR"
+                    "category": "FLOOR",
+                    "material": "WOOD"
                 },
                 "1": {
-                    "category": "FLOOR"
+                    "category": "FLOOR",
+                    "material": "WOOD"
                 }
             }
         },
