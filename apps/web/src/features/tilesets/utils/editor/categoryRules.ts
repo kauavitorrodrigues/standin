@@ -12,6 +12,16 @@ export const canBeBlankDefault = (category: TileCategory): boolean => {
     }
 };
 
+// Only a floor has a material, the sound it makes under the feet.
+export const canHaveMaterial = (category: TileCategory): boolean => {
+    switch (category) {
+        case TILE_CATEGORIES.FLOOR:
+            return true;
+        default:
+            return false;
+    }
+};
+
 // Only a wall has a tile drawn above it.
 export const canHaveTop = (category: TileCategory): boolean => {
     switch (category) {

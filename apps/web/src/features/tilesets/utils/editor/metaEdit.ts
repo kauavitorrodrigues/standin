@@ -1,4 +1,8 @@
-import type { TileMeta } from "@standin/contracts";
+import {
+    DEFAULT_FLOOR_MATERIAL,
+    type FloorMaterial,
+    type TileMeta,
+} from "@standin/contracts";
 import type {
     CanEditTile,
     TileCategory,
@@ -6,6 +10,7 @@ import type {
 } from "../../types/meta";
 import {
     canBeBlankDefault,
+    canHaveMaterial,
     canHaveTop,
     canHaveWallMeta,
 } from "./categoryRules";
@@ -32,6 +37,10 @@ export const setTileCategory = (
         }
         if (canHaveWallMeta(category) && current) {
             Object.assign(entry, pickWallFields(current));
+        }
+        // A floor always has a material: the one it had, or wood.
+        if (canHaveMaterial(category)) {
+            entry.material = current?.material ?? DEFAULT_FLOOR_MATERIAL;
         }
         if (canBeBlankDefault(category) && current?.blankDefault) {
             entry.blankDefault = true;
@@ -85,6 +94,24 @@ export const setTileBlankDefault = (
         const sameCategory = entry.category === target.category;
         const keeps = isTarget ? on : blankDefault && !sameCategory;
         next[key] = keeps ? { ...rest, blankDefault: true } : rest;
+    }
+    return next;
+};
+
+// The material of the floor tiles among the indices, or none. Unlike the other
+// fields it is open to a tile that maps already use, because it does not
+// change what the tile is.
+export const setTileMaterial = (
+    meta: TileMeta,
+    indices: number[],
+    material: FloorMaterial | null
+): TileMeta => {
+    const next = { ...meta };
+    for (const index of indices) {
+        const current = meta[keyOf(index)];
+        if (!current || !canHaveMaterial(current.category)) continue;
+        const { material: _material, ...rest } = current;
+        next[keyOf(index)] = material === null ? rest : { ...rest, material };
     }
     return next;
 };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { expandTileMask } from "../../utils/footprintMask";
 import { assetAnimationSchema } from "../asset-animation.schema";
+import { TileMetaEntrySchema } from "../tile-meta.schema";
 import {
     CreateAssetDataSchema,
     CreateTilesetDataSchema,
@@ -57,6 +58,32 @@ describe("CreateTilesetDataSchema", () => {
             CreateTilesetDataSchema.safeParse({
                 name: "a",
                 tileMeta: { x: { category: "FLOOR" } },
+            }).success
+        ).toBe(false);
+    });
+});
+
+describe("TileMetaEntrySchema material", () => {
+    it("accepts a material on a floor tile", () => {
+        expect(
+            TileMetaEntrySchema.safeParse({
+                category: "FLOOR",
+                material: "GRASS",
+            }).success
+        ).toBe(true);
+    });
+
+    it("rejects an unknown material and a material off a floor tile", () => {
+        expect(
+            TileMetaEntrySchema.safeParse({
+                category: "FLOOR",
+                material: "LAVA",
+            }).success
+        ).toBe(false);
+        expect(
+            TileMetaEntrySchema.safeParse({
+                category: "WALL",
+                material: "STONE",
             }).success
         ).toBe(false);
     });

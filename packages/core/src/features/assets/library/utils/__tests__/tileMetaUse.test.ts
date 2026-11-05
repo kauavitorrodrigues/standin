@@ -28,6 +28,16 @@ describe("isTileMetaAppendOnly", () => {
         ).toBe(true);
     });
 
+    it("accepts setting, changing and clearing a floor material", () => {
+        const withMaterial = {
+            ...stored,
+            "0": { category: "FLOOR", blankDefault: true, material: "GRASS" },
+        } as TileMeta;
+
+        expect(isTileMetaAppendOnly(stored, withMaterial)).toBe(true);
+        expect(isTileMetaAppendOnly(withMaterial, stored)).toBe(true);
+    });
+
     it("refuses to change or remove an entry that already exists", () => {
         expect(
             isTileMetaAppendOnly(stored, {

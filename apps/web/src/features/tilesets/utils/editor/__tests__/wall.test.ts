@@ -229,7 +229,11 @@ describe("setTileCategory and the wall fields", () => {
             TILE_CATEGORIES.FLOOR,
             allowAll
         );
-        expect(next["0"]).toEqual({ category: "FLOOR", solid: true });
+        expect(next["0"]).toEqual({
+            category: "FLOOR",
+            solid: true,
+            material: "WOOD",
+        });
     });
 
     it("keeps them when the tile is given the wall category again", () => {

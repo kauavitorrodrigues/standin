@@ -46,6 +46,15 @@
                     "blankDefault": {
                         "type": "boolean"
                     },
+                    "material": {
+                        "type": "string",
+                        "enum": [
+                            "CARPET",
+                            "WOOD",
+                            "STONE",
+                            "GRASS"
+                        ]
+                    },
                     "top": {
                         "type": "integer",
                         "minimum": 0,

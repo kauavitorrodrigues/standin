@@ -176,6 +176,13 @@
       "when": 1793826376696,
       "tag": "0024_add_space_members_can_invite",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793882207683,
+      "tag": "0025_backfill_floor_material",
+      "breakpoints": true
     }
   ]
 }

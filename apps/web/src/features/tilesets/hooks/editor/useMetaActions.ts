@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import type { TileMeta } from "@standin/contracts";
+import type { FloorMaterial, TileMeta } from "@standin/contracts";
 import type { CanEditTile, TileCategory } from "../../types/meta";
 import type { TileBrush } from "../../types/sheet";
 import { useTileHistory } from "./useHistory";
@@ -17,6 +17,7 @@ import {
     clearTileCategory,
     setTileBlankDefault,
     setTileCategory,
+    setTileMaterial,
     setTileSolid,
     setTileTop,
 } from "../../utils/editor/metaEdit";
@@ -74,6 +75,10 @@ export const useTileMetaActions = ({
     const toggleBlankDefaultOf = (index: number) => {
         const on = latest.current[String(index)]?.blankDefault !== true;
         commit(setTileBlankDefault(latest.current, index, on));
+    };
+
+    const setMaterialOfSelected = (material: FloorMaterial | null) => {
+        commit(setTileMaterial(latest.current, selected, material));
     };
 
     const setTopOf = (index: number, top: number | null) => {
@@ -150,6 +155,7 @@ export const useTileMetaActions = ({
         setSolid,
         toggleBlankDefaultOf,
         setTopOf,
+        setMaterialOfSelected,
         paintTiles,
         eraseTiles,
         history,

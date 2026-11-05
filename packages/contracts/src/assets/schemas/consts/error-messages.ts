@@ -18,6 +18,8 @@ export const TileMetaErrorMessages = {
     index: { invalid: "The tile index must be an integer." },
     category: { invalid: "The tile category is invalid." },
     solid: { invalid: 'The tile field "solid" is invalid.' },
+    material: { invalid: 'The tile field "material" is invalid.' },
+    floorOnly: { invalid: "Only a FLOOR tile can have a material." },
     top: { invalid: "The top tile of the wall is invalid." },
     blankDefault: {
         invalid: 'The tile field "blankDefault" is invalid.',
