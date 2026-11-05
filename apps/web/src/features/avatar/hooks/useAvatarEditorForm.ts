@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { ONBOARDING_TASKS } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
 import { useCompleteTask } from "@/features/onboarding/hooks/useCompleteTask";
@@ -7,7 +7,7 @@ import { AVATAR_EDITOR_MESSAGES } from "../consts/editor/messages";
 import { useSaveAvatar } from "../mutations/saveAvatar";
 import type { AvatarEditorFormValues } from "../types/draft";
 import type { AvatarEditor, MyAvatar } from "../types/editor";
-import { buildConfig, buildFormValues } from "../utils/draft";
+import { buildConfig, buildFormValues, isDraftEdited } from "../utils/draft";
 
 type Params = {
     editor: AvatarEditor;
@@ -46,10 +46,16 @@ export const useAvatarEditorForm = ({ editor, onDone, onSaved }: Params) => {
         }
     });
 
+    // Compared with the saved avatar instead of using the form's dirty flag,
+    // which stays set after a change is undone.
+    const baseId = useWatch({ control: form.control, name: "baseId" });
+    const parts = useWatch({ control: form.control, name: "parts" });
+    const isDirty = isDraftEdited({ baseId, parts }, editor);
+
     return {
         form,
         isSubmitting: form.formState.isSubmitting,
-        isDirty: form.formState.isDirty,
+        isDirty,
         submit,
     };
 };

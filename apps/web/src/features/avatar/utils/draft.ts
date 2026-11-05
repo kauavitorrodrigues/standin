@@ -120,3 +120,29 @@ export const resolveDraftBase = (
 // Whether the draft holds at least one part.
 export const hasAnyPart = (draft: AvatarDraft): boolean =>
     AVATAR_SLOT_VALUES.some((slot: AvatarSlot) => draft.parts[slot] !== null);
+
+// A person who never saved has no base and no part. Someone who saved an empty
+// avatar looks the same, and starting them from a random draft is harmless.
+export const hasNoSavedAvatar = (editor: AvatarEditor): boolean =>
+    editor.current.baseId === null && editor.current.parts.length === 0;
+
+// Slot and part of each chosen part, sorted, so two avatars compare
+// equal no matter how their parts were listed.
+const toPartKeys = (parts: readonly AvatarConfig["parts"][number][]) =>
+    parts
+        .map((part) => `${part.slot}:${part.partId}`)
+        .sort()
+        .join("|");
+
+// Whether the draft differs from the saved avatar. Changing something and
+// changing it back is not an edit. With no saved avatar the draft always
+// counts as edited, so confirming stays possible.
+export const isDraftEdited = (
+    draft: AvatarDraft,
+    editor: AvatarEditor
+): boolean => {
+    if (hasNoSavedAvatar(editor)) return true;
+    const config = buildConfig(draft);
+    if (config.baseId !== editor.current.baseId) return true;
+    return toPartKeys(config.parts) !== toPartKeys(editor.current.parts);
+};

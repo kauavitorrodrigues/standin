@@ -55,4 +55,11 @@ describe("useAvatarEditorForm", () => {
         await submit();
         expect(mocks.completeTask).not.toHaveBeenCalled();
     });
+
+    it("counts as edited when there is no saved avatar", () => {
+        const { result } = renderHook(() =>
+            useAvatarEditorForm({ editor: EDITOR, onDone: vi.fn() })
+        );
+        expect(result.current.isDirty).toBe(true);
+    });
 });
