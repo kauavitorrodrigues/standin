@@ -14,6 +14,9 @@ import { AVATAR_COLOR_PATTERN } from "../color";
 import { AVATAR_PARTS_PAGE, AVATAR_RANDOM_CHANCE } from "../limits";
 import { AVATAR_SLOT_ORDER, AVATAR_SLOT_TABS } from "../slot-order";
 
+// The sheet has these poses only facing down, so every direction shares them.
+const SHARED_FRAME_ANIMATIONS: readonly string[] = ["EMOTE", "DANCE"];
+
 describe("dimensions", () => {
     it("derives the sheet size from the frame and the grid", () => {
         expect(AVATAR_SHEET_PX).toEqual({
@@ -65,6 +68,7 @@ describe("dimensions", () => {
                 AVATAR_FRAME_KINDS.SIT_CROSSED,
             ],
             EMOTE: [AVATAR_FRAME_KINDS.EMOTE],
+            DANCE: [AVATAR_FRAME_KINDS.EMOTE],
         } as const;
 
         for (const [animation, frames] of Object.entries(AVATAR_FRAMES)) {
@@ -75,10 +79,10 @@ describe("dimensions", () => {
                     const slot = AVATAR_SHEET_SLOTS[column];
 
                     // The sheet only has the emote facing down, so every
-                    // direction shows that one.
-                    expect(slot.direction).toBe(
-                        animation === "EMOTE" ? PLAYER_DIRECTIONS.DOWN : direction
-                    );
+                    // direction shows that one, and the dance reuses it.
+                    const isShared = SHARED_FRAME_ANIMATIONS.includes(animation);
+                    const expected = [direction, PLAYER_DIRECTIONS.DOWN];
+                    expect(slot.direction).toBe(expected[Number(isShared)]);
                     expect(allowed).toContain(slot.kind);
                 }
             }
@@ -93,8 +97,8 @@ describe("dimensions", () => {
 
     it("never gives one frame to two directions of the same animation", () => {
         for (const [animation, frames] of Object.entries(AVATAR_FRAMES)) {
-            // The emote is the one animation the directions share.
-            if (animation === "EMOTE") continue;
+            // The emote and the dance are the animations the directions share.
+            if (SHARED_FRAME_ANIMATIONS.includes(animation)) continue;
 
             const columns = AVATAR_SHEET_DIRECTIONS.flatMap(
                 (direction) => frames[direction]

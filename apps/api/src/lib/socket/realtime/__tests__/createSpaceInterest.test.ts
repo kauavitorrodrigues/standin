@@ -7,6 +7,7 @@ const at = (x: number, y: number): PlayerPosition => ({
     y,
     direction: PLAYER_DIRECTIONS.DOWN,
     isSitting: false,
+    isDancing: false,
 });
 
 const build = () => createSpaceInterest({ radius: 100, exitMargin: 20 });

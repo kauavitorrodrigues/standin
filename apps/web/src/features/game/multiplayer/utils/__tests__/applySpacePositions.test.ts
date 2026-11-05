@@ -76,7 +76,7 @@ describe("applySpacePositions", () => {
         const target = build();
         const state = buildState();
         state.shortIds.set(1, "sock-a");
-        state.inSight.set("sock-a", { x: 1, y: 1, direction: "up", isSitting: false });
+        state.inSight.set("sock-a", { x: 1, y: 1, direction: "up", isSitting: false, isDancing: false });
 
         applySpacePositions(
             { entered: [], moved: [], left: [1, 2] },

@@ -66,6 +66,8 @@ export const AVATAR_ANIMATIONS = {
     SIT: { fps: 7, repeat: 0 },
     BLINK: { fps: 1 },
     EMOTE: { fps: 8, repeat: 1 },
+    // The frames of the emote, looping for as long as the key is held.
+    DANCE: { fps: 8 },
 } as const satisfies Record<string, AvatarAnimationConfig>;
 
 export type AvatarAnimation = keyof typeof AVATAR_ANIMATIONS;
@@ -79,6 +81,13 @@ export type AvatarAnimation = keyof typeof AVATAR_ANIMATIONS;
 // only has facing down, so every direction plays those frames and the avatar
 // turns to the viewer for the gesture. The other frames of the sheet (run and
 // the rest of the poses) are not used yet.
+const EMOTE_FRAMES = {
+    [PLAYER_DIRECTIONS.DOWN]: [5, 6, 7, 8],
+    [PLAYER_DIRECTIONS.LEFT]: [5, 6, 7, 8],
+    [PLAYER_DIRECTIONS.UP]: [5, 6, 7, 8],
+    [PLAYER_DIRECTIONS.RIGHT]: [5, 6, 7, 8],
+} as const;
+
 export const AVATAR_FRAMES = {
     IDLE: {
         [PLAYER_DIRECTIONS.DOWN]: [0],
@@ -106,12 +115,9 @@ export const AVATAR_FRAMES = {
         [PLAYER_DIRECTIONS.UP]: [18],
         [PLAYER_DIRECTIONS.RIGHT]: [26],
     },
-    EMOTE: {
-        [PLAYER_DIRECTIONS.DOWN]: [5, 6, 7, 8],
-        [PLAYER_DIRECTIONS.LEFT]: [5, 6, 7, 8],
-        [PLAYER_DIRECTIONS.UP]: [5, 6, 7, 8],
-        [PLAYER_DIRECTIONS.RIGHT]: [5, 6, 7, 8],
-    },
+    EMOTE: EMOTE_FRAMES,
+    // Dancing uses the emote poses until it has art of its own.
+    DANCE: EMOTE_FRAMES,
 } as const satisfies Record<
     AvatarAnimation,
     Record<(typeof AVATAR_SHEET_DIRECTIONS)[number], readonly number[]>

@@ -14,6 +14,7 @@ export const isPlayerPosition = (data: unknown): data is PlayerPosition => {
         typeof candidate.x === "number" &&
         typeof candidate.y === "number" &&
         typeof candidate.isSitting === "boolean" &&
+        typeof candidate.isDancing === "boolean" &&
         typeof candidate.direction === "string" &&
         DIRECTIONS.has(candidate.direction)
     );

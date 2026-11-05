@@ -3,6 +3,7 @@ import { PLAYER_DIRECTIONS, type PlayerPosition } from "@standin/contracts";
 import { SeatOccupancy } from "@/features/game/lib/SeatOccupancy";
 
 const position = (x: number, y: number, isSitting: boolean): PlayerPosition => ({
+    isDancing: false,
     x,
     y,
     direction: PLAYER_DIRECTIONS.DOWN,

@@ -13,6 +13,7 @@ type SpaceMediaControlsOptions = {
     micError: SpaceConnection["localAudioError"];
     sendEmote: SpaceConnection["sendEmote"];
     sendConfetti: SpaceConnection["sendConfetti"];
+    setDancing: SpaceConnection["setDancing"];
     nearbyChat: NearbyChatConnection;
     soundboard: SpaceSoundboard | null;
     announcing: SpaceAnnouncing | null;
@@ -26,6 +27,7 @@ export const useSpaceMediaControls = ({
     micError,
     sendEmote,
     sendConfetti,
+    setDancing,
     nearbyChat,
     soundboard,
     announcing,
@@ -44,6 +46,7 @@ export const useSpaceMediaControls = ({
         cameraError: video.localCameraError,
         sendEmote,
         sendConfetti,
+        setDancing,
         nearbyChat,
         soundboard,
         announcing,

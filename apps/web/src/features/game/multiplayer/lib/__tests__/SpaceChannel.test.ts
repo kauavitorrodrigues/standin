@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { SpaceChannel } from "../SpaceChannel";
 
-const position = { x: 10, y: 20, direction: "down", isSitting: false } as const;
+const position = {
+    x: 10,
+    y: 20,
+    direction: "down",
+    isSitting: false,
+    isDancing: false,
+} as const;
 
 const build = () => {
     let time = 1000;
@@ -72,6 +78,27 @@ describe("SpaceChannel", () => {
         channel.resetPosition();
         advance(100);
         channel.sendPosition(position);
+
+        expect(emit).toHaveBeenCalledTimes(2);
+    });
+
+    it("sends the start and the end of a dance reliably, so neither is lost", () => {
+        const { channel, emit, volatileEmit, advance } = build();
+        channel.sendPosition(position);
+        advance(100);
+        channel.sendPosition({ ...position, isDancing: true });
+        advance(100);
+        channel.sendPosition({ ...position, isDancing: false });
+
+        expect(emit).toHaveBeenCalledTimes(3);
+        expect(volatileEmit).not.toHaveBeenCalled();
+    });
+
+    it("sends a dance flip inside the interval, since no later frame may come", () => {
+        const { channel, emit, advance } = build();
+        channel.sendPosition(position);
+        advance(10);
+        channel.sendPosition({ ...position, isDancing: true });
 
         expect(emit).toHaveBeenCalledTimes(2);
     });

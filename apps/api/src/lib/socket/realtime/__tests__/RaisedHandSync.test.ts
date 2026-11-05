@@ -30,6 +30,7 @@ const stand = (socketId: string, x: number) => {
         y: 0,
         direction: "down",
         isSitting: false,
+        isDancing: false,
     });
 };
 
@@ -117,6 +118,7 @@ describe("RaisedHandSync", () => {
             y: 0,
             direction: "down",
             isSitting: false,
+            isDancing: false,
         });
         RaisedHandSync.refreshOnMove(SPACE, "walker", send);
 

@@ -13,3 +13,6 @@ export const EMOTE_HOTKEY_CODES = [
     ["digit7", "numpad7"],
     ["digit8", "numpad8"],
 ] as const;
+
+// The key that dances while it is held, as `event.code` in lower case.
+export const DANCE_HOTKEY_CODE = "keyz";

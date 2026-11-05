@@ -608,8 +608,12 @@ export function useSpaceConnection({
     const emoteSenderRef = useRef<EmoteSender | null>(null);
     useEffect(() => {
         const sender = new EmoteSender((payload) => {
-            channel.sendEmote(payload);
             const scene = game ? getMapScene(game) : null;
+            // The combo window may close after a dance began: it is dropped
+            // here too, so it neither goes out nor shows locally.
+            if (scene?.isLocalDancing) return;
+
+            channel.sendEmote(payload);
             scene?.playLocalEmote(payload);
         });
         emoteSenderRef.current = sender;
@@ -619,9 +623,26 @@ export function useSpaceConnection({
             emoteSenderRef.current = null;
         };
     }, [channel, game]);
+    // A person who dances makes no other gesture, so an emoji sent meanwhile
+    // goes nowhere: not to the peers, and not onto the local avatar.
     const sendEmote = useCallback(
-        (emoji: string) => emoteSenderRef.current?.send(emoji),
-        []
+        (emoji: string) => {
+            const scene = game && getMapScene(game);
+            if (scene?.isLocalDancing) return;
+
+            emoteSenderRef.current?.send(emoji);
+        },
+        [game]
+    );
+
+    // The dance key, held down. The scene starts the dance only for an avatar
+    // that stands still, and the position it broadcasts carries the state.
+    const setDancing = useCallback(
+        (isDancing: boolean) => {
+            const scene = game && getMapScene(game);
+            scene?.setLocalDancing(isDancing);
+        },
+        [game]
     );
 
     // The key throws one burst, sent to the peers and shown on the local avatar
@@ -687,6 +708,7 @@ export function useSpaceConnection({
         },
         sendChatTyping,
         sendEmote,
+        setDancing,
         sendConfetti,
         sendNearbyMessage,
         sendNearbyTyping,

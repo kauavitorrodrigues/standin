@@ -27,6 +27,10 @@ export const SpacePositionSchema = z.object({
     isSitting: z.boolean({
         error: GameErrorMessages.position.isSitting.invalid,
     }),
+    // Left out by a client that does not dance, which reads as not dancing.
+    isDancing: z
+        .boolean({ error: GameErrorMessages.position.isDancing.invalid })
+        .default(false),
 });
 
 export const SpaceEmoteSchema = z.object({

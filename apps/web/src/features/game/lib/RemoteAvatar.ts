@@ -1,5 +1,10 @@
 import Phaser from "phaser";
-import { PLAYER_DIRECTIONS, type PlayerDirection } from "@standin/contracts";
+import {
+    DANCE_MAX_MS,
+    DANCE_SERVER_GRACE_MS,
+    PLAYER_DIRECTIONS,
+    type PlayerDirection,
+} from "@standin/contracts";
 import {
     AVATAR_FIRST_FRAME,
     AVATAR_SPRITE_ORIGIN,
@@ -11,6 +16,7 @@ import { EmoteState } from "@/features/game/lib/EmoteState";
 import { getAvatarDepth } from "@/features/game/utils/getAvatarDepth";
 import { playAvatarAnimation } from "@/features/game/utils/playAvatarAnimation";
 import { RemoteAvatarGlide } from "@/features/game/lib/RemoteAvatarGlide";
+import { prefersReducedMotion } from "@/features/game/utils/prefersReducedMotion";
 import { resolveAvatarAnimation } from "@/features/game/utils/resolveAvatarAnimation";
 
 // Visual counterpart to a peer's PlayerPosition, driven entirely by network
@@ -29,6 +35,10 @@ export class RemoteAvatar {
     // gliding there from an arbitrary, unrelated spot on the map.
     private hasReceivedPosition = false;
     private isSitting = false;
+    private isDancing = false;
+    // When the dance was seen to start, so a stop that never arrives still
+    // ends it, a little after the server would have.
+    private danceSeenAt = 0;
     // The depth of the piece the peer sits on, null when unknown or standing.
     private seatDepth: number | null = null;
     private direction: PlayerDirection = PLAYER_DIRECTIONS.DOWN;
@@ -92,6 +102,16 @@ export class RemoteAvatar {
 
     setSitting(isSitting: boolean): void {
         this.isSitting = isSitting;
+        this.refresh();
+    }
+
+    // Mirrors the dance of the peer. It shows only while the avatar stands
+    // still, so a glide in progress still reads as walking.
+    setDancing(isDancing: boolean): void {
+        if (isDancing && !this.isDancing) {
+            this.danceSeenAt = this.gameObject.scene.time.now;
+        }
+        this.isDancing = isDancing;
         this.refresh();
     }
 
@@ -176,8 +196,15 @@ export class RemoteAvatar {
         const isMoving = this.isMoving();
         const now = this.gameObject.scene.time.now;
         const canStand = !this.isSitting && !isMoving;
+        const isDancing =
+            this.isDancing &&
+            canStand &&
+            now - this.danceSeenAt < DANCE_MAX_MS + DANCE_SERVER_GRACE_MS;
         const isEmoting = this.emote.update(now, canStand);
-        const isBlinking = this.blink.update(now, canStand && !isEmoting);
+        const isBlinking = this.blink.update(
+            now,
+            canStand && !isEmoting && !isDancing
+        );
         playAvatarAnimation(
             this.gameObject,
             this.textureKey,
@@ -186,6 +213,9 @@ export class RemoteAvatar {
                 isMoving,
                 isBlinking,
                 isEmoting,
+                isDancing,
+                // Asked only while dancing, since this runs every frame.
+                isReducedMotion: isDancing && prefersReducedMotion(),
             }),
             this.direction
         );
