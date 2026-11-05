@@ -9,9 +9,9 @@ export const FOOTSTEP_REACH_TILES = 9;
 // Steps sit under voices and notifications, so the curve is scaled down.
 export const FOOTSTEP_VOLUME_SCALE = 0.8;
 
-// Takes of each material, `<material>-01.mp3` to `<material>-04.mp3`. Keep in
+// Takes of each material, `<material>/<material>-01.mp3` to `<material>-17.mp3`. Keep in
 // step with the files of apps/web/public/sounds/footsteps.
-export const FOOTSTEP_TAKE_COUNT = 4;
+export const FOOTSTEP_TAKE_COUNT = 17;
 
 export const FOOTSTEP_SOUNDS_PATH = "/sounds/footsteps";
 

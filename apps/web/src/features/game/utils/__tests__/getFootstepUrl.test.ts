@@ -5,9 +5,11 @@ import { getFootstepUrl } from "../getFootstepUrl";
 
 describe("getFootstepUrl", () => {
     it("names the file by material and a two digit take", () => {
-        expect(getFootstepUrl("WOOD", 1)).toBe("/sounds/footsteps/wood-02.mp3");
+        expect(getFootstepUrl("WOOD", 1)).toBe(
+            "/sounds/footsteps/wood/wood-02.mp3"
+        );
         expect(getFootstepUrl("CARPET", 0)).toBe(
-            "/sounds/footsteps/carpet-01.mp3"
+            "/sounds/footsteps/carpet/carpet-01.mp3"
         );
     });
 

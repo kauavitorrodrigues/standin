@@ -39,7 +39,7 @@ describe("FootstepSounds", () => {
             Object.keys(FLOOR_MATERIALS).length * FOOTSTEP_TAKE_COUNT
         );
         expect(created.map(({ url }) => url)).toContain(
-            "/sounds/footsteps/grass-04.mp3"
+            "/sounds/footsteps/grass/grass-04.mp3"
         );
     });
 
@@ -49,7 +49,7 @@ describe("FootstepSounds", () => {
         sounds.play("STONE", 2, 0.4);
 
         const effect = created.find(
-            ({ url }) => url === "/sounds/footsteps/stone-03.mp3"
+            ({ url }) => url === "/sounds/footsteps/stone/stone-03.mp3"
         );
         expect(effect?.setVolume).toHaveBeenCalledWith(0.4);
         expect(effect?.play).toHaveBeenCalledTimes(1);
