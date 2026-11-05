@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import type { BaseSyntheticEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ONBOARDING_TASKS } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
@@ -28,7 +30,7 @@ export const useAvatarEditorForm = ({ editor, onDone, onSaved }: Params) => {
         defaultValues: buildFormValues(editor),
     });
 
-    const submit = form.handleSubmit(async (values) => {
+    const handleSave = form.handleSubmit(async (values) => {
         try {
             const saved = await saveAvatar.mutateAsync(buildConfig(values));
             completeTask(ONBOARDING_TASKS.PERSONALIZE_AVATAR);
@@ -45,6 +47,21 @@ export const useAvatarEditorForm = ({ editor, onDone, onSaved }: Params) => {
             });
         }
     });
+
+    // The discard dialog can ask to save while a save is running, which would
+    // repeat the request and its side effects.
+    const isSaving = useRef(false);
+    const submit = async (event?: BaseSyntheticEvent) => {
+        // Stops a native submit from reloading the page.
+        event?.preventDefault();
+        if (isSaving.current) return;
+        isSaving.current = true;
+        try {
+            await handleSave(event);
+        } finally {
+            isSaving.current = false;
+        }
+    };
 
     // Compared with the saved avatar instead of using the form's dirty flag,
     // which stays set after a change is undone.

@@ -62,4 +62,23 @@ describe("useAvatarEditorForm", () => {
         );
         expect(result.current.isDirty).toBe(true);
     });
+
+    it("ignores a second save while one is running", async () => {
+        let finish: (value: unknown) => void = () => undefined;
+        mocks.mutateAsync.mockReturnValueOnce(
+            new Promise((resolve) => {
+                finish = resolve;
+            })
+        );
+        const { result, act } = renderHook(() =>
+            useAvatarEditorForm({ editor: EDITOR, onDone: vi.fn() })
+        );
+        await act(async () => {
+            const first = result.current.submit();
+            await result.current.submit();
+            finish({});
+            await first;
+        });
+        expect(mocks.mutateAsync).toHaveBeenCalledTimes(1);
+    });
 });

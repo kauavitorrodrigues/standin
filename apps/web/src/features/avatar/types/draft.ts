@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import type { AvatarSlot } from "@standin/contracts";
 
 // A part the person chose in a slot. It carries what the preview needs to
@@ -26,6 +27,9 @@ export type AvatarDraft = {
 export type AvatarEditorFormValues = AvatarDraft & {
     activeSlot: AvatarSlot;
 };
+
+// Filled by the editor form with its save, so the discard dialog can run it.
+export type SaveDraftRef = RefObject<(() => Promise<void>) | null>;
 
 // How a random draw applies to the draft.
 export type RandomizeOptions = {

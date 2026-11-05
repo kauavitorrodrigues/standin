@@ -13,6 +13,7 @@ type AvatarDiscardDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void;
+    onSave: () => void;
 };
 
 // Asked when the editor is closed with changes that were not saved.
@@ -20,6 +21,7 @@ export const AvatarDiscardDialog = ({
     open,
     onOpenChange,
     onConfirm,
+    onSave,
 }: AvatarDiscardDialogProps) => (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
         <AlertDialogContent className="border border-border">
@@ -33,6 +35,9 @@ export const AvatarDiscardDialog = ({
                 <AlertDialogCancel>Continuar editando</AlertDialogCancel>
                 <Button type="button" variant="destructive" onClick={onConfirm}>
                     Descartar
+                </Button>
+                <Button type="button" onClick={onSave}>
+                    Salvar
                 </Button>
             </AlertDialogFooter>
         </AlertDialogContent>
