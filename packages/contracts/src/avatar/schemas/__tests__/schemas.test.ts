@@ -284,6 +284,7 @@ describe("AvatarEditorSchema", () => {
                         slot: "HAIR",
                         partId: "p2",
                         familyId: "p1",
+                        colorKey: null,
                         url: "/files/p2",
                     },
                 ],

@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import type { AvatarSlot } from "@standin/contracts";
 
 // A part the person chose in a slot. It carries what the preview needs to
@@ -7,8 +8,7 @@ export type DraftPartChoice = {
     partId: string;
     // The id of the family the row belongs to, to mark the tile in the grid.
     familyId: string;
-    // The color picked from the list, null for a part that came from the
-    // saved avatar until the person picks a color.
+    // The color of the row, null for a part with no colors.
     colorKey: string | null;
     url: string;
 };
@@ -26,4 +26,13 @@ export type AvatarDraft = {
 // person confirms.
 export type AvatarEditorFormValues = AvatarDraft & {
     activeSlot: AvatarSlot;
+};
+
+// Filled by the editor form with its save, so the discard dialog can run it.
+export type SaveDraftRef = RefObject<(() => Promise<void>) | null>;
+
+// How a random draw applies to the draft.
+export type RandomizeOptions = {
+    // The draft as it was when the start draw began, null to always apply.
+    untouchedKey: string | null;
 };

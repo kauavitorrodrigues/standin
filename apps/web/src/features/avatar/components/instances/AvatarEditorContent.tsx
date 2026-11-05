@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import { useAvatarEditor } from "../../queries/useAvatarEditor";
+import type { SaveDraftRef } from "../../types/draft";
 import type { MyAvatar } from "../../types/editor";
 import { AvatarEditorForm } from "../forms/AvatarEditorForm";
 import { AvatarEditorError } from "../views/AvatarEditorError";
@@ -8,6 +9,8 @@ import { AvatarEditorSkeleton } from "../views/AvatarEditorSkeleton";
 type AvatarEditorContentProps = {
     // Kept up to date with whether the draft has unsaved changes.
     isDirtyRef: RefObject<boolean>;
+    // Filled with the save of the draft, for the discard dialog.
+    saveRef: SaveDraftRef;
     onDone: () => void;
     onSaved?: (avatar: MyAvatar) => void;
 };
@@ -17,6 +20,7 @@ type AvatarEditorContentProps = {
 // parts of each category load later, when the category is opened.
 export const AvatarEditorContent = ({
     isDirtyRef,
+    saveRef,
     onDone,
     onSaved,
 }: AvatarEditorContentProps) => {
@@ -31,6 +35,7 @@ export const AvatarEditorContent = ({
         <AvatarEditorForm
             editor={editor.data}
             isDirtyRef={isDirtyRef}
+            saveRef={saveRef}
             onDone={onDone}
             onSaved={onSaved}
         />

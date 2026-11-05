@@ -8,8 +8,9 @@ import {
     categoryPartsInfiniteOptions,
     resolvePages,
 } from "../queries/useCategoryParts";
-import type { AvatarEditorFormValues } from "../types/draft";
+import type { AvatarEditorFormValues, RandomizeOptions } from "../types/draft";
 import type { AvatarEditorCategory } from "../types/editor";
+import { buildConfig } from "../utils/draft";
 import { buildRandomCatalog, buildRandomParts } from "../utils/randomDraft";
 import type { RandomPool } from "../utils/randomDraft";
 
@@ -24,8 +25,14 @@ export const useRandomizeDraft = (
     const queryClient = useQueryClient();
     const { getValues, setValue } = useFormContext<AvatarEditorFormValues>();
 
-    const { mutate, isPending } = useMutation({
-        mutationFn: async (): Promise<RandomPool[]> => {
+    const draftKey = () => JSON.stringify(buildConfig(getValues()));
+
+    const { mutate, isPending } = useMutation<
+        RandomPool[],
+        Error,
+        RandomizeOptions
+    >({
+        mutationFn: async () => {
             const pages = await Promise.all(
                 categories.map((category) =>
                     queryClient.ensureInfiniteQueryData({
@@ -41,7 +48,9 @@ export const useRandomizeDraft = (
                 ),
             }));
         },
-        onSuccess: (pools) => {
+        onSuccess: (pools, { untouchedKey }) => {
+            // The start draft gives way to anything chosen while it loaded.
+            if (untouchedKey !== null && untouchedKey !== draftKey()) return;
             const config = randomAvatarConfig(
                 buildRandomCatalog(pools, getValues("baseId")),
                 Math.random
@@ -61,5 +70,10 @@ export const useRandomizeDraft = (
         },
     });
 
-    return { randomize: () => mutate(), isRandomizing: isPending };
+    return {
+        randomize: () => mutate({ untouchedKey: null }),
+        // For the draft a person gets on opening: skipped if they pick first.
+        randomizeIfUntouched: () => mutate({ untouchedKey: draftKey() }),
+        isRandomizing: isPending,
+    };
 };

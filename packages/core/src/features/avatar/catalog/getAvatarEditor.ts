@@ -52,6 +52,7 @@ export const getAvatarEditor = async (
                 slot: userAvatarPartsTable.slot,
                 partId: userAvatarPartsTable.partId,
                 basePartId: avatarPartsTable.basePartId,
+                colorKey: avatarPartsTable.colorKey,
                 fileId: avatarPartsTable.fileId,
             })
             .from(userAvatarPartsTable)
@@ -107,6 +108,7 @@ export const getAvatarEditor = async (
                     slot: part.slot,
                     partId: part.partId,
                     familyId: part.basePartId ?? part.partId,
+                    colorKey: part.colorKey,
                     url: buildFileUrl(part.fileId),
                 })),
         },

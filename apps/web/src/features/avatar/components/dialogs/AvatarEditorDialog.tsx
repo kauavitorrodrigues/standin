@@ -7,6 +7,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import type { SaveDraftRef } from "../../types/draft";
 import type { MyAvatar } from "../../types/editor";
 import { AvatarEditorContent } from "../instances/AvatarEditorContent";
 import { AvatarDiscardDialog } from "./AvatarDiscardDialog";
@@ -43,6 +44,7 @@ export const AvatarEditorDialog = ({
     };
     const [isDiscardOpen, setIsDiscardOpen] = useState(false);
     const isDirtyRef = useRef(false);
+    const saveRef = useRef<SaveDraftRef["current"]>(null);
 
     const handleOpenChange = (next: boolean) => {
         if (!next && isDirtyRef.current) {
@@ -58,6 +60,13 @@ export const AvatarEditorDialog = ({
         setIsOpen(false);
     };
 
+    // The discard dialog closes first so a failed save shows its toast over the
+    // editor, which stays open with the draft intact.
+    const save = async () => {
+        setIsDiscardOpen(false);
+        await saveRef.current?.();
+    };
+
     return (
         <>
             <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -71,6 +80,7 @@ export const AvatarEditorDialog = ({
                     </DialogHeader>
                     <AvatarEditorContent
                         isDirtyRef={isDirtyRef}
+                        saveRef={saveRef}
                         onDone={discard}
                         onSaved={onSaved}
                     />
@@ -80,6 +90,7 @@ export const AvatarEditorDialog = ({
                 open={isDiscardOpen}
                 onOpenChange={setIsDiscardOpen}
                 onConfirm={discard}
+                onSave={() => void save()}
             />
         </>
     );

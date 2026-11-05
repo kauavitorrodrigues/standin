@@ -12,6 +12,8 @@ import {
     findChosenFamily,
     getSwatchVariations,
     hasAnyPart,
+    hasNoSavedAvatar,
+    isDraftEdited,
     isChoiceDeleted,
     pickVariation,
     resolveDraftBase,
@@ -76,6 +78,7 @@ describe("buildFormValues", () => {
                         slot: AVATAR_SLOTS.HAIR,
                         partId: "hair-1",
                         familyId: "hair",
+                        colorKey: "black",
                         url: "/files/hair-1",
                     },
                 ],
@@ -86,7 +89,7 @@ describe("buildFormValues", () => {
         expect(values.parts.HAIR).toEqual({
             partId: "hair-1",
             familyId: "hair",
-            colorKey: null,
+            colorKey: "black",
             url: "/files/hair-1",
         });
         expect(values.parts.TOP).toBeNull();
@@ -172,5 +175,44 @@ describe("resolveDraftBase", () => {
         expect(resolveDraftBase(bases, null)?.id).toBe("b");
         expect(resolveDraftBase([base("a", false)], null)?.id).toBe("a");
         expect(resolveDraftBase([], null)).toBeUndefined();
+    });
+});
+
+describe("isDraftEdited", () => {
+    const saved = editor({
+        baseId: "base-2",
+        parts: [
+            {
+                slot: AVATAR_SLOTS.HAIR,
+                partId: "hair-1",
+                familyId: "hair",
+                colorKey: null,
+                url: "/files/hair-1",
+            },
+        ],
+    });
+
+    it("is not edited right after opening", () => {
+        expect(isDraftEdited(buildFormValues(saved), saved)).toBe(false);
+    });
+
+    it("is not edited after changing something and changing it back", () => {
+        const values = buildFormValues(saved);
+        const changed = { ...values, parts: { ...values.parts, HAIR: null } };
+        expect(isDraftEdited(changed, saved)).toBe(true);
+        expect(isDraftEdited({ ...changed, parts: values.parts }, saved)).toBe(
+            false
+        );
+    });
+
+    it("is edited when the base changes", () => {
+        const values = { ...buildFormValues(saved), baseId: "base-3" };
+        expect(isDraftEdited(values, saved)).toBe(true);
+    });
+
+    it("counts as edited when nothing was saved", () => {
+        const empty = editor();
+        expect(hasNoSavedAvatar(empty)).toBe(true);
+        expect(isDraftEdited(buildFormValues(empty), empty)).toBe(true);
     });
 });

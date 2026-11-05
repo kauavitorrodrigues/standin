@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useDownloadAvatar } from "../../hooks/useDownloadAvatar";
 import { useDraftLayers } from "../../hooks/useDraftLayers";
 import { useRandomizeDraft } from "../../hooks/useRandomizeDraft";
 import type { AvatarEditorFormValues } from "../../types/draft";
 import type { AvatarEditor } from "../../types/editor";
+import { hasNoSavedAvatar } from "../../utils/draft";
 import { BasePickerField } from "../fields/BasePickerField";
 import { DownloadButton } from "../views/DownloadButton";
 import { PreviewImageError } from "../views/PreviewImageError";
@@ -21,14 +22,26 @@ export const AvatarPreviewPanel = ({ editor }: AvatarPreviewPanelProps) => {
     const parts = useWatch({ control, name: "parts" });
     const draft = useMemo(() => ({ baseId, parts }), [baseId, parts]);
     const { layers, hasError } = useDraftLayers(draft, editor.bases);
-    const { randomize, isRandomizing } = useRandomizeDraft(editor.categories);
+    const { randomize, randomizeIfUntouched, isRandomizing } =
+        useRandomizeDraft(editor.categories);
     const download = useDownloadAvatar(layers);
+
+    // Someone who never saved starts from a random avatar instead of a ghost.
+    const hasStarted = useRef(false);
+    useEffect(() => {
+        if (hasStarted.current || !hasNoSavedAvatar(editor)) return;
+        hasStarted.current = true;
+        randomizeIfUntouched();
+    }, [editor, randomizeIfUntouched]);
 
     return (
         <>
             <BasePickerField bases={editor.bases} />
             <div className="relative min-h-0 flex-1">
-                <AvatarPreviewCanvas layers={layers} className="h-full w-full" />
+                <AvatarPreviewCanvas
+                    layers={layers}
+                    className="h-full w-full"
+                />
                 <div className="absolute top-2 right-2">
                     <DownloadButton
                         hasAvatar={layers.length > 0}

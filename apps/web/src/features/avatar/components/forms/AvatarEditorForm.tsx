@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { RefObject } from "react";
 import { FormProvider } from "react-hook-form";
 import { useAvatarEditorForm } from "../../hooks/useAvatarEditorForm";
+import type { SaveDraftRef } from "../../types/draft";
 import type { AvatarEditor, MyAvatar } from "../../types/editor";
 import { CategoryListField } from "../fields/CategoryListField";
 import { PartGridField } from "../fields/PartGridField";
@@ -12,6 +13,7 @@ import { FormDialogControls } from "@/components/FormDialogControls";
 type AvatarEditorFormProps = {
     editor: AvatarEditor;
     isDirtyRef: RefObject<boolean>;
+    saveRef: SaveDraftRef;
     onDone: () => void;
     onSaved?: (avatar: MyAvatar) => void;
 };
@@ -20,6 +22,7 @@ type AvatarEditorFormProps = {
 export const AvatarEditorForm = ({
     editor,
     isDirtyRef,
+    saveRef,
     onDone,
     onSaved,
 }: AvatarEditorFormProps) => {
@@ -31,7 +34,18 @@ export const AvatarEditorForm = ({
 
     useEffect(() => {
         isDirtyRef.current = isDirty;
+        // The ref outlives the form, so it must not stay dirty once it is gone.
+        return () => {
+            isDirtyRef.current = false;
+        };
     }, [isDirty, isDirtyRef]);
+
+    useEffect(() => {
+        saveRef.current = submit;
+        return () => {
+            saveRef.current = null;
+        };
+    }, [submit, saveRef]);
 
     return (
         <FormProvider {...form}>
