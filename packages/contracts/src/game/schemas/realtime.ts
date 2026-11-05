@@ -41,6 +41,10 @@ export const SpaceEmoteSchema = z.object({
         .max(EMOTE_COMBO_MAX, { error: GameErrorMessages.emote.count.invalid }),
 });
 
+// Confetti carries nothing: the burst starts at the sender, and who sent it is
+// stamped by the server.
+export const SpaceConfettiSchema = z.object({});
+
 export const SpaceNearbyMessageSchema = z.object({
     text: z
         .string({ error: GameErrorMessages.nearby.text.invalid })

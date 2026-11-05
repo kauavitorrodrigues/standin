@@ -14,6 +14,7 @@ export type SpaceMediaControls = {
     micError: SpaceConnection["localAudioError"];
     cameraError: SpaceConnection["video"]["localCameraError"];
     sendEmote: SpaceConnection["sendEmote"];
+    sendConfetti: SpaceConnection["sendConfetti"];
     nearbyChat: NearbyChatConnection;
     // Null where the person cannot play clips, such as a guest.
     soundboard: SpaceSoundboard | null;

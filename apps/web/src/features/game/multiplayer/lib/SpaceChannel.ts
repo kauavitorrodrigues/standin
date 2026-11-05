@@ -72,6 +72,10 @@ export class SpaceChannel {
         this.transport.emit(SpaceEvents.SPACE_EMOTE, payload);
     }
 
+    sendConfetti(): void {
+        this.transport.emit(SpaceEvents.SPACE_CONFETTI, {});
+    }
+
     sendNearbyMessage(payload: SpaceNearbyMessageInput): void {
         this.transport.emit(SpaceEvents.SPACE_NEARBY_MESSAGE, payload);
     }

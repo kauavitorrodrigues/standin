@@ -1,6 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import {
     SPACE_EVENT_RADIUS_PX,
+    SpaceConfettiSchema,
     SpaceEmoteSchema,
     SpaceEvents,
     SpaceNearbyMessageSchema,
@@ -12,6 +13,7 @@ import { resolveSpaceSettings } from "../services/resolveSpaceSettings";
 
 type Relayable =
     | typeof SpaceEvents.SPACE_EMOTE
+    | typeof SpaceEvents.SPACE_CONFETTI
     | typeof SpaceEvents.SPACE_NEARBY_MESSAGE
     | typeof SpaceEvents.SPACE_NEARBY_TYPING;
 
@@ -69,6 +71,13 @@ export function registerSpaceEvents(io: Server, socket: Socket) {
         if (!parsed.success) return;
 
         relayNearby(io, socket, SpaceEvents.SPACE_EMOTE, parsed.data);
+    });
+
+    socket.on(SpaceEvents.SPACE_CONFETTI, (payload) => {
+        const parsed = SpaceConfettiSchema.safeParse(payload);
+        if (!parsed.success) return;
+
+        relayNearby(io, socket, SpaceEvents.SPACE_CONFETTI, parsed.data);
     });
 
     socket.on(SpaceEvents.SPACE_NEARBY_MESSAGE, (payload) => {

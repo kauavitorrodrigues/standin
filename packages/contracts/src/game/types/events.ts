@@ -17,6 +17,7 @@ import type {
 import type { MapServerEvents } from "../../maps/types/events";
 import type { MapJoinSchema, SpaceJoinSchema } from "../schemas/space";
 import type {
+    SpaceConfettiSchema,
     SpaceEmoteSchema,
     SpaceNearbyMessageSchema,
     SpaceNearbyTypingSchema,
@@ -106,6 +107,7 @@ export const SpaceEvents = {
     SPACE_POSITION: "space:position",
     SPACE_POSITIONS: "space:positions",
     SPACE_EMOTE: "space:emote",
+    SPACE_CONFETTI: "space:confetti",
     SPACE_NEARBY_MESSAGE: "space:nearby-message",
     SPACE_NEARBY_TYPING: "space:nearby-typing",
     SPACE_SET_ANNOUNCING: "space:set-announcing",
@@ -134,6 +136,7 @@ export type SpaceJoinPayload = z.infer<typeof SpaceJoinSchema>;
 export type MapJoinPayload = z.infer<typeof MapJoinSchema>;
 export type SpacePositionInput = z.infer<typeof SpacePositionSchema>;
 export type SpaceEmoteInput = z.infer<typeof SpaceEmoteSchema>;
+export type SpaceConfettiInput = z.infer<typeof SpaceConfettiSchema>;
 export type SpaceNearbyMessageInput = z.infer<typeof SpaceNearbyMessageSchema>;
 export type SpaceNearbyTypingInput = z.infer<typeof SpaceNearbyTypingSchema>;
 export type SpaceSetAnnouncingInput = z.infer<typeof SpaceSetAnnouncingSchema>;
@@ -196,6 +199,7 @@ export type SpacePositionsPayload = {
 // The sender is the socket the server saw it come from, never a field the
 // client wrote.
 export type SpaceEmoteOutput = SpaceEmoteInput & { socketId: string };
+export type SpaceConfettiOutput = SpaceConfettiInput & { socketId: string };
 export type SpaceNearbyMessageOutput = SpaceNearbyMessageInput & {
     socketId: string;
 };
@@ -240,6 +244,7 @@ export type ClientToServerEvents = {
     // replaced by the next.
     "space:position": (payload: SpacePositionInput) => void;
     "space:emote": (payload: SpaceEmoteInput) => void;
+    "space:confetti": (payload: SpaceConfettiInput) => void;
     "space:nearby-message": (payload: SpaceNearbyMessageInput) => void;
     "space:nearby-typing": (payload: SpaceNearbyTypingInput) => void;
     "chat:typing": (payload: ChatTypingInput) => void;
@@ -374,6 +379,7 @@ export type ServerToClientEvents = {
     // The positions that changed around this person, once per tick.
     "space:positions": (payload: SpacePositionsPayload) => void;
     "space:emote": (payload: SpaceEmoteOutput) => void;
+    "space:confetti": (payload: SpaceConfettiOutput) => void;
     "space:nearby-message": (payload: SpaceNearbyMessageOutput) => void;
     "space:nearby-typing": (payload: SpaceNearbyTypingOutput) => void;
     "space:announcers": (payload: SpaceAnnouncersPayload) => void;

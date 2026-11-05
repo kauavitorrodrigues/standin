@@ -72,6 +72,29 @@ describe("registerSpaceEvents", () => {
         expect(to).toHaveBeenCalledWith(["near-1"]);
     });
 
+    it("relays confetti to the neighbors with nothing but the sender", () => {
+        const socket = createSocket();
+        const { io, to, emit } = createIo();
+        registerSpaceEvents(io as never, socket as never);
+
+        socket.handlers.get("space:confetti")?.({ extra: "ignored" });
+
+        expect(to).toHaveBeenCalledWith(["near-1", "near-2"]);
+        expect(emit).toHaveBeenCalledWith("space:confetti", {
+            socketId: "sender",
+        });
+    });
+
+    it("drops confetti that is not an object", () => {
+        const socket = createSocket();
+        const { io, to } = createIo();
+        registerSpaceEvents(io as never, socket as never);
+
+        socket.handlers.get("space:confetti")?.("party");
+
+        expect(to).not.toHaveBeenCalled();
+    });
+
     it("sends nothing when nobody is near", () => {
         neighborsMock.mockReturnValue([]);
         const socket = createSocket();

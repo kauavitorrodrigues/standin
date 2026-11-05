@@ -80,12 +80,14 @@ describe("SpaceChannel", () => {
         const { channel, emit } = build();
 
         channel.sendEmote({ emoji: "👍", count: 1 });
+        channel.sendConfetti();
         channel.sendNearbyMessage({ text: "oi" });
         channel.sendNearbyTyping({ isTyping: true });
         channel.sendChatTyping({ conversationId: "c1", isTyping: false });
 
         expect(emit.mock.calls.map(([event]) => event)).toEqual([
             "space:emote",
+            "space:confetti",
             "space:nearby-message",
             "space:nearby-typing",
             "chat:typing",
