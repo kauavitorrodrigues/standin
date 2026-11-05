@@ -72,6 +72,16 @@ import { planWalk } from "@/features/game/utils/planWalk";
 import { getDirectionVector } from "@/features/game/utils/getDirectionVector";
 import { InteractionController } from "@/features/game/lib/InteractionController";
 import { RemoteAvatar } from "@/features/game/lib/RemoteAvatar";
+import { FootstepPicker } from "@/features/game/lib/FootstepPicker";
+import { FootstepSounds } from "@/features/game/lib/FootstepSounds";
+import { Footsteps } from "@/features/game/lib/Footsteps";
+import {
+    FOOTSTEP_LOCAL_ID,
+    FOOTSTEP_TAKE_COUNT,
+} from "@/features/game/consts/footsteps";
+import { buildGameFloorLookup } from "@/features/game/utils/buildGameFloorLookup";
+import { getFootstepVolume } from "@/features/game/utils/getFootstepVolume";
+import { outputVolumePreference } from "@/features/media-devices/lib/audioSettingsPreferences";
 import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
 import { ConfettiParticles } from "@/features/game/lib/ConfettiParticles";
@@ -281,6 +291,11 @@ export class MapScene extends Phaser.Scene {
     private readonly remoteHoverPool = new Map<string, HoverTarget>();
     private emoteParticles: EmoteParticles | null = null;
     private confettiParticles: ConfettiParticles | null = null;
+    private footsteps: Footsteps | null = null;
+    private footstepSounds: FootstepSounds | null = null;
+    // The output volume of the settings for the frame in progress, read once so
+    // `stepRemoteAvatar` builds no closure and reads nothing per avatar.
+    private footstepOutputVolume = 1;
     private emoteTextures: EmojiTextureCache | null = null;
     private readonly emoteRateLimiter = new EmoteRateLimiter();
     private readonly confettiRateLimiter = new EmoteRateLimiter(
@@ -544,6 +559,16 @@ export class MapScene extends Phaser.Scene {
 
         this.confettiParticles = new ConfettiParticles(this);
 
+        this.footstepSounds = new FootstepSounds();
+        const footstepSounds = this.footstepSounds;
+        this.footsteps = new Footsteps({
+            picker: new FootstepPicker(FOOTSTEP_TAKE_COUNT),
+            getMaterial: buildGameFloorLookup(this.mapData),
+            play: (material, take, volume) =>
+                footstepSounds.play(material, take, volume),
+            random: Math.random,
+        });
+
         const onFireEmoji = ({ x, y, emoji, count }: FireEmojiEvent) =>
             this.emoteParticles?.emitAt(x, y, emoji, count);
         this.game.events.on(EMOTE_EVENTS.FIRE_EMOJI, onFireEmoji);
@@ -558,6 +583,10 @@ export class MapScene extends Phaser.Scene {
             this.emoteTextures = null;
             this.emoteRateLimiter.clear();
             this.confettiRateLimiter.clear();
+            this.footsteps?.clear();
+            this.footsteps = null;
+            this.footstepSounds?.destroy();
+            this.footstepSounds = null;
             this.game.events.off(PLAYER_EVENTS.HOVER_CHANGED, onPlayerHover);
             this.game.events.off(selectedEvent, onPlayerSelected);
             this.playerOutline?.destroy();
@@ -726,6 +755,7 @@ export class MapScene extends Phaser.Scene {
         this.updateTravel();
         this.frameDelta = delta;
         this.remoteAvatars.forEach(this.updateRemoteAvatar);
+        this.updateFootsteps();
         this.updateNameTags();
         this.nearbyBubbles?.update();
         this.updateTypingMarks();
@@ -1463,6 +1493,43 @@ export class MapScene extends Phaser.Scene {
         avatar.update(this.frameDelta);
     };
 
+    // Your steps always sound; the steps of others sound only from the same
+    // private room (or both outside one) and inside the reach of footsteps.
+    // The output volume of the settings is on top, so zero silences them.
+    private updateFootsteps(): void {
+        const { footsteps, player } = this;
+        if (!footsteps || !player) return;
+
+        this.footstepOutputVolume = outputVolumePreference.get();
+        if (player.isWalking) {
+            footsteps.step(
+                FOOTSTEP_LOCAL_ID,
+                player.gameObject,
+                this.time.now,
+                getFootstepVolume(0, this.proximityPreset) *
+                    this.footstepOutputVolume
+            );
+        }
+        this.remoteAvatars.forEach(this.stepRemoteAvatar);
+    }
+
+    private readonly stepRemoteAvatar = (
+        avatar: RemoteAvatar,
+        socketId: string
+    ): void => {
+        if (!avatar.isWalking) return;
+
+        this.footsteps?.step(
+            socketId,
+            avatar.gameObject,
+            this.time.now,
+            getFootstepVolume(
+                this.getCommunicationDistanceTo(avatar),
+                this.proximityPreset
+            ) * this.footstepOutputVolume
+        );
+    };
+
     private readonly applyNameTagAllowed = (avatar: RemoteAvatar): void => {
         avatar.setNameTagAllowed(this.isRemoteTagAllowed(avatar));
     };
@@ -1538,6 +1605,7 @@ export class MapScene extends Phaser.Scene {
         this.confettiRateLimiter.remove(socketId);
         this.nearbyRateLimiter.remove(socketId);
         this.nearbyTypingRateLimiter.remove(socketId);
+        this.footsteps?.remove(socketId);
     }
 
     clearRemoteAvatars(): void {
@@ -1548,6 +1616,7 @@ export class MapScene extends Phaser.Scene {
         );
         this.remoteAvatars.forEach((avatar) => avatar.destroy());
         this.remoteAvatars.clear();
+        this.footsteps?.clear();
         this.seatOccupancy.clear();
         this.remoteUserIds.clear();
         this.nearbySocketIds.clear();

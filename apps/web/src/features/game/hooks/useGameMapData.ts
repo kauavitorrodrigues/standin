@@ -25,5 +25,10 @@ const buildGameMapData = (
 ): GameMapData | null => {
     if (!payload) return null;
 
-    return { ...map, assets: payload.assets, placed: payload.placed };
+    return {
+        ...map,
+        assets: payload.assets,
+        placed: payload.placed,
+        floorTilesets: payload.tilesets,
+    };
 };
