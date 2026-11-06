@@ -39,7 +39,8 @@ export const MAP_TOOL_META: readonly EditorToolMeta[] = [
     {
         value: EDITOR_TOOLS.ERASE,
         label: "Borracha",
-        description: "Apaga os tiles por onde você passar.",
+        description:
+            "Apaga os tiles por onde você passar. Segure Shift para apagar uma área.",
         icon: EraserIcon,
         shortcut: "E",
     },

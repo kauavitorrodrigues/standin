@@ -36,6 +36,22 @@ export class TilePreview {
         this.add(cells);
     }
 
+    // Shows the rectangle between two corners as ONE shape, so a large area
+    // costs the same as a small one.
+    setRect(a: Cell, b: Cell): void {
+        this.clear();
+        const minX = Math.min(a[0], b[0]);
+        const minY = Math.min(a[1], b[1]);
+        const width = Math.abs(a[0] - b[0]) + 1;
+        const height = Math.abs(a[1] - b[1]) + 1;
+        this.graphics.fillRect(
+            minX * TILE_SIZE,
+            minY * TILE_SIZE,
+            width * TILE_SIZE,
+            height * TILE_SIZE
+        );
+    }
+
     clear(): void {
         this.graphics.clear();
         // clear() drops the fill style too in Phaser, so it is set again.
