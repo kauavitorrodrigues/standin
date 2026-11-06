@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import {
+    MAP_CAMERA_CONFIG,
     WHEEL_ZOOM_DIRECTIONS,
     type WheelZoomDirection,
 } from "@/features/game/consts/camera";
@@ -41,10 +42,27 @@ export const applyWheelZoom = (
     }
 };
 
+/** Says whether a wheel event may zoom: not while the last step is cooling. */
+export const createWheelZoomGate = (
+    cooldownMs: number,
+    now: () => number = () => performance.now()
+): (() => boolean) => {
+    let lastStepAt = Number.NEGATIVE_INFINITY;
+    return () => {
+        const time = now();
+        if (time - lastStepAt < cooldownMs) return false;
+        lastStepAt = time;
+        return true;
+    };
+};
+
 export const bindMapWheelZoom = (
     scene: Phaser.Scene,
     controller: MapCameraController
 ): void => {
+    const mayStep = createWheelZoomGate(
+        MAP_CAMERA_CONFIG.WHEEL_ZOOM_COOLDOWN_MS
+    );
     scene.input.on(
         Phaser.Input.Events.POINTER_WHEEL,
         (
@@ -53,7 +71,10 @@ export const bindMapWheelZoom = (
             _deltaX: number,
             deltaY: number
         ) => {
-            applyWheelZoom(controller, resolveWheelZoomDirection(deltaY));
+            const direction = resolveWheelZoomDirection(deltaY);
+            if (direction === WHEEL_ZOOM_DIRECTIONS.NEUTRAL) return;
+            if (!mayStep()) return;
+            applyWheelZoom(controller, direction);
         }
     );
 };

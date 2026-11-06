@@ -235,7 +235,8 @@ export class MapCameraController {
 
         this.camera.zoomTo(
             targetZoom,
-            MAP_CAMERA_CONFIG.ZOOM_TWEEN_DURATION_MS
+            MAP_CAMERA_CONFIG.ZOOM_TWEEN_DURATION_MS,
+            MAP_CAMERA_CONFIG.ZOOM_TWEEN_EASE
         );
         this.camera.followOffset.x = -this.followOffsetXPixels / targetZoom;
         this.targetZoom = targetZoom;

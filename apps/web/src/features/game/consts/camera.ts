@@ -3,7 +3,14 @@ export const MAP_CAMERA_CONFIG = {
     MIN_ZOOM: 0.25,
     MAX_ZOOM: 4,
     ZOOM_STEP: 1,
-    ZOOM_TWEEN_DURATION_MS: 100,
+    // The step stays a whole zoom so the pixel art lands on whole screen px once
+    // the tween ends. The ease is what makes it soft.
+    ZOOM_TWEEN_DURATION_MS: 280,
+    ZOOM_TWEEN_EASE: "Cubic.easeOut",
+    // One scroll gesture sends many wheel events, some of them with the other
+    // sign. After a step, the ones inside this window are dropped, so a gesture
+    // is one step and the zoom does not bounce between the two limits.
+    WHEEL_ZOOM_COOLDOWN_MS: 260,
     // Off on purpose: Phaser would floor the scroll to whole world px, which
     // shakes the avatar at a high zoom. The controller snaps the scroll to whole
     // screen px instead (see `MapCameraController`).
