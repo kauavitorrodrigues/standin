@@ -37,6 +37,12 @@ decoration on the map.
   `EMPTY` (a transparent tile that is never painted). A tileset is "complete"
   when all of its tiles have a category.
 - Mark a tile as **solid** when avatars cannot walk through it.
+- Give each `FLOOR` tile a **material**: `WOOD` (the default), `CARPET`, `STONE`
+  or `GRASS`. It picks the sound of the footsteps on that tile, and a tile with
+  no material sounds as wood. Select floor tiles and use the **Piso** panel; the
+  choice applies to every selected tile. Unlike the category, the material can
+  still be changed on a tileset that maps already use. A tile that stops being
+  a floor loses its material.
 - Mark one `FLOOR` and one `WALL` tile as the **blank default**. Blank maps
   are generated from them.
 
@@ -125,15 +131,32 @@ enabled yet.
 | Pan              | `M` | Drag to move the map (also middle button or space) |
 | Select           | `V` | Select an object or a zone                         |
 | Brush            | `P` | Paint one tile at a time                           |
-| Eraser           | `E` | Erase tiles                                        |
+| Eraser           | `E` | Erase tiles; hold Shift to erase an area           |
 | Rectangle        | `R` | Fill an area with the chosen tile                  |
 | Hollow rectangle | `B` | Paint only the border of an area                   |
 | Bucket           | `G` | Flood fill                                         |
 | Picker           | `I` | Pick the tile under the cursor                     |
 | Zones            | `Z` | Draw a zone (spawn, area, room)                    |
 
-Zoom goes from 1x to 3x. The history keeps the last 200 steps, and undo and
-redo work across tiles, zones, and objects.
+Zoom has five levels: 25%, 50%, 100%, 200% and 300%. **Fit** picks the largest
+level where the whole map is visible. The history keeps the last 200 steps, and
+undo and redo work across tiles, zones, and objects.
+
+Holding Shift while you drag the eraser erases the whole rectangle between the
+press and the pointer, in every layer that shows. It is one operation, so a
+single undo brings the area back, and releasing Shift in the middle of the drag
+goes back to erasing along the path. With the **Objects** tab open the eraser
+still removes one object per click.
+
+### The outer area
+
+When a whole map is edited, the camera can go one map size past each edge. The
+space past the edge is a flat teal color with a thin frame on the edge of the
+map, so a small map no longer sits against the border of the screen. Nothing is
+placed there. The grid, the thumbnails and the snapshots never draw it, and the
+area composer, whose canvas is tight around the area, does not have it. The
+game uses the same outer area: the camera can go past the edge, the avatar
+cannot.
 
 ### The palette
 
@@ -149,11 +172,11 @@ The layout is stored in a Tiled-compatible shape with these layers, from back
 to front: `ground`, `area-floor`, `walls`, `furniture`, `foreground`, and a
 `zones` group. Zone kinds:
 
-| Kind      | Role                                           |
-| --------- | ---------------------------------------------- |
-| `spawn`   | Where avatars appear when they enter           |
-| `area`    | A named region                                 |
-| `private` | A **room**: walls, doors, and a lockable entry |
+| Kind      | Role                                                                                        |
+| --------- | ------------------------------------------------------------------------------------------- |
+| `spawn`   | Where avatars appear when they enter, drawn as your own avatar (the ghost if you have none) |
+| `area`    | A named region                                                                              |
+| `private` | A **room**: walls, doors, and a lockable entry                                              |
 
 Limits: 100 tiles per side, 8 tilesets, 200 zones, and 3000 objects per map.
 
@@ -266,7 +289,7 @@ derived from the key of the part and the color, like in the endpoint. The
             "key": "floor",
             "name": "Floor",
             "file": "floor.png",
-            "tileMeta": { "0": { "category": "FLOOR" } }
+            "tileMeta": { "0": { "category": "FLOOR", "material": "WOOD" } }
         }
     ],
     "assets": [

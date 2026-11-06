@@ -1,7 +1,7 @@
 # Avatar guide
 
 Every person has one avatar, the same in every space. It is a stack of parts
-(skin, hair, clothes, accessories) picked in an editor window. Whoever has no avatar is drawn as a ghost.
+(skin, hair, clothes, accessories) picked in an editor window. Whoever has no avatar is drawn as a ghost. The spawns of the map editor use the same avatar.
 
 The avatar is not the **profile picture**. The profile picture is a square
 photo shown in lists, the chat and the name tag, and it is independent from
@@ -25,9 +25,16 @@ This page is for people who use or maintain the feature.
    are kept and come back when you remove the costume.
 4. Use the dice for a random avatar, the arrows or a click on the preview to
    turn it, and the download button to save the front frame as an image.
-5. **Concluir** saves. **Cancelar** throws the draft away.
+5. **Concluir** saves. **Cancelar** throws the draft away. If you changed
+   something, closing asks **Descartar alterações?** with three answers:
+   **Continuar editando**, **Descartar** and **Salvar**. If the save fails the
+   editor stays open with your draft intact. Changing a part and changing it
+   back is not an edit.
+6. Colors are saved with each part, so reopening the editor shows them and a
+   part you add next takes the same color. Removing a part also drops the
+   costume.
 
-Nothing is required. An empty avatar means the ghost.
+Nothing is required. An empty avatar means the ghost, but the first time you open the editor without an avatar it starts from a random one.
 
 ## For admins: the parts library
 
@@ -57,6 +64,16 @@ it is assembled again.
   space is assembled again then.
 - **Fallback.** While a sheet loads, if it fails, or if the file is gone, the
   ghost is drawn. A broken sheet never breaks a sprite.
+
+## Animations
+
+The sheet holds the frames of each direction and the game picks one animation
+at a time, in this order: dance, emote, walk, eyes closed, idle. Sitting plays
+two frames once at 7 fps (the person stands, then sits) and holds the seated
+one, instead of a single frame. The dance, held with `Z`, loops the emote
+frames at 8 fps facing the viewer, because there is no dance art yet, and holds
+the emote pose under reduced motion. See [realtime.md](realtime.md) for the
+dance and confetti rules.
 
 ## Changing the size of the avatar
 
