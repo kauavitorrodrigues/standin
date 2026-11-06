@@ -24,24 +24,25 @@ describe("getFitZoom", () => {
     it("falls back to the smallest level when the map never fits", () => {
         expect(
             getFitZoom({
-                mapWidth: 3200,
-                mapHeight: 3200,
+                mapWidth: 12800,
+                mapHeight: 12800,
                 viewWidth: 800,
                 viewHeight: 600,
             })
-        ).toBe(1);
+        ).toBe(0.25);
     });
 });
 
 describe("getNextZoom", () => {
     it("steps through the levels", () => {
+        expect(getNextZoom(0.5, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(1);
         expect(getNextZoom(1, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(2);
         expect(getNextZoom(3, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(2);
     });
 
     it("stays at the ends", () => {
         expect(getNextZoom(3, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(3);
-        expect(getNextZoom(1, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(1);
+        expect(getNextZoom(0.25, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(0.25);
         expect(getNextZoom(2, EDITOR_ZOOM_DIRECTIONS.NEUTRAL)).toBe(2);
     });
 });
@@ -93,7 +94,7 @@ describe("getCameraBounds", () => {
 
 describe("clampZoom", () => {
     it("keeps the zoom between the first and the last level", () => {
-        expect(clampZoom(0.2)).toBe(1);
+        expect(clampZoom(0.1)).toBe(0.25);
         expect(clampZoom(2.5)).toBe(2.5);
         expect(clampZoom(1.14108319)).toBe(1.14);
         expect(clampZoom(10)).toBe(3);
@@ -104,5 +105,6 @@ describe("getNextZoom between levels", () => {
     it("steps to the nearest level on that side", () => {
         expect(getNextZoom(1.4, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(2);
         expect(getNextZoom(1.4, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(1);
+        expect(getNextZoom(0.4, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(0.25);
     });
 });
