@@ -1,6 +1,6 @@
 export const MAP_CAMERA_CONFIG = {
     DEFAULT_ZOOM: 2,
-    MIN_ZOOM: 0.5,
+    MIN_ZOOM: 0.25,
     MAX_ZOOM: 4,
     ZOOM_STEP: 1,
     ZOOM_TWEEN_DURATION_MS: 100,
@@ -14,6 +14,9 @@ export const MAP_CAMERA_CONFIG = {
     FOLLOW_LERP: 1,
     NO_HORIZONTAL_FOLLOW_OFFSET: 0,
     NO_ZOOM_DELTA: 0,
+    // How far the camera may go past each edge of the map, as a share of the
+    // map size. The avatar stays inside the map, the view does not.
+    OUTER_MARGIN_RATIO: 1,
 } as const;
 
 export const WHEEL_ZOOM_DIRECTIONS = {

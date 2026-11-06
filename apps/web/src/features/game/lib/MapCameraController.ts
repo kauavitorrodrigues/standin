@@ -2,6 +2,7 @@ import type Phaser from "phaser";
 import { AVATAR } from "@standin/contracts";
 import { MAP_CAMERA_CONFIG } from "@/features/game/consts/camera";
 import { cameraZoomPreference } from "@/features/game/lib/cameraZoomPreference";
+import { resolveCameraBounds } from "@/features/game/utils/cameraBounds";
 import { resolveClampedZoom } from "@/features/game/utils/zoom";
 import { snapToScreenPixel } from "@/features/game/utils/snapToScreenPixel";
 import type { CameraState } from "@/features/game/types/game";
@@ -168,7 +169,7 @@ export class MapCameraController {
 
     /**
      * Re-applies the zoom needed for the map to always cover the current
-     * viewport (never leaving empty margins). Only ever grows the zoom from
+     * viewport (never leaving the area past the camera bounds in view). Only ever grows the zoom from
      * whatever the user currently has set, safe to call on every resize.
      */
     fitToViewport(): void {
@@ -178,10 +179,13 @@ export class MapCameraController {
     }
 
     private resolveCoverZoom(): number {
-        return Math.max(
-            this.camera.width / this.mapWidth,
-            this.camera.height / this.mapHeight
+        // The view may show the margin around the map, so it is the margin
+        // included that must fill the viewport.
+        const { width, height } = resolveCameraBounds(
+            this.mapWidth,
+            this.mapHeight
         );
+        return Math.max(this.camera.width / width, this.camera.height / height);
     }
 
     private resolveMinZoom(): number {
