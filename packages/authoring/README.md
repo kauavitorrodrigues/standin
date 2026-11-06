@@ -28,7 +28,7 @@ It only composes what `@standin/contracts` already has (`replayOps`, `buildRoomW
 
 Every builder answers `{ ok: true, ops }` or `{ ok: false, issues }`, where an issue is `{ code, path, message, opIndex? }`. The builders replay their ops on the model, so an `ok` result is accepted by the shared rules.
 
-Two things the palette does not give: a tileset has no key, so tilesets are found by id or by name, and a wall style is named in the tile meta of the tileset.
+Two things the palette does not give: a tileset has no key, so tilesets are found by id or by name, and a wall style is named in the tile meta of the tileset. A `FLOOR` tile can also name a `material` there (`CARPET`, `WOOD`, `STONE` or `GRASS`), which only picks its footstep sound.
 
 ## Example
 

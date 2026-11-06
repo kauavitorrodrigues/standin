@@ -187,6 +187,8 @@ without its own limit shares one bucket (30 per second, burst 60).
 | `space:join`                                                                                                    | 1          | 5        |
 | `space:position`                                                                                                | 20         | 40       |
 | `space:emote`                                                                                                   | 8          | 16       |
+| `space:confetti`                                                                                                | 3          | 6        |
+| Announcing and hand raise (`space:set-announcing`, `space:share-video-with-announcer`, `space:set-hand-raised`) | 2          | 6        |
 | `space:nearby-message`                                                                                          | 3          | 6        |
 | `space:nearby-typing`                                                                                           | 4          | 8        |
 | `chat:typing`                                                                                                   | 4          | 8        |

@@ -68,6 +68,12 @@ To show a fixed link again, the server keeps it sealed (AES-256-GCM) in the data
 - **Changing it later** does not delete anything, but the fixed links already made can no longer be read. The next time an owner opens the screen the link is replaced by a new one, and the old one stops working. E-mail invitations already sent still work, because they are found by a hash, but their link can no longer be copied from the list.
 - **Back it up** with the rest of `.env`.
 
+The owner of a space can also let its members copy the guest link (see [spaces.md](spaces.md#members-inviting-guests)). Resetting the link and changing its validity stay with the owner.
+
+## Site icons and the share image
+
+The web build includes the favicon, the app icons, a web manifest and a 1200x630 `og.png` for link previews. The `og:image` and `twitter:image` tags need an absolute URL, so the build reads `VITE_SITE_URL`. In the compose stack it comes from the build argument `SITE_URL`, which is set to `FRONTEND_URL`, so nothing else is needed there. For a manual build set `VITE_SITE_URL` (a trailing slash is removed; empty gives a relative URL). The rasters are regenerated from the SVGs in `apps/web/public/brand` with `apps/web/scripts/brand/render.mjs`, which needs `rsvg-convert`, ImageMagick and headless Chrome (set `CHROME` to use another binary).
+
 ## Health checks
 
 The API answers `GET /health` with no session, rate limited to 120 requests a minute per address. The body is `{"status": "ok" | "degraded" | "down", "timestamp": "<ISO date>", "responseTimeMs": <number>}`. The database is checked with a 2 second limit: `ok` when it answers within 500 ms, `degraded` when it answers slower, `down` when it fails or times out. `ok` and `degraded` answer HTTP 200 and `down` answers 503. The body never says why a check failed. Through the proxy it is `/api/health`. `compose.yml` uses it as the healthcheck of `app` (the migrations run inside its start period) and the `proxy` waits for a healthy `app` before it starts. The `proxy` check asks the admin endpoint Caddy keeps inside its container. `docker compose ps` shows the state of each.

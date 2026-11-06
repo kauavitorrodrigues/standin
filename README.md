@@ -26,7 +26,7 @@ The product goal is to give a team a navigable "virtual office" with real-time p
 
 - **Multi-tenant organizations**: each `Organization` isolates its own members (`organization_members`, `OWNER`/`MEMBER` roles) and spaces.
 - **Spaces (`Space`)**: a space belongs to exactly one organization and owns exactly one `Map`. The map is created together with the space, either blank (by size tier) or copied from a published template.
-- **Built-in map editor**: tile painting, objects, areas, rooms with doors, zones, undo/redo, and a draft-then-publish flow, all inside the platform (see [Map Editor](#map-editor)).
+- **Built-in map editor**: tile painting, objects, areas, rooms with doors, zones, undo/redo, and a draft-then-publish flow, all inside the platform (see [Map Editor](#map-editor)). Zoom goes from 25% to 300%, Shift on the eraser clears a whole area in one step, and the camera shows an outer area past the edge of the map. Spawns are drawn with your own avatar.
 - **Asset library**: upload your own PNGs as tilesets or placeable objects, with footprint and collision painted in the browser. The library is global (managed by the instance admin) or private to an organization (managed by its owner).
 - **Reusable areas**: capture a block of tiles, objects, and an optional zone as an area, and stamp it onto any map.
 - **Rooms and doors**: a room is a private zone with walls and doors. Doors can be locked, and people outside ask to join. Communication is limited to the people in the same room.
@@ -42,6 +42,12 @@ The product goal is to give a team a navigable "virtual office" with real-time p
 - **Chat messaging**: text and attachment messages, in two conversation shapes: a `DIRECT` conversation between members, or a `SPACE` conversation shared by every member of that space (both scoped to the organization).
 - **Room for a lot of people**: a space holds many people at once, depending on the server. See the [performance guide](docs/performance.md).
 - **Proximity voice chat**: voice through a media server (an SFU) that runs inside the API, forwarded automatically between users when their avatars get close enough inside a space, so a space can hold dozens of people on microphone.
+- **Announcing and raising a hand**: a member can announce to the people around them, and listeners choose whether to share their video with the announcer. In the grid view a member can raise a hand. Neither exists for guests. See the [real-time guide](docs/realtime.md).
+- **Emotes, confetti and dance**: eight emotes on the keys 1 to 8, confetti on `F` and a dance held on `Z`, all visible to the people nearby.
+- **Chat mentions**: type `@` in a space conversation to mention a member, who gets a notification even when the conversation is muted.
+- **Onboarding**: a five task checklist for new people (desk, avatar, moving around, decorating, hanging out). See [docs/onboarding.md](docs/onboarding.md).
+- **Guest invites for members**: the owner of a space can let any member copy the guest link.
+- **Footsteps by floor material**: floor tiles have a material (wood, carpet, stone or grass) and the footsteps sound like it.
 - **Proximity camera and screen sharing**: the same rule as voice, applied to video. The server picks the few videos each person sees (a shared screen first), and videos render centered over the map.
 
 ## Documentation
@@ -56,6 +62,7 @@ Longer guides live in [`docs/`](docs). Each one is for the people who use or mai
 | [Avatar](docs/avatar.md)                        | How people build their avatar and how admins manage the parts library      |
 | [Profile picture](docs/profile-picture.md)      | The photo shown in lists, chat and the name tag                            |
 | [Sign in with GitHub](docs/github-login.md)     | Turning on the optional GitHub login for an instance                       |
+| [Onboarding](docs/onboarding.md)                | The first steps checklist, how each task completes and where it is stored  |
 | [Real-time and media](docs/realtime.md)         | Presence, proximity voice, camera and screen sharing, and chat             |
 | [Data model](docs/data-model.md)                | Who owns what, how a map is stored, and the entities                       |
 | [Architecture](docs/architecture.md)            | The repository layout, the stack and how the pieces fit                    |
@@ -72,7 +79,7 @@ An `Organization` is the tenant. It has members, and it owns spaces and a privat
 
 ### Map Editor
 
-The editor is the core of the platform. Everything a space looks like is made with it, from the library of pieces (tilesets, assets, bundles, areas) up to the finished map, with rooms and doors, a draft-then-publish flow and two edit scopes. The full walkthrough is in the [map editor guide](docs/map-editor.md).
+The editor is the core of the platform. Everything a space looks like is made with it, from the library of pieces (tilesets, assets, bundles, areas) up to the finished map, with rooms and doors, a draft-then-publish flow and two edit scopes. The camera can go one map size past each edge, over a flat outer area with a frame on the edge of the map, in the editor and in the game. The full walkthrough is in the [map editor guide](docs/map-editor.md).
 
 ### From map to rendered world
 

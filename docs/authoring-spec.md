@@ -45,6 +45,11 @@ schema. A test fails when the committed files are out of date.
 | `objects`  | all                         | Single objects                                                          |
 | `spawns`   | `map`, `template`           | Spawn points                                                            |
 
+A `FLOOR` tile of a tileset can name a `material` in its `tileMeta` in
+`library.json` (`CARPET`, `WOOD`, `STONE` or `GRASS`; wood when absent). It is
+only valid on a `FLOOR` tile, and the spec does not use it: it only decides the
+footsteps.
+
 Tilesets have no key: refer to them by **name or id**. Assets are referred to
 by their `key`. Walls are a wall `style` named in the tile meta of the tileset
 (`{ tileset: brick, style: Brick }`), or one `tileIndex` of the style.

@@ -50,6 +50,25 @@ with the last one it sent, and skips the upload when they are the same.
 Only the owner can send a photo. A member who decorates their own desk does not
 change it, and the server would refuse the upload anyway.
 
+### Members inviting guests
+
+By default only the owner of a space copies its guest link. The owner can turn
+on **Membros podem convidar** in **Configurações**, in the **segurança**
+section, group **Convites**. While it is on, any member of the organization can
+copy the guest link from **Convidar pessoas**. The switch saves at once and
+applies to everybody in the space.
+
+| Role                | Guest link                                                       |
+| ------------------- | ---------------------------------------------------------------- |
+| Owner               | Sees the link, resets it, sets its validity and the guest access |
+| Member, setting on  | Sees and copies the link only. No reset, no members tab          |
+| Member, setting off | Is not offered the link                                          |
+
+Guest access has to be on for the link to work, so the setting changes nothing
+while guests are not accepted. A guest or a stranger always gets a plain 403.
+The setting is `PUT /spaces/:spaceId/settings` (owner only) and reaches the
+open clients through the settings event of the space.
+
 ### Limits
 
 | Rule         | Value                                                     |
