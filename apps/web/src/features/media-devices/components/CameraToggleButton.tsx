@@ -5,9 +5,9 @@ import { LOCAL_CAMERA_ERROR_LABEL } from "@/features/media-devices/consts/videoE
 import { CAMERA_SHORTCUT } from "@/features/media-devices/consts/shortcuts";
 import { useMediaDeviceControl } from "@/features/media-devices/hooks/useMediaDeviceControl";
 
-type Props = { error: LocalAudioStreamError | null };
+type Props = { error: LocalAudioStreamError | null; compact?: boolean };
 
-export const CameraToggleButton = ({ error }: Props) => {
+export const CameraToggleButton = ({ error, compact }: Props) => {
     const {
         enabled,
         pending,
@@ -21,6 +21,7 @@ export const CameraToggleButton = ({ error }: Props) => {
 
     return (
         <DeviceToggleButton
+            compact={compact}
             shortcut={CAMERA_SHORTCUT}
             errorLabel={error && LOCAL_CAMERA_ERROR_LABEL[error]}
             pressed={enabled}

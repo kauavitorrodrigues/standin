@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { ChevronUpIcon, Loader2Icon } from "lucide-react";
+import { PresenceSlot } from "@/components/ui/presence-slot";
 import { ControlButton } from "@/components/ControlButton";
 import { DeviceErrorMark } from "@/features/media-devices/components/DeviceErrorMark";
+import { cn } from "@/lib/utils";
 import { useHotkey } from "@/hooks/useHotkey";
 import type { Shortcut } from "@/types/shortcut";
 import {
@@ -49,6 +51,8 @@ type DeviceToggleButtonProps = {
     shortcut?: Shortcut;
     // Why the device could not be captured, if it could not.
     errorLabel?: string | null;
+    // Drops the device menu so the button fits a narrow bar.
+    compact?: boolean;
 };
 
 // The off state keeps the regular icon and lays a red diagonal across it,
@@ -142,6 +146,7 @@ export const DeviceToggleButton = ({
     secondarySection,
     shortcut,
     errorLabel = null,
+    compact = false,
 }: DeviceToggleButtonProps) => {
     const label = pressed ? activeLabel : inactiveLabel;
     useHotkey(shortcut?.keys ?? [], onPressedChange, {
@@ -155,7 +160,10 @@ export const DeviceToggleButton = ({
                     render={
                         <ControlButton
                             type="button"
-                            className="relative w-9 rounded-r-none bg-transparent"
+                            className={cn(
+                                "relative w-9 bg-transparent",
+                                !compact && "rounded-r-none"
+                            )}
                             aria-pressed={pressed}
                             aria-label={label}
                             disabled={pending}
@@ -175,54 +183,58 @@ export const DeviceToggleButton = ({
                 </TooltipContent>
             </Tooltip>
 
-            <span aria-hidden className="h-6 w-px bg-border -mx-0.5" />
+            <PresenceSlot show={!compact} halfGap={0}>
+                <span aria-hidden className="h-6 w-px bg-border -mx-0.5" />
 
-            <DropdownMenu
-                onOpenChange={(open) => {
-                    if (open) onOpenDeviceMenu();
-                }}
-            >
-                <DropdownMenuTrigger
-                    render={
-                        <ControlButton
-                            className="w-5 rounded-l-none bg-transparent text-muted-foreground [&_svg:not([class*='size-'])]:size-3"
-                            aria-label="Selecionar dispositivo"
-                        />
-                    }
+                <DropdownMenu
+                    onOpenChange={(open) => {
+                        if (open) onOpenDeviceMenu();
+                    }}
                 >
-                    <ChevronUpIcon />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                    <DropdownMenuGroup>
-                        <DropdownMenuLabel>{menuLabel}</DropdownMenuLabel>
-                    </DropdownMenuGroup>
-                    <DeviceMenuBody
-                        devicesLoading={devicesLoading}
-                        devices={devices}
-                        selectedDeviceId={selectedDeviceId}
-                        onSelectDevice={onSelectDevice}
-                    />
-
-                    {secondarySection && (
-                        <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                                <DropdownMenuLabel>
-                                    {secondarySection.label}
-                                </DropdownMenuLabel>
-                            </DropdownMenuGroup>
-                            <DeviceMenuBody
-                                devicesLoading={devicesLoading}
-                                devices={secondarySection.devices}
-                                selectedDeviceId={
-                                    secondarySection.selectedDeviceId
-                                }
-                                onSelectDevice={secondarySection.onSelectDevice}
+                    <DropdownMenuTrigger
+                        render={
+                            <ControlButton
+                                className="w-5 rounded-l-none bg-transparent text-muted-foreground [&_svg:not([class*='size-'])]:size-3"
+                                aria-label="Selecionar dispositivo"
                             />
-                        </>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                        }
+                    >
+                        <ChevronUpIcon />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64">
+                        <DropdownMenuGroup>
+                            <DropdownMenuLabel>{menuLabel}</DropdownMenuLabel>
+                        </DropdownMenuGroup>
+                        <DeviceMenuBody
+                            devicesLoading={devicesLoading}
+                            devices={devices}
+                            selectedDeviceId={selectedDeviceId}
+                            onSelectDevice={onSelectDevice}
+                        />
+
+                        {secondarySection && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuLabel>
+                                        {secondarySection.label}
+                                    </DropdownMenuLabel>
+                                </DropdownMenuGroup>
+                                <DeviceMenuBody
+                                    devicesLoading={devicesLoading}
+                                    devices={secondarySection.devices}
+                                    selectedDeviceId={
+                                        secondarySection.selectedDeviceId
+                                    }
+                                    onSelectDevice={
+                                        secondarySection.onSelectDevice
+                                    }
+                                />
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </PresenceSlot>
         </div>
     );
 };

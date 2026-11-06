@@ -7,9 +7,9 @@ import {
 import { MIC_SHORTCUT } from "@/features/media-devices/consts/shortcuts";
 import { useMediaDeviceControl } from "@/features/media-devices/hooks/useMediaDeviceControl";
 
-type Props = { error: LocalAudioStreamError | null };
+type Props = { error: LocalAudioStreamError | null; compact?: boolean };
 
-export const MicToggleButton = ({ error }: Props) => {
+export const MicToggleButton = ({ error, compact }: Props) => {
     const {
         enabled,
         pending,
@@ -26,6 +26,7 @@ export const MicToggleButton = ({ error }: Props) => {
 
     return (
         <DeviceToggleButton
+            compact={compact}
             shortcut={MIC_SHORTCUT}
             errorLabel={error && LOCAL_AUDIO_STREAM_ERROR_LABEL[error]}
             pressed={enabled}
