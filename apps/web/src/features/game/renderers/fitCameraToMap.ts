@@ -1,14 +1,13 @@
 import type Phaser from "phaser";
-import { MAP_LAYER_ORIGIN } from "@/features/game/consts/map-geometry";
+import { resolveCameraBounds } from "@/features/game/utils/cameraBounds";
 
 export const fitCameraToMap = (
     camera: Phaser.Cameras.Scene2D.Camera,
     tilemap: Phaser.Tilemaps.Tilemap
 ): void => {
-    camera.setBounds(
-        MAP_LAYER_ORIGIN.X,
-        MAP_LAYER_ORIGIN.Y,
+    const { x, y, width, height } = resolveCameraBounds(
         tilemap.widthInPixels,
         tilemap.heightInPixels
     );
+    camera.setBounds(x, y, width, height);
 };
