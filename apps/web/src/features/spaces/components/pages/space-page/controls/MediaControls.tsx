@@ -1,5 +1,6 @@
 import type { ScreenShareError } from "@/features/media-devices/consts/videoError";
 import type { LocalAudioStreamError } from "@/features/media-devices/consts/audioError";
+import { PresenceSlot } from "@/components/ui/presence-slot";
 import { Separator } from "@/components/ui/separator";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -71,26 +72,37 @@ export const MediaControls = ({
                 isOpen={userStatus.isOpen}
                 onToggle={userStatus.onToggle}
             />
-            <MicToggleButton error={micError} />
-            <CameraToggleButton error={cameraError} />
-            {isMeetingContext && (
+            <MicToggleButton error={micError} compact={!isMeetingContext} />
+            <CameraToggleButton
+                error={cameraError}
+                compact={!isMeetingContext}
+            />
+            <PresenceSlot show={isMeetingContext && soundboard !== null}>
                 <SoundboardControl
                     soundboard={soundboard}
                     isOpen={soundboardPanel.isOpen}
                     onToggle={soundboardPanel.onToggle}
                 />
-            )}
-            {isMeetingContext && <AnnounceButton announcing={announcing} />}
+            </PresenceSlot>
+            <PresenceSlot show={isMeetingContext && announcing !== null}>
+                <AnnounceButton announcing={announcing} />
+            </PresenceSlot>
             <ReactionsControl {...reactions} />
-            {isMeetingContext && <HandRaiseButton handRaise={handRaise} />}
-            <ProximityChatButton {...nearbyChat} />
-            <ScreenShareButton
-                visible={isMeetingContext && canShareScreen}
-                error={screenShareError}
-                onStart={onStartScreenShare}
-                onStop={onStopScreenShare}
-                isSharing={isSharingScreen}
-            />
+            <PresenceSlot show={isMeetingContext && handRaise !== null}>
+                <HandRaiseButton handRaise={handRaise} />
+            </PresenceSlot>
+            <PresenceSlot show={nearbyChat.isEnabled}>
+                <ProximityChatButton {...nearbyChat} />
+            </PresenceSlot>
+            <PresenceSlot show={isMeetingContext && canShareScreen}>
+                <ScreenShareButton
+                    visible
+                    error={screenShareError}
+                    onStart={onStartScreenShare}
+                    onStop={onStopScreenShare}
+                    isSharing={isSharingScreen}
+                />
+            </PresenceSlot>
             <Separator
                 orientation="vertical"
                 className="mx-1 my-1.5 h-auto self-stretch bg-border"
