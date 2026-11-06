@@ -1,6 +1,7 @@
 import type { TileRect } from "@/features/editor/types/tile-rect";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Cell } from "@standin/contracts";
+import { useMyAvatar } from "@/features/avatar/queries/useMyAvatar";
 import { createEditorEngine } from "@/features/editor/lib/EditorEngine";
 import { useDraftStore } from "@/features/editor/hooks/useDraftStore";
 import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
@@ -26,6 +27,12 @@ export const useEditorEngine = (
     const store = useEditorStore();
     const draftStore = useDraftStore();
     const engineRef = useRef<EditorEngineHandle | null>(null);
+    // The avatar of the person stands for the spawns, the ghost when there is
+    // none. A new sheet reaches a running scene without building it again.
+    const { data: myAvatar } = useMyAvatar();
+    const avatarSheetFileId = myAvatar?.avatarSheetFileId ?? null;
+    const avatarSheetRef = useRef(avatarSheetFileId);
+    avatarSheetRef.current = avatarSheetFileId;
     const coordinatesRef = useRef<HTMLElement | null>(null);
     const hintRef = useRef<HTMLElement | null>(null);
     // The bar over the selected object, moved by the scene without a render.
@@ -46,6 +53,7 @@ export const useEditorEngine = (
                 store,
                 draftStore,
                 frame,
+                avatarSheetFileId: avatarSheetRef.current,
                 onHint: (text: string | null) => {
                     if (!hintRef.current) return;
                     hintRef.current.textContent = text ?? "";
@@ -71,6 +79,10 @@ export const useEditorEngine = (
         },
         [map, store, draftStore, sceneLink, frame]
     );
+
+    useEffect(() => {
+        engineRef.current?.setAvatarSheet(avatarSheetFileId);
+    }, [avatarSheetFileId]);
 
     const fitCamera = useCallback(() => engineRef.current?.fitCamera(), []);
 

@@ -14,6 +14,8 @@ export type EditorSceneInitData = {
     store: EditorStore;
     draftStore: DraftStore;
     frame?: FrameConfig;
+    // The sheet of the avatar the person has, for the spawns. Null is the ghost.
+    avatarSheetFileId?: string | null;
 };
 
 export type EditorEngineOptions = {
@@ -23,6 +25,8 @@ export type EditorEngineOptions = {
     draftStore: DraftStore;
     // The frame of an area over the canvas. Without it the editor draws none.
     frame?: FrameConfig;
+    // The sheet of the avatar the person has, for the spawns. Null is the ghost.
+    avatarSheetFileId?: string | null;
     // Called when the cell under the cursor changes. Meant to write to the DOM
     // directly, not to set state.
     onHoverCell: (cell: Cell | null) => void;
@@ -44,6 +48,8 @@ export type EditorEngineOptions = {
 export type EditorEngineHandle = {
     game: Phaser.Game;
     fitCamera: () => void;
+    // Dresses the spawns with another sheet. Null is the ghost.
+    setAvatarSheet: (avatarSheetFileId: string | null) => void;
     // Centers the camera on a cell.
     focusCell: (cell: Cell) => void;
     // The answer to a zone name request.

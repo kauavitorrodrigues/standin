@@ -26,6 +26,7 @@ export const createEditorEngine = ({
     store,
     draftStore,
     frame,
+    avatarSheetFileId,
     onHoverCell,
     onHint,
     onSelectionAnchor,
@@ -92,6 +93,7 @@ export const createEditorEngine = ({
         store,
         draftStore,
         frame,
+        avatarSheetFileId,
     });
 
     const unbindResize = bindGameResize(game, container);
@@ -99,6 +101,10 @@ export const createEditorEngine = ({
     return {
         game,
         fitCamera: () => game.events.emit(EDITOR_EVENTS.FIT_REQUESTED),
+        setAvatarSheet: (sheetFileId) => {
+            const scene = game.scene.getScene(EDITOR_SCENE_KEYS.EDITOR);
+            if (scene instanceof EditorScene) scene.setAvatarSheet(sheetFileId);
+        },
         focusCell: (cell) =>
             game.events.emit(EDITOR_EVENTS.FOCUS_CELL_REQUESTED, cell),
         confirmZoneName: (label) =>
