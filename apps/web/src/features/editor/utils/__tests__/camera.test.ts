@@ -24,30 +24,49 @@ describe("getFitZoom", () => {
     it("falls back to the smallest level when the map never fits", () => {
         expect(
             getFitZoom({
-                mapWidth: 3200,
-                mapHeight: 3200,
+                mapWidth: 12800,
+                mapHeight: 12800,
                 viewWidth: 800,
                 viewHeight: 600,
             })
-        ).toBe(1);
+        ).toBe(0.25);
     });
 });
 
 describe("getNextZoom", () => {
     it("steps through the levels", () => {
+        expect(getNextZoom(0.5, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(1);
         expect(getNextZoom(1, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(2);
         expect(getNextZoom(3, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(2);
     });
 
     it("stays at the ends", () => {
         expect(getNextZoom(3, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(3);
-        expect(getNextZoom(1, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(1);
+        expect(getNextZoom(0.25, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(0.25);
         expect(getNextZoom(2, EDITOR_ZOOM_DIRECTIONS.NEUTRAL)).toBe(2);
     });
 });
 
 describe("getCameraBounds", () => {
-    it("adds a margin of 2 tiles when the map is larger than the view", () => {
+    it("adds a margin of one map size when the map is larger than the view", () => {
+        const margin = 3200;
+        const bounds = getCameraBounds({
+            mapWidth: 3200,
+            mapHeight: 3200,
+            viewWidth: 800,
+            viewHeight: 600,
+            zoom: 1,
+        });
+
+        expect(bounds).toEqual({
+            x: -margin,
+            y: -margin,
+            width: 3200 + margin * 2,
+            height: 3200 + margin * 2,
+        });
+    });
+
+    it("keeps a margin in tiles when one is given", () => {
         const margin = 2 * TILE_SIZE;
         const bounds = getCameraBounds({
             mapWidth: 3200,
@@ -55,6 +74,7 @@ describe("getCameraBounds", () => {
             viewWidth: 800,
             viewHeight: 600,
             zoom: 1,
+            marginTiles: 2,
         });
 
         expect(bounds).toEqual({
@@ -72,9 +92,22 @@ describe("getCameraBounds", () => {
             viewWidth: 1000,
             viewHeight: 800,
             zoom: 1,
+            marginTiles: 2,
         });
 
         expect(bounds).toEqual({ x: -340, y: -240, width: 1000, height: 800 });
+    });
+
+    it("lets the view of a small map go one map size past each edge", () => {
+        const bounds = getCameraBounds({
+            mapWidth: 320,
+            mapHeight: 320,
+            viewWidth: 1000,
+            viewHeight: 800,
+            zoom: 1,
+        });
+
+        expect(bounds).toEqual({ x: -340, y: -320, width: 1000, height: 960 });
     });
 
     it("measures the view in world px, so a higher zoom needs less room", () => {
@@ -84,6 +117,7 @@ describe("getCameraBounds", () => {
             viewWidth: 1000,
             viewHeight: 800,
             zoom: 2,
+            marginTiles: 2,
         });
 
         expect(bounds.width).toBe(500);
@@ -93,7 +127,7 @@ describe("getCameraBounds", () => {
 
 describe("clampZoom", () => {
     it("keeps the zoom between the first and the last level", () => {
-        expect(clampZoom(0.2)).toBe(1);
+        expect(clampZoom(0.1)).toBe(0.25);
         expect(clampZoom(2.5)).toBe(2.5);
         expect(clampZoom(1.14108319)).toBe(1.14);
         expect(clampZoom(10)).toBe(3);
@@ -104,5 +138,6 @@ describe("getNextZoom between levels", () => {
     it("steps to the nearest level on that side", () => {
         expect(getNextZoom(1.4, EDITOR_ZOOM_DIRECTIONS.IN)).toBe(2);
         expect(getNextZoom(1.4, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(1);
+        expect(getNextZoom(0.4, EDITOR_ZOOM_DIRECTIONS.OUT)).toBe(0.25);
     });
 });

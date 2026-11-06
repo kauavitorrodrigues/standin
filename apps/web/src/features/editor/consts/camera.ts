@@ -3,6 +3,9 @@ export const EDITOR_CAMERA_CONFIG = {
     DEFAULT_ZOOM: 2,
     // Room the camera allows around the map (tiles).
     BOUNDS_MARGIN_TILES: 2,
+    // How far the view of a map may go past each edge of it, as a share of the
+    // map size, when the room in tiles above is smaller than that.
+    OUTER_MARGIN_RATIO: 1,
 } as const;
 
 export const EDITOR_ZOOM_DIRECTIONS = {

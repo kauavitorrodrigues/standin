@@ -8,7 +8,7 @@ export const MAX_PUBLISH_OPS = 5000;
 export const UNDO_STACK_LIMIT = 200;
 
 // Zoom multipliers the editor offers (scale factor).
-export const ZOOM_LEVELS = [1, 2, 3] as const;
+export const ZOOM_LEVELS = [0.25, 0.5, 1, 2, 3] as const;
 
 // Smallest zone area the editor accepts (tiles).
 export const ZONE_AREA_MIN_TILES = 2;

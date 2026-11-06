@@ -16,6 +16,7 @@ import { captureNativeSnapshot } from "@/features/editor/lib/captureNativeSnapsh
 import type { TileRect } from "@/features/editor/types/tile-rect";
 import { showsCellHighlight } from "@/features/editor/utils/showsCellHighlight";
 import { CellHighlight } from "@/features/editor/lib/CellHighlight";
+import { renderMapOuterArea } from "@/features/game/renderers/renderMapOuterArea";
 import { EditorCameraController } from "@/features/editor/lib/EditorCameraController";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import type { EditorStore } from "@/features/editor/lib/EditorStore";
@@ -156,6 +157,9 @@ export class EditorScene extends Phaser.Scene {
             (zoom) => this.game.events.emit(EDITOR_EVENTS.ZOOM_CHANGED, zoom),
             this.frameConfig ? FRAME_CAMERA_MARGIN_TILES : undefined
         );
+        // The canvas of an area frame is bound tight to it, so only a whole map
+        // shows what lies past its edge.
+        if (!this.frameConfig) renderMapOuterArea(this, tilemap);
         const grid = new GridOverlay(
             this,
             tilemap.widthInPixels,
