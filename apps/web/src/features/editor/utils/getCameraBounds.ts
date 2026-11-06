@@ -7,7 +7,8 @@ type Params = {
     viewWidth: number;
     viewHeight: number;
     zoom: number;
-    // Room around the map (tiles), the default one when left out.
+    // Room around the map (tiles). Left out, the view may go as far as one map
+    // size past each edge, and never less than the default room.
     marginTiles?: number;
 };
 
@@ -22,9 +23,15 @@ const getAxis = (
     mapSize: number,
     viewSize: number,
     zoom: number,
-    marginTiles: number
+    marginTiles: number | undefined
 ) => {
-    const margin = marginTiles * TILE_SIZE;
+    const margin =
+        marginTiles === undefined
+            ? Math.max(
+                  EDITOR_CAMERA_CONFIG.BOUNDS_MARGIN_TILES * TILE_SIZE,
+                  mapSize * EDITOR_CAMERA_CONFIG.OUTER_MARGIN_RATIO
+              )
+            : marginTiles * TILE_SIZE;
     // Phaser pins the camera to the start of bounds smaller than the view. A
     // bound as large as the view, centered on the map, keeps the map in the middle.
     const size = Math.max(mapSize + margin * 2, viewSize / zoom);
@@ -32,7 +39,7 @@ const getAxis = (
     return { start: -(size - mapSize) / 2, size };
 };
 
-// The area the camera may show (world px): the map with a margin of tiles,
+// The area the camera may show (world px): the map with a margin,
 // grown to the size of the view when the map is smaller, so it stays centered.
 export const getCameraBounds = ({
     mapWidth,
@@ -40,7 +47,7 @@ export const getCameraBounds = ({
     viewWidth,
     viewHeight,
     zoom,
-    marginTiles = EDITOR_CAMERA_CONFIG.BOUNDS_MARGIN_TILES,
+    marginTiles,
 }: Params): CameraBounds => {
     const horizontal = getAxis(mapWidth, viewWidth, zoom, marginTiles);
     const vertical = getAxis(mapHeight, viewHeight, zoom, marginTiles);

@@ -48,7 +48,25 @@ describe("getNextZoom", () => {
 });
 
 describe("getCameraBounds", () => {
-    it("adds a margin of 2 tiles when the map is larger than the view", () => {
+    it("adds a margin of one map size when the map is larger than the view", () => {
+        const margin = 3200;
+        const bounds = getCameraBounds({
+            mapWidth: 3200,
+            mapHeight: 3200,
+            viewWidth: 800,
+            viewHeight: 600,
+            zoom: 1,
+        });
+
+        expect(bounds).toEqual({
+            x: -margin,
+            y: -margin,
+            width: 3200 + margin * 2,
+            height: 3200 + margin * 2,
+        });
+    });
+
+    it("keeps a margin in tiles when one is given", () => {
         const margin = 2 * TILE_SIZE;
         const bounds = getCameraBounds({
             mapWidth: 3200,
@@ -56,6 +74,7 @@ describe("getCameraBounds", () => {
             viewWidth: 800,
             viewHeight: 600,
             zoom: 1,
+            marginTiles: 2,
         });
 
         expect(bounds).toEqual({
@@ -73,9 +92,22 @@ describe("getCameraBounds", () => {
             viewWidth: 1000,
             viewHeight: 800,
             zoom: 1,
+            marginTiles: 2,
         });
 
         expect(bounds).toEqual({ x: -340, y: -240, width: 1000, height: 800 });
+    });
+
+    it("lets the view of a small map go one map size past each edge", () => {
+        const bounds = getCameraBounds({
+            mapWidth: 320,
+            mapHeight: 320,
+            viewWidth: 1000,
+            viewHeight: 800,
+            zoom: 1,
+        });
+
+        expect(bounds).toEqual({ x: -340, y: -320, width: 1000, height: 960 });
     });
 
     it("measures the view in world px, so a higher zoom needs less room", () => {
@@ -85,6 +117,7 @@ describe("getCameraBounds", () => {
             viewWidth: 1000,
             viewHeight: 800,
             zoom: 2,
+            marginTiles: 2,
         });
 
         expect(bounds.width).toBe(500);
