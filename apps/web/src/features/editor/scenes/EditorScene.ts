@@ -17,6 +17,7 @@ import type { TileRect } from "@/features/editor/types/tile-rect";
 import { showsCellHighlight } from "@/features/editor/utils/showsCellHighlight";
 import { CellHighlight } from "@/features/editor/lib/CellHighlight";
 import { renderMapOuterArea } from "@/features/game/renderers/renderMapOuterArea";
+import { loadGhostTexture } from "@/features/avatar/lib/loadGhostTexture";
 import { EditorCameraController } from "@/features/editor/lib/EditorCameraController";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import type { EditorStore } from "@/features/editor/lib/EditorStore";
@@ -91,6 +92,8 @@ export class EditorScene extends Phaser.Scene {
 
     preload(): void {
         loadMapAssets(this.load, this.mapData);
+        // The ghost stands for the spawns of the map.
+        loadGhostTexture(this);
     }
 
     create(): void {
