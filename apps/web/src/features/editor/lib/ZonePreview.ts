@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import { TILE_SIZE, type Cell } from "@standin/contracts";
+import { SpawnAvatarSheets } from "@/features/editor/lib/SpawnAvatarSheets";
 import { EDITOR_ZONE_PREVIEW } from "@/features/editor/consts/zone-preview";
 import { EDITOR_ZONES } from "@/features/editor/consts/zones";
 import { ZONE_KINDS } from "@/features/editor/consts/zone-kinds";
@@ -7,6 +8,9 @@ import type { ZoneKind } from "@/features/editor/types/zone-kind";
 import type { ZoneRect } from "@/features/editor/types/zone-rect";
 
 const HALF = 2;
+
+// Each preview has its own avatar in the shared sheets of the scene.
+let nextPreviewId = 0;
 
 const getZoneColor = (kind: ZoneKind): number => {
     switch (kind) {
@@ -22,8 +26,17 @@ const getZoneColor = (kind: ZoneKind): number => {
 // only, so a pointer move never goes through React.
 export class ZonePreview {
     private readonly graphics: Phaser.GameObjects.Graphics;
+    private readonly sheets: SpawnAvatarSheets;
+    private readonly spawnId = `preview:${nextPreviewId++}`;
+    private readonly spawn: Phaser.GameObjects.Sprite;
 
     constructor(scene: Phaser.Scene) {
+        this.sheets = SpawnAvatarSheets.of(scene);
+        this.spawn = this.sheets
+            .place(this.spawnId, 0, 0)
+            .setDepth(EDITOR_ZONE_PREVIEW.DEPTH)
+            .setAlpha(EDITOR_ZONE_PREVIEW.GHOST_ALPHA)
+            .setVisible(false);
         this.graphics = scene.add.graphics();
         this.graphics.setDepth(EDITOR_ZONE_PREVIEW.DEPTH);
         this.graphics.setVisible(false);
@@ -31,16 +44,13 @@ export class ZonePreview {
 
     showSpawn(cell: Cell): void {
         this.graphics.clear();
-        this.graphics.fillStyle(
-            EDITOR_ZONES.SPAWN_COLOR,
-            EDITOR_ZONE_PREVIEW.GHOST_ALPHA
-        );
-        this.graphics.fillCircle(
-            cell[0] * TILE_SIZE + TILE_SIZE / HALF,
-            cell[1] * TILE_SIZE + TILE_SIZE / HALF,
-            EDITOR_ZONES.SPAWN_RADIUS
-        );
-        this.graphics.setVisible(true);
+        this.graphics.setVisible(false);
+        this.spawn
+            .setPosition(
+                cell[0] * TILE_SIZE + TILE_SIZE / HALF,
+                cell[1] * TILE_SIZE + TILE_SIZE / HALF
+            )
+            .setVisible(true);
     }
 
     // `valid` false draws it in red: the area is too small to be created. A
@@ -50,6 +60,7 @@ export class ZonePreview {
         valid: boolean,
         kind: ZoneKind = ZONE_KINDS.AREA
     ): void {
+        this.spawn.setVisible(false);
         const color = valid
             ? getZoneColor(kind)
             : EDITOR_ZONE_PREVIEW.INVALID_COLOR;
@@ -73,9 +84,11 @@ export class ZonePreview {
     hide(): void {
         this.graphics.clear();
         this.graphics.setVisible(false);
+        this.spawn.setVisible(false);
     }
 
     destroy(): void {
         this.graphics.destroy();
+        this.sheets.remove(this.spawnId);
     }
 }

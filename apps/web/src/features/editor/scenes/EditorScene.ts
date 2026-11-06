@@ -17,6 +17,8 @@ import type { TileRect } from "@/features/editor/types/tile-rect";
 import { showsCellHighlight } from "@/features/editor/utils/showsCellHighlight";
 import { CellHighlight } from "@/features/editor/lib/CellHighlight";
 import { renderMapOuterArea } from "@/features/game/renderers/renderMapOuterArea";
+import { loadGhostTexture } from "@/features/avatar/lib/loadGhostTexture";
+import { SpawnAvatarSheets } from "@/features/editor/lib/SpawnAvatarSheets";
 import { EditorCameraController } from "@/features/editor/lib/EditorCameraController";
 import type { DraftStore } from "@/features/editor/lib/DraftStore";
 import type { EditorStore } from "@/features/editor/lib/EditorStore";
@@ -69,6 +71,7 @@ export class EditorScene extends Phaser.Scene {
     private store!: EditorStore;
     private draftStore!: DraftStore;
     private frameConfig: FrameConfig | null = null;
+    private avatarSheetFileId: string | null = null;
     private toolRouter: EditorToolRouter | null = null;
     private objectRenderer: EditorObjectRenderer | null = null;
     private tileRenderer: EditorTileRenderer | null = null;
@@ -87,10 +90,13 @@ export class EditorScene extends Phaser.Scene {
         this.store = data.store;
         this.draftStore = data.draftStore;
         this.frameConfig = data.frame ?? null;
+        this.avatarSheetFileId = data.avatarSheetFileId ?? null;
     }
 
     preload(): void {
         loadMapAssets(this.load, this.mapData);
+        // The ghost stands for the spawns of the map.
+        loadGhostTexture(this);
     }
 
     create(): void {
@@ -131,6 +137,7 @@ export class EditorScene extends Phaser.Scene {
             tilemap.heightInPixels
         );
         this.objectRenderer.sync(this.mapData.placed ?? []);
+        SpawnAvatarSheets.of(this).setFileId(this.avatarSheetFileId);
         this.zoneOverlay = new ZoneOverlay(this, this.store);
         this.selectionOverlay = new SelectionOverlay(
             this,
@@ -412,6 +419,13 @@ export class EditorScene extends Phaser.Scene {
 
     // The whole map as a PNG, whatever the zoom and the camera. Only tiles and
     // objects are drawn, so the grid, the highlight and the zones stay out.
+    // Dresses the avatars of the spawns with the sheet of the person. Null is
+    // the ghost. Safe to call again with the same sheet.
+    setAvatarSheet(avatarSheetFileId: string | null): void {
+        this.avatarSheetFileId = avatarSheetFileId;
+        SpawnAvatarSheets.of(this).setFileId(avatarSheetFileId);
+    }
+
     captureThumbnail(): Promise<Blob> {
         return this.captureWith(captureMapThumbnail);
     }

@@ -5,6 +5,7 @@ import { ZONE_HANDLE_LIST } from "@/features/editor/consts/zone-handles";
 import { ZONE_KINDS } from "@/features/editor/consts/zone-kinds";
 import { ZONE_SELECTION } from "@/features/editor/consts/zone-selection";
 import type { EditorStore } from "@/features/editor/lib/EditorStore";
+import { SpawnAvatarSheets } from "@/features/editor/lib/SpawnAvatarSheets";
 import { ZoneAnchorTracker } from "@/features/editor/lib/ZoneAnchorTracker";
 import { getSelectedZoneId } from "@/features/editor/utils/getSelectedZoneId";
 import { getZoneHandlePoints } from "@/features/editor/utils/getZoneHandlePoints";
@@ -17,7 +18,7 @@ import type {
 } from "@/features/editor/types/zone-shape";
 import type { ZoneRect } from "@/features/editor/types/zone-rect";
 
-// Outline and label of each area zone and a marker for each spawn. Only drawn
+// Outline and label of each area zone and an avatar for each spawn. Only drawn
 // while editing. The zone the selection holds is highlighted and, when it is
 // an area or a room, gets the 8 resize handles. The highlight and the handles hide with
 // the zones toggle, and so does the bar over the zone (it stops being
@@ -26,6 +27,8 @@ import type { ZoneRect } from "@/features/editor/types/zone-rect";
 export class ZoneOverlay {
     private readonly graphics: Phaser.GameObjects.Graphics;
     private readonly labels: Phaser.GameObjects.Text[] = [];
+    private readonly sheets: SpawnAvatarSheets;
+    private spawnIds: string[] = [];
     private readonly scene: Phaser.Scene;
     private readonly store: EditorStore;
     private readonly tracker: ZoneAnchorTracker;
@@ -38,6 +41,7 @@ export class ZoneOverlay {
         this.scene = scene;
         this.store = store;
         this.selection = store.getState().selection;
+        this.sheets = SpawnAvatarSheets.of(scene);
         this.graphics = scene.add.graphics();
         this.graphics.setDepth(EDITOR_ZONES.DEPTH);
         this.tracker = new ZoneAnchorTracker(scene);
@@ -60,6 +64,7 @@ export class ZoneOverlay {
         this.graphics.clear();
         this.labels.forEach((label) => label.destroy());
         this.labels.length = 0;
+        this.clearSpawns();
 
         for (const zone of this.zones) {
             const shape = getZoneShape(zone);
@@ -84,6 +89,7 @@ export class ZoneOverlay {
         this.visible = visible;
         this.graphics.setVisible(visible);
         this.labels.forEach((label) => label.setVisible(visible));
+        this.spawnIds.forEach((id) => this.sheets.setVisible(id, visible));
         this.tracker.track(visible ? this.getSelectedRect() : null);
     }
 
@@ -93,6 +99,12 @@ export class ZoneOverlay {
         this.graphics.destroy();
         this.labels.forEach((label) => label.destroy());
         this.labels.length = 0;
+        this.clearSpawns();
+    }
+
+    private clearSpawns(): void {
+        this.spawnIds.forEach((id) => this.sheets.remove(id));
+        this.spawnIds = [];
     }
 
     private getSelectedZone(): Zone | null {
@@ -150,14 +162,9 @@ export class ZoneOverlay {
     }
 
     private drawSpawn(x: number, y: number): void {
-        this.graphics.fillStyle(EDITOR_ZONES.SPAWN_COLOR, 1);
-        this.graphics.lineStyle(
-            EDITOR_ZONES.SPAWN_STROKE_WIDTH,
-            EDITOR_ZONES.SPAWN_STROKE_COLOR,
-            1
-        );
-        this.graphics.fillCircle(x, y, EDITOR_ZONES.SPAWN_RADIUS);
-        this.graphics.strokeCircle(x, y, EDITOR_ZONES.SPAWN_RADIUS);
+        const id = `overlay:${this.spawnIds.length}`;
+        this.sheets.place(id, x, y).setDepth(EDITOR_ZONES.DEPTH);
+        this.spawnIds.push(id);
     }
 
     private drawOutline(
