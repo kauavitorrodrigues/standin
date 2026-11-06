@@ -23,6 +23,7 @@ import {
     buildTilemap,
     ensureAssetTextures,
     fitCameraToMap,
+    renderMapOuterArea,
     fitWorldBoundsToMap,
     loadMapAssets,
     registerAssetAnimations,
@@ -415,6 +416,7 @@ export class MapScene extends Phaser.Scene {
         this.wallTiles = renderWallTiles(this, tilemap, tileLayers);
         renderObjectLayers(this, tilemap);
         fitCameraToMap(this.cameras.main, tilemap);
+        renderMapOuterArea(this, tilemap);
         fitWorldBoundsToMap(this.physics.world, tilemap);
 
         const { solidGroup, interactableGroup } = buildObjectPhysicsGroups(
