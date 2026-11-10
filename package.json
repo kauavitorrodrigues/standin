@@ -6,6 +6,7 @@
         "build": "turbo run build",
         "dev": "turbo run dev",
         "dev:lan": "turbo run dev:lan",
+        "dev:loopback": "turbo run dev:loopback",
         "lint": "turbo run lint",
         "check-types": "turbo run check-types",
         "test": "turbo run test",

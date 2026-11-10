@@ -8,6 +8,7 @@
         "start": "pnpm env:load node dist/server.js",
         "dev": "pnpm env:load tsx watch src/server.ts",
         "dev:lan": "pnpm dev",
+        "dev:loopback": "SERVER_URL=http://127.0.0.1:3001 FRONTEND_URL=http://127.0.0.1:5173 GITHUB_CALLBACK_URL=http://127.0.0.1:3001/auth/github/callback pnpm env:load tsx watch src/server.ts",
         "backfill:avatar-sheets": "pnpm env:load tsx src/scripts/backfillAvatarSheets.ts",
         "bootstrap": "pnpm env:load tsx src/scripts/bootstrap.ts",
         "seed:library": "pnpm env:load tsx src/scripts/seedLibrary.ts",

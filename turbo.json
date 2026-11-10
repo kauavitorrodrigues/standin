@@ -21,6 +21,10 @@
         "dev:lan": {
             "persistent": true,
             "cache": false
+        },
+        "dev:loopback": {
+            "persistent": true,
+            "cache": false
         }
     }
 }

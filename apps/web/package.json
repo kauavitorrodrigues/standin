@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "pnpm env:load vite",
         "dev:lan": "VITE_LAN=true VITE_BASE_API_URL=/api pnpm env:load vite",
+        "dev:loopback": "VITE_BASE_API_URL=http://127.0.0.1:3001 pnpm env:load vite --host 127.0.0.1",
         "build": "pnpm env:load sh -c 'tsc -b && vite build'",
         "lint": "eslint .",
         "preview": "vite preview",
