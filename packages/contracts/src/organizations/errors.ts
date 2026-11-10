@@ -55,3 +55,13 @@ export class OrganizationInvitationDeskUnavailableError extends BaseError {
         );
     }
 }
+
+export class OrganizationOwnerOnlyError extends BaseError {
+    constructor() {
+        super(
+            "Only the owner of the organization can do this.",
+            "ORGANIZATION_OWNER_ONLY",
+            403
+        );
+    }
+}
