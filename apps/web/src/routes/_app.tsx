@@ -9,6 +9,7 @@ import { RealtimeSocketProvider } from "@/features/realtime/contexts/RealtimeSoc
 import { RealtimeProvider } from "@/features/realtime/components/RealtimeProvider";
 import type { Organization } from "@standin/contracts";
 import { rememberReturnPath } from "@/features/auth/lib/returnTo";
+import { useSpotifyResultToast } from "@/features/integrations/providers/spotify/hooks/useSpotifyResultToast";
 
 export const Route = createFileRoute("/_app")({
     beforeLoad: async ({ context, location }) => {
@@ -49,6 +50,9 @@ function AppLayout() {
         initialData: routeUser,
         staleTime: Infinity,
     });
+
+    // How a Spotify connection ended, if the person just came back from one.
+    useSpotifyResultToast();
 
     return (
         <AuthProvider user={user}>

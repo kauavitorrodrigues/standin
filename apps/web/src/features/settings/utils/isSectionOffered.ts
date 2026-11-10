@@ -6,9 +6,10 @@ import type { SettingsSpace } from "../types";
 const isRestrictedToInviters = (id: SettingsSectionId): boolean =>
     id === "members";
 
-// The server only lets the owner save these, so only the owner sees them.
+// The server only lets the owner save these (and the Spotify app), so only the
+// owner sees them.
 const isRestrictedToManagers = (id: SettingsSectionId): boolean =>
-    id === "conversations" || id === "security";
+    id === "conversations" || id === "security" || id === "apps";
 
 /**
  * The one rule for what the dialog offers. The sections of the space need a

@@ -7,11 +7,13 @@ export const getSettingsSectionTitle = (id: SettingsSectionId): string => {
         video: "Vídeo",
         streaming: "Transmissão",
         notifications: "Notificações",
+        integrations: "Integrações",
         performance: "Desempenho",
         members: "Gerenciar membros",
         guests: "Gerenciar convidados",
         conversations: "Conversas",
         security: "Segurança",
+        apps: "Apps",
     };
     return titles[id];
 };

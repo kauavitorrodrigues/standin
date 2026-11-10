@@ -4,18 +4,18 @@ import type { SettingsSpace } from "../types";
 import { isSectionOffered } from "./isSectionOffered";
 
 /**
- * The groups the dialog offers: the preferences always, the group of the space
- * only inside one, and in it only what the person may use.
+ * The groups the dialog offers: the group of the space only inside one, and in
+ * every group only the sections the person may use (a preference such as the
+ * integrations can also need a space).
  */
 export const getVisibleSettingsGroups = (
     space: SettingsSpace | undefined
 ): SettingsSectionGroup[] =>
     SETTINGS_SECTION_GROUPS.flatMap((group) => {
-        if (!group.isSpace) return [group];
-        if (!space) return [];
+        if (group.isSpace && !space) return [];
 
         const sections = group.sections.filter(({ id }) =>
             isSectionOffered(id, space)
         );
-        return [{ ...group, sections }];
+        return sections.length === 0 ? [] : [{ ...group, sections }];
     });
