@@ -37,6 +37,8 @@ services:
       SERVER_PORT: ${SERVER_PORT:-3001}
       SERVER_URL: ${SERVER_URL}
       FRONTEND_URL: ${FRONTEND_URL}
+      # Where the browser reaches the API: the site plus /api, as the Caddyfile proxies it.
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-${FRONTEND_URL}/api}
       JWT_SECRET: ${JWT_SECRET}
       INVITE_LINK_SECRET: ${INVITE_LINK_SECRET}
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}

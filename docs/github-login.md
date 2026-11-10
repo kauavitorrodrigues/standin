@@ -130,6 +130,19 @@ requests and the game socket use. The web never reads the token itself.
 
 - **Normal dev** (web on `localhost:5173`, API on `localhost:3001`): cookies are
   not scoped by port, so the cookie reaches both. Nothing to configure.
+- **Dev on `127.0.0.1`** (needed to connect Spotify, see the [Spotify
+  guide](spotify.md#trying-it-on-your-machine)): the web, the API and the
+  callback have to be on the same host, or the sign in fails with
+  `oauth_state_invalid`. The sign in starts on the API address that the web
+  uses (`VITE_BASE_API_URL`), which is where the state cookie is set, and
+  GitHub sends the browser back to `GITHUB_CALLBACK_URL`. If the first is
+  `127.0.0.1` and the second is `localhost`, the cookie is not sent back. So set
+  `GITHUB_CALLBACK_URL="http://127.0.0.1:3001/auth/github/callback"` and add
+  that address to the **Callback URL** list of the GitHub App, next to the
+  `localhost` one (the App takes up to 10). `pnpm dev:loopback` already sets
+  that variable for its run, so you only have to register the address once. Use
+  one mode at a time: the web, the API and the callback all on `localhost`
+  (`pnpm dev`), or all on `127.0.0.1` (`pnpm dev:loopback`).
 - **`pnpm dev:lan`**: the page and the API share one https origin through the
   `/api` proxy. For the login to work from another computer, register and set
   the callback URL on that origin, for example
