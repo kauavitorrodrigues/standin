@@ -5,6 +5,7 @@ import {
     OAuthProviderDisabledError,
 } from "@standin/contracts";
 import { GithubProvider } from "@standin/infra";
+import { readQueryString } from "@/lib/oauth/readQueryString";
 import { sendError } from "@/utils/sendError";
 import { createToken } from "../../services/createToken";
 import { setTokenCookie } from "../../utils/setTokenCookie";
@@ -13,9 +14,6 @@ import { buildWebRedirectUrl } from "../utils/buildWebRedirectUrl";
 import { importGithubProfilePicture } from "../utils/importGithubProfilePicture";
 import { consumeOAuthStateCookie } from "../utils/oauthStateCookie";
 import { resolveOAuthErrorCode } from "../utils/resolveOAuthErrorCode";
-
-const readQueryString = (value: unknown): string | null =>
-    typeof value === "string" && value.length > 0 ? value : null;
 
 export const callback: RequestHandler = async (req, res) => {
     if (!GithubProvider.isConfigured()) {
