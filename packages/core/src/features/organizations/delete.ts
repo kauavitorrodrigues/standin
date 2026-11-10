@@ -10,6 +10,7 @@ import {
 import type { Organization } from "@standin/contracts";
 import { FileService } from "../files";
 import { SoundboardService } from "../soundboard";
+import { IntegrationService } from "../integrations";
 import { SpaceGuestService, SpaceService } from "../spaces";
 import { publishOrganizationMemberRemoved } from "./members/memberRemovedEvents";
 
@@ -39,6 +40,9 @@ export const deleteOrganization = async (id: string): Promise<Organization> => {
             // Its clips go with it, files included.
             const clipStorageKeys =
                 await SoundboardService.deleteByOrganizationId(id, tx);
+
+            // Its apps of outside services and the tokens of the people connected.
+            await IntegrationService.deleteByOrganizationId(id, tx);
 
             return {
                 organization,

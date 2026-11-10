@@ -6,12 +6,14 @@ const {
     clipDeleteMock,
     purgeMock,
     publishGuestsMock,
+    integrationDeleteMock,
 } = vi.hoisted(() => ({
     transactionMock: vi.fn(),
     spaceDeleteMock: vi.fn(),
     clipDeleteMock: vi.fn(),
     purgeMock: vi.fn(),
     publishGuestsMock: vi.fn(),
+    integrationDeleteMock: vi.fn(),
 }));
 
 const returning = (rows: unknown[]) => ({
@@ -31,6 +33,9 @@ vi.mock("../consts/select", () => ({ organizationSelect: {} }));
 vi.mock("../../files", () => ({ FileService: { purge: purgeMock } }));
 vi.mock("../../soundboard", () => ({
     SoundboardService: { deleteByOrganizationId: clipDeleteMock },
+}));
+vi.mock("../../integrations", () => ({
+    IntegrationService: { deleteByOrganizationId: integrationDeleteMock },
 }));
 vi.mock("../../spaces", () => ({
     SpaceService: { deleteByOrganizationId: spaceDeleteMock },
