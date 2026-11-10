@@ -12,6 +12,7 @@ import { RequiresInviteManager } from "@/middlewares/requiresInviteManager";
 import { libraryRouter } from "../library/routes";
 import { RequiresLibraryOwner } from "../library/middleware/requiresLibraryOwner";
 import { organizationSoundboardRouter } from "../soundboard/routes";
+import { organizationSpotifyRouter } from "../integrations/providers/spotify/routes";
 
 const router = Router();
 
@@ -72,6 +73,13 @@ router.use(
     "/:organizationId/soundboard",
     RequiresOrgMember,
     organizationSoundboardRouter
+);
+
+// The Spotify app of the organization (owner) and the account of each member.
+router.use(
+    "/:organizationId/spotify",
+    RequiresOrgMember,
+    organizationSpotifyRouter
 );
 
 router.use(

@@ -29,6 +29,7 @@ import {
     mapsRouter,
 } from "./features/maps/routes";
 import { desksRouter } from "./features/desks/routes";
+import { spotifyCallbackRouter } from "./features/integrations/providers/spotify/routes";
 import { defaultSoundboardRouter } from "./features/soundboard/routes";
 import {
     guestSpacesAccessRouter,
@@ -58,6 +59,8 @@ router.use("/users/me/avatar", myAvatarRouter);
 router.use("/users/me/guest-spaces", RequiresAuth, guestSpacesAccessRouter);
 router.use("/users", usersRouter);
 router.use("/organizations", organizationsRouter);
+// Where Spotify sends the person back after they allow the app.
+router.use("/integrations/spotify", spotifyCallbackRouter);
 // Open: the sign up page of an organization link, and the switches it reads.
 router.use("/organization-invites", organizationInvitePreviewRouter);
 router.use("/global-settings", globalSettingsPublicRouter);
