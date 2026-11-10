@@ -1,18 +1,21 @@
 import { createDecipheriv } from "node:crypto";
-import { SEAL_ALGORITHM } from "./consts";
+import { SEAL_ALGORITHM, SEAL_CONTEXTS } from "./consts";
 import { deriveSealKey } from "./deriveSealKey";
 import { splitSealedParts } from "./sealedParts";
-import type { SealedTokenColumn } from "./types";
+import type { SealContext, SealedTokenColumn } from "./types";
 
 /** Opens what `sealToken` made. Null when this server did not make it. */
-export const openToken = (sealed: string): string | null => {
+export const openToken = (
+    sealed: string,
+    context: SealContext = SEAL_CONTEXTS.INVITE_LINK
+): string | null => {
     const parts = splitSealedParts(sealed);
     if (!parts) return null;
 
     try {
         const decipher = createDecipheriv(
             SEAL_ALGORITHM,
-            deriveSealKey(),
+            deriveSealKey(context),
             parts.iv
         );
         decipher.setAuthTag(parts.authTag);
