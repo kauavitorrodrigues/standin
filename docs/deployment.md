@@ -80,26 +80,27 @@ The API answers `GET /health` with no session, rate limited to 120 requests a mi
 
 ## Environment variables
 
-| Variable                                                              | Meaning                                                                                                  |
-| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`                   | The database container. `POSTGRES_PORT` is only the port it shows on the host of a dev machine           |
-| `DATABASE_URL`, `DATABASE_POOL_MAX`                                   | The database. The compose file builds the URL from the `POSTGRES_*` values. The pool defaults to 20      |
-| `DB_QUERY_COUNT`                                                      | `1` logs the queries sent per join (see [performance](performance.md)). Leave it `0` in production       |
-| `SERVER_PORT`, `SERVER_URL`, `FRONTEND_URL`, `JWT_SECRET`             | The API                                                                                                  |
-| `INVITE_LINK_SECRET`                                                  | Required. Seals the fixed invite links, see [Invite links](#invite-links)                                |
-| `STORAGE_DRIVER`, `S3_*`                                              | Where uploads go, see the [storage guide](storage.md)                                                    |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ORGANIZATION_NAME`    | The first admin and organization, see [First admin](#first-admin)                                        |
-| `ALLOW_SIGNUP`, `ALLOW_ORGANIZATION_CREATION`, `ALLOW_SPACE_CREATION` | The initial global settings, see [Who can use the instance](#who-can-use-the-instance). Open while empty |
-| `SITE_ADDRESS`                                                        | The domain Caddy serves                                                                                  |
-| `APP_COMMIT`, `APP_COMMIT_TIME`                                       | Build arguments that show the commit in the settings of the app (step 4 above)                           |
-| `MEDIA_WORKERS`                                                       | `1` (default) runs the media server, `0` turns it off. One worker serves the whole process               |
-| `MEDIA_LISTEN_IP`                                                     | The address the media port listens on (`0.0.0.0`)                                                        |
-| `MEDIA_LISTEN_PORT`                                                   | The one port for all media, over UDP and TCP (default `44444`)                                           |
-| `MEDIA_ANNOUNCED_ADDRESS`                                             | The public address clients send media to. Required behind a NAT, and on a laptop use `127.0.0.1`         |
-| `TURN_HOST`, `TURN_SECRET`, `TURN_PORT`, `TURN_TTL_SECONDS`           | The optional relay (see below). Off while `TURN_HOST` and `TURN_SECRET` are empty                        |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`     | Sign in with GitHub, see the [guide](github-login.md). Off while empty                                   |
-| `VITE_BASE_API_URL`                                                   | Read when the web is built. The image sets it to `/api`                                                  |
-| `INTEGRATION_DATABASE_URL`                                            | Tests only. Never set it on a server                                                                     |
+| Variable                                                              | Meaning                                                                                                                                                       |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`                   | The database container. `POSTGRES_PORT` is only the port it shows on the host of a dev machine                                                                |
+| `DATABASE_URL`, `DATABASE_POOL_MAX`                                   | The database. The compose file builds the URL from the `POSTGRES_*` values. The pool defaults to 20                                                           |
+| `DB_QUERY_COUNT`                                                      | `1` logs the queries sent per join (see [performance](performance.md)). Leave it `0` in production                                                            |
+| `SERVER_PORT`, `SERVER_URL`, `FRONTEND_URL`, `JWT_SECRET`             | The API                                                                                                                                                       |
+| `INVITE_LINK_SECRET`                                                  | Required. Seals the fixed invite links, see [Invite links](#invite-links)                                                                                     |
+| `STORAGE_DRIVER`, `S3_*`                                              | Where uploads go, see the [storage guide](storage.md)                                                                                                         |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ORGANIZATION_NAME`    | The first admin and organization, see [First admin](#first-admin)                                                                                             |
+| `ALLOW_SIGNUP`, `ALLOW_ORGANIZATION_CREATION`, `ALLOW_SPACE_CREATION` | The initial global settings, see [Who can use the instance](#who-can-use-the-instance). Open while empty                                                      |
+| `SITE_ADDRESS`                                                        | The domain Caddy serves                                                                                                                                       |
+| `APP_COMMIT`, `APP_COMMIT_TIME`                                       | Build arguments that show the commit in the settings of the app (step 4 above)                                                                                |
+| `MEDIA_WORKERS`                                                       | `1` (default) runs the media server, `0` turns it off. One worker serves the whole process                                                                    |
+| `MEDIA_LISTEN_IP`                                                     | The address the media port listens on (`0.0.0.0`)                                                                                                             |
+| `MEDIA_LISTEN_PORT`                                                   | The one port for all media, over UDP and TCP (default `44444`)                                                                                                |
+| `MEDIA_ANNOUNCED_ADDRESS`                                             | The public address clients send media to. Required behind a NAT, and on a laptop use `127.0.0.1`                                                              |
+| `TURN_HOST`, `TURN_SECRET`, `TURN_PORT`, `TURN_TTL_SECONDS`           | The optional relay (see below). Off while `TURN_HOST` and `TURN_SECRET` are empty                                                                             |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`     | Sign in with GitHub, see the [guide](github-login.md). Off while empty                                                                                        |
+| `API_PUBLIC_URL`                                                      | Where the browser reaches the API, for the Spotify redirect address, see the [guide](spotify.md). The compose stack defaults it to `FRONTEND_URL` plus `/api` |
+| `VITE_BASE_API_URL`                                                   | Read when the web is built. The image sets it to `/api`                                                                                                       |
+| `INTEGRATION_DATABASE_URL`                                            | Tests only. Never set it on a server                                                                                                                          |
 
 All of them are in `.env.example` with a comment.
 

@@ -1,9 +1,11 @@
 import {
     BellIcon,
     BoltIcon,
+    BlocksIcon,
     LockIcon,
     MessagesSquareIcon,
     MonitorUpIcon,
+    PlugIcon,
     MicIcon,
     SettingsIcon,
     UserRoundIcon,
@@ -29,6 +31,7 @@ export const SETTINGS_SECTION_GROUPS: SettingsSectionGroup[] = [
             { id: "video", icon: VideoIcon },
             { id: "streaming", icon: MonitorUpIcon },
             { id: "notifications", icon: BellIcon },
+            { id: "integrations", icon: PlugIcon },
             { id: "performance", icon: BoltIcon },
         ],
     },
@@ -41,5 +44,10 @@ export const SETTINGS_SECTION_GROUPS: SettingsSectionGroup[] = [
             { id: "conversations", icon: MessagesSquareIcon },
             { id: "security", icon: LockIcon },
         ],
+    },
+    {
+        title: "Organização",
+        isSpace: true,
+        sections: [{ id: "apps", icon: BlocksIcon }],
     },
 ];

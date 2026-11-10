@@ -41,13 +41,17 @@ function DialogContent({
     className,
     children,
     showCloseButton = true,
+    forceOverlay = false,
     ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  // Draws the backdrop even when this dialog is nested in another one: the
+  // library hides it by default, which leaves the dialog below undimmed.
+  forceOverlay?: boolean
 }) {
     return (
         <DialogPortal>
-            <DialogOverlay />
+            <DialogOverlay forceRender={forceOverlay} />
             <DialogPrimitive.Popup
                 data-slot="dialog-content"
                 className={cn(

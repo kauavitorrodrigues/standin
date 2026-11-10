@@ -10,6 +10,8 @@ import { NotificationsSection } from "./NotificationsSection";
 import { VideoSection } from "./VideoSection";
 import { ConversationsSection } from "./ConversationsSection";
 import { SecuritySection } from "./SecuritySection";
+import { AppsSection } from "./AppsSection";
+import { IntegrationsSection } from "./IntegrationsSection";
 
 export const SETTINGS_SECTION_VIEWS: Record<SettingsSectionId, ComponentType> =
     {
@@ -23,4 +25,6 @@ export const SETTINGS_SECTION_VIEWS: Record<SettingsSectionId, ComponentType> =
         guests: GuestsSection,
         conversations: ConversationsSection,
         security: SecuritySection,
+        apps: AppsSection,
+        integrations: IntegrationsSection,
     };

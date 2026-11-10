@@ -15,3 +15,4 @@ export * from "./features/global-settings";
 export * from "./features/admin";
 export * from "./features/soundboard";
 export * from "./features/onboarding";
+export * from "./features/integrations";

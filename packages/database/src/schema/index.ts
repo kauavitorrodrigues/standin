@@ -34,3 +34,5 @@ export * from "./service-tokens";
 export * from "./global-settings";
 export * from "./organization-invite-links";
 export * from "./soundboard-clips";
+export * from "./organization-integrations";
+export * from "./app-connections";

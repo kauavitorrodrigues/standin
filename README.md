@@ -62,6 +62,7 @@ Longer guides live in [`docs/`](docs). Each one is for the people who use or mai
 | [Avatar](docs/avatar.md)                        | How people build their avatar and how admins manage the parts library      |
 | [Profile picture](docs/profile-picture.md)      | The photo shown in lists, chat and the name tag                            |
 | [Sign in with GitHub](docs/github-login.md)     | Turning on the optional GitHub login for an instance                       |
+| [Spotify](docs/spotify.md)                      | Connecting the Spotify app of an organization and its 5 people limit       |
 | [Onboarding](docs/onboarding.md)                | The first steps checklist, how each task completes and where it is stored  |
 | [Real-time and media](docs/realtime.md)         | Presence, proximity voice, camera and screen sharing, and chat             |
 | [Data model](docs/data-model.md)                | Who owns what, how a map is stored, and the entities                       |
@@ -185,6 +186,11 @@ The seed is idempotent by key and never deletes anything.
 pnpm dev
 ```
 
+To try the Spotify connection locally the app has to run on `127.0.0.1` instead
+of `localhost`, because Spotify does not accept `localhost`. Use
+`pnpm dev:loopback` for that, it needs no change in the `.env`. See the
+[Spotify guide](docs/spotify.md#trying-it-on-your-machine).
+
 ## Sign in with GitHub
 
 Optional and off by default. Create a GitHub App for the instance, set `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` and `GITHUB_CALLBACK_URL` in `.env`, and restart the API. The steps are in the [GitHub login guide](docs/github-login.md).
@@ -195,6 +201,7 @@ Optional and off by default. Create a GitHub App for the instance, set `GITHUB_C
 
 ```bash
 pnpm dev              # Run all apps in watch mode (Turborepo)
+pnpm dev:loopback     # The same on 127.0.0.1, to connect Spotify (docs/spotify.md)
 pnpm build            # Build all packages and apps
 pnpm lint             # Lint all code
 pnpm check-types      # TypeScript type checking

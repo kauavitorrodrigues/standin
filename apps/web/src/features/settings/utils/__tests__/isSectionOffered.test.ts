@@ -22,9 +22,15 @@ describe("isSectionOffered", () => {
         expect(isSectionOffered("guests", undefined)).toBe(false);
     });
 
+    it("offers the integrations inside a space only", () => {
+        expect(isSectionOffered("integrations", undefined)).toBe(false);
+        expect(isSectionOffered("integrations", space({}))).toBe(true);
+    });
+
     it("keeps the settings of the space from who cannot manage it", () => {
         const member = space({});
 
+        expect(isSectionOffered("apps", member)).toBe(false);
         expect(isSectionOffered("conversations", member)).toBe(false);
         expect(isSectionOffered("security", member)).toBe(false);
         expect(isSectionOffered("guests", member)).toBe(true);
@@ -36,5 +42,6 @@ describe("isSectionOffered", () => {
         expect(isSectionOffered("members", owner)).toBe(true);
         expect(isSectionOffered("conversations", owner)).toBe(true);
         expect(isSectionOffered("security", owner)).toBe(true);
+        expect(isSectionOffered("apps", owner)).toBe(true);
     });
 });

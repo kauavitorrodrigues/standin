@@ -183,6 +183,13 @@
       "when": 1793882207683,
       "tag": "0025_backfill_floor_material",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794327992648,
+      "tag": "0026_add_integrations_tables",
+      "breakpoints": true
     }
   ]
 }

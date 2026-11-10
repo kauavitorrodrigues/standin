@@ -4,15 +4,18 @@ import { AuthPage } from "@/components/pages/AuthPage";
 import { getMeQueryOptions } from "@/features/auth/queries/getMe";
 import { authSearchSchema } from "@/features/auth/schemas/authSearch";
 import { takeReturnPath } from "@/features/auth/lib/returnTo";
+import { storeSpotifyResult } from "@/features/integrations/providers/spotify/lib/resultStorage";
 
 export const Route = createFileRoute("/")({
     validateSearch: authSearchSchema,
-    beforeLoad: async ({ context }) => {
+    beforeLoad: async ({ context, search }) => {
         const user = await context.queryClient
             .query({ ...getMeQueryOptions(), staleTime: "static" })
             .catch(() => null);
 
         if (user) {
+            if (search.spotify) storeSpotifyResult(search.spotify);
+
             // Just signed in with a page waiting: the person goes there.
             const returnPath = takeReturnPath();
             if (returnPath) throw redirect({ href: returnPath });
