@@ -99,3 +99,43 @@ export class HandRaiseInvalidError extends BaseError {
         super("The hand raise request is invalid.", "HAND_RAISE_INVALID", 422);
     }
 }
+
+// The person is not in a space, so there is nobody to tell.
+export class ActiveObjectNotAllowedError extends BaseError {
+    constructor() {
+        super(
+            "You cannot open an object in this space.",
+            "ACTIVE_OBJECT_NOT_ALLOWED",
+            403
+        );
+    }
+}
+
+// The request is malformed, or the object is not a website of this space.
+export class ActiveObjectInvalidError extends BaseError {
+    constructor() {
+        super("The object cannot be opened.", "ACTIVE_OBJECT_INVALID", 422);
+    }
+}
+
+// Guests see the object but do not decide for the others, and nobody who is
+// not looking at the object can close it for the ones who are.
+export class CloseObjectForViewersNotAllowedError extends BaseError {
+    constructor() {
+        super(
+            "You cannot close this object for the people viewing it.",
+            "CLOSE_OBJECT_FOR_VIEWERS_NOT_ALLOWED",
+            403
+        );
+    }
+}
+
+export class CloseObjectForViewersInvalidError extends BaseError {
+    constructor() {
+        super(
+            "The close request is invalid.",
+            "CLOSE_OBJECT_FOR_VIEWERS_INVALID",
+            422
+        );
+    }
+}

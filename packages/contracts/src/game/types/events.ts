@@ -21,11 +21,13 @@ import type {
 import type { MapServerEvents } from "../../maps/types/events";
 import type { MapJoinSchema, SpaceJoinSchema } from "../schemas/space";
 import type {
+    SpaceCloseObjectForViewersSchema,
     SpaceConfettiSchema,
     SpaceEmoteSchema,
     SpaceNearbyMessageSchema,
     SpaceNearbyTypingSchema,
     SpacePositionSchema,
+    SpaceSetActiveObjectSchema,
     SpaceSetAnnouncingSchema,
     SpaceSetHandRaisedSchema,
     SpaceShareVideoWithAnnouncerSchema,
@@ -119,6 +121,10 @@ export const SpaceEvents = {
     SPACE_SHARE_VIDEO_WITH_ANNOUNCER: "space:share-video-with-announcer",
     SPACE_SET_HAND_RAISED: "space:set-hand-raised",
     SPACE_RAISED_HANDS: "space:raised-hands",
+    SPACE_SET_ACTIVE_OBJECT: "space:set-active-object",
+    SPACE_ACTIVE_OBJECT: "space:active-object",
+    SPACE_CLOSE_OBJECT_FOR_VIEWERS: "space:close-object-for-viewers",
+    SPACE_OBJECT_CLOSED: "space:object-closed",
     SPACE_MUSIC_LISTENING: "space:music-listening",
 } as const;
 
@@ -149,6 +155,12 @@ export type SpaceShareVideoWithAnnouncerInput = z.infer<
     typeof SpaceShareVideoWithAnnouncerSchema
 >;
 export type SpaceSetHandRaisedInput = z.infer<typeof SpaceSetHandRaisedSchema>;
+export type SpaceSetActiveObjectInput = z.infer<
+    typeof SpaceSetActiveObjectSchema
+>;
+export type SpaceCloseObjectForViewersInput = z.infer<
+    typeof SpaceCloseObjectForViewersSchema
+>;
 
 // One person who is announcing within earshot of the receiver.
 export type SpaceAnnouncer = {
@@ -190,6 +202,36 @@ export type SpaceRaisedHandsPayload = {
 export type SpaceSetHandRaisedAck =
     { ok: true; raisedSince: number | null } | { ok: false; code: string };
 
+// The object a person has open, such as an embedded website. Not tied to
+// sitting or to any one kind of object, so other objects can use it later.
+export type SpaceActiveObject = {
+    socketId: string;
+    userId: string;
+    objectId: string;
+};
+
+// A person opened an object or closed the one they had. A null object means
+// they have none open now. Sent to the whole space, since the people looking at
+// an object are not necessarily near it.
+export type SpaceActiveObjectPayload = {
+    socketId: string;
+    userId: string;
+    objectId: string | null;
+};
+
+export type SpaceSetActiveObjectAck =
+    { ok: true; objectId: string | null } | { ok: false; code: string };
+
+// Someone who was looking at the object closed it for everyone looking.
+// Nothing is deleted: the object stays and anyone can open it again.
+export type SpaceObjectClosedPayload = {
+    objectId: string;
+    closedByUserId: string;
+};
+
+export type SpaceCloseObjectForViewersAck =
+    { ok: true } | { ok: false; code: string };
+
 // What changed around one person since the last tick, and nothing else. `entered`
 // carries the full state of someone who came into their interest area, `moved`
 // the people already known who changed, and `left` the ones who went out of it
@@ -218,6 +260,8 @@ export type SpaceJoinedPayload = {
     // What the people online are playing, so a person who joins later sees it
     // without waiting for the next change.
     listening: ListeningEntry[];
+    // The object each person inside has open, for the ones who have one.
+    activeObjects: SpaceActiveObject[];
 };
 
 // A person started, changed or stopped playing. A null track clears the widget.
@@ -265,6 +309,14 @@ export type ClientToServerEvents = {
     "space:set-hand-raised": (
         payload: SpaceSetHandRaisedInput,
         ack: (response: SpaceSetHandRaisedAck) => void
+    ) => void;
+    "space:set-active-object": (
+        payload: SpaceSetActiveObjectInput,
+        ack: (response: SpaceSetActiveObjectAck) => void
+    ) => void;
+    "space:close-object-for-viewers": (
+        payload: SpaceCloseObjectForViewersInput,
+        ack: (response: SpaceCloseObjectForViewersAck) => void
     ) => void;
     "space:set-announcing": (
         payload: SpaceSetAnnouncingInput,
@@ -398,6 +450,8 @@ export type ServerToClientEvents = {
     "space:nearby-typing": (payload: SpaceNearbyTypingOutput) => void;
     "space:announcers": (payload: SpaceAnnouncersPayload) => void;
     "space:raised-hands": (payload: SpaceRaisedHandsPayload) => void;
+    "space:active-object": (payload: SpaceActiveObjectPayload) => void;
+    "space:object-closed": (payload: SpaceObjectClosedPayload) => void;
     "space:music-listening": (payload: SpaceMusicListeningPayload) => void;
     "room:state": (payload: RoomStatePayload) => void;
     "room:states": (payload: RoomStatesPayload) => void;

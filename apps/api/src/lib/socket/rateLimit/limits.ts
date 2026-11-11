@@ -34,6 +34,9 @@ export const RATE_LIMITS: Record<string, RateLimit> = {
         burst: 6,
     },
     [SpaceEvents.SPACE_SET_HAND_RAISED]: { perSecond: 2, burst: 6 },
+    // Opening and closing an object, and closing it for the others.
+    [SpaceEvents.SPACE_SET_ACTIVE_OBJECT]: { perSecond: 2, burst: 6 },
+    [SpaceEvents.SPACE_CLOSE_OBJECT_FOR_VIEWERS]: { perSecond: 1, burst: 3 },
     [ChatEvents.TYPING]: { perSecond: 4, burst: 8 },
     // Negotiating media is a handful of requests per connection. The room for
     // a reconnect is the burst.

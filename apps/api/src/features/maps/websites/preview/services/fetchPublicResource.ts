@@ -22,6 +22,12 @@ const toPreviewError = (error: unknown, signal: AbortSignal): BaseError => {
     return new WebsitePreviewRequestError();
 };
 
+// A header sent more than once arrives as a list; it is read as one value.
+const readHeader = (value: string | string[] | undefined): string | null => {
+    if (value === undefined) return null;
+    return Array.isArray(value) ? value.join(", ") : value;
+};
+
 const normalizeType = (header: string | undefined): string =>
     (header ?? "").split(";")[0]!.trim().toLowerCase();
 
@@ -111,6 +117,14 @@ const readOnce = (
                         resource: {
                             contentType,
                             body: Buffer.concat(chunks),
+                            frameHeaders: {
+                                xFrameOptions: readHeader(
+                                    response.headers["x-frame-options"]
+                                ),
+                                contentSecurityPolicy: readHeader(
+                                    response.headers["content-security-policy"]
+                                ),
+                            },
                         },
                     });
 

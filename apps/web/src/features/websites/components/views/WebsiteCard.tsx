@@ -1,5 +1,11 @@
 import type { RefObject } from "react";
-import { GlobeIcon, InfoIcon, XIcon } from "lucide-react";
+import {
+    ExternalLinkIcon,
+    FootprintsIcon,
+    GlobeIcon,
+    InfoIcon,
+    XIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { WebsiteCardData } from "../../types/website";
@@ -17,7 +23,15 @@ type WebsiteCardProps = {
     // the title and the icon are shown as placeholders until they arrive.
     isLoadingPreview: boolean;
     data: WebsiteCardData;
+    // The avatar is within reach of the object. Away from it the card says to
+    // come closer, and offers to walk there.
+    isInReach: boolean;
+    // The site refuses to be shown inside another page, so the card offers the
+    // new tab only.
+    canEmbed: boolean;
     onOpen: () => void;
+    onWalk: () => void;
+    onOpenInTab: () => void;
     onClose: () => void;
 };
 
@@ -31,7 +45,11 @@ export const WebsiteCard = ({
     faviconUrl,
     isLoadingPreview,
     data,
+    isInReach,
+    canEmbed,
     onOpen,
+    onWalk,
+    onOpenInTab,
     onClose,
 }: WebsiteCardProps) => (
     <div
@@ -78,14 +96,45 @@ export const WebsiteCard = ({
                         <InfoIcon className="size-3.5 shrink-0" />
                         Conteúdo de terceiros
                     </div>
-                    <Button
-                        type="button"
-                        icon={GlobeIcon}
-                        onClick={onOpen}
-                        className="h-9 w-full bg-[#3a3de8] font-semibold text-white hover:bg-[#3a3de8]/85"
-                    >
-                        Abrir site
-                    </Button>
+                    {!canEmbed ? (
+                        <>
+                            <span className="text-xs text-white/60">
+                                Este site não permite ser exibido dentro de
+                                outra página.
+                            </span>
+                            <Button
+                                type="button"
+                                icon={ExternalLinkIcon}
+                                onClick={onOpenInTab}
+                                className="h-9 w-full bg-[#3a3de8] font-semibold text-white hover:bg-[#3a3de8]/85"
+                            >
+                                Abrir em nova aba
+                            </Button>
+                        </>
+                    ) : isInReach ? (
+                        <Button
+                            type="button"
+                            icon={GlobeIcon}
+                            onClick={onOpen}
+                            className="h-9 w-full bg-[#3a3de8] font-semibold text-white hover:bg-[#3a3de8]/85"
+                        >
+                            Abrir site
+                        </Button>
+                    ) : (
+                        <>
+                            <span className="text-xs text-white/60">
+                                Chegue perto do objeto para interagir com ele.
+                            </span>
+                            <Button
+                                type="button"
+                                icon={FootprintsIcon}
+                                onClick={onWalk}
+                                className="h-9 w-full bg-[#3a3de8] font-semibold text-white hover:bg-[#3a3de8]/85"
+                            >
+                                Ir até lá
+                            </Button>
+                        </>
+                    )}
                 </>
             ) : (
                 <>

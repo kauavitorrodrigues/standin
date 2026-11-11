@@ -33,6 +33,8 @@ import { registerSpaceEvents } from "@/lib/socket/handlers/spaceEvents";
 import { registerSpaceAnnouncing } from "@/lib/socket/handlers/spaceAnnouncing";
 import { registerSpaceShareVideoWithAnnouncer } from "@/lib/socket/handlers/spaceShareVideoWithAnnouncer";
 import { registerSpaceHandRaise } from "@/lib/socket/handlers/spaceHandRaise";
+import { registerSpaceActiveObject } from "@/lib/socket/handlers/spaceActiveObject";
+import { registerSpaceCloseObjectForViewers } from "@/lib/socket/handlers/spaceCloseObjectForViewers";
 import { registerMedia } from "@/lib/media/handlers/registerMedia";
 import { registerSoundboard } from "@/lib/socket/handlers/soundboard";
 import { registerChatTyping } from "@/lib/socket/handlers/chatTyping";
@@ -114,6 +116,8 @@ export function createSocketServer(
         registerSpaceAnnouncing(io, socket);
         registerSpaceShareVideoWithAnnouncer(socket);
         registerSpaceHandRaise(io, socket);
+        registerSpaceActiveObject(socket);
+        registerSpaceCloseObjectForViewers(io, socket);
         registerChatTyping(socket);
         registerMedia(socket);
         registerSoundboard(io, socket);

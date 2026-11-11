@@ -1,19 +1,31 @@
 import { describe, expect, it, vi } from "vitest";
 import { WebsitePreviewTimeoutError } from "@standin/contracts";
-import type { FetchedResource, FetchResource } from "../../types";
+import type { FetchedResource, FetchResource, FrameHeaders } from "../../types";
 import { loadWebsitePreview } from "../loadWebsitePreview";
 
-const page = (html: string, finalUrl = "https://example.com/board") =>
+const OPEN: FrameHeaders = {
+    xFrameOptions: null,
+    contentSecurityPolicy: null,
+};
+const ORIGINS = ["https://standin.example"];
+
+const page = (
+    html: string,
+    finalUrl = "https://example.com/board",
+    frameHeaders: FrameHeaders = OPEN
+) =>
     ({
         finalUrl,
         contentType: "text/html",
         body: Buffer.from(html),
+        frameHeaders,
     }) satisfies FetchedResource;
 const icon = (bytes: number[], contentType = "image/png") =>
     ({
         finalUrl: "https://example.com/icon.png",
         contentType,
         body: Buffer.from(bytes),
+        frameHeaders: OPEN,
     }) satisfies FetchedResource;
 
 describe("loadWebsitePreview", () => {
@@ -28,12 +40,14 @@ describe("loadWebsitePreview", () => {
 
         const preview = await loadWebsitePreview(
             "https://example.com/board",
+            ORIGINS,
             fetchResource
         );
 
         expect(preview).toEqual({
             title: "Whiteboard",
             faviconDataUrl: "data:image/png;base64,AQID",
+            canEmbed: true,
         });
         expect(fetchResource).toHaveBeenCalledWith(
             "https://example.com/icon.png",
@@ -50,6 +64,7 @@ describe("loadWebsitePreview", () => {
 
         const preview = await loadWebsitePreview(
             "https://example.com/board",
+            ORIGINS,
             fetchResource
         );
 
@@ -67,7 +82,11 @@ describe("loadWebsitePreview", () => {
                 : icon([1])
         );
 
-        await loadWebsitePreview("https://example.com/board", fetchResource);
+        await loadWebsitePreview(
+            "https://example.com/board",
+            ORIGINS,
+            fetchResource
+        );
 
         expect(fetchResource).toHaveBeenLastCalledWith(
             "https://app.example.net/favicon.ico",
@@ -85,10 +104,15 @@ describe("loadWebsitePreview", () => {
 
         const preview = await loadWebsitePreview(
             "https://example.com/board",
+            ORIGINS,
             fetchResource
         );
 
-        expect(preview).toEqual({ title: "Only title", faviconDataUrl: null });
+        expect(preview).toEqual({
+            title: "Only title",
+            faviconDataUrl: null,
+            canEmbed: true,
+        });
     });
 
     it("never fails: an unreadable page gives an empty preview", async () => {
@@ -98,10 +122,15 @@ describe("loadWebsitePreview", () => {
 
         const preview = await loadWebsitePreview(
             "https://example.com/board",
+            ORIGINS,
             fetchResource
         );
 
-        expect(preview).toEqual({ title: null, faviconDataUrl: null });
+        expect(preview).toEqual({
+            title: null,
+            faviconDataUrl: null,
+            canEmbed: true,
+        });
         expect(fetchResource).toHaveBeenCalledTimes(1);
     });
 
@@ -114,9 +143,45 @@ describe("loadWebsitePreview", () => {
 
         const preview = await loadWebsitePreview(
             "https://example.com/board",
+            ORIGINS,
             fetchResource
         );
 
         expect(preview.faviconDataUrl).toBeNull();
+    });
+
+    it("says the site refuses a frame when its headers do", async () => {
+        const fetchResource = vi.fn<FetchResource>(async () =>
+            page("<title>Closed</title>", "https://example.com/board", {
+                xFrameOptions: "DENY",
+                contentSecurityPolicy: null,
+            })
+        );
+
+        const preview = await loadWebsitePreview(
+            "https://example.com/board",
+            ORIGINS,
+            fetchResource
+        );
+
+        expect(preview.canEmbed).toBe(false);
+    });
+
+    it("says the site accepts a frame from the app by frame-ancestors", async () => {
+        const fetchResource = vi.fn<FetchResource>(async () =>
+            page("<title>Open</title>", "https://example.com/board", {
+                xFrameOptions: null,
+                contentSecurityPolicy:
+                    "frame-ancestors https://standin.example",
+            })
+        );
+
+        const preview = await loadWebsitePreview(
+            "https://example.com/board",
+            ORIGINS,
+            fetchResource
+        );
+
+        expect(preview.canEmbed).toBe(true);
     });
 });

@@ -32,7 +32,10 @@ const remember = (url: string, preview: WebsitePreview): WebsitePreview => {
 export const getWebsitePreview = async (
     mapId: string,
     objectId: string,
-    load: (url: string) => Promise<WebsitePreview> = loadWebsitePreview
+    load: (
+        url: string,
+        appOrigins: readonly string[]
+    ) => Promise<WebsitePreview> = loadWebsitePreview
 ): Promise<WebsitePreview> => {
     const url = await MapService.resolveWebsiteUrl(mapId, objectId);
     if (url === null) return EMPTY_WEBSITE_PREVIEW;
@@ -43,7 +46,7 @@ export const getWebsitePreview = async (
     const running = pending.get(url);
     if (running) return running;
 
-    const task = load(url)
+    const task = load(url, MapService.getAppOrigins())
         .then((preview) => remember(url, preview))
         .finally(() => pending.delete(url));
     pending.set(url, task);

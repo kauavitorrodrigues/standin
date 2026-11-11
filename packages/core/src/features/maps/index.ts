@@ -8,6 +8,8 @@ import { findResolvedMapById } from "./findResolvedById";
 import { getMapAccess } from "./getAccess";
 import { previewBlankMap } from "./previewBlank";
 import { loadLayoutLibrary } from "./utils/loadLayoutLibrary";
+import { getAppOrigins } from "./publish/utils/getAppOrigins";
+import { hasEmbeddedWebsite } from "./websites/hasEmbeddedWebsite";
 import { resolveWebsiteUrl } from "./websites/resolveWebsiteUrl";
 
 export type { MapAccess } from "./types/map-access";
@@ -25,6 +27,8 @@ export const MapService = {
     findOwner: findMapOwner,
     loadLibrary: loadLayoutLibrary,
     resolveWebsiteUrl,
+    hasEmbeddedWebsite,
+    getAppOrigins,
 };
 
 export { MapApplyService } from "./apply";

@@ -21,6 +21,7 @@ const entry = (socketId: string): PresenceEntry => ({
     announcingSince: null,
     sharingVideoWithAnnouncerSince: null,
     handRaisedSince: null,
+    activeInteractionObjectId: null,
 });
 
 const stand = (socketId: string, x: number) => {

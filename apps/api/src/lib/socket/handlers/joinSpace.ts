@@ -1,5 +1,6 @@
 import type { Server, Socket } from "socket.io";
 import { RoomEvents, SpaceEvents, SpaceJoinSchema } from "@standin/contracts";
+import type { SpaceActiveObject } from "@standin/contracts";
 import { SpaceGuestService } from "@standin/core";
 import { countQueries } from "@standin/database";
 import { buildSpaceRoom } from "../utils/buildSpaceRoom";
@@ -45,6 +46,7 @@ const resolveSelfEntry = async (
         announcingSince: null,
         sharingVideoWithAnnouncerSince: null,
         handRaisedSince: null,
+        activeInteractionObjectId: null,
         ...profile,
     };
 };
@@ -113,6 +115,16 @@ const toPeerPayload = ({
     headphones,
     focus,
 });
+
+// The object each person inside has open, so a person who joins sees who is
+// looking at what without waiting for the next change.
+const listActiveObjects = (spaceId: string): SpaceActiveObject[] =>
+    PresenceStore.listActiveObjects(spaceId).flatMap(
+        ({ socketId, userId, activeInteractionObjectId }) =>
+            activeInteractionObjectId === null
+                ? []
+                : [{ socketId, userId, objectId: activeInteractionObjectId }]
+    );
 
 const leavePreviousSpace = async (
     io: Server,
@@ -240,6 +252,7 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                     settings,
                     peers: peers.map(toPeerPayload),
                     listening: ListeningSync.snapshot(spaceId),
+                    activeObjects: listActiveObjects(spaceId),
                 });
                 socket.to(room).emit(SpaceEvents.SPACE_PEER_JOINED, {
                     socketId: socket.id,

@@ -17,6 +17,12 @@ describe("describeWalk", () => {
         );
     });
 
+    it("says the website the avatar goes to", () => {
+        expect(describeWalk({ kind: "website" }, getName)).toBe(
+            "Indo até o site"
+        );
+    });
+
     it("names the person walked to", () => {
         expect(describeWalk({ kind: "person", userId: "ana" }, getName)).toBe(
             "Indo até Ana"

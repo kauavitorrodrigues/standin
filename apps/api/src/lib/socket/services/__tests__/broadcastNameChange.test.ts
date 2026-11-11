@@ -23,6 +23,7 @@ const join = (spaceId: string, socketId: string, userId: string) =>
         announcingSince: null,
         sharingVideoWithAnnouncerSince: null,
         handRaisedSince: null,
+        activeInteractionObjectId: null,
     });
 
 describe("broadcastNameChange", () => {

@@ -97,6 +97,7 @@ function createFakeIo(
             announcingSince: null,
             sharingVideoWithAnnouncerSince: null,
             handRaisedSince: null,
+            activeInteractionObjectId: null,
             ...(PROFILES[peer.data.userId] ?? {
                 name: "",
                 profilePictureUrl: null,
@@ -154,6 +155,7 @@ describe("registerJoinSpace", () => {
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
             settings: { enableSendNearbyInMapView: true },
             listening: [],
+            activeObjects: [],
             peers: [
                 {
                     socketId: "socket-a",
@@ -183,6 +185,7 @@ describe("registerJoinSpace", () => {
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
             settings: { enableSendNearbyInMapView: true },
             listening: [],
+            activeObjects: [],
             peers: [
                 {
                     socketId: "socket-a",
@@ -295,6 +298,7 @@ describe("registerJoinSpace", () => {
             announcingSince: null,
             sharingVideoWithAnnouncerSince: null,
             handRaisedSince: null,
+            activeInteractionObjectId: null,
         });
 
         socket.data.spaceId = "space-1";
@@ -390,6 +394,7 @@ describe("registerJoinSpace", () => {
             settings: { enableSendNearbyInMapView: true },
             peers: [],
             listening: [],
+            activeObjects: [],
         });
     });
 
@@ -416,6 +421,41 @@ describe("registerJoinSpace", () => {
         expect(socket.emit).toHaveBeenCalledWith(
             "space:joined",
             expect.objectContaining({ listening: [entry] })
+        );
+    });
+
+    it("tells who joins later what each person inside has open", async () => {
+        PresenceStore.add("space-1", {
+            socketId: "socket-a",
+            userId: "user-a",
+            name: "",
+            profilePictureUrl: null,
+            avatarSheetFileId: null,
+            muted: true,
+            headphones: false,
+            focus: false,
+            announcingSince: null,
+            sharingVideoWithAnnouncerSince: null,
+            handRaisedSince: null,
+            activeInteractionObjectId: "object-1",
+        });
+        const socket = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([], "space:space-1");
+
+        registerJoinSpace(io as any, socket as any);
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(socket.emit).toHaveBeenCalledWith(
+            "space:joined",
+            expect.objectContaining({
+                activeObjects: [
+                    {
+                        socketId: "socket-a",
+                        userId: "user-a",
+                        objectId: "object-1",
+                    },
+                ],
+            })
         );
     });
 

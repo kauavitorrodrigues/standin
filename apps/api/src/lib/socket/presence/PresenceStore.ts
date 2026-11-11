@@ -21,6 +21,9 @@ export type PresenceEntry = {
     // When the person raised a hand, in ms since the epoch, or null when the
     // hand is down. Memory only, like the rest of the presence.
     handRaisedSince: number | null;
+    // The object the person has open, such as an embedded website, or null when
+    // they have none. Not tied to sitting. Memory only.
+    activeInteractionObjectId: string | null;
 };
 
 export type PresenceProfile = Pick<
@@ -233,6 +236,41 @@ const setHandRaised = (
     return true;
 };
 
+// Returns whether the state changed.
+const setActiveObject = (
+    spaceId: string,
+    socketId: string,
+    objectId: string | null
+): boolean => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry) return false;
+    if (entry.activeInteractionObjectId === objectId) return false;
+
+    space.bySocket.set(socketId, {
+        ...entry,
+        activeInteractionObjectId: objectId,
+    });
+    return true;
+};
+
+// Who has an object open in the space.
+const listActiveObjects = (spaceId: string): PresenceEntry[] =>
+    list(spaceId).filter((entry) => entry.activeInteractionObjectId !== null);
+
+// Takes the object away from everyone who has it open and returns who they
+// were, so the caller can tell the space.
+const clearActiveObject = (
+    spaceId: string,
+    objectId: string
+): PresenceEntry[] => {
+    const viewers = list(spaceId).filter(
+        (entry) => entry.activeInteractionObjectId === objectId
+    );
+    viewers.forEach((entry) => setActiveObject(spaceId, entry.socketId, null));
+    return viewers;
+};
+
 // Who has a hand up in the space, the oldest first.
 const listRaisedHands = (spaceId: string): PresenceEntry[] =>
     list(spaceId)
@@ -264,6 +302,9 @@ export const PresenceStore = {
     setAnnouncing,
     setSharingVideoWithAnnouncer,
     setHandRaised,
+    setActiveObject,
+    listActiveObjects,
+    clearActiveObject,
     listRaisedHands,
     listAnnouncers,
     clear,
