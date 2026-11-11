@@ -47,6 +47,7 @@ const withGroundObject = (): EditorModel =>
                 offsetY: 0,
                 parentId: null,
                 propertyOverrides: null,
+                behaviorParams: null,
             },
         ],
     });

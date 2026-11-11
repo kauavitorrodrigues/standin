@@ -2,6 +2,7 @@ import {
     buildZoneFloorOps,
     buildZoneRemoveOps,
     type LayerName,
+    type EmbeddedWebsiteParams,
     type ZoomLevel,
 } from "@standin/contracts";
 import { DEFAULT_LAYER_VISIBILITY } from "@/features/editor/consts/layers";
@@ -10,6 +11,7 @@ import { PANEL_TABS } from "@/features/editor/consts/panelTabs";
 import { keepsSelectionOnToolChange } from "@/features/editor/utils/keepsSelectionOnToolChange";
 import { isEditable } from "@/features/editor/utils/isEditable";
 import { buildRemoveOps } from "@/features/editor/utils/buildRemoveOps";
+import { buildBehaviorOps } from "@/features/editor/utils/buildBehaviorOps";
 import { buildReplaceOps } from "@/features/editor/utils/buildReplaceOps";
 import { buildRotateOps } from "@/features/editor/utils/buildRotateOps";
 import { buildMoveOps } from "@/features/editor/utils/buildMoveOps";
@@ -396,6 +398,16 @@ export class EditorStore {
         if (!host || !isEditable(this.state) || id === undefined) return;
 
         host.dispatch(buildReplaceOps(id, assetId));
+    };
+
+    // Gives the selected object the params of its behavior (or clears them),
+    // as one gesture. Params the model refuses change nothing.
+    setSelectionBehavior = (params: EmbeddedWebsiteParams | null): void => {
+        const host = this.selectionHost;
+        const [id] = this.state.selection;
+        if (!host || !isEditable(this.state) || id === undefined) return;
+
+        host.dispatch(buildBehaviorOps(id, params));
     };
 
     // Removes the selected objects as one gesture (Delete, Backspace). A

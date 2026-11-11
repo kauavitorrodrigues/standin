@@ -67,7 +67,7 @@ export const FormFields = ({ form, disabled }: Props) => {
                             control={form.control}
                             name="action"
                             label="Ação"
-                            hint="O que acontece quando alguém usa a peça. Sentar: o avatar senta na peça, e você marca onde direto na imagem."
+                            hint="O que acontece quando alguém usa a peça. Sentar: o avatar senta na peça, e você marca onde direto na imagem. Site embutido: a peça mostra um site, e quem edita o mapa define o endereço em cada objeto."
                             options={ACTION_OPTIONS}
                             disabled={disabled}
                         />

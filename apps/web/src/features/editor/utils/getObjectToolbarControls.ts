@@ -1,4 +1,5 @@
 import {
+    OBJECT_BEHAVIORS,
     getFamilyId,
     getReplaceAlternatives,
     type EditorModel,
@@ -46,5 +47,7 @@ export const getObjectToolbarControls = (
         showModel: alternatives.models.length + 1 >= MIN_CHOICES,
         showColor: alternatives.colors.length + 1 >= MIN_CHOICES,
         showRotate: alternatives.rotations.length > 0,
+        behaviorParams: placed.behaviorParams,
+        showBehavior: current.behavior === OBJECT_BEHAVIORS.EMBEDDED_WEBSITE,
     };
 };

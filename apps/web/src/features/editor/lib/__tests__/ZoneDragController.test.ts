@@ -218,6 +218,7 @@ const roomWithDoor = (): EditorModel => {
                 offsetY: 0,
                 parentId: null,
                 propertyOverrides: null,
+                behaviorParams: null,
             },
         ],
         library: { ...base.library, assets: [doorAsset] },

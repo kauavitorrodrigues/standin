@@ -1,18 +1,22 @@
 import { describe, expect, it } from "vitest";
-import type { ModelDesk } from "@standin/contracts";
+import type { AssetDefinition, ModelDesk } from "@standin/contracts";
 import { EDITOR_TOOLS } from "@/features/editor/consts/tools";
 import { createDraftStore } from "@/features/editor/lib/DraftStore";
 import { createEditorStore } from "@/features/editor/lib/EditorStore";
 import {
     buildToolbarModel,
+    desk,
     placedAt,
+    screen,
+    sofa,
 } from "@/features/editor/utils/__tests__/objectToolbarKit";
 
 const setup = (
     placed = [placedAt("a", "sofa", 2, 4)],
-    desks: ModelDesk[] = []
+    desks: ModelDesk[] = [],
+    assets?: AssetDefinition[]
 ) => {
-    const draft = createDraftStore(buildToolbarModel(placed, undefined, desks));
+    const draft = createDraftStore(buildToolbarModel(placed, assets, desks));
     const store = createEditorStore();
     store.attachSelectionHost({
         getModel: () => draft.getState().draft,
@@ -184,5 +188,32 @@ describe("EditorStore copy and paste", () => {
         store.copySelection();
 
         expect(store.getState().clipboard).toBe("sofa");
+    });
+});
+
+describe("EditorStore setSelectionBehavior", () => {
+    const website = { mode: "url", url: "https://example.com" } as const;
+    const withScreen = () =>
+        setup([placedAt("a", "screen", 2, 4)], [], [sofa, desk, screen]);
+    const paramsOf = (draft: ReturnType<typeof setup>["draft"]) =>
+        draft.getState().draft.placed.find((p) => p.id === "a")?.behaviorParams;
+
+    it("gives the selected object the params and clears them later", () => {
+        const { draft, store } = withScreen();
+        store.setSelection(["a"]);
+
+        store.setSelectionBehavior(website);
+        expect(paramsOf(draft)).toEqual(website);
+
+        store.setSelectionBehavior(null);
+        expect(paramsOf(draft)).toBeNull();
+    });
+
+    it("changes nothing for an object whose asset has no behavior", () => {
+        const { draft, store } = setup();
+        store.setSelection(["a"]);
+
+        store.setSelectionBehavior(website);
+        expect(paramsOf(draft)).toBeNull();
     });
 });

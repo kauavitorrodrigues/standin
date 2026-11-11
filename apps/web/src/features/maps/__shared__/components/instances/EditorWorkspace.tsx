@@ -116,7 +116,7 @@ export const EditorWorkspace = ({
                         onConfirm={confirmZoneName}
                         onCancel={cancelZoneName}
                     />
-                    <ObjectToolbar toolbarRef={toolbarRef} />
+                    <ObjectToolbar toolbarRef={toolbarRef} canSetBehavior />
                     <ZoneToolbar toolbarRef={zoneToolbarRef} />
                     <RoomPanel />
                     <EditorZoom onFit={fitCamera} />

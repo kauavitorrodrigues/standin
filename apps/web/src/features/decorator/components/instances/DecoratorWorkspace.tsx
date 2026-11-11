@@ -3,6 +3,7 @@ import { EDIT_SCOPES, TILE_SIZE } from "@standin/contracts";
 import type { Cell } from "@standin/contracts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { DECORATOR_FOCUS_OFFSET_X_PX } from "@/features/game/consts/decorator";
+import { useMapRender } from "@/features/game/queries/useMapRender";
 import type { GameEngineHandle } from "@/features/game/types/game";
 import { DECORATOR_FOCUS_KINDS } from "@/features/decorator/consts/focus-kinds";
 import { DecoratorDeskRemovalDialog } from "@/features/decorator/components/instances/DecoratorDeskRemovalDialog";
@@ -49,6 +50,8 @@ export const DecoratorWorkspace = ({
     onClose,
 }: DecoratorWorkspaceProps) => {
     const { user } = useAuth();
+    // The link of an object is set by who edits the map, not by who only decorates.
+    const canEdit = useMapRender(mapId).data?.access.canEdit ?? false;
     const draftStore = useDraftStore();
     const { toolbarRef, hintRef } = useDecoratorEngine(
         handle,
@@ -83,7 +86,7 @@ export const DecoratorWorkspace = ({
     return (
         <>
             <DecoratorPanel mapId={mapId} onClose={close} />
-            <ObjectToolbar toolbarRef={toolbarRef} />
+            <ObjectToolbar toolbarRef={toolbarRef} canSetBehavior={canEdit} />
             <HintLine ref={hintRef} />
             <DecoratorLockNotice />
             <DecoratorResumeDialog

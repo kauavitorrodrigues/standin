@@ -19,6 +19,7 @@ export const getOpFocusCell = (
         case "move_asset":
             return [op.tileX, op.tileY];
         case "replace_asset":
+        case "set_behavior":
         case "remove_asset": {
             const target = placed.find(({ id }) => id === op.id);
             return target ? [target.tileX, target.tileY] : null;

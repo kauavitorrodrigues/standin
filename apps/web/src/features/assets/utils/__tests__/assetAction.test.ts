@@ -20,6 +20,23 @@ describe("action of a new asset", () => {
         expect(data.actionParams).toEqual({ seats: [seat] });
     });
 
+    it("sends the behavior, and no action, for an embedded website", () => {
+        const data = buildAssetData(
+            createValues({ action: "EMBEDDED_WEBSITE" })
+        );
+        expect(data.behavior).toBe("EMBEDDED_WEBSITE");
+        expect(data.action).toBeUndefined();
+        expect(data.actionParams).toBeUndefined();
+    });
+
+    it("sends no behavior with a sit action or without one", () => {
+        expect(buildAssetData(createValues()).behavior).toBeUndefined();
+        expect(
+            buildAssetData(createValues({ action: "SIT", seats: [seat] }))
+                .behavior
+        ).toBeUndefined();
+    });
+
     it("asks for a seat when the action is sit", () => {
         const errors = validateCreateAsset(
             createValues({ action: "SIT", seats: [] }),

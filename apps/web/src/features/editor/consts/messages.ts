@@ -141,3 +141,16 @@ export const FRAME_MESSAGES = {
     size: (width: number, height: number): string =>
         `${width} x ${height} tiles`,
 } as const;
+
+export const BEHAVIOR_MESSAGES = {
+    LABEL: "Comportamento",
+    MODE_URL: "Endereço",
+    MODE_DERIVED: "Prefixo",
+    URL_LABEL: "Endereço do site",
+    URL_PLACEHOLDER: "https://",
+    PREFIX_LABEL: "Prefixo do endereço",
+    PREFIX_HINT: "Cada objeto soma um sufixo curto e próprio ao prefixo",
+    APPLY: "Aplicar",
+    CLEAR: "Limpar",
+    INVALID: "Use um endereço https válido",
+} as const;
