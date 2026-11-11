@@ -1,3 +1,7 @@
+import type {
+    ListeningEntry,
+    ListeningTrack,
+} from "../../spaces/music/types/listening";
 import type { RemotePlayer } from "./player";
 import type {
     RoomEntitlementsPayload,
@@ -115,6 +119,7 @@ export const SpaceEvents = {
     SPACE_SHARE_VIDEO_WITH_ANNOUNCER: "space:share-video-with-announcer",
     SPACE_SET_HAND_RAISED: "space:set-hand-raised",
     SPACE_RAISED_HANDS: "space:raised-hands",
+    SPACE_MUSIC_LISTENING: "space:music-listening",
 } as const;
 
 export const OrganizationEvents = {
@@ -210,6 +215,15 @@ export type SpaceNearbyTypingOutput = SpaceNearbyTypingInput & {
 export type SpaceJoinedPayload = {
     peers: RemotePlayer[];
     settings: SpaceSettings;
+    // What the people online are playing, so a person who joins later sees it
+    // without waiting for the next change.
+    listening: ListeningEntry[];
+};
+
+// A person started, changed or stopped playing. A null track clears the widget.
+export type SpaceMusicListeningPayload = {
+    userId: string;
+    track: ListeningTrack | null;
 };
 
 export type SpaceSettingsChangedPayload = {
@@ -384,6 +398,7 @@ export type ServerToClientEvents = {
     "space:nearby-typing": (payload: SpaceNearbyTypingOutput) => void;
     "space:announcers": (payload: SpaceAnnouncersPayload) => void;
     "space:raised-hands": (payload: SpaceRaisedHandsPayload) => void;
+    "space:music-listening": (payload: SpaceMusicListeningPayload) => void;
     "room:state": (payload: RoomStatePayload) => void;
     "room:states": (payload: RoomStatesPayload) => void;
     "room:join-requested": (payload: RoomJoinRequestedPayload) => void;
