@@ -8,6 +8,7 @@ export const SPOTIFY_CONNECT_RESULTS = {
     DENIED: "denied",
     LIMIT_REACHED: "limit_reached",
     NOT_ALLOWED: "not_allowed",
+    ACCOUNT_TAKEN: "account_taken",
     NOT_CONFIGURED: "not_configured",
     STATE_INVALID: "state_invalid",
     FAILED: "failed",

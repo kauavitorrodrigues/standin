@@ -4,6 +4,7 @@ import { deleteSpotifyConnection } from "./deleteConnection";
 import { deleteSpotifyConnections } from "./deleteConnections";
 import { findSpotifyApp } from "./findApp";
 import { findSpotifyConnection } from "./findConnection";
+import { findSpotifyConnectionByAccount } from "./findConnectionByAccount";
 import { listSpotifyConnections } from "./listConnections";
 import { listSpotifyConnectedUserIds } from "./listConnectedUserIds";
 import { updateSpotifyRefreshToken } from "./updateRefreshToken";
@@ -18,6 +19,7 @@ export const SpotifyRepository = {
     deleteApp: deleteSpotifyApp,
     deleteConnections: deleteSpotifyConnections,
     findConnection: findSpotifyConnection,
+    findConnectionByAccount: findSpotifyConnectionByAccount,
     listConnections: listSpotifyConnections,
     countConnections: countSpotifyConnections,
     upsertConnection: upsertSpotifyConnection,

@@ -29,5 +29,6 @@ export const SpotifyErrorMessages = {
         isAvailable: "The available flag is invalid.",
         isConnected: "The connected flag is invalid.",
         isFull: "The full flag is invalid.",
+        needsReconnect: "The reconnect flag is invalid.",
     },
 };

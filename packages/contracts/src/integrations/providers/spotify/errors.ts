@@ -75,6 +75,18 @@ export class SpotifyUnavailableError extends BaseError {
     }
 }
 
+// Another member of the organization already holds this Spotify account, and
+// it would take a second place of the app for the same person.
+export class SpotifyAccountTakenError extends BaseError {
+    constructor() {
+        super(
+            "This Spotify account is already connected by someone else in this organization.",
+            "SPOTIFY_ACCOUNT_TAKEN",
+            409
+        );
+    }
+}
+
 export class SpotifyConnectionNotFoundError extends BaseError {
     constructor() {
         super(
