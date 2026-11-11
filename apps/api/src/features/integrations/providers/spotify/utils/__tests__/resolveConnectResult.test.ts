@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     SPOTIFY_CONNECT_RESULTS,
+    SpotifyAccountTakenError,
     SpotifyAccountNotAllowedError,
     SpotifyAuthorizationDeniedError,
     SpotifyConnectionLimitError,
@@ -21,6 +22,7 @@ describe("resolveSpotifyConnectResult", () => {
             new SpotifyAccountNotAllowedError(),
             SPOTIFY_CONNECT_RESULTS.NOT_ALLOWED,
         ],
+        [new SpotifyAccountTakenError(), SPOTIFY_CONNECT_RESULTS.ACCOUNT_TAKEN],
         [
             new SpotifyNotConfiguredError(),
             SPOTIFY_CONNECT_RESULTS.NOT_CONFIGURED,

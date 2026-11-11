@@ -1,4 +1,7 @@
-import { SpotifyConnectionLimitError } from "@standin/contracts";
+import {
+    SpotifyAccountTakenError,
+    SpotifyConnectionLimitError,
+} from "@standin/contracts";
 import { db } from "@standin/database";
 import { SpotifyProvider } from "@standin/infra";
 import { SEAL_CONTEXTS, sealToken } from "../../../../../lib/crypto";
@@ -36,6 +39,16 @@ export const completeSpotifyConnection = async ({
 
         const current = await SpotifyRepository.findApp(organizationId, tx);
         assertSameApp(current, credentials);
+
+        // One person, one place: the same account cannot hold two.
+        const holder = await SpotifyRepository.findConnectionByAccount(
+            organizationId,
+            profile.id,
+            tx
+        );
+        if (holder && holder.userId !== userId) {
+            throw new SpotifyAccountTakenError();
+        }
 
         const key = { organizationId, userId };
         const existing = await SpotifyRepository.findConnection(key, tx);
