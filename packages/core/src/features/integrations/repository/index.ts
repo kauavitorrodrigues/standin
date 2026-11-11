@@ -9,6 +9,8 @@ import { deleteIntegrationsOfOrganization } from "./deleteIntegrationsOfOrganiza
 import { findConnection } from "./findConnection";
 import { findIntegration } from "./findIntegration";
 import { listConnections } from "./listConnections";
+import { listConnectedUserIds } from "./listConnectedUserIds";
+import { updateRefreshToken } from "./updateRefreshToken";
 import { upsertConnection } from "./upsertConnection";
 import { upsertIntegration } from "./upsertIntegration";
 
@@ -24,6 +26,8 @@ export const IntegrationRepository = {
     listConnections,
     countConnections,
     upsertConnection,
+    updateRefreshToken,
+    listConnectedUserIds,
     deleteConnection,
     deleteConnectionsOfIntegration,
     deleteConnectionsOfOrganization,

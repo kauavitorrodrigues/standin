@@ -16,4 +16,7 @@ export const SpotifyResponseErrorMessages = {
     profile: {
         id: "Spotify did not send the id of the account.",
     },
+    playback: {
+        invalid: "Spotify sent an invalid playback state.",
+    },
 };

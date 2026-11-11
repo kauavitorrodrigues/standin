@@ -1,3 +1,5 @@
+import type { SpotifyCredentials } from "@standin/infra";
+
 export type SaveSpotifyAppInput = {
     organizationId: string;
     userId: string;
@@ -22,4 +24,12 @@ export type CompleteSpotifyConnectionInput = {
 export type SpotifyConnectionKey = {
     organizationId: string;
     userId: string;
+};
+
+// What a read of the playback needs to get an access token: the person, the
+// app of the organization and the refresh token still sealed.
+export type PlaybackAccess = {
+    key: SpotifyConnectionKey;
+    credentials: SpotifyCredentials;
+    refreshTokenSealed: string;
 };
