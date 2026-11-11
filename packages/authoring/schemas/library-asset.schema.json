@@ -136,6 +136,13 @@
                 }
             ]
         },
+        "behavior": {
+            "type": "string",
+            "enum": [
+                "NONE",
+                "EMBEDDED_WEBSITE"
+            ]
+        },
         "promptText": {
             "type": [
                 "string",

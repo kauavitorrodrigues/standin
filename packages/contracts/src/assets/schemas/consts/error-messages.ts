@@ -91,6 +91,11 @@ export const AssetErrorMessages = {
     actionParams: {
         invalid: "The action parameters of the asset are invalid.",
     },
+    behavior: {
+        invalid: "The asset behavior is invalid.",
+        conflictsWithAction:
+            "An asset with an action (sit, teleport) cannot also have a behavior.",
+    },
     promptText: { invalid: "The interaction text of the asset is invalid." },
     animation: { invalid: "The asset animation is invalid." },
     animationFrameCount: {

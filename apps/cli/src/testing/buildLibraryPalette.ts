@@ -49,6 +49,7 @@ const buildAsset = (
     solid: entry.solid ?? false,
     action: entry.action ?? null,
     actionParams: variant?.actionParams ?? entry.actionParams ?? null,
+    behavior: entry.behavior ?? "NONE",
     promptText: entry.promptText ?? null,
     animation: entry.animation ?? null,
 });

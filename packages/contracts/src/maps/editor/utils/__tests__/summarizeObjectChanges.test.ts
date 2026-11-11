@@ -11,6 +11,7 @@ const object = (id: string, parentId: string | null = null) => ({
     offsetY: 0,
     parentId,
     propertyOverrides: null,
+    behaviorParams: null,
 });
 
 const base = {

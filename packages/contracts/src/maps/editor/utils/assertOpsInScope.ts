@@ -23,6 +23,14 @@ const isMapLevelOp = (op: EditorOp): boolean => {
     }
 };
 
+// In the objects scope the map-level operations are refused. The params of a
+// behavior are the exception for who may edit the map: they are set from the
+// decorator too, but only by an owner or an editor.
+const isRefusedInObjects = (op: EditorOp, actor: EditActor): boolean => {
+    if (op.type === "set_behavior") return actor.canEdit !== true;
+    return isMapLevelOp(op);
+};
+
 // Keeps the parent of every object up to date while the list is read, so an
 // object placed by the list itself (tempId) can be the parent of a later one.
 const trackParents = (parents: Map<string, string | null>, op: EditorOp) => {
@@ -44,7 +52,8 @@ const trackParents = (parents: Map<string, string | null>, op: EditorOp) => {
 /**
  * Checks the operations against the edit scope and the desk claims, before
  * any of them is applied. Pure. In the `objects` scope the tile, zone and
- * background operations are refused (OUT_OF_SCOPE). In any scope, moving,
+ * background operations are refused (OUT_OF_SCOPE), and so are the params of
+ * a behavior unless the actor `canEdit`. In any scope, moving,
  * replacing or removing a desk claimed by someone else, or an item on it, is
  * refused (DESK_CLAIMED), and so is removing the own desk without
  * `releaseDesk`. Returns every problem found, each with the `opIndex` of its
@@ -62,7 +71,10 @@ export const assertOpsInScope = (
     );
 
     for (const [opIndex, op] of ops.entries()) {
-        if (scope.kind === EDIT_SCOPES.OBJECTS && isMapLevelOp(op)) {
+        if (
+            scope.kind === EDIT_SCOPES.OBJECTS &&
+            isRefusedInObjects(op, actor)
+        ) {
             issues.push({
                 opIndex,
                 code: Code.OUT_OF_SCOPE,

@@ -182,6 +182,17 @@ export class FootprintMaskAnimatedIssue extends LibraryIssueItem {
     }
 }
 
+// An asset has an action or a behavior, never both.
+export class BehaviorWithActionIssue extends LibraryIssueItem {
+    constructor() {
+        super(
+            CODES.ASSET_BEHAVIOR_CONFLICT,
+            "behavior",
+            "An asset with an action (sit, teleport) cannot also have a behavior."
+        );
+    }
+}
+
 export class ActionParamsWithoutActionIssue extends LibraryIssueItem {
     constructor() {
         super(
