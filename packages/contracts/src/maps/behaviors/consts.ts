@@ -29,3 +29,6 @@ export const EMBEDDED_WEBSITE_SUFFIX_LENGTH = 6;
 
 // Schemes that can run code in the page that shows them.
 export const FORBIDDEN_URL_PROTOCOLS = ["javascript:", "data:", "vbscript:"];
+
+// The longest page title the preview keeps.
+export const WEBSITE_PREVIEW_TITLE_MAX = 120;

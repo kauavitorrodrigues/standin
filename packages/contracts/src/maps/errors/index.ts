@@ -6,3 +6,4 @@ export * from "./lock";
 export * from "./publish";
 export * from "./scope";
 export * from "./authoring";
+export * from "./websitePreview";
