@@ -13,6 +13,7 @@ const entry = (socketId: string, userId: string): PresenceEntry => ({
     announcingSince: null,
     sharingVideoWithAnnouncerSince: null,
     handRaisedSince: null,
+    activeInteractionObjectId: null,
 });
 
 describe("PresenceStore", () => {
@@ -129,5 +130,54 @@ describe("PresenceStore", () => {
         expect(PresenceStore.setHandRaised("space-1", "s1", null)).toBe(false);
         expect(PresenceStore.setHandRaised("space-1", "nobody", 1)).toBe(false);
         expect(PresenceStore.listRaisedHands("space-1")).toEqual([]);
+    });
+
+    it("opens and closes an object for one socket", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+
+        expect(PresenceStore.setActiveObject("space-1", "s1", "obj")).toBe(
+            true
+        );
+        expect(PresenceStore.setActiveObject("space-1", "s1", "obj")).toBe(
+            false
+        );
+        expect(
+            PresenceStore.get("space-1", "s1")?.activeInteractionObjectId
+        ).toBe("obj");
+
+        expect(PresenceStore.setActiveObject("space-1", "s1", null)).toBe(true);
+        expect(PresenceStore.setActiveObject("space-1", "nobody", "obj")).toBe(
+            false
+        );
+        expect(PresenceStore.listActiveObjects("space-1")).toEqual([]);
+    });
+
+    it("lists who has an object open and clears one object for its viewers", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.add("space-1", entry("s2", "u2"));
+        PresenceStore.add("space-1", entry("s3", "u3"));
+        PresenceStore.setActiveObject("space-1", "s1", "a");
+        PresenceStore.setActiveObject("space-1", "s2", "a");
+        PresenceStore.setActiveObject("space-1", "s3", "b");
+
+        expect(
+            PresenceStore.listActiveObjects("space-1").map((e) => e.socketId)
+        ).toEqual(["s1", "s2", "s3"]);
+
+        const cleared = PresenceStore.clearActiveObject("space-1", "a");
+
+        expect(cleared.map((e) => e.socketId)).toEqual(["s1", "s2"]);
+        expect(
+            PresenceStore.listActiveObjects("space-1").map((e) => e.socketId)
+        ).toEqual(["s3"]);
+    });
+
+    it("drops the open object together with the socket", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.setActiveObject("space-1", "s1", "a");
+
+        PresenceStore.remove("space-1", "s1");
+
+        expect(PresenceStore.listActiveObjects("space-1")).toEqual([]);
     });
 });

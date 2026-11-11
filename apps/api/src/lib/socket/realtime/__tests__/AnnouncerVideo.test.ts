@@ -18,6 +18,7 @@ const presence = (
     announcingSince,
     sharingVideoWithAnnouncerSince: sharingSince,
     handRaisedSince: null,
+    activeInteractionObjectId: null,
 });
 
 const fakeRoom = (hasPeer: boolean) => ({
