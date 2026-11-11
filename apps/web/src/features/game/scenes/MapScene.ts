@@ -45,6 +45,8 @@ import { PathWalker } from "@/features/game/lib/PathWalker";
 import { TileMover } from "@/features/game/lib/TileMover";
 import { WALK_EVENTS } from "@/features/game/consts/walk-events";
 import { DESK_EVENTS, DESK_REACH_PX } from "@/features/game/consts/desk";
+import { WEBSITE_EVENTS } from "@/features/game/consts/website";
+import { buildWebsiteAreas } from "@/features/game/utils/buildWebsiteAreas";
 import { REMOTE_SELECTION_EVENTS } from "@/features/game/consts/remote-selection";
 import type { WalkPurpose } from "@/features/game/types/walk";
 import { splitDeskAreas } from "@/features/game/utils/splitDeskAreas";
@@ -237,6 +239,8 @@ export class MapScene extends Phaser.Scene {
     private isWalkReported = false;
     private deskHoverController: HoverTargetController | null = null;
     private zoneHoverController: HoverTargetController | null = null;
+    // The objects that embed a website: outlined, and clicked to open a card.
+    private websiteHoverController: HoverTargetController | null = null;
     // The desks and the named zones: places the double click walks to, and
     // where the mark of a tile is not drawn.
     private deskAreas: HoverTarget[] = [];
@@ -522,6 +526,12 @@ export class MapScene extends Phaser.Scene {
             DESK_EVENTS.HOVER_CHANGED
         );
 
+        this.websiteHoverController = new HoverTargetController(
+            this,
+            WEBSITE_EVENTS.HOVER_CHANGED,
+            { drawsOutline: true, setsCursor: true, followsRender: true }
+        );
+
         // Created after the desk one on purpose: a click on the avatar is a
         // click on the empty map for the desks, which closes the profile card,
         // and the avatar one runs after it to open it again.
@@ -682,6 +692,9 @@ export class MapScene extends Phaser.Scene {
             );
             this.deskHoverController?.setTargets(this.deskAreas);
             this.refreshDeskClaims();
+            this.websiteHoverController?.setTargets(
+                buildWebsiteAreas(placed, assetsById, tilemap.heightInPixels)
+            );
 
             const doors = buildRoomDoors(
                 placed,
@@ -782,6 +795,7 @@ export class MapScene extends Phaser.Scene {
         this.interactionController?.update();
         this.zoneHoverController?.update();
         this.deskHoverController?.update();
+        this.websiteHoverController?.update();
         this.updatePlayerHover();
         this.updateTileCursor();
         this.updateAtOwnDesk();
@@ -955,6 +969,7 @@ export class MapScene extends Phaser.Scene {
         this.canPanCamera = guards?.canPan ?? (() => true);
         this.isDecorating = guards !== null;
         this.deskHoverController?.setEnabled(guards === null);
+        this.websiteHoverController?.setEnabled(guards === null);
         this.zoneHoverController?.setEnabled(guards === null);
         this.playerHoverController?.setEnabled(guards === null);
         this.remoteHoverController?.setEnabled(guards === null);
