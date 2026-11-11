@@ -119,6 +119,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     } = useSpaceSearch();
 
     const { user } = useAuth();
+    const [chipHost, setChipHost] = useState<HTMLElement | null>(null);
 
     const peoplePanel = usePeoplePanel({ view, selectView });
 
@@ -244,6 +245,9 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     // speak, as in a meeting. Near someone on the map one just talks.
     const isGridView =
         stageView === STAGE_VIEWS.GRID && view === SPACE_VIEWS.SPACE;
+    // The site of an object opens over the office and is put away on the grid.
+    const isOfficeView =
+        stageView === STAGE_VIEWS.OFFICE && view === SPACE_VIEWS.SPACE;
     useLowerHandOutsideGrid({ handRaise, isGridView });
     useHandRaiseToasts({
         hands: handRaise.hands,
@@ -380,9 +384,14 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     <WebsiteHoverCard
                         handle={handle}
                         mapId={space.map.id}
-                        isBelowStageToggle={layout.isStageToggleVisible}
+                        chipHost={chipHost}
                         placed={mapRender.data?.placed ?? []}
                         assets={mapRender.data?.assets ?? []}
+                        isOfficeView={isOfficeView}
+                        selfUserId={user.id}
+                        names={names}
+                        avatars={avatars}
+                        canCloseForViewers={peopleById.has(user.id)}
                     />
                     <LayoutPrimitive.RightStack
                         isBelowStageToggle={layout.isStageToggleVisible}
@@ -459,12 +468,17 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         />
                     </RaisedHandsContext.Provider>
                     <LayoutPrimitive.TopControls
-                        visible={layout.isStageToggleVisible}
+                        visible={layout.isControlsVisible}
+                        className="gap-2"
                     >
-                        <StageViewToggle
-                            view={stageView}
-                            onViewChange={changeStageView}
-                        />
+                        {/* The chip of an open website lands here, beside the switch. */}
+                        <div ref={setChipHost} className="contents" />
+                        {layout.isStageToggleVisible && (
+                            <StageViewToggle
+                                view={stageView}
+                                onViewChange={changeStageView}
+                            />
+                        )}
                     </LayoutPrimitive.TopControls>
                     <LayoutPrimitive.Controls
                         visible={layout.isControlsVisible}

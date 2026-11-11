@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { GlobeIcon, InfoIcon, XIcon } from "lucide-react";
+import { FootprintsIcon, GlobeIcon, InfoIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { WebsiteCardData } from "../../types/website";
@@ -17,7 +17,11 @@ type WebsiteCardProps = {
     // the title and the icon are shown as placeholders until they arrive.
     isLoadingPreview: boolean;
     data: WebsiteCardData;
+    // The avatar is within reach of the object. Away from it the card says to
+    // come closer, and offers to walk there.
+    isInReach: boolean;
     onOpen: () => void;
+    onWalk: () => void;
     onClose: () => void;
 };
 
@@ -31,7 +35,9 @@ export const WebsiteCard = ({
     faviconUrl,
     isLoadingPreview,
     data,
+    isInReach,
     onOpen,
+    onWalk,
     onClose,
 }: WebsiteCardProps) => (
     <div
@@ -78,14 +84,30 @@ export const WebsiteCard = ({
                         <InfoIcon className="size-3.5 shrink-0" />
                         Conteúdo de terceiros
                     </div>
-                    <Button
-                        type="button"
-                        icon={GlobeIcon}
-                        onClick={onOpen}
-                        className="h-9 w-full bg-[#3a3de8] font-semibold text-white hover:bg-[#3a3de8]/85"
-                    >
-                        Abrir site
-                    </Button>
+                    {isInReach ? (
+                        <Button
+                            type="button"
+                            icon={GlobeIcon}
+                            onClick={onOpen}
+                            className="h-9 w-full bg-[#3a3de8] font-semibold text-white hover:bg-[#3a3de8]/85"
+                        >
+                            Abrir site
+                        </Button>
+                    ) : (
+                        <>
+                            <span className="text-xs text-white/60">
+                                Chegue perto do objeto para interagir com ele.
+                            </span>
+                            <Button
+                                type="button"
+                                icon={FootprintsIcon}
+                                onClick={onWalk}
+                                className="h-9 w-full bg-[#3a3de8] font-semibold text-white hover:bg-[#3a3de8]/85"
+                            >
+                                Ir até lá
+                            </Button>
+                        </>
+                    )}
                 </>
             ) : (
                 <>

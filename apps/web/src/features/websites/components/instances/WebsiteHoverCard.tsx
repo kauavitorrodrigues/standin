@@ -1,37 +1,58 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AssetDefinition, PlacedAsset } from "@standin/contracts";
+import { toast } from "@/components/ui/toast";
 import { useHotkey } from "@/hooks/useHotkey";
 import { WEBSITE_EVENTS } from "@/features/game/consts/website";
 import { useHoverClick } from "@/features/game/hooks/useHoverClick";
 import type { GameEngineHandle } from "@/features/game/types/game";
 import { usePrefetchPreview } from "../../hooks/usePrefetchPreview";
+import { useWebsiteSession } from "../../hooks/useWebsiteSession";
+import { useWebsiteViewers } from "../../hooks/useWebsiteViewers";
 import { WebsitesQueries } from "../../queries";
+import type { WebsiteViewerPerson } from "../../types/viewers";
 import { resolveWebsiteCard } from "../../utils/resolveWebsiteCard";
+import { listViewerIds } from "../../utils/websiteViewers";
 import { WebsiteCard } from "../views/WebsiteCard";
 import { WebsiteViewer } from "./WebsiteViewer";
 
 type WebsiteHoverCardProps = {
     handle: GameEngineHandle | null;
     mapId: string;
-    // The switch of views is on screen, so the frame starts below it.
-    isBelowStageToggle: boolean;
+    // The row of the top right corner the chip of the open site goes in.
+    chipHost: HTMLElement | null;
     placed: readonly PlacedAsset[];
     assets: readonly Pick<AssetDefinition, "id" | "name">[];
+    // The stage shows the office. On the grid of the meeting the site is put
+    // away, and it comes back with the office.
+    isOfficeView: boolean;
+    selfUserId: string;
+    names: ReadonlyMap<string, string>;
+    avatars: ReadonlyMap<string, string | null>;
+    // Guests look at the site but do not close it for the others.
+    canCloseForViewers: boolean;
 };
 
 // The card of the object with a website that was clicked, and the frame that
-// shows the website once the person chooses to open it. The card stays
-// outlined and follows the camera until a click anywhere else or Esc drops it.
+// shows the website once the person chooses to open it, over the stage. The
+// card stays outlined and follows the camera until a click anywhere else or Esc
+// drops it. The site only opens, and only stays open, within reach of the
+// object; from afar the card offers to walk there.
 export const WebsiteHoverCard = ({
     handle,
     mapId,
-    isBelowStageToggle,
+    chipHost,
     placed,
     assets,
+    isOfficeView,
+    selfUserId,
+    names,
+    avatars,
+    canCloseForViewers,
 }: WebsiteHoverCardProps) => {
     const [openId, setOpenId] = useState<string | null>(null);
     // The object whose website is open in the frame, which outlives the card.
-    const [viewingId, setViewingId] = useState<string | null>(null);
+    const session = useWebsiteSession(handle);
+    const { viewingId, inReachIds, close: closeViewer } = session;
     const anchorRef = useRef<HTMLDivElement | null>(null);
     const origins = [window.location.origin];
     const data =
@@ -53,6 +74,34 @@ export const WebsiteHoverCard = ({
     );
 
     usePrefetchPreview(handle, mapId, placed);
+
+    const handleClosedByOther = useCallback(
+        (_objectId: string, byUserId: string) => {
+            closeViewer();
+            if (byUserId === selfUserId) return;
+
+            const name = names.get(byUserId) ?? "Alguém";
+            toast.add({
+                title: `${name} fechou o site para quem estava vendo.`,
+                type: "info",
+            });
+        },
+        [closeViewer, selfUserId, names]
+    );
+    const { viewers, closeForViewers } = useWebsiteViewers({
+        activeObjectId: viewingId,
+        onClosedByOther: handleClosedByOther,
+    });
+    const viewerPeople = useMemo<WebsiteViewerPerson[]>(() => {
+        if (viewingId === null) return [];
+
+        const userIds = listViewerIds(viewers, viewingId, selfUserId, true);
+        return userIds.map((userId) => ({
+            userId,
+            name: names.get(userId) ?? "Alguém",
+            avatar: avatars.get(userId) ?? null,
+        }));
+    }, [viewers, viewingId, selfUserId, names, avatars]);
 
     useEffect(() => {
         handle?.selectHover(WEBSITE_EVENTS.HOVER_CHANGED, openId);
@@ -98,8 +147,14 @@ export const WebsiteHoverCard = ({
                 host={viewingData.host}
                 title={viewingPreview?.title ?? findObjectName(viewingId)}
                 faviconUrl={viewingPreview?.faviconDataUrl ?? null}
-                isBelowStageToggle={isBelowStageToggle}
-                onClose={() => setViewingId(null)}
+                viewers={viewerPeople}
+                isMinimized={session.isMinimized}
+                isHidden={!isOfficeView}
+                canCloseForViewers={canCloseForViewers}
+                chipHost={chipHost}
+                onToggleMinimized={session.toggleMinimized}
+                onCloseForViewers={() => void closeForViewers(viewingId)}
+                onClose={closeViewer}
             />
         ) : null;
 
@@ -107,7 +162,11 @@ export const WebsiteHoverCard = ({
 
     // The card gives way to the frame: the site opens inside the space.
     const open = () => {
-        setViewingId(openId);
+        session.open(openId);
+        setOpenId(null);
+    };
+    const walk = () => {
+        session.walkTo(openId);
         setOpenId(null);
     };
 
@@ -119,7 +178,9 @@ export const WebsiteHoverCard = ({
                 faviconUrl={preview?.faviconDataUrl ?? null}
                 isLoadingPreview={isPreviewLoading}
                 data={data}
+                isInReach={inReachIds.includes(openId)}
                 onOpen={open}
+                onWalk={walk}
                 onClose={() => setOpenId(null)}
             />
             {viewer}
