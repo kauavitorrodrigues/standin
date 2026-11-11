@@ -45,7 +45,11 @@ import { PathWalker } from "@/features/game/lib/PathWalker";
 import { TileMover } from "@/features/game/lib/TileMover";
 import { WALK_EVENTS } from "@/features/game/consts/walk-events";
 import { DESK_EVENTS, DESK_REACH_PX } from "@/features/game/consts/desk";
-import { WEBSITE_EVENTS } from "@/features/game/consts/website";
+import {
+    WEBSITE_EVENTS,
+    WEBSITE_REACH_PX,
+} from "@/features/game/consts/website";
+import { findWebsitesInReach } from "@/features/game/utils/findWebsitesInReach";
 import { buildWebsiteAreas } from "@/features/game/utils/buildWebsiteAreas";
 import { REMOTE_SELECTION_EVENTS } from "@/features/game/consts/remote-selection";
 import type { WalkPurpose } from "@/features/game/types/walk";
@@ -241,6 +245,10 @@ export class MapScene extends Phaser.Scene {
     private zoneHoverController: HoverTargetController | null = null;
     // The objects that embed a website: outlined, and clicked to open a card.
     private websiteHoverController: HoverTargetController | null = null;
+    // Where those objects are, and which of them the page was last told the
+    // avatar is within reach of (a sorted signature, so only a change is told).
+    private websiteAreas: HoverTarget[] = [];
+    private websitesInReachReported = "";
     // The desks and the named zones: places the double click walks to, and
     // where the mark of a tile is not drawn.
     private deskAreas: HoverTarget[] = [];
@@ -692,9 +700,13 @@ export class MapScene extends Phaser.Scene {
             );
             this.deskHoverController?.setTargets(this.deskAreas);
             this.refreshDeskClaims();
-            this.websiteHoverController?.setTargets(
-                buildWebsiteAreas(placed, assetsById, tilemap.heightInPixels)
+            this.websiteAreas = buildWebsiteAreas(
+                placed,
+                assetsById,
+                tilemap.heightInPixels
             );
+            this.websiteHoverController?.setTargets(this.websiteAreas);
+            this.updateWebsitesInReach();
 
             const doors = buildRoomDoors(
                 placed,
@@ -799,6 +811,7 @@ export class MapScene extends Phaser.Scene {
         this.updatePlayerHover();
         this.updateTileCursor();
         this.updateAtOwnDesk();
+        this.updateWebsitesInReach();
         this.updateTravel();
         this.frameDelta = delta;
         this.remoteAvatars.forEach(this.updateRemoteAvatar);
@@ -1124,6 +1137,44 @@ export class MapScene extends Phaser.Scene {
 
         this.isAtOwnDeskReported = isAt;
         this.game.events.emit(DESK_EVENTS.AT_OWN_DESK_CHANGED, isAt);
+    }
+
+    // Tells the page which website objects the avatar is within reach of, when
+    // that changes. A few numbers are compared, so it costs nothing in a frame.
+    private updateWebsitesInReach(): void {
+        const { player } = this;
+        // Most maps have none, and then there is nothing to compare.
+        if (
+            this.websiteAreas.length === 0 &&
+            this.websitesInReachReported === ""
+        ) {
+            return;
+        }
+
+        const ids = player
+            ? findWebsitesInReach(this.websiteAreas, player, WEBSITE_REACH_PX)
+            : [];
+        const signature = ids.join("|");
+        if (signature === this.websitesInReachReported) return;
+
+        this.websitesInReachReported = signature;
+        this.game.events.emit(WEBSITE_EVENTS.IN_REACH_CHANGED, ids);
+    }
+
+    // Walks to the reach of an object that embeds a website. False when the
+    // object is not one or there is no way there.
+    walkToWebsite(objectId: string): boolean {
+        const { player } = this;
+        const area = this.websiteAreas.find(({ id }) => id === objectId);
+        if (!player || !area || isGameInputSuspended()) return false;
+
+        const { x, y, width, height } = area.bounds;
+        return this.startPurposeWalk({ kind: "website" }, () =>
+            this.startWalkToArea(area, {
+                x: x + width / 2,
+                y: y + height / 2,
+            })
+        );
     }
 
     // Walks to the desk of the person, to a free seat of it first. False when

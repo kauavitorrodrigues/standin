@@ -10,6 +10,8 @@ export const describeWalk = (
     switch (purpose.kind) {
         case "desk":
             return WALK_MESSAGES.toDesk;
+        case "website":
+            return WALK_MESSAGES.toWebsite;
         case "person": {
             const name = getName(purpose.userId);
             return name

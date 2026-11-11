@@ -172,6 +172,8 @@ export const createGameEngine = ({
         walkToOwnDesk: () => getMapScene(game)?.walkToOwnDesk() ?? false,
         walkToPerson: (userId) =>
             getMapScene(game)?.walkToPerson(userId) ?? false,
+        walkToWebsite: (objectId) =>
+            getMapScene(game)?.walkToWebsite(objectId) ?? false,
         clearPersonSelection: () => getMapScene(game)?.clearRemoteSelection(),
     };
 };
