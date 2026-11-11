@@ -44,4 +44,9 @@ export const SpotifyMemberStatusSchema = z.object({
     }),
     // True when every place is taken and this person holds none.
     isFull: z.boolean({ error: SpotifyErrorMessages.memberStatus.isFull }),
+    // True when the connection is kept but its token cannot be opened (the
+    // server secret changed), so the person has to connect again.
+    needsReconnect: z.boolean({
+        error: SpotifyErrorMessages.memberStatus.needsReconnect,
+    }),
 });

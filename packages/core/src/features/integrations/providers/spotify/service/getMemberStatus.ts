@@ -1,4 +1,5 @@
 import type { SpotifyMemberStatus } from "@standin/contracts";
+import { SEAL_CONTEXTS, openToken } from "../../../../../lib/crypto";
 import { SpotifyRepository } from "../repository";
 import type { SpotifyConnectionKey } from "../types";
 import { hasNoPlaceLeft } from "./helpers/places";
@@ -11,7 +12,12 @@ export const getSpotifyMemberStatus = async (
     const credentials = await findCredentials(key.organizationId);
 
     if (!credentials) {
-        return { isAvailable: false, isConnected: false, isFull: false };
+        return {
+            isAvailable: false,
+            isConnected: false,
+            isFull: false,
+            needsReconnect: false,
+        };
     }
 
     const [connection, total] = await Promise.all([
@@ -25,5 +31,12 @@ export const getSpotifyMemberStatus = async (
         isAvailable: true,
         isConnected,
         isFull: hasNoPlaceLeft(isConnected, total),
+        // The server secret changed since the person connected.
+        needsReconnect:
+            connection !== null &&
+            openToken(
+                connection.refreshTokenSealed,
+                SEAL_CONTEXTS.INTEGRATION
+            ) === null,
     };
 };

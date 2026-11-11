@@ -32,7 +32,7 @@ export const SpotifyAccountView = ({
                     disabled={isBusy}
                     onClick={onConnect}
                 >
-                    Atualizar
+                    {status.needsReconnect ? "Conectar de novo" : "Atualizar"}
                 </Button>
                 <Button
                     type="button"
