@@ -68,4 +68,14 @@ export const GameErrorMessages = {
             invalid: "The raised hand state must be true or false.",
         },
     },
+    activeObject: {
+        objectId: {
+            invalid: "The object must be an id or null.",
+        },
+    },
+    closeObject: {
+        objectId: {
+            invalid: "The object to close must be an id.",
+        },
+    },
 } as const;

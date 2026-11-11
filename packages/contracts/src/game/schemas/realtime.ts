@@ -79,3 +79,20 @@ export const SpaceSetHandRaisedSchema = z.object({
         error: GameErrorMessages.handRaise.raised.invalid,
     }),
 });
+
+// The object the person has open, or null when they closed it. The server
+// checks that it is a website object of the map of the space.
+export const SpaceSetActiveObjectSchema = z.object({
+    objectId: z
+        .string({ error: GameErrorMessages.activeObject.objectId.invalid })
+        .min(1, { error: GameErrorMessages.activeObject.objectId.invalid })
+        .max(64, { error: GameErrorMessages.activeObject.objectId.invalid })
+        .nullable(),
+});
+
+export const SpaceCloseObjectForViewersSchema = z.object({
+    objectId: z
+        .string({ error: GameErrorMessages.closeObject.objectId.invalid })
+        .min(1, { error: GameErrorMessages.closeObject.objectId.invalid })
+        .max(64, { error: GameErrorMessages.closeObject.objectId.invalid }),
+});
