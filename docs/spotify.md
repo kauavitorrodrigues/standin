@@ -16,9 +16,31 @@ a member does, and what the connection does and does not do.
 - Each member links their own Spotify account to that app, and can unlink it.
 - The owner sees who holds a place and can free one.
 
-Showing what a person is playing is not part of this step. The connection only
-proves who the person is at Spotify and keeps the permission to read what they
-are playing (`user-read-currently-playing`), nothing else.
+- Everyone who is connected shows what they are playing to the others in the
+  space (see below).
+
+## What people are playing
+
+Every connected person who is online in a space shows what they play:
+
+- The server asks Spotify every 10 seconds for each connected person who is
+  online in a space, and sends an event to the space only when the track, or
+  whether it is playing or paused, changes. People who join later get what is
+  shown in the join snapshot. The browser never talks to Spotify.
+- The profile card of the person has a "Ouvindo" card with the cover, the track,
+  the artists and the Spotify logo. It opens the track in Spotify in a new tab.
+- While the music plays, paper-like music notes rise from the avatar. Everyone
+  near the person sees them, including the person. They stop when the music
+  pauses and are not drawn with reduced motion.
+- Nothing is shown for a private session, an ad or a podcast episode. A track
+  paused for more than 5 minutes is hidden until the music plays again.
+- A 429 from Spotify pauses the polling of that organization for the time
+  Spotify asked. Other errors (401, 403, a network failure) never break the
+  space: a refused refresh token removes the connection, and the others keep
+  what was shown.
+
+The server keeps the access token in memory only, and the new refresh token
+Spotify sometimes sends is sealed and saved.
 
 ## The limit of 5 people
 
@@ -211,9 +233,9 @@ as the other.
 
 ## What it does not do
 
-- It does not show what anyone is playing yet, and it does not play, pause or
-  change anything in Spotify. The only permission asked is
-  `user-read-currently-playing`.
+- It does not play, pause or change anything in Spotify. The only permission
+  asked is `user-read-currently-playing`.
+- It has no switch yet to hide what you play: connecting is what shares it.
 - It does not ask for the e-mail or the name of the Spotify account.
 - It does not check the Premium of the owner. If it lapses, Spotify refuses the
   app and connecting fails with the generic message until it is renewed.
