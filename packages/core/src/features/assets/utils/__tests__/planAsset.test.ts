@@ -5,6 +5,7 @@ import {
     ASSET_PLACEMENTS,
     ASSET_TYPES,
     LIBRARY_ISSUE_CODES,
+    OBJECT_BEHAVIORS,
     expandTileMask,
 } from "@standin/contracts";
 import type { CreateAssetData } from "@standin/contracts";
@@ -98,6 +99,23 @@ describe("planAsset", () => {
         expect(
             codes({ ...mug, footprint: { w: 1, h: 1, offsetX: 1 } })
         ).toEqual([LIBRARY_ISSUE_CODES.ASSET_FOOTPRINT_INVALID]);
+    });
+
+    it("accepts a behavior on an asset without an action", () => {
+        expect(
+            codes({ ...mug, behavior: OBJECT_BEHAVIORS.EMBEDDED_WEBSITE })
+        ).toEqual([]);
+    });
+
+    it("refuses a behavior together with an action", () => {
+        expect(
+            codes({
+                ...mug,
+                action: ASSET_ACTIONS.SIT,
+                actionParams: chairSeats,
+                behavior: OBJECT_BEHAVIORS.EMBEDDED_WEBSITE,
+            })
+        ).toEqual([LIBRARY_ISSUE_CODES.ASSET_BEHAVIOR_CONFLICT]);
     });
 
     it("refuses action params without an action", () => {

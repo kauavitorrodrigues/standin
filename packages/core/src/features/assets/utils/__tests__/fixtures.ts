@@ -2,6 +2,7 @@ import {
     ASSET_CATEGORIES,
     ASSET_PLACEMENTS,
     ASSET_TYPES,
+    OBJECT_BEHAVIORS,
 } from "@standin/contracts";
 import { encodePng } from "../../library/utils/encodePng";
 import type { AssetRow } from "../../types";
@@ -39,6 +40,7 @@ export const assetRow = (overrides: Partial<AssetRow> = {}): AssetRow => ({
     solid: false,
     action: null,
     actionParams: null,
+    behavior: OBJECT_BEHAVIORS.NONE,
     promptText: null,
     animation: null,
     fileName: "library/mug-red.png",

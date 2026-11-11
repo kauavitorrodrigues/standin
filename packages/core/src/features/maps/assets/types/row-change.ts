@@ -6,4 +6,6 @@ export type RowChange = {
     offsetY: number;
     parentId: string | null;
     assetId?: string;
+    // The new asset has another behavior, so the object loses its params.
+    clearBehaviorParams?: boolean;
 };

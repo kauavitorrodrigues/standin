@@ -1,3 +1,4 @@
+import { parseBehaviorParams } from "@standin/contracts";
 import type { PlacedAsset } from "@standin/contracts";
 import type { PlacedRow } from "../types/placed-row";
 
@@ -10,4 +11,5 @@ export const toPlaced = (row: PlacedRow): PlacedAsset => ({
     offsetY: row.offsetY,
     parentId: row.parentId,
     propertyOverrides: row.propertyOverrides,
+    behaviorParams: parseBehaviorParams(row.behaviorParams),
 });

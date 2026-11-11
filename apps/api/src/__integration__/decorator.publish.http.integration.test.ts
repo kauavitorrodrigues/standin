@@ -256,6 +256,7 @@ describe.skipIf(!enabled)("decorator publish over HTTP (real stack)", () => {
             );
             defs[key] = asset.id;
         };
+        await createAsset("site", { behavior: "EMBEDDED_WEBSITE" });
         await createAsset(
             "desk",
             { type: "DESK", footprint: { w: 2, h: 1 }, solid: true },
@@ -359,7 +360,10 @@ describe.skipIf(!enabled)("decorator publish over HTTP (real stack)", () => {
                 userId: users.other.id,
             });
             await new Promise((resolve) => setTimeout(resolve, 300));
-            const heard = collect(watcher, ["objects_published", "map_published"]);
+            const heard = collect(watcher, [
+                "objects_published",
+                "map_published",
+            ]);
             hold("member", space.mapId, "s-1");
 
             const response = await publish(
@@ -416,6 +420,44 @@ describe.skipIf(!enabled)("decorator publish over HTTP (real stack)", () => {
             );
 
             expect(response.status).toBe(200);
+        });
+
+        it("lets the owner set the link of an object, and refuses a member", async () => {
+            const { mapId } = await newSpace();
+            const id = await place(mapId, defs.site, 5, 5);
+            const params = { mode: "url", url: "https://example.com" } as const;
+
+            hold("member", mapId, "s-1");
+            const memberBase = (await renderOf("member", mapId))
+                .objectsRevision;
+            const refused = await publish(
+                "member",
+                mapId,
+                "s-1",
+                decorate(memberBase, [{ type: "set_behavior", id, params }])
+            );
+            expect(refused.status).toBe(403);
+            expect(
+                (await renderOf("owner", mapId)).placed.find(
+                    (object: { id: string }) => object.id === id
+                )?.behaviorParams
+            ).toBeNull();
+
+            core.MapLockService.release(mapId, "s-1");
+            hold("owner", mapId, "s-2");
+            const base = (await renderOf("owner", mapId)).objectsRevision;
+            const accepted = await publish(
+                "owner",
+                mapId,
+                "s-2",
+                decorate(base, [{ type: "set_behavior", id, params }])
+            );
+            expect(accepted.status).toBe(200);
+            expect(
+                (await renderOf("owner", mapId)).placed.find(
+                    (object: { id: string }) => object.id === id
+                )?.behaviorParams
+            ).toEqual(params);
         });
 
         it("refuses a tile operation with 403 OUT_OF_SCOPE and writes nothing", async () => {
@@ -556,7 +598,8 @@ describe.skipIf(!enabled)("decorator publish over HTTP (real stack)", () => {
             const deskId = await place(space.mapId, defs.desk, 8, 10);
             await place(space.mapId, defs.vase, 8, 10, deskId);
             await claim("member", space, deskId);
-            const base = (await renderOf("member", space.mapId)).objectsRevision;
+            const base = (await renderOf("member", space.mapId))
+                .objectsRevision;
             hold("member", space.mapId, "s-1");
 
             const response = await publish(
@@ -588,8 +631,12 @@ describe.skipIf(!enabled)("decorator publish over HTTP (real stack)", () => {
                 userId: users.other.id,
             });
             await new Promise((resolve) => setTimeout(resolve, 300));
-            const heard = collect(watcher, ["desk_released", "objects_published"]);
-            const base = (await renderOf("member", space.mapId)).objectsRevision;
+            const heard = collect(watcher, [
+                "desk_released",
+                "objects_published",
+            ]);
+            const base = (await renderOf("member", space.mapId))
+                .objectsRevision;
             hold("member", space.mapId, "s-1");
 
             const without = await publish(
@@ -643,7 +690,9 @@ describe.skipIf(!enabled)("decorator publish over HTTP (real stack)", () => {
             );
 
             expect(response.status).toBe(409);
-            expect((await renderOf("owner", space.mapId)).placed).toHaveLength(1);
+            expect((await renderOf("owner", space.mapId)).placed).toHaveLength(
+                1
+            );
         });
     });
 

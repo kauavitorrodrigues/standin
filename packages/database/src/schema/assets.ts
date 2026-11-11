@@ -21,6 +21,7 @@ import {
     type AssetAnimation,
     type FootprintMask,
     ASSET_ACTIONS,
+    OBJECT_BEHAVIORS,
     ASSET_CATEGORIES,
     ASSET_PLACEMENTS,
     ASSET_ROTATIONS,
@@ -34,6 +35,7 @@ export const assetTypeEnum = pgEnum("asset_type", ASSET_TYPES);
 export const assetCategoryEnum = pgEnum("asset_category", ASSET_CATEGORIES);
 export const assetPlacementEnum = pgEnum("asset_placement", ASSET_PLACEMENTS);
 export const assetActionEnum = pgEnum("asset_action", ASSET_ACTIONS);
+export const objectBehaviorEnum = pgEnum("object_behavior", OBJECT_BEHAVIORS);
 export const assetRotationEnum = pgEnum("asset_rotation", ASSET_ROTATIONS);
 
 // A placeable piece (chair, table, door, tree), one whole PNG per row. A
@@ -102,6 +104,9 @@ export const assetsTable = pgTable(
         // Interactable when set.
         action: assetActionEnum("action"),
         actionParams: jsonb("action_params").$type<Record<string, unknown>>(),
+        // What the object does when someone uses it, apart from an action. One
+        // of the two at most, and the whole family shares it.
+        behavior: objectBehaviorEnum("behavior").notNull().default("NONE"),
         promptText: text("prompt_text"),
         // Horizontal strip playback. Null for static pieces.
         animation: jsonb("animation").$type<AssetAnimation>(),

@@ -123,6 +123,7 @@ export const persistModelDiff = async (
             offsetX: item.offsetX,
             offsetY: item.offsetY,
             propertyOverrides: item.propertyOverrides ?? null,
+            behaviorParams: item.behaviorParams,
         });
     }
 
@@ -136,6 +137,7 @@ export const persistModelDiff = async (
                 offsetX: item.offsetX,
                 offsetY: item.offsetY,
                 parentId: remapParentId(item.parentId, idMap),
+                behaviorParams: item.behaviorParams,
                 updatedAt: now,
             })
             .where(

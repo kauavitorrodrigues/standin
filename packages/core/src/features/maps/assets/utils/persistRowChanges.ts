@@ -20,6 +20,7 @@ export const persistRowChanges = async (
                 offsetY: change.offsetY,
                 parentId: change.parentId,
                 ...(change.assetId ? { assetId: change.assetId } : {}),
+                ...(change.clearBehaviorParams ? { behaviorParams: null } : {}),
             })
             .where(eq(mapAssetsTable.id, change.id));
     }

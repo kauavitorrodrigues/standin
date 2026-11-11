@@ -1,5 +1,9 @@
 import { db, assetsTable } from "@standin/database";
-import { ASSET_PLACEMENTS, LibraryValidationError } from "@standin/contracts";
+import {
+    ASSET_PLACEMENTS,
+    LibraryValidationError,
+    OBJECT_BEHAVIORS,
+} from "@standin/contracts";
 import type { CreateAssetData, LibraryAsset } from "@standin/contracts";
 import type { LibraryContext, UploadedImage } from "../types";
 import { resolveAssetKey } from "../utils/keys";
@@ -59,6 +63,7 @@ export const createLibraryAsset = async (
                 solid: data.solid ?? false,
                 action,
                 actionParams,
+                behavior: data.behavior ?? OBJECT_BEHAVIORS.NONE,
                 promptText: data.promptText ?? null,
                 animation: data.animation ?? null,
             })

@@ -6,7 +6,11 @@ import type {
 } from "@standin/contracts";
 import type { AssetRow } from "../types";
 import { stableJson } from "../library/utils/stableJson";
-import { findActionParamsIssue, findFootprintIssue } from "./ruleIssues";
+import {
+    findActionParamsIssue,
+    findBehaviorIssue,
+    findFootprintIssue,
+} from "./ruleIssues";
 
 // The body of the HTTP route plus the two fields only the seed sets, straight
 // on the service: the footprint is bound to the PNG and the color has its own
@@ -73,6 +77,10 @@ export const planChanges = (
         // No action, no params: every rotation drops them together.
         plan.clearActionParams = body.action === null;
         change("action");
+    }
+    if (body.behavior !== undefined && body.behavior !== target.behavior) {
+        plan.family.behavior = body.behavior;
+        change("behavior");
     }
     if (
         body.promptText !== undefined &&
@@ -187,7 +195,8 @@ export const findRowIssues = (rows: AssetRow[]): LibraryIssue[] =>
             { w: row.spriteW, h: row.spriteH }
         );
         const actionIssue = findActionParamsIssue(row.action, row.actionParams);
-        return [footprintIssue, actionIssue].filter(
+        const behaviorIssue = findBehaviorIssue(row.action, row.behavior);
+        return [footprintIssue, actionIssue, behaviorIssue].filter(
             (issue): issue is LibraryIssue => issue !== null
         );
     });

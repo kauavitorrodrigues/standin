@@ -48,6 +48,11 @@ export const mapAssetsTable = pgTable(
         propertyOverrides: jsonb("property_overrides").$type<
             Record<string, unknown>
         >(),
+        // The params of the behavior its asset has (the address of an embedded
+        // website). The kind is the one of the asset, so a swap to an asset
+        // with another behavior clears them.
+        behaviorParams:
+            jsonb("behavior_params").$type<Record<string, unknown>>(),
 
         // Date columns
         createdAt: createdAtColumn(),

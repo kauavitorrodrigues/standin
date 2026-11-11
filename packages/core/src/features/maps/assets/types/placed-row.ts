@@ -7,4 +7,5 @@ export type PlacedRow = {
     offsetY: number;
     parentId: string | null;
     propertyOverrides: Record<string, unknown> | null;
+    behaviorParams: Record<string, unknown> | null;
 };

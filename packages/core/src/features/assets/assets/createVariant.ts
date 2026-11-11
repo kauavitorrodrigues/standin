@@ -77,6 +77,7 @@ export const createLibraryVariant = async (
                 solid: base.solid,
                 action: base.action,
                 actionParams,
+                behavior: base.behavior,
                 promptText: base.promptText,
                 animation: base.animation,
             })

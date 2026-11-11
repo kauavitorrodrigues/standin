@@ -15,6 +15,7 @@ const placed = (id: string, overrides: Partial<PlacedAsset> = {}) =>
         tileY: 1,
         parentId: null,
         propertyOverrides: null,
+        behaviorParams: null,
         ...overrides,
     }) as PlacedAsset;
 
@@ -53,6 +54,22 @@ describe("planModelDiff", () => {
         expect(plan.layoutChanged).toBe(true);
         expect(plan.inserts).toEqual([]);
         expect(plan.updates).toEqual([]);
+        expect(plan.deletes).toEqual([]);
+    });
+
+    it("plans an update when only the behavior changes", () => {
+        const before = [placed("a")];
+        const after = [
+            placed("a", {
+                behaviorParams: { mode: "url", url: "https://example.com" },
+            }),
+        ];
+
+        const plan = planModelDiff(model(before), model(after));
+
+        expect(plan.layoutChanged).toBe(false);
+        expect(plan.updates.map(({ id }) => id)).toEqual(["a"]);
+        expect(plan.inserts).toEqual([]);
         expect(plan.deletes).toEqual([]);
     });
 

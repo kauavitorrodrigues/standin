@@ -82,6 +82,7 @@ export const copyMap = async (
                 ? (newIdsByOldId.get(object.parentId) ?? null)
                 : null,
             propertyOverrides: object.propertyOverrides,
+            behaviorParams: object.behaviorParams,
         }))
     );
 

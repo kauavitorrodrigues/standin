@@ -29,6 +29,7 @@ export const buildAssetDefinition = (
     solid: row.solid,
     action: row.action,
     actionParams: row.actionParams,
+    behavior: row.behavior,
     promptText: row.promptText,
     animation: row.animation,
 });

@@ -15,6 +15,7 @@ import {
     toAssetDefinitions,
     toTilesets,
 } from "../assets/utils/toDefinitions";
+import { toPlaced } from "./assets/utils/toPlaced";
 import { MapLockService } from "./lock";
 import { getObjectsRevision } from "./publish/getObjectsRevision";
 import { mapRenderSelect, placedAssetSelect } from "./consts/select";
@@ -80,7 +81,7 @@ export const buildMapRenderPayload = async (
         },
         tilesets: await toTilesets(tilesetRows),
         assets: await toAssetDefinitions(assetRows),
-        placed,
+        placed: placed.map(toPlaced),
         desks,
         access: {
             canEdit: access.canEdit,

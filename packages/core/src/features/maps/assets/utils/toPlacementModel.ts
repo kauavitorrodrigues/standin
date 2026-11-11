@@ -27,6 +27,7 @@ export const toPlacementModel = (items: Item[], map?: MapInfo): EditorModel => {
             offsetY: item.offsetY,
             parentId: item.parentId,
             propertyOverrides: null,
+            behaviorParams: null,
         })),
         library: {
             tilesets: [],
