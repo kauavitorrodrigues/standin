@@ -165,6 +165,11 @@ export const WebsiteHoverCard = ({
         session.open(openId);
         setOpenId(null);
     };
+    // No opener and no referrer: the site gets nothing about the app.
+    const openInTab = () => {
+        if (data.kind !== "available") return;
+        window.open(data.url, "_blank", "noopener,noreferrer");
+    };
     const walk = () => {
         session.walkTo(openId);
         setOpenId(null);
@@ -179,8 +184,10 @@ export const WebsiteHoverCard = ({
                 isLoadingPreview={isPreviewLoading}
                 data={data}
                 isInReach={inReachIds.includes(openId)}
+                canEmbed={preview?.canEmbed ?? true}
                 onOpen={open}
                 onWalk={walk}
+                onOpenInTab={openInTab}
                 onClose={() => setOpenId(null)}
             />
             {viewer}

@@ -22,10 +22,17 @@ export type FetchOptions = {
     overflow: "truncate" | "reject";
 };
 
+// What the answer says about who may show the site inside another page.
+export type FrameHeaders = {
+    xFrameOptions: string | null;
+    contentSecurityPolicy: string | null;
+};
+
 export type FetchedResource = {
     finalUrl: string;
     contentType: string;
     body: Buffer;
+    frameHeaders: FrameHeaders;
 };
 
 export type FetchResource = (

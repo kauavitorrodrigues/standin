@@ -2,15 +2,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MapAssetNotFoundError } from "@standin/contracts";
 
 const resolveWebsiteUrl = vi.hoisted(() => vi.fn());
-vi.mock("@standin/core", () => ({ MapService: { resolveWebsiteUrl } }));
+vi.mock("@standin/core", () => ({
+    MapService: {
+        resolveWebsiteUrl,
+        getAppOrigins: () => ["https://standin.example"],
+    },
+}));
 
 import { getWebsitePreview } from "../getWebsitePreview";
 
 const PREVIEW = {
     title: "Board",
     faviconDataUrl: "data:image/png;base64,AA==",
+    canEmbed: true,
 };
-const EMPTY = { title: null, faviconDataUrl: null };
+const EMPTY = { title: null, faviconDataUrl: null, canEmbed: true };
+const ORIGINS = ["https://standin.example"];
 
 describe("getWebsitePreview", () => {
     beforeEach(() => {
@@ -24,7 +31,7 @@ describe("getWebsitePreview", () => {
         const preview = await getWebsitePreview("map", "object", load);
 
         expect(resolveWebsiteUrl).toHaveBeenCalledWith("map", "object");
-        expect(load).toHaveBeenCalledWith("https://one.example.com/");
+        expect(load).toHaveBeenCalledWith("https://one.example.com/", ORIGINS);
         expect(preview).toEqual(PREVIEW);
     });
 

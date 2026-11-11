@@ -53,6 +53,10 @@ export type EmbeddedWebsiteParams = z.infer<typeof EmbeddedWebsiteParamsSchema>;
 export const WebsitePreviewSchema = z.object({
     title: z.string().max(WEBSITE_PREVIEW_TITLE_MAX).nullable(),
     faviconDataUrl: z.string().nullable(),
+    // Whether the site agrees to be shown inside the app, by its headers
+    // (`X-Frame-Options` and `frame-ancestors`). True when the page could not
+    // be read, since then nothing says it refuses.
+    canEmbed: z.boolean(),
 });
 
 export type WebsitePreview = z.infer<typeof WebsitePreviewSchema>;
