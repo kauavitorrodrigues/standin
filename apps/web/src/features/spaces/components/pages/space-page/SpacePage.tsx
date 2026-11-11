@@ -63,6 +63,7 @@ import { useProfileCard } from "@/features/users/hooks/useProfileCard";
 import { PersonProfileCard } from "@/features/users/components/instances/PersonProfileCard";
 import { resolveSelectedPerson } from "@/features/users/utils/resolveSelectedPerson";
 import { DeskHoverCard } from "@/features/desks/components/instances/DeskHoverCard";
+import { WebsiteHoverCard } from "@/features/websites/components/instances/WebsiteHoverCard";
 import { Decorator } from "@/features/decorator/components/instances/Decorator";
 import { useDecorateAvailability } from "@/features/decorator/hooks/useDecorateAvailability";
 import { useDecoratorSession } from "@/features/decorator/hooks/useDecoratorSession";
@@ -375,6 +376,13 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         isProfileOpen={profileCard.isOpen}
                         onOpenProfile={profileCard.open}
                         onCloseProfile={profileCard.close}
+                    />
+                    <WebsiteHoverCard
+                        handle={handle}
+                        mapId={space.map.id}
+                        isBelowStageToggle={layout.isStageToggleVisible}
+                        placed={mapRender.data?.placed ?? []}
+                        assets={mapRender.data?.assets ?? []}
                     />
                     <LayoutPrimitive.RightStack
                         isBelowStageToggle={layout.isStageToggleVisible}
