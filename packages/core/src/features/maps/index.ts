@@ -8,6 +8,7 @@ import { findResolvedMapById } from "./findResolvedById";
 import { getMapAccess } from "./getAccess";
 import { previewBlankMap } from "./previewBlank";
 import { loadLayoutLibrary } from "./utils/loadLayoutLibrary";
+import { resolveWebsiteUrl } from "./websites/resolveWebsiteUrl";
 
 export type { MapAccess } from "./types/map-access";
 export type { MapOwner } from "./types/map-owner";
@@ -23,6 +24,7 @@ export const MapService = {
     getAccess: getMapAccess,
     findOwner: findMapOwner,
     loadLibrary: loadLayoutLibrary,
+    resolveWebsiteUrl,
 };
 
 export { MapApplyService } from "./apply";
