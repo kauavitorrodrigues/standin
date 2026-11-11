@@ -53,7 +53,7 @@ import { isWithinReach } from "@/features/game/utils/isWithinReach";
 import { ZONE_EVENTS } from "@/features/game/consts/zone";
 import { buildZoneAreas } from "@/features/game/utils/buildZoneAreas";
 import { findAreaGoals } from "@/features/game/utils/findAreaGoals";
-import type { HoverTarget } from "@/features/game/types/hover";
+import type { HoverState, HoverTarget } from "@/features/game/types/hover";
 import { TileCursor } from "@/features/game/lib/TileCursor";
 import { findPath, getStandingPoint } from "@/features/game/utils/findPath";
 import {
@@ -179,6 +179,7 @@ import { hasPlacedChanges } from "@/features/game/utils/hasPlacedChanges";
 import { PlacedObjectsSync } from "@/features/game/lib/PlacedObjectsSync";
 import { SolidColliders } from "@/features/game/lib/SolidColliders";
 import { AvatarOutline } from "@/features/game/lib/AvatarOutline";
+import { RemoteAvatarOutlines } from "@/features/game/lib/RemoteAvatarOutlines";
 import {
     findHoveredTarget,
     getHoverClickEvent,
@@ -337,6 +338,10 @@ export class MapScene extends Phaser.Scene {
     private remoteHoverController: HoverTargetController | null = null;
     // The remote avatar the mouse clicked, whose tag shows the photo.
     private readonly remoteSelection = new RemoteSelection();
+    // The avatar of another person the mouse is on, by socket id. It and the
+    // selected one get the same outline as the avatar of the local person.
+    private hoveredRemoteId: string | null = null;
+    private remoteOutlines: RemoteAvatarOutlines | null = null;
     // Names that arrived before the avatar they belong to was made.
     private readonly pendingUserNames = new PendingUserNames();
     // Profile pictures that arrived before the avatar they belong to was made.
@@ -534,15 +539,29 @@ export class MapScene extends Phaser.Scene {
             REMOTE_AVATAR_EVENTS.HOVER_CHANGED,
             { drawsOutline: false, setsCursor: true }
         );
+        this.remoteOutlines = new RemoteAvatarOutlines((socketId) => {
+            const avatar = this.remoteAvatars.get(socketId);
+            return avatar ? new AvatarOutline(this, avatar.gameObject) : null;
+        });
+        const onRemoteHover = (hover: HoverState | null) => {
+            this.hoveredRemoteId = hover?.id ?? null;
+        };
+        this.game.events.on(REMOTE_AVATAR_EVENTS.HOVER_CHANGED, onRemoteHover);
         const remoteClickEvent = getHoverClickEvent(
             REMOTE_AVATAR_EVENTS.HOVER_CHANGED
         );
         const onRemoteClick = (socketId: string | null) =>
             this.selectRemoteAvatar(socketId);
         this.game.events.on(remoteClickEvent, onRemoteClick);
-        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
-            this.game.events.off(remoteClickEvent, onRemoteClick)
-        );
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.game.events.off(remoteClickEvent, onRemoteClick);
+            this.game.events.off(
+                REMOTE_AVATAR_EVENTS.HOVER_CHANGED,
+                onRemoteHover
+            );
+            this.remoteOutlines?.destroy();
+            this.remoteOutlines = null;
+        });
 
         this.playerOutline = new AvatarOutline(this, this.player.gameObject);
         const onPlayerHover = (hover: unknown) => {
@@ -1408,6 +1427,10 @@ export class MapScene extends Phaser.Scene {
         }
         remoteHoverController.setTargets(this.remoteHoverTargets);
         remoteHoverController.update();
+        this.remoteOutlines?.update(
+            this.hoveredRemoteId,
+            this.remoteSelection.id
+        );
     }
 
     private readonly collectRemoteHoverTarget = (
@@ -1443,6 +1466,12 @@ export class MapScene extends Phaser.Scene {
             this.remoteAvatars.get(id)
         );
         this.reportRemoteSelection();
+    }
+
+    // The page closed the card of the selected person: the selection ends, the
+    // same as a click on the empty map.
+    clearRemoteSelection(): void {
+        this.selectRemoteAvatar(null);
     }
 
     // Tells the page which person is selected, only when it changed.
@@ -1610,6 +1639,7 @@ export class MapScene extends Phaser.Scene {
     removeRemoteAvatar(socketId: string): void {
         this.remoteSelection.remove(socketId);
         this.reportRemoteSelection();
+        this.remoteOutlines?.release(socketId);
         this.avatarSheets?.release(socketId);
         this.remoteAvatars.get(socketId)?.destroy();
         this.remoteAvatars.delete(socketId);
@@ -1626,6 +1656,7 @@ export class MapScene extends Phaser.Scene {
     clearRemoteAvatars(): void {
         this.remoteSelection.clear();
         this.reportRemoteSelection();
+        this.remoteOutlines?.destroy();
         this.remoteAvatars.forEach((_avatar, socketId) =>
             this.avatarSheets?.release(socketId)
         );

@@ -60,6 +60,8 @@ import { useSpaceMapLock } from "@/features/maps/organizations/hooks/useSpaceMap
 import { LockBanner } from "@/features/spaces/components/pages/space-page/controls/LockBanner";
 import { OwnDeskProfileCard } from "@/features/desks/components/instances/OwnDeskProfileCard";
 import { useProfileCard } from "@/features/users/hooks/useProfileCard";
+import { PersonProfileCard } from "@/features/users/components/instances/PersonProfileCard";
+import { resolveSelectedPerson } from "@/features/users/utils/resolveSelectedPerson";
 import { DeskHoverCard } from "@/features/desks/components/instances/DeskHoverCard";
 import { Decorator } from "@/features/decorator/components/instances/Decorator";
 import { useDecorateAvailability } from "@/features/decorator/hooks/useDecorateAvailability";
@@ -214,6 +216,12 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         selectedPersonId !== null && selectedPersonId !== user.id
             ? selectedPersonId
             : null;
+    // The card of the person whose avatar was clicked.
+    const selectedPerson = resolveSelectedPerson(
+        selectedPersonId,
+        user.id,
+        peopleById
+    );
     useLocalAvatarSheet(handle?.game ?? null);
     const avatars = new Map(members.map((m) => [m.id, m.profilePictureUrl]));
     useLocalUserProfile(handle?.game ?? null, {
@@ -385,6 +393,14 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                                 }}
                                 onClose={profileCard.close}
                             />
+                            {selectedPerson && (
+                                <PersonProfileCard
+                                    person={selectedPerson}
+                                    onClose={() =>
+                                        handle?.clearPersonSelection()
+                                    }
+                                />
+                            )}
                         </ListeningContext.Provider>
                         <RoomJoinRequests
                             requests={currentRoom.pendingRequests}
