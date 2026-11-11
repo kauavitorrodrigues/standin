@@ -4,6 +4,7 @@ import {
     EMBEDDED_WEBSITE_MODES,
     EMBEDDED_WEBSITE_URL_MAX,
     OBJECT_BEHAVIORS,
+    WEBSITE_PREVIEW_TITLE_MAX,
 } from "./consts";
 import { ObjectBehaviorErrorMessages as Messages } from "./error-messages";
 
@@ -45,3 +46,13 @@ export const EmbeddedWebsiteParamsSchema = z.union(
 );
 
 export type EmbeddedWebsiteParams = z.infer<typeof EmbeddedWebsiteParamsSchema>;
+
+// What the server read from the page of an embedded website. Both are null
+// when the page could not be read. The icon is sent as a `data:` address so
+// the browser never has to contact the site before the person chooses to.
+export const WebsitePreviewSchema = z.object({
+    title: z.string().max(WEBSITE_PREVIEW_TITLE_MAX).nullable(),
+    faviconDataUrl: z.string().nullable(),
+});
+
+export type WebsitePreview = z.infer<typeof WebsitePreviewSchema>;

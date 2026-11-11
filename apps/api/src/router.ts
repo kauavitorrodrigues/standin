@@ -28,6 +28,7 @@ import {
     mapReadRouter,
     mapsRouter,
 } from "./features/maps/routes";
+import { websitesRouter } from "./features/maps/websites/routes";
 import { desksRouter } from "./features/desks/routes";
 import { spotifyCallbackRouter } from "./features/integrations/providers/spotify/routes";
 import { defaultSoundboardRouter } from "./features/soundboard/routes";
@@ -133,6 +134,8 @@ router.use("/maps", mapReadRouter);
 
 // Reading and editing maps, and the desks of a space.
 router.use("/maps", RequiresAuth, mapsRouter);
+// The websites that objects of a map embed.
+router.use("/maps", RequiresAuth, websitesRouter);
 router.use("/spaces/:spaceId/desks", RequiresAuth, desksRouter);
 // A space by its id alone, for members and guests, and the invites to it.
 router.use("/spaces", RequiresAuth, spaceAccessRouter);

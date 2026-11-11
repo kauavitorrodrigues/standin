@@ -34,6 +34,10 @@ export class HoverTargetController {
     private readonly drawsOutline: boolean;
     // A zone is outlined and named but leaves the cursor as the arrow.
     private readonly setsCursor: boolean;
+    // Tells the page where the selected target is after the camera drew the
+    // frame, not before, so a card over it moves with what is on the canvas
+    // and not one frame behind it while the camera zooms.
+    private readonly followsRender: boolean;
     private readonly outline: Phaser.GameObjects.Graphics;
     private targets: HoverTarget[] = [];
     // Off while the decorator is open, so a desk is a plain object to select.
@@ -60,7 +64,11 @@ export class HoverTargetController {
     constructor(
         scene: Phaser.Scene,
         event: string,
-        options: { drawsOutline: boolean; setsCursor: boolean } = {
+        options: {
+            drawsOutline: boolean;
+            setsCursor: boolean;
+            followsRender?: boolean;
+        } = {
             drawsOutline: true,
             setsCursor: true,
         }
@@ -69,6 +77,7 @@ export class HoverTargetController {
         this.event = event;
         this.drawsOutline = options.drawsOutline;
         this.setsCursor = options.setsCursor;
+        this.followsRender = options.followsRender ?? false;
         this.outline = scene.add
             .graphics()
             .setDepth(HOVER_OUTLINE.DEPTH)
@@ -108,12 +117,22 @@ export class HoverTargetController {
         const selectEvent = getHoverSelectEvent(event);
         const onSelect = (id: string | null) => {
             this.selectedId = id;
+            // A still scene draws no frame, so the new selection is told now,
+            // with the camera of the last frame.
+            if (this.followsRender)
+                this.emitSelected(this.findSelectedTarget());
         };
         scene.game.events.on(selectEvent, onSelect);
+
+        const onRender = () => this.emitSelected(this.findSelectedTarget());
+        if (this.followsRender) {
+            scene.events.on(Phaser.Scenes.Events.RENDER, onRender);
+        }
 
         scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             scene.game.events.off(pinEvent, onPin);
             scene.game.events.off(selectEvent, onSelect);
+            scene.events.off(Phaser.Scenes.Events.RENDER, onRender);
         });
     }
 
@@ -138,7 +157,7 @@ export class HoverTargetController {
             : null;
 
         this.drawOutlines(selected, target);
-        this.emitSelected(selected);
+        if (!this.followsRender) this.emitSelected(selected);
         this.syncCursor(hover);
         this.emit(hover);
     }
