@@ -3,6 +3,7 @@ import {
     CATEGORY_ERROR_CODES,
     CategoryInvalidIssue,
     CategoryRequiredIssue,
+    OBJECT_BEHAVIORS,
     resolveAssetCategory,
 } from "@standin/contracts";
 import type {
@@ -15,6 +16,7 @@ import type { ImageSize } from "../../../lib/types";
 import { readFrameSize } from "./readFrameSize";
 import {
     findActionParamsIssue,
+    findBehaviorIssue,
     findFootprintIssue,
     findFootprintMaskIssue,
     resolveFootprintMasks,
@@ -83,6 +85,11 @@ export const planAsset = (
         data.actionParams ?? null
     );
     if (actionIssue) errors.push(actionIssue);
+    const behaviorIssue = findBehaviorIssue(
+        data.action ?? null,
+        data.behavior ?? OBJECT_BEHAVIORS.NONE
+    );
+    if (behaviorIssue) errors.push(behaviorIssue);
 
     let frame: { w: number; h: number } | null = null;
     if (size) {

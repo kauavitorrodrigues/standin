@@ -52,6 +52,7 @@ export const placedAssetSelect = {
     offsetY: mapAssetsTable.offsetY,
     parentId: mapAssetsTable.parentId,
     propertyOverrides: mapAssetsTable.propertyOverrides,
+    behaviorParams: mapAssetsTable.behaviorParams,
 };
 
 export const mapOwnerSpaceSelect = {

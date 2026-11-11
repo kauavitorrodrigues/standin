@@ -5,20 +5,24 @@ import { ObjectToolbarControls } from "@/features/editor/components/instances/Ob
 
 type ObjectToolbarProps = {
     toolbarRef: RefObject<HTMLDivElement | null>;
+    canSetBehavior?: boolean;
 };
 
 // The bar over the selected object. The element sits at the corner of the page
 // and the scene moves it by writing its transform (see applyToolbarAnchor),
 // so zoom, camera drags and moving the object never render React. It starts
 // hidden until the scene reports a place.
-export const ObjectToolbar = ({ toolbarRef }: ObjectToolbarProps) => (
+export const ObjectToolbar = ({
+    toolbarRef,
+    canSetBehavior,
+}: ObjectToolbarProps) => (
     <div
         ref={toolbarRef}
         className="group pointer-events-none fixed top-0 left-0 z-99 invisible"
     >
         <div className="-translate-x-1/2 -translate-y-full group-data-[below=true]:translate-y-0">
             <TooltipProvider delay={OBJECT_TOOLBAR_TOOLTIP_DELAY_MS}>
-                <ObjectToolbarControls />
+                <ObjectToolbarControls canSetBehavior={canSetBehavior} />
             </TooltipProvider>
         </div>
     </div>

@@ -9,8 +9,10 @@ import { canReplaceAsset } from "../canReplaceAsset";
 
 /**
  * Swaps the asset of an object, keeping its position (unless the op carries a
- * new anchor), parentId, children and propertyOverrides. The inverse swaps the previous asset back. The desk link
- * is kept by the server, the model does not know claimed desks.
+ * new anchor), parentId, children and propertyOverrides. The inverse swaps the
+ * previous asset back. A new asset with another behavior clears the behavior
+ * params, and the inverse puts them back. The desk link is kept by
+ * the server, the model does not know claimed desks.
  */
 export const applyEditorReplaceAsset: EditorOpHandler<
     Extract<EditorOp, { type: "replace_asset" }>
@@ -63,6 +65,14 @@ export const applyEditorReplaceAsset: EditorOpHandler<
         };
     }
 
+    // The params belong to the behavior of the asset, so a swap to an asset
+    // with another behavior drops them.
+    const previous = model.library.assets.find(
+        ({ id }) => id === target.assetId
+    );
+    const clearsBehavior =
+        target.behaviorParams !== null && previous?.behavior !== asset.behavior;
+
     return {
         ok: true,
         model: {
@@ -74,6 +84,9 @@ export const applyEditorReplaceAsset: EditorOpHandler<
                           assetId: op.assetId,
                           tileX: anchor.tileX,
                           tileY: anchor.tileY,
+                          behaviorParams: clearsBehavior
+                              ? null
+                              : object.behaviorParams,
                       }
                     : object
             ),
@@ -85,6 +98,15 @@ export const applyEditorReplaceAsset: EditorOpHandler<
                 assetId: target.assetId,
                 ...(moved ? { tileX: target.tileX, tileY: target.tileY } : {}),
             },
+            ...(clearsBehavior
+                ? [
+                      {
+                          type: "set_behavior" as const,
+                          id: op.id,
+                          params: target.behaviorParams,
+                      },
+                  ]
+                : []),
         ],
         diff: [],
     };

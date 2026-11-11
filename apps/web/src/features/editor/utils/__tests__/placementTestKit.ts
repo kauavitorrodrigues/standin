@@ -50,6 +50,7 @@ export const placedAt = (
     offsetY: 0,
     parentId,
     propertyOverrides: null,
+    behaviorParams: null,
 });
 
 export const buildModel = (

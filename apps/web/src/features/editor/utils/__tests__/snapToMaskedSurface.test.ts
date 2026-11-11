@@ -43,6 +43,7 @@ const placedCorner: PlacedAsset = {
     offsetY: 0,
     parentId: null,
     propertyOverrides: null,
+    behaviorParams: null,
 };
 
 describe("snapToSurface with a footprint mask", () => {

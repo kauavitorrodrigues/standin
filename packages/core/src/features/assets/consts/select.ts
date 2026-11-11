@@ -41,6 +41,7 @@ export const assetRowSelect = {
     solid: assetsTable.solid,
     action: assetsTable.action,
     actionParams: assetsTable.actionParams,
+    behavior: assetsTable.behavior,
     promptText: assetsTable.promptText,
     animation: assetsTable.animation,
     fileName: filesTable.fileName,

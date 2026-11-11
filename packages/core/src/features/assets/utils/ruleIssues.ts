@@ -2,8 +2,10 @@ import {
     ACTION_PARAMS_SCHEMAS,
     ActionParamsInvalidIssue,
     ActionParamsWithoutActionIssue,
+    BehaviorWithActionIssue,
     FootprintInvalidIssue,
     FootprintMaskAnimatedIssue,
+    OBJECT_BEHAVIORS,
     TILE_SIZE,
 } from "@standin/contracts";
 import type {
@@ -53,6 +55,15 @@ export const resolveFootprintMasks = (footprint: Footprint) => ({
     mask: footprint.mask ?? null,
     solidMask: footprint.solidMask ?? null,
 });
+
+/** An asset has an action or a behavior, never both. */
+export const findBehaviorIssue = (
+    action: AssetDefinition["action"],
+    behavior: AssetDefinition["behavior"]
+): LibraryIssue | null =>
+    action !== null && behavior !== OBJECT_BEHAVIORS.NONE
+        ? new BehaviorWithActionIssue()
+        : null;
 
 /** `actionParams` need an action, and have to match the schema of it. */
 export const findActionParamsIssue = (

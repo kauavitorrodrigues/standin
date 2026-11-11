@@ -16,6 +16,7 @@ export const FAMILY_ASSET_FIELDS = [
     "solid",
     "surfaceHeightPx",
     "action",
+    "behavior",
     "promptText",
 ] as const;
 

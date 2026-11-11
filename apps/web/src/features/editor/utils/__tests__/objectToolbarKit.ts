@@ -54,6 +54,14 @@ export const desk = asset({
     footprint: { w: 3, h: 1, offsetX: 0 },
 });
 
+// A plain asset whose objects embed a website, apart from the sofas.
+export const screen = asset({
+    id: "screen",
+    type: "TV",
+    footprint: { w: 1, h: 1, offsetX: 0 },
+    behavior: "EMBEDDED_WEBSITE",
+});
+
 export const buildToolbarModel = (
     placed: PlacedAsset[],
     assets: AssetDefinition[] = [sofa, sofaBlue, sofa90, couch, lamp, desk],

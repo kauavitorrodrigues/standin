@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import type { PlacedAsset } from "@standin/contracts";
 
 export const hasPlacedChanged = (
@@ -9,4 +10,5 @@ export const hasPlacedChanged = (
     before.tileY !== after.tileY ||
     before.offsetX !== after.offsetX ||
     before.offsetY !== after.offsetY ||
-    before.parentId !== after.parentId;
+    before.parentId !== after.parentId ||
+    !isDeepStrictEqual(before.behaviorParams, after.behaviorParams);

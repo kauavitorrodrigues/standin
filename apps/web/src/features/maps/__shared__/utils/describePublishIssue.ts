@@ -19,6 +19,8 @@ const describeOp = (op: EditorOp | undefined): string => {
             return "Objeto trocado";
         case "remove_asset":
             return "Objeto apagado";
+        case "set_behavior":
+            return "Comportamento do objeto";
         case "set_zone":
             return "Zona";
         case "remove_zone":

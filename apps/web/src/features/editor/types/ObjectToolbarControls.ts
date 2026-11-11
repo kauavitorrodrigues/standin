@@ -1,4 +1,8 @@
-import type { AssetDefinition, ReplaceAlternatives } from "@standin/contracts";
+import type {
+    AssetDefinition,
+    EmbeddedWebsiteParams,
+    ReplaceAlternatives,
+} from "@standin/contracts";
 
 // What the bar of the selected object offers. Each flag says whether the
 // control shows, and `alternatives` is what the controls list.
@@ -12,4 +16,9 @@ export type ObjectToolbarControls = {
     showModel: boolean;
     showColor: boolean;
     showRotate: boolean;
+    // The params of the behavior the object has now, if it has any.
+    behaviorParams: EmbeddedWebsiteParams | null;
+    // True when the asset of the object was created with a behavior that
+    // takes params.
+    showBehavior: boolean;
 };

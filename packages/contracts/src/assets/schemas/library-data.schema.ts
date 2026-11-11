@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
 import { MAX_LIBRARY_KEY_LENGTH } from "../consts/library";
+import { AssetBehaviorSchema } from "../../maps/behaviors/schemas";
 import { ASSET_ACTIONS } from "../enums/asset-action";
 import { ASSET_PLACEMENTS } from "../enums/asset-placement";
 import { ASSET_ROTATIONS } from "../enums/asset-rotation";
@@ -107,6 +108,7 @@ export const CreateAssetDataSchema = z.object({
         .nullable()
         .optional(),
     actionParams: LibraryActionParamsSchema.nullable().optional(),
+    behavior: AssetBehaviorSchema.optional(),
     promptText: z
         .string({ error: Messages.update.invalid })
         .nullable()
@@ -176,6 +178,7 @@ export const UpdateLibraryAssetSchema = z
             .nullable()
             .optional(),
         actionParams: LibraryActionParamsSchema.nullable().optional(),
+        behavior: AssetBehaviorSchema.optional(),
         promptText: z
             .string({ error: Messages.update.invalid })
             .nullable()

@@ -200,6 +200,7 @@ describe("findCrossingObjectIds", () => {
             offsetY: 0,
             parentId: null,
             propertyOverrides: null,
+            behaviorParams: null,
         }));
         return model;
     };

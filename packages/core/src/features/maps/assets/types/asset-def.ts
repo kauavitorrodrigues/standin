@@ -15,4 +15,6 @@ export type AssetDef = {
     footprintH: number;
     // The occupied tiles inside the footprint, null for the whole rectangle.
     footprintMask?: FootprintMask | null;
+    // What the object does when used. Not read for rows that are only measured.
+    behavior?: AssetRow["behavior"];
 };

@@ -33,6 +33,7 @@ const buildRender = (): MapRenderPayload => ({
             offsetY: 0,
             parentId: null,
             propertyOverrides: null,
+            behaviorParams: null,
         },
         {
             id: "p2",
@@ -43,6 +44,7 @@ const buildRender = (): MapRenderPayload => ({
             offsetY: 0,
             parentId: "p1",
             propertyOverrides: { color: "red" },
+            behaviorParams: null,
         },
     ],
     desks: [{ mapAssetId: "p1", userId: "u1" }],

@@ -18,6 +18,7 @@ export const buildAssetUpdateBody = (
         footprint: entry.footprint,
         action: entry.action,
         actionParams: entry.actionParams,
+        behavior: entry.behavior,
         promptText: entry.promptText,
         rotation: entry.rotation,
         color: entry.color,

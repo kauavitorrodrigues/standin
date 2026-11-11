@@ -2,6 +2,7 @@ import { z } from "zod/v4";
 import { AssetDefinitionSchema } from "../../assets/schemas/asset-definition.schema";
 import { TilesetSchema } from "../../assets/schemas/tileset.schema";
 import { EditScopeKindSchema } from "../editor/schemas/editScope.schema";
+import { EmbeddedWebsiteParamsSchema } from "../behaviors/schemas";
 import { MAX_OBJECT_OFFSET } from "../consts/constants";
 import { MapRenderErrorMessages as Messages } from "../schemas/consts/error-messages";
 import { MapErrorMessages } from "../schemas/consts/error-messages";
@@ -27,6 +28,9 @@ export const PlacedAssetSchema = z.object({
     propertyOverrides: z
         .record(z.string(), z.unknown(), { error: Messages.placed.invalid })
         .nullable(),
+    // The params of the behavior its asset has. Null when there are none yet,
+    // and in payloads from before behaviors.
+    behaviorParams: EmbeddedWebsiteParamsSchema.nullable().default(null),
 });
 
 // Who is editing the map right now, if anyone. `by` and `since` come only

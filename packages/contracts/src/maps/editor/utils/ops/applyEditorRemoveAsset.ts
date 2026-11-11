@@ -4,6 +4,7 @@ import {
     LAYOUT_ISSUE_CODES as Code,
     createIssue,
 } from "../../../layout/issues";
+import type { PlacedAsset } from "../../../render/render-payload.schema";
 import type { EditorOp } from "../../schemas/editorOp.schema";
 import type { EditorOpHandler } from "../../types/editor-op-handler";
 import { getClaimedDesk } from "../getClaimedDesk";
@@ -71,6 +72,19 @@ export const applyEditorRemoveAsset: EditorOpHandler<
             releasedIds.has(object.id) ? { ...object, parentId: null } : object
         );
 
+    // place_asset always brings an object back without params, so the ones it
+    // had are set again right after.
+    const restoreParams = (object: PlacedAsset): EditorOp[] =>
+        object.behaviorParams === null
+            ? []
+            : [
+                  {
+                      type: "set_behavior",
+                      id: object.id,
+                      params: object.behaviorParams,
+                  },
+              ];
+
     const inverse: EditorOp[] = [
         {
             type: "place_asset",
@@ -80,14 +94,18 @@ export const applyEditorRemoveAsset: EditorOpHandler<
             tileY: target.tileY,
             parentId: target.parentId,
         },
-        ...removedChildren.map((child): EditorOp => ({
-            type: "place_asset",
-            tempId: child.id,
-            assetId: child.assetId,
-            tileX: child.tileX,
-            tileY: child.tileY,
-            parentId: child.parentId,
-        })),
+        ...restoreParams(target),
+        ...removedChildren.flatMap((child): EditorOp[] => [
+            {
+                type: "place_asset",
+                tempId: child.id,
+                assetId: child.assetId,
+                tileX: child.tileX,
+                tileY: child.tileY,
+                parentId: child.parentId,
+            },
+            ...restoreParams(child),
+        ]),
         ...releasedChildren.map((child): EditorOp => ({
             type: "move_asset",
             id: child.id,

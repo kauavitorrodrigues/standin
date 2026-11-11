@@ -57,6 +57,7 @@ describe.skipIf(!enabled)("persistModelDiff (real database)", () => {
             tileY,
             parentId,
             propertyOverrides: null,
+            behaviorParams: null,
         }) as PlacedAsset;
 
     const withPlaced = (
@@ -351,7 +352,7 @@ describe.skipIf(!enabled)("MapPublishService.publish (real database)", () => {
     let guestId: string;
     let spaceId: string;
     let mapId: string;
-    const defs = {} as Record<"desk" | "monitor", string>;
+    const defs = {} as Record<"desk" | "monitor" | "site", string>;
     const SESSION = `session-${RUN}`;
     let counter = 0;
     const nextPublishId = () =>
@@ -473,6 +474,10 @@ describe.skipIf(!enabled)("MapPublishService.publish (real database)", () => {
         };
         await create("desk", { type: "DESK", solid: true });
         await create("monitor", { type: "MONITOR", placement: "SURFACE" });
+        await create("site", {
+            type: "DECORATION",
+            behavior: "EMBEDDED_WEBSITE",
+        });
 
         const organization = await core.OrganizationService.create(ownerId, {
             name: "Publish Map Org",
@@ -639,6 +644,100 @@ describe.skipIf(!enabled)("MapPublishService.publish (real database)", () => {
             { mapAssetId: deskRealId, userId: guestId },
         ]);
         expect(await activeRows()).toHaveLength(0);
+    });
+
+    it("stores the params of the behavior of the asset, reads them back and clears them", async () => {
+        const { result: placed } = await publish([
+            {
+                type: "place_asset",
+                tempId: "temp-site",
+                assetId: defs.site,
+                tileX: 8,
+                tileY: 8,
+            },
+        ]);
+        const id = placed.idMap["temp-site"];
+        const rowOf = async () =>
+            (await activeRows()).find((row) => row.id === id);
+        const params = { mode: "url", url: "https://example.com" } as const;
+        expect(await rowOf()).toMatchObject({ behaviorParams: null });
+
+        await publish([{ type: "set_behavior", id, params }]);
+        expect(await rowOf()).toMatchObject({ behaviorParams: params });
+        const model = await database.db.transaction(async (tx) =>
+            core.MapPublishService.loadEditorModel(tx, await getAccess())
+        );
+        expect(model.placed.find((p) => p.id === id)).toMatchObject({
+            behaviorParams: params,
+        });
+        expect(
+            model.library.assets.find((asset) => asset.id === defs.site)
+        ).toMatchObject({ behavior: "EMBEDDED_WEBSITE" });
+
+        await expect(
+            publish([
+                {
+                    type: "set_behavior",
+                    id,
+                    params: { mode: "url", url: "http://example.com" },
+                },
+            ])
+        ).rejects.toMatchObject({ code: "PUBLISH_INVALID", status: 422 });
+
+        const previousFrontend = process.env.FRONTEND_URL;
+        process.env.FRONTEND_URL = "https://standin.test";
+        try {
+            await expect(
+                publish([
+                    {
+                        type: "set_behavior",
+                        id,
+                        params: {
+                            mode: "url",
+                            url: "https://standin.test/space/1",
+                        },
+                    },
+                ])
+            ).rejects.toMatchObject({
+                code: "PUBLISH_INVALID",
+                errors: [{ code: "BEHAVIOR_URL_INVALID" }],
+            });
+        } finally {
+            process.env.FRONTEND_URL = previousFrontend;
+        }
+
+        await publish([{ type: "set_behavior", id, params: null }]);
+        expect(await rowOf()).toMatchObject({ behaviorParams: null });
+
+        await publish([{ type: "remove_asset", id }]);
+    });
+
+    it("refuses params on an object whose asset has no behavior", async () => {
+        const { result: placed } = await publish([
+            {
+                type: "place_asset",
+                tempId: "temp-plain",
+                assetId: defs.desk,
+                tileX: 8,
+                tileY: 8,
+            },
+        ]);
+        const id = placed.idMap["temp-plain"];
+
+        await expect(
+            publish([
+                {
+                    type: "set_behavior",
+                    id,
+                    params: { mode: "url", url: "https://example.com" },
+                },
+            ])
+        ).rejects.toMatchObject({
+            code: "PUBLISH_INVALID",
+            errors: [{ code: "BEHAVIOR_NOT_ON_ASSET" }],
+        });
+
+        await publish([{ type: "remove_asset", id }]);
     });
 
     it("keeps the lock with who published", async () => {

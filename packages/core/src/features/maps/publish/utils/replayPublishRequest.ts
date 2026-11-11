@@ -12,6 +12,7 @@ import { loadEditorModel } from "../loadEditorModel";
 import type { ReplayedRequest } from "../types/replayed-request";
 import { assertBaseIsCurrent } from "./assertBaseIsCurrent";
 import { assertRequestInScope } from "./assertRequestInScope";
+import { getAppOrigins } from "./getAppOrigins";
 import { lockMapForPublish } from "./lockMapForPublish";
 
 // The checks every write of a draft goes through, on an open transaction:
@@ -30,11 +31,17 @@ export const replayPublishRequest = async (
     await assertBaseIsCurrent(tx, access.mapId, request, currentVersion);
 
     const base = await loadEditorModel(tx, access);
-    assertRequestInScope(request.ops, scope, { userId: user.id }, base);
+    const actor = { userId: user.id, canEdit: access.canEdit };
+    assertRequestInScope(request.ops, scope, actor, base);
 
-    const replayed = validateEditorOps(base, request.ops);
+    // The origins are only for validating (an embedded website may not point
+    // at the app), so the model that was read stays as the client builds it.
+    const replayed = validateEditorOps(
+        { ...base, appOrigins: getAppOrigins() },
+        request.ops
+    );
     if (!replayed.ok) throw new PublishValidationError(replayed.issues);
-    if (assertDiffInScope(base, replayed.model, scope).length > 0) {
+    if (assertDiffInScope(base, replayed.model, scope, actor).length > 0) {
         throw new OutOfScopeError();
     }
 

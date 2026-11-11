@@ -111,6 +111,9 @@ export const updateMapAsset = async (
                 ...offset,
                 parentId,
                 ...(nextAsset ? { assetId: nextAsset.id } : {}),
+                ...(nextAsset && nextAsset.behavior !== current.behavior
+                    ? { clearBehaviorParams: true }
+                    : {}),
             },
             ...childChanges,
         ]);

@@ -6,6 +6,7 @@ import {
     RemoveZoneOpSchema,
     SetBackgroundOpSchema,
 } from "../../layout/ops.schema";
+import { EmbeddedWebsiteParamsSchema } from "../../behaviors/schemas";
 import { MAX_OBJECT_OFFSET } from "../../consts/constants";
 import { MAX_CELLS_PER_OP, ZONE_AREA_MIN_TILES } from "../consts/limits";
 import { EditorOpErrorMessages as Messages } from "./consts/error-messages";
@@ -182,6 +183,15 @@ const RemoveAssetOpSchema = z.object({
     releaseDesk: z.boolean({ error: Messages.releaseDesk.invalid }).optional(),
 });
 
+const SetBehaviorOpSchema = z.object({
+    type: z.literal("set_behavior"),
+    id: z.string({ error: Messages.id.invalid }).min(1, {
+        error: Messages.id.invalid,
+    }),
+    // The params replace the ones the object had. Null clears them.
+    params: EmbeddedWebsiteParamsSchema.nullable(),
+});
+
 export const EditorOpSchema = z.discriminatedUnion(
     "type",
     [
@@ -195,6 +205,7 @@ export const EditorOpSchema = z.discriminatedUnion(
         MoveAssetOpSchema,
         ReplaceAssetOpSchema,
         RemoveAssetOpSchema,
+        SetBehaviorOpSchema,
     ],
     { error: Messages.op.invalid }
 );

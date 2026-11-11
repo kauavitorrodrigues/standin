@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AssetDefinition } from "@standin/contracts";
+import { BehaviorControl } from "@/features/editor/components/views/object-toolbar/BehaviorControl";
 import { ColorControl } from "@/features/editor/components/views/object-toolbar/ColorControl";
 import { DeleteControl } from "@/features/editor/components/views/object-toolbar/DeleteControl";
 import { ModelControl } from "@/features/editor/components/views/object-toolbar/ModelControl";
@@ -11,10 +12,17 @@ import { useEditorStore } from "@/features/editor/hooks/useEditorStore";
 import { getObjectToolbarControls } from "@/features/editor/utils/getObjectToolbarControls";
 import { isEditable } from "@/features/editor/utils/isEditable";
 
-// The controls of the selected object: model, color, turn and delete, only
+// The controls of the selected object: model, color, turn, behavior and delete, only
 // the ones that apply. Each swap is ONE gesture. Nothing shows for zero or
 // several selected, while an object is being placed, or without the lock.
-export const ObjectToolbarControls = () => {
+type ObjectToolbarControlsProps = {
+    // The behavior is set by the people who edit the map, not by decorators.
+    canSetBehavior?: boolean;
+};
+
+export const ObjectToolbarControls = ({
+    canSetBehavior = false,
+}: ObjectToolbarControlsProps) => {
     const store = useEditorStore();
     const selection = useEditorSelector((state) => state.selection);
     const placing = useEditorSelector((state) => state.placing);
@@ -49,6 +57,11 @@ export const ObjectToolbarControls = () => {
             <RotateControl
                 show={controls.showRotate}
                 onRotate={store.rotateSelection}
+            />
+            <BehaviorControl
+                show={canSetBehavior && controls.showBehavior}
+                params={controls.behaviorParams}
+                onSelect={store.setSelectionBehavior}
             />
             <DeleteControl onDelete={store.removeSelection} />
         </ObjectToolbarBar>

@@ -55,6 +55,7 @@ export const applyEditorPlaceAsset: EditorOpHandler<
         offsetY: op.offsetY ?? 0,
         parentId,
         propertyOverrides: null,
+        behaviorParams: null,
     };
 
     return {

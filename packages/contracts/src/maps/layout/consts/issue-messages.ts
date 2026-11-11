@@ -80,6 +80,8 @@ export const LAYOUT_ISSUE_MESSAGES = {
         "The footprint overlaps another object of the same occupation type.",
     replaceIncompatible:
         "The replacement asset is not compatible with the current object.",
+    behaviorNotOnAsset:
+        "The asset of this object has no behavior that takes these params.",
     opTooLarge: "The operation touches more cells than the allowed limit.",
     opNotSupported: "This operation type is not supported yet.",
     objectNotFound: "The object does not exist on the map.",

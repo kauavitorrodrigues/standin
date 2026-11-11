@@ -7,6 +7,7 @@ import { applyEditorPlaceAsset } from "./applyEditorPlaceAsset";
 import { applyEditorRemoveAsset } from "./applyEditorRemoveAsset";
 import { applyEditorRemoveZone } from "./applyEditorRemoveZone";
 import { applyEditorReplaceAsset } from "./applyEditorReplaceAsset";
+import { applyEditorSetBehavior } from "./applyEditorSetBehavior";
 import { applyEditorSetBackground } from "./applyEditorSetBackground";
 import { applyEditorSetZone } from "./applyEditorSetZone";
 
@@ -25,4 +26,5 @@ export const EDITOR_OP_HANDLERS: EditorOpHandlers = {
     move_asset: applyEditorMoveAsset,
     remove_asset: applyEditorRemoveAsset,
     replace_asset: applyEditorReplaceAsset,
+    set_behavior: applyEditorSetBehavior,
 };

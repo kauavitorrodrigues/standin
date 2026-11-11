@@ -180,6 +180,7 @@ describe("doors of a room of thin walls", () => {
                     offsetY: 0,
                     parentId: null,
                     propertyOverrides: null,
+                    behaviorParams: null,
                 },
             ],
             library: {

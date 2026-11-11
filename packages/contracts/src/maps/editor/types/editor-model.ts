@@ -19,6 +19,8 @@ export type EditorModel = {
     // The tilesets the layout declares, served even when the palette does not
     // list them (a deleted one). Layout math needs their tile count.
     usedTilesets?: LibraryPalette["tilesets"];
+    // Where the app is served from. An embedded website may not point at it.
+    appOrigins?: string[];
     limits: { objectsUsed: number; objectsMax: number };
     // The published layout version this model was built from.
     version: number;

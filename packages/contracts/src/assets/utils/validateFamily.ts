@@ -17,6 +17,7 @@ const FAMILY_FIELDS = [
     "solid",
     "surfaceHeightPx",
     "action",
+    "behavior",
     "promptText",
     "animation",
 ] as const;

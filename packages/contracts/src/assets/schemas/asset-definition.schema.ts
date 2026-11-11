@@ -1,4 +1,6 @@
 import { z } from "zod/v4";
+import { OBJECT_BEHAVIORS } from "../../maps/behaviors/consts";
+import { ObjectBehaviorKindSchema } from "../../maps/behaviors/schemas";
 import { ASSET_ACTIONS } from "../enums/asset-action";
 import { ASSET_CATEGORIES } from "../enums/asset-category";
 import { ASSET_PLACEMENTS } from "../enums/asset-placement";
@@ -78,6 +80,9 @@ export const AssetDefinitionSchema = z
                 error: Messages.actionParams.invalid,
             })
             .nullable(),
+        // What the object does when someone uses it, apart from a built-in
+        // action. Missing in payloads from before behaviors, which means none.
+        behavior: ObjectBehaviorKindSchema.default(OBJECT_BEHAVIORS.NONE),
         promptText: z.string({ error: Messages.promptText.invalid }).nullable(),
         animation: assetAnimationSchema.nullable(),
     })
@@ -101,6 +106,13 @@ export const AssetDefinitionSchema = z
                 code: "custom",
                 path: ["footprint", "solidMask"],
                 message: Messages.footprintSolidMask.invalid,
+            });
+        }
+        if (asset.behavior !== OBJECT_BEHAVIORS.NONE && asset.action !== null) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["behavior"],
+                message: Messages.behavior.conflictsWithAction,
             });
         }
         if (

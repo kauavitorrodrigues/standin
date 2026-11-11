@@ -18,6 +18,7 @@ export const makeAsset = (
     surfaceHeightPx: 0,
     solid: false,
     action: null,
+    behavior: "NONE",
     actionParams: null,
     promptText: null,
     animation: null,

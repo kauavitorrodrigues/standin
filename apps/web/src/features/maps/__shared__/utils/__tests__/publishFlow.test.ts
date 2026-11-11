@@ -81,6 +81,7 @@ describe("buildPublishedModel", () => {
                     offsetY: 0,
                     parentId: null,
                     propertyOverrides: null,
+                    behaviorParams: null,
                 },
                 {
                     id: "temp-b",
@@ -91,6 +92,7 @@ describe("buildPublishedModel", () => {
                     offsetY: 0,
                     parentId: "temp-a",
                     propertyOverrides: null,
+                    behaviorParams: null,
                 },
                 {
                     id: "kept",
@@ -101,6 +103,7 @@ describe("buildPublishedModel", () => {
                     offsetY: 0,
                     parentId: null,
                     propertyOverrides: null,
+                    behaviorParams: null,
                 },
             ],
         };

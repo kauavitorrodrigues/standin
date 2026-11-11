@@ -99,6 +99,7 @@ const placedAt = (
     offsetY: 0,
     parentId,
     propertyOverrides: null,
+    behaviorParams: null,
 });
 
 // The corner desk is anchored at (5, 5), so it spans x 5..7 and y 3..5.

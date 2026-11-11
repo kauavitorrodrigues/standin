@@ -145,6 +145,7 @@ const placedAt = (
     offsetY: 0,
     parentId,
     propertyOverrides: { label: id },
+    behaviorParams: null,
 });
 
 const buildModel = (
