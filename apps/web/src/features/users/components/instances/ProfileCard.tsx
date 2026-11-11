@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useMinuteClock } from "../../hooks/useMinuteClock";
 import { formatLocalTime } from "../../utils/formatLocalTime";
+import { ListeningCard } from "@/features/spaces/music/listening/components/instances/ListeningCard";
 import { SpacePageLayout } from "@/features/spaces/components/pages/space-page/layout";
 import type { ProfileDecorate } from "../../types/profileDecorate";
 import { ProfileActions } from "../views/ProfileActions";
@@ -37,6 +38,7 @@ export const ProfileCard = ({
                 onClose={onClose}
             />
             <ProfileActions actions={actions} decorate={decorate} />
+            <ListeningCard userId={user.id} />
         </SpacePageLayout.FloatingCard>
     );
 };

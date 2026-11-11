@@ -35,6 +35,7 @@ import type { RemotePrivacy } from "../types/sfuHooks";
 import { useSpeakingUsers } from "./useSpeakingUsers";
 import { useAnnouncing } from "@/features/spaces/announcing/hooks/useAnnouncing";
 import { useHandRaise } from "@/features/spaces/hand-raise/hooks/useHandRaise";
+import { useListening } from "@/features/spaces/music/listening/hooks/useListening";
 import { useSpaceSoundboard } from "@/features/soundboard/hooks/useSpaceSoundboard";
 import { SPACE_SETTINGS_QUERY_KEY } from "@/features/spaces/settings/consts/queryKeys";
 import { STAGE_MAX_NEARBY_PEERS } from "../consts/video";
@@ -212,6 +213,7 @@ export function useSpaceConnection({
         isCameraEnabled: localCameraStream !== null,
     });
     const handRaise = useHandRaise();
+    const listening = useListening();
 
     const sfu = useSfuMedia({
         userId,
@@ -691,6 +693,7 @@ export function useSpaceConnection({
         soundboard,
         announcing,
         handRaise,
+        listening,
         video: {
             remoteVideos: sfu.remoteVideos,
             setActiveVideoIds: sfu.setActiveVideoIds,

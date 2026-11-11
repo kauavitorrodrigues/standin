@@ -86,6 +86,10 @@ import { outputVolumePreference } from "@/features/media-devices/lib/audioSettin
 import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
 import { ConfettiParticles } from "@/features/game/lib/ConfettiParticles";
+import { MusicNoteParticles } from "@/features/game/lib/MusicNoteParticles";
+import type { MusicNoteSource } from "@/features/game/types/musicNotes";
+import { isMotionReduced } from "@/features/game/utils/isMotionReduced";
+import { prefersReducedMotion } from "@/features/game/utils/prefersReducedMotion";
 import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
 import { EMOTE_EVENTS } from "@/features/game/consts/emote";
 import {
@@ -292,6 +296,11 @@ export class MapScene extends Phaser.Scene {
     private readonly remoteHoverPool = new Map<string, HoverTarget>();
     private emoteParticles: EmoteParticles | null = null;
     private confettiParticles: ConfettiParticles | null = null;
+    private musicNoteParticles: MusicNoteParticles | null = null;
+    // The people whose music plays now, by user id, and whether the app turned
+    // the motion off (the system preference is read on each frame).
+    private listeningUserIds: ReadonlySet<string> = new Set();
+    private isAppMotionReduced = false;
     private footsteps: Footsteps | null = null;
     private footstepSounds: FootstepSounds | null = null;
     // The output volume of the settings for the frame in progress, read once so
@@ -560,6 +569,7 @@ export class MapScene extends Phaser.Scene {
         );
 
         this.confettiParticles = new ConfettiParticles(this);
+        this.musicNoteParticles = new MusicNoteParticles(this);
 
         this.footstepSounds = new FootstepSounds();
         const footstepSounds = this.footstepSounds;
@@ -581,6 +591,8 @@ export class MapScene extends Phaser.Scene {
             this.emoteParticles = null;
             this.confettiParticles?.destroy();
             this.confettiParticles = null;
+            this.musicNoteParticles?.destroy();
+            this.musicNoteParticles = null;
             this.emoteTextures?.destroy();
             this.emoteTextures = null;
             this.emoteRateLimiter.clear();
@@ -764,6 +776,7 @@ export class MapScene extends Phaser.Scene {
         this.updateRemoteHover();
         this.emoteParticles?.update(delta);
         this.confettiParticles?.update(delta);
+        this.updateMusicNotes(delta);
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
     }
@@ -1682,6 +1695,54 @@ export class MapScene extends Phaser.Scene {
         if (this.getCommunicationDistanceTo(avatar) > emoteRadius) return;
 
         this.burstConfetti(avatar.gameObject);
+    }
+
+    // Who plays music now. The notes rise from these avatars while they are near.
+    setListeningUserIds(userIds: ReadonlySet<string>): void {
+        this.listeningUserIds = userIds;
+    }
+
+    // The in-app switch for less motion, on top of the system preference.
+    setAppMotionReduced(isReduced: boolean): void {
+        this.isAppMotionReduced = isReduced;
+    }
+
+    private updateMusicNotes(delta: number): void {
+        const isReduced = isMotionReduced(
+            prefersReducedMotion(),
+            this.isAppMotionReduced
+        );
+        this.musicNoteParticles?.update(
+            delta,
+            isReduced ? [] : this.collectMusicNoteSources(),
+            isReduced
+        );
+    }
+
+    // The avatars that play music and are seen by the local person: theirs
+    // always, the others only within the range of an emote and in the same
+    // private room, so a locked room never shows its music.
+    private collectMusicNoteSources(): MusicNoteSource[] {
+        const { player } = this;
+        if (!player || this.listeningUserIds.size === 0) return [];
+
+        const sources: MusicNoteSource[] = [];
+        const localUserId = this.localUserProfile?.userId;
+        if (localUserId && this.listeningUserIds.has(localUserId)) {
+            sources.push({ key: localUserId, feet: player.gameObject });
+        }
+
+        const reach = getEmoteRadius(this.proximityPreset);
+        this.remoteUserIds.forEach((userId, socketId) => {
+            if (!this.listeningUserIds.has(userId)) return;
+
+            const avatar = this.remoteAvatars.get(socketId);
+            if (!avatar?.hasPosition) return;
+            if (this.getCommunicationDistanceTo(avatar) > reach) return;
+
+            sources.push({ key: userId, feet: avatar.gameObject });
+        });
+        return sources;
     }
 
     playLocalConfetti(): void {

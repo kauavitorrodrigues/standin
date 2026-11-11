@@ -68,6 +68,8 @@ import type { DecorateAvailability } from "@/features/decorator/types/decorate-a
 import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 import { handRaiseInGrid } from "@/features/spaces/hand-raise/utils/handRaiseInGrid";
+import { ListeningContext } from "@/features/spaces/music/listening/contexts/ListeningContext";
+import { useListeningNotes } from "@/features/spaces/music/listening/hooks/useListeningNotes";
 import { RaisedHandsContext } from "@/features/spaces/hand-raise/contexts/RaisedHandsContext";
 import { useHandRaiseToasts } from "@/features/spaces/hand-raise/hooks/useHandRaiseToasts";
 import { useLowerHandOutsideGrid } from "@/features/spaces/hand-raise/hooks/useLowerHandOutsideGrid";
@@ -132,6 +134,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         soundboard,
         announcing,
         handRaise,
+        listening,
         onlineUserIds,
         speakingUserIds,
         video,
@@ -155,6 +158,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         sendTyping: sendNearbyTyping,
         isEnabled: isSendNearbyEnabled,
     });
+
+    useListeningNotes(handle?.game ?? null, listening);
 
     const currentRoom = useCurrentRoom(handle?.game ?? null);
     const walk = useWalkState(handle?.game ?? null);
@@ -366,19 +371,21 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     <LayoutPrimitive.RightStack
                         isBelowStageToggle={layout.isStageToggleVisible}
                     >
-                        <ProfileCardSlot
-                            isOpen={profileCard.isOpen && !decorator.isOpen}
-                            spaceId={space.id}
-                            isMapLocked={mapLock.isLocked}
-                            decorateAvailability={decorateAvailability}
-                            isAtOwnDesk={isAtOwnDesk}
-                            onWalkToDesk={() => handle?.walkToOwnDesk()}
-                            onDecorate={(focus) => {
-                                profileCard.close();
-                                decorator.open(focus);
-                            }}
-                            onClose={profileCard.close}
-                        />
+                        <ListeningContext.Provider value={listening}>
+                            <ProfileCardSlot
+                                isOpen={profileCard.isOpen && !decorator.isOpen}
+                                spaceId={space.id}
+                                isMapLocked={mapLock.isLocked}
+                                decorateAvailability={decorateAvailability}
+                                isAtOwnDesk={isAtOwnDesk}
+                                onWalkToDesk={() => handle?.walkToOwnDesk()}
+                                onDecorate={(focus) => {
+                                    profileCard.close();
+                                    decorator.open(focus);
+                                }}
+                                onClose={profileCard.close}
+                            />
+                        </ListeningContext.Provider>
                         <RoomJoinRequests
                             requests={currentRoom.pendingRequests}
                             names={names}
