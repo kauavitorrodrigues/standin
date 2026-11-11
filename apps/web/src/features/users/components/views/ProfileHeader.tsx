@@ -8,8 +8,21 @@ type ProfileHeaderProps = {
     name: string;
     avatar?: string | null;
     isOnline: boolean;
-    localTime: string;
+    // The local time of the person. Left out when it is not known, as for
+    // somebody else, whose time zone the app does not have.
+    localTime?: string;
     onClose: () => void;
+};
+
+const LocalTime = ({ value }: { value?: string }) => {
+    if (value === undefined) return null;
+
+    return (
+        <p className="flex items-center gap-1 text-sm leading-4 text-muted-foreground">
+            <ClockIcon className="size-3.5 shrink-0" />
+            {value}
+        </p>
+    );
 };
 
 export const ProfileHeader = ({
@@ -35,10 +48,7 @@ export const ProfileHeader = ({
             <p className="truncate text-base leading-5 font-semibold text-popover-foreground">
                 {name}
             </p>
-            <p className="flex items-center gap-1 text-sm leading-4 text-muted-foreground">
-                <ClockIcon className="size-3.5 shrink-0" />
-                {localTime}
-            </p>
+            <LocalTime value={localTime} />
         </div>
         <Button
             type="button"

@@ -6,6 +6,7 @@ import { createSocketServer } from "@/lib/socket/createSocketServer";
 import { registerIntegrationsCleanup } from "@/lib/integrations/registerIntegrationsCleanup";
 import { startLockSweeper } from "@/lib/socket/startLockSweeper";
 import { startGuestSweeper } from "@/lib/socket/startGuestSweeper";
+import { startListeningPoller } from "@/lib/socket/music/listening/startListeningPoller";
 import { startPositionTicker } from "@/lib/socket/realtime/startPositionTicker";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
 import { readMediaConfig } from "@/lib/media/readMediaConfig";
@@ -30,6 +31,7 @@ const stopLockSweeper = startLockSweeper();
 const stopGuestSweeper = startGuestSweeper();
 const stopPositionTicker = startPositionTicker();
 const stopMediaTicker = startMediaTicker();
+const stopListeningPoller = startListeningPoller();
 
 const mediaConfig = readMediaConfig();
 if (mediaConfig.enabled) {
@@ -72,6 +74,7 @@ async function gracefulShutdown(signal: string) {
     stopGuestSweeper();
     stopPositionTicker();
     stopMediaTicker();
+    stopListeningPoller();
     MediaRuntime.stop();
 
     try {

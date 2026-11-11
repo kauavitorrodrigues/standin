@@ -1,6 +1,7 @@
 import { SpotifyUnavailableError } from "@standin/contracts";
 import { SPOTIFY_REQUEST_TIMEOUT_MS } from "../consts/http";
 import type { SpotifyResponse } from "../types";
+import { RETRY_AFTER_HEADER, readRetryAfter } from "./readRetryAfter";
 
 /**
  * One call to Spotify. It answers with the status and the JSON body (null when
@@ -21,7 +22,11 @@ export const requestSpotify = async (
         });
         const body: unknown = await response.json().catch(() => null);
 
-        return { status: response.status, body };
+        const retryAfterSeconds = readRetryAfter(
+            response.headers.get(RETRY_AFTER_HEADER)
+        );
+
+        return { status: response.status, body, retryAfterSeconds };
     } catch (cause) {
         console.error("[Spotify] request failed:", url, cause);
         throw new SpotifyUnavailableError();

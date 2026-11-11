@@ -15,3 +15,11 @@ export const SPOTIFY_CODE_REJECTED_STATUS = 400;
 export const SPOTIFY_INVALID_GRANT_ERROR = "invalid_grant";
 
 export const SPOTIFY_OK_STATUS = 200;
+
+export const SPOTIFY_NOTHING_PLAYING_STATUS = 204;
+export const SPOTIFY_UNAUTHORIZED_STATUS = 401;
+export const SPOTIFY_RATE_LIMITED_STATUS = 429;
+
+// The only kind of item the widget shows. An ad, a podcast episode or an item
+// Spotify does not describe is nothing.
+export const SPOTIFY_TRACK_TYPE = "track";

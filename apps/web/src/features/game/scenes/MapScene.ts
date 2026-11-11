@@ -53,7 +53,7 @@ import { isWithinReach } from "@/features/game/utils/isWithinReach";
 import { ZONE_EVENTS } from "@/features/game/consts/zone";
 import { buildZoneAreas } from "@/features/game/utils/buildZoneAreas";
 import { findAreaGoals } from "@/features/game/utils/findAreaGoals";
-import type { HoverTarget } from "@/features/game/types/hover";
+import type { HoverState, HoverTarget } from "@/features/game/types/hover";
 import { TileCursor } from "@/features/game/lib/TileCursor";
 import { findPath, getStandingPoint } from "@/features/game/utils/findPath";
 import {
@@ -86,6 +86,10 @@ import { outputVolumePreference } from "@/features/media-devices/lib/audioSettin
 import { EmojiTextureCache } from "@/features/game/lib/EmojiTextureCache";
 import { EmoteParticles } from "@/features/game/lib/EmoteParticles";
 import { ConfettiParticles } from "@/features/game/lib/ConfettiParticles";
+import { MusicNoteParticles } from "@/features/game/lib/MusicNoteParticles";
+import type { MusicNoteSource } from "@/features/game/types/musicNotes";
+import { isMotionReduced } from "@/features/game/utils/isMotionReduced";
+import { prefersReducedMotion } from "@/features/game/utils/prefersReducedMotion";
 import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
 import { EMOTE_EVENTS } from "@/features/game/consts/emote";
 import {
@@ -175,6 +179,7 @@ import { hasPlacedChanges } from "@/features/game/utils/hasPlacedChanges";
 import { PlacedObjectsSync } from "@/features/game/lib/PlacedObjectsSync";
 import { SolidColliders } from "@/features/game/lib/SolidColliders";
 import { AvatarOutline } from "@/features/game/lib/AvatarOutline";
+import { RemoteAvatarOutlines } from "@/features/game/lib/RemoteAvatarOutlines";
 import {
     findHoveredTarget,
     getHoverClickEvent,
@@ -292,6 +297,11 @@ export class MapScene extends Phaser.Scene {
     private readonly remoteHoverPool = new Map<string, HoverTarget>();
     private emoteParticles: EmoteParticles | null = null;
     private confettiParticles: ConfettiParticles | null = null;
+    private musicNoteParticles: MusicNoteParticles | null = null;
+    // The people whose music plays now, by user id, and whether the app turned
+    // the motion off (the system preference is read on each frame).
+    private listeningUserIds: ReadonlySet<string> = new Set();
+    private isAppMotionReduced = false;
     private footsteps: Footsteps | null = null;
     private footstepSounds: FootstepSounds | null = null;
     // The output volume of the settings for the frame in progress, read once so
@@ -328,6 +338,10 @@ export class MapScene extends Phaser.Scene {
     private remoteHoverController: HoverTargetController | null = null;
     // The remote avatar the mouse clicked, whose tag shows the photo.
     private readonly remoteSelection = new RemoteSelection();
+    // The avatar of another person the mouse is on, by socket id. It and the
+    // selected one get the same outline as the avatar of the local person.
+    private hoveredRemoteId: string | null = null;
+    private remoteOutlines: RemoteAvatarOutlines | null = null;
     // Names that arrived before the avatar they belong to was made.
     private readonly pendingUserNames = new PendingUserNames();
     // Profile pictures that arrived before the avatar they belong to was made.
@@ -525,15 +539,29 @@ export class MapScene extends Phaser.Scene {
             REMOTE_AVATAR_EVENTS.HOVER_CHANGED,
             { drawsOutline: false, setsCursor: true }
         );
+        this.remoteOutlines = new RemoteAvatarOutlines((socketId) => {
+            const avatar = this.remoteAvatars.get(socketId);
+            return avatar ? new AvatarOutline(this, avatar.gameObject) : null;
+        });
+        const onRemoteHover = (hover: HoverState | null) => {
+            this.hoveredRemoteId = hover?.id ?? null;
+        };
+        this.game.events.on(REMOTE_AVATAR_EVENTS.HOVER_CHANGED, onRemoteHover);
         const remoteClickEvent = getHoverClickEvent(
             REMOTE_AVATAR_EVENTS.HOVER_CHANGED
         );
         const onRemoteClick = (socketId: string | null) =>
             this.selectRemoteAvatar(socketId);
         this.game.events.on(remoteClickEvent, onRemoteClick);
-        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
-            this.game.events.off(remoteClickEvent, onRemoteClick)
-        );
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.game.events.off(remoteClickEvent, onRemoteClick);
+            this.game.events.off(
+                REMOTE_AVATAR_EVENTS.HOVER_CHANGED,
+                onRemoteHover
+            );
+            this.remoteOutlines?.destroy();
+            this.remoteOutlines = null;
+        });
 
         this.playerOutline = new AvatarOutline(this, this.player.gameObject);
         const onPlayerHover = (hover: unknown) => {
@@ -560,6 +588,7 @@ export class MapScene extends Phaser.Scene {
         );
 
         this.confettiParticles = new ConfettiParticles(this);
+        this.musicNoteParticles = new MusicNoteParticles(this);
 
         this.footstepSounds = new FootstepSounds();
         const footstepSounds = this.footstepSounds;
@@ -581,6 +610,8 @@ export class MapScene extends Phaser.Scene {
             this.emoteParticles = null;
             this.confettiParticles?.destroy();
             this.confettiParticles = null;
+            this.musicNoteParticles?.destroy();
+            this.musicNoteParticles = null;
             this.emoteTextures?.destroy();
             this.emoteTextures = null;
             this.emoteRateLimiter.clear();
@@ -764,6 +795,7 @@ export class MapScene extends Phaser.Scene {
         this.updateRemoteHover();
         this.emoteParticles?.update(delta);
         this.confettiParticles?.update(delta);
+        this.updateMusicNotes(delta);
         this.emitLocalPosition();
         this.updateRemoteVolumes(time);
     }
@@ -1395,6 +1427,10 @@ export class MapScene extends Phaser.Scene {
         }
         remoteHoverController.setTargets(this.remoteHoverTargets);
         remoteHoverController.update();
+        this.remoteOutlines?.update(
+            this.hoveredRemoteId,
+            this.remoteSelection.id
+        );
     }
 
     private readonly collectRemoteHoverTarget = (
@@ -1430,6 +1466,12 @@ export class MapScene extends Phaser.Scene {
             this.remoteAvatars.get(id)
         );
         this.reportRemoteSelection();
+    }
+
+    // The page closed the card of the selected person: the selection ends, the
+    // same as a click on the empty map.
+    clearRemoteSelection(): void {
+        this.selectRemoteAvatar(null);
     }
 
     // Tells the page which person is selected, only when it changed.
@@ -1597,6 +1639,7 @@ export class MapScene extends Phaser.Scene {
     removeRemoteAvatar(socketId: string): void {
         this.remoteSelection.remove(socketId);
         this.reportRemoteSelection();
+        this.remoteOutlines?.release(socketId);
         this.avatarSheets?.release(socketId);
         this.remoteAvatars.get(socketId)?.destroy();
         this.remoteAvatars.delete(socketId);
@@ -1613,6 +1656,7 @@ export class MapScene extends Phaser.Scene {
     clearRemoteAvatars(): void {
         this.remoteSelection.clear();
         this.reportRemoteSelection();
+        this.remoteOutlines?.destroy();
         this.remoteAvatars.forEach((_avatar, socketId) =>
             this.avatarSheets?.release(socketId)
         );
@@ -1682,6 +1726,54 @@ export class MapScene extends Phaser.Scene {
         if (this.getCommunicationDistanceTo(avatar) > emoteRadius) return;
 
         this.burstConfetti(avatar.gameObject);
+    }
+
+    // Who plays music now. The notes rise from these avatars while they are near.
+    setListeningUserIds(userIds: ReadonlySet<string>): void {
+        this.listeningUserIds = userIds;
+    }
+
+    // The in-app switch for less motion, on top of the system preference.
+    setAppMotionReduced(isReduced: boolean): void {
+        this.isAppMotionReduced = isReduced;
+    }
+
+    private updateMusicNotes(delta: number): void {
+        const isReduced = isMotionReduced(
+            prefersReducedMotion(),
+            this.isAppMotionReduced
+        );
+        this.musicNoteParticles?.update(
+            delta,
+            isReduced ? [] : this.collectMusicNoteSources(),
+            isReduced
+        );
+    }
+
+    // The avatars that play music and are seen by the local person: theirs
+    // always, the others only within the range of an emote and in the same
+    // private room, so a locked room never shows its music.
+    private collectMusicNoteSources(): MusicNoteSource[] {
+        const { player } = this;
+        if (!player || this.listeningUserIds.size === 0) return [];
+
+        const sources: MusicNoteSource[] = [];
+        const localUserId = this.localUserProfile?.userId;
+        if (localUserId && this.listeningUserIds.has(localUserId)) {
+            sources.push({ key: localUserId, feet: player.gameObject });
+        }
+
+        const reach = getEmoteRadius(this.proximityPreset);
+        this.remoteUserIds.forEach((userId, socketId) => {
+            if (!this.listeningUserIds.has(userId)) return;
+
+            const avatar = this.remoteAvatars.get(socketId);
+            if (!avatar?.hasPosition) return;
+            if (this.getCommunicationDistanceTo(avatar) > reach) return;
+
+            sources.push({ key: userId, feet: avatar.gameObject });
+        });
+        return sources;
     }
 
     playLocalConfetti(): void {

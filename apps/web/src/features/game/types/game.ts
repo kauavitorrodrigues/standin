@@ -70,4 +70,6 @@ export type GameEngineHandle = {
     // walk could not be planned (the page is told as well).
     walkToOwnDesk: () => boolean;
     walkToPerson: (userId: string) => boolean;
+    // Lets go of the person selected by a click, with their outline.
+    clearPersonSelection: () => void;
 };

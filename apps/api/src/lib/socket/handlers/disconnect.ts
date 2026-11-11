@@ -10,6 +10,7 @@ import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 import { RaisedHandSync } from "../realtime/RaisedHandSync";
 import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
+import { ListeningSync } from "../music/listening/ListeningSync";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
 
 export function registerDisconnect(socket: Socket) {
@@ -35,6 +36,12 @@ export function registerDisconnect(socket: Socket) {
         // told, even though the presence is already gone.
         AnnouncerSync.forget(spaceId, socket.id, buildAnnouncersSender(socket.nsp));
         RaisedHandSync.forget(spaceId, socket.id, buildRaisedHandsSender(socket.nsp));
+
+        // Another tab of the person may still be inside, and then they keep
+        // what they play.
+        if (PresenceStore.findSocketIdsOfUser(spaceId, userId).length === 0) {
+            ListeningSync.clearUser(spaceId, userId);
+        }
 
         const room = buildSpaceRoom(spaceId);
         socket.to(room).emit(SpaceEvents.SPACE_PEER_LEFT, {

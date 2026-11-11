@@ -16,3 +16,8 @@ export type ExchangeCodeInput = {
     redirectUri: string;
     code: string;
 };
+
+export type RefreshAccessTokenInput = {
+    credentials: SpotifyCredentials;
+    refreshToken: string;
+};

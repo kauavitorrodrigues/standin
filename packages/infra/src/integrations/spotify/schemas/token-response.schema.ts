@@ -7,6 +7,14 @@ export const AccessTokenResponseSchema = z.object({
         .min(1, { error: SpotifyResponseErrorMessages.accessToken.required }),
 });
 
+// The answer to a refresh. Spotify sends a new refresh token only sometimes.
+export const RefreshTokenResponseSchema = AccessTokenResponseSchema.extend({
+    refresh_token: z
+        .string({ error: SpotifyResponseErrorMessages.refreshToken.required })
+        .min(1, { error: SpotifyResponseErrorMessages.refreshToken.required })
+        .optional(),
+});
+
 // The answer to the code exchange. Spotify gives the refresh token here only.
 export const AuthorizationTokenResponseSchema =
     AccessTokenResponseSchema.extend({

@@ -1,6 +1,7 @@
 import { SpotifyConnectionNotFoundError } from "@standin/contracts";
 import { db } from "@standin/database";
 import { IntegrationService } from "../../../service";
+import { forgetAccessToken } from "./helpers/accessTokens";
 import { SpotifyRepository } from "../repository";
 import type { SpotifyConnectionKey } from "../types";
 
@@ -18,4 +19,6 @@ export const disconnectSpotify = async (
         const wasConnected = await SpotifyRepository.deleteConnection(tx, key);
         if (!wasConnected) throw new SpotifyConnectionNotFoundError();
     });
+
+    forgetAccessToken(key);
 };
