@@ -7,7 +7,9 @@ const {
     resolveUserProfileMock,
     listPendingMock,
     resolveSpaceSettingsMock,
+    listeningSnapshotMock,
 } = vi.hoisted(() => ({
+    listeningSnapshotMock: vi.fn(),
     resolveSpaceSettingsMock: vi.fn(),
     resolveJoinAccessMock: vi.fn(),
     recheckAccessMock: vi.fn(),
@@ -18,6 +20,13 @@ const {
 
 vi.mock("../../services/resolveUserProfile", () => ({
     resolveUserProfile: resolveUserProfileMock,
+}));
+
+vi.mock("../../music/listening/ListeningSync", () => ({
+    ListeningSync: {
+        snapshot: listeningSnapshotMock,
+        clearUser: vi.fn(),
+    },
 }));
 
 vi.mock("../../services/resolveSpaceSettings", () => ({
@@ -123,6 +132,7 @@ describe("registerJoinSpace", () => {
         resolveSpaceSettingsMock.mockResolvedValue({
             enableSendNearbyInMapView: true,
         });
+        listeningSnapshotMock.mockReturnValue([]);
         resolveAvatarSheetFileIdMock.mockResolvedValue(null);
         resolveUserProfileMock.mockImplementation(
             async (userId: string) =>
@@ -143,6 +153,7 @@ describe("registerJoinSpace", () => {
         expect(socketB.data.spaceId).toBe("space-1");
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
             settings: { enableSendNearbyInMapView: true },
+            listening: [],
             peers: [
                 {
                     socketId: "socket-a",
@@ -168,11 +179,10 @@ describe("registerJoinSpace", () => {
         registerJoinSpace(io as any, socketB as any);
         await getJoinHandler(socketB)?.(validPayload);
 
-        expect(resolveAvatarSheetFileIdMock).not.toHaveBeenCalledWith(
-            "user-a"
-        );
+        expect(resolveAvatarSheetFileIdMock).not.toHaveBeenCalledWith("user-a");
         expect(socketB.emit).toHaveBeenCalledWith("space:joined", {
             settings: { enableSendNearbyInMapView: true },
+            listening: [],
             peers: [
                 {
                     socketId: "socket-a",
@@ -379,7 +389,34 @@ describe("registerJoinSpace", () => {
         expect(newSocket.emit).toHaveBeenCalledWith("space:joined", {
             settings: { enableSendNearbyInMapView: true },
             peers: [],
+            listening: [],
         });
+    });
+
+    it("gives who joins later what the people inside are playing", async () => {
+        const entry = {
+            userId: "user-a",
+            track: {
+                trackId: "t1",
+                title: "ALEXA 2",
+                artists: ["LH CHUCRO"],
+                coverUrl: null,
+                url: "https://open.spotify.com/track/t1",
+                isPlaying: true,
+            },
+        };
+        listeningSnapshotMock.mockReturnValue([entry]);
+        const socket = createFakeSocket("socket-b", "user-b");
+        const io = createFakeIo([], "space:space-1");
+
+        registerJoinSpace(io as any, socket as any);
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(listeningSnapshotMock).toHaveBeenCalledWith("space-1");
+        expect(socket.emit).toHaveBeenCalledWith(
+            "space:joined",
+            expect.objectContaining({ listening: [entry] })
+        );
     });
 
     it("does not touch peers belonging to a different account", async () => {

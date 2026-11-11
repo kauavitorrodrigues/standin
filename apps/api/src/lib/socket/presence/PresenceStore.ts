@@ -106,6 +106,14 @@ const findSpaceIdsOfUser = (userId: string): string[] =>
         .filter(([, space]) => space.byUser.has(userId))
         .map(([spaceId]) => spaceId);
 
+// The spaces with at least one person inside.
+const listSpaceIds = (): string[] => [...spaces.keys()];
+
+// The people inside a space, one id each, however many tabs they hold.
+const listUserIds = (spaceId: string): string[] => [
+    ...(readSpace(spaceId)?.byUser.keys() ?? []),
+];
+
 const size = (spaceId: string): number =>
     readSpace(spaceId)?.bySocket.size ?? 0;
 
@@ -248,6 +256,8 @@ export const PresenceStore = {
     size,
     findSocketIdsOfUser,
     findSpaceIdsOfUser,
+    listSpaceIds,
+    listUserIds,
     updateUser,
     setMuted,
     setPrivacy,

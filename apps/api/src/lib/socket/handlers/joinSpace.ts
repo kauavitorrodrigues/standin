@@ -20,6 +20,7 @@ import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 import { RaisedHandSync } from "../realtime/RaisedHandSync";
 import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
+import { ListeningSync } from "../music/listening/ListeningSync";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
 import type { PresenceEntry } from "../presence/PresenceStore";
 
@@ -133,6 +134,11 @@ const leavePreviousSpace = async (
         socket.id,
         buildRaisedHandsSender(io)
     );
+    if (
+        PresenceStore.findSocketIdsOfUser(previousSpaceId, userId).length === 0
+    ) {
+        ListeningSync.clearUser(previousSpaceId, userId);
+    }
     socket.to(previousRoom).emit(SpaceEvents.SPACE_PEER_LEFT, {
         socketId: socket.id,
         userId,
@@ -233,6 +239,7 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                 socket.emit(SpaceEvents.SPACE_JOINED, {
                     settings,
                     peers: peers.map(toPeerPayload),
+                    listening: ListeningSync.snapshot(spaceId),
                 });
                 socket.to(room).emit(SpaceEvents.SPACE_PEER_JOINED, {
                     socketId: socket.id,
