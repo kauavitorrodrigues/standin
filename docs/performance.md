@@ -751,6 +751,24 @@ outside working hours.
 | Videos shown at once  | 4 to 6 on a mid machine, 2 to 3 on a weak one. The plan shows 2 |
 | Audio streams mixed   | 8 to 10 on a mid machine, 4 to 6 on a weak one                  |
 
+#### Performance levels
+
+Settings, Performance has a level that sets the frame limit, reduced motion and
+teleport when blocked together. The default is `best`, which keeps the behavior from before levels
+existed. The table is `PERFORMANCE_LEVELS` in
+`apps/web/src/features/settings/performance/consts/performanceLevels.ts`.
+
+| Level        | Frame limit | Reduced motion | Teleport when blocked |
+| ------------ | ----------- | -------------- | --------------------- |
+| `best`       | none        | off            | on                    |
+| `balanced`   | 60 fps      | off            | on                    |
+| `low`        | 30 fps      | off            | on                    |
+| `powerSaver` | 30 fps      | on             | off                   |
+
+Changing one option by hand shows the level as "Personalizado" (custom). Automatic
+degradation (high CPU in WebRTC, low battery) lowers the app to `powerSaver`
+for a while (frame limit and motion only, not teleport), and gives the person's own settings back on recovery.
+
 ### 5.5 Server requirements
 
 What the machine needs. Memory, CPU and traffic for the data-only
