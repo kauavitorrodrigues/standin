@@ -31,6 +31,13 @@ export const setIdle = (next: boolean): void => {
     idleListeners.forEach((listener) => listener());
 };
 
+// What the idle watcher reports. Five minutes with no input take the person
+// away, and the activity that follows does not bring them back: only the
+// person does, by returning to the office.
+export const handleIdleChange = (isIdle: boolean): void => {
+    if (isIdle) setIdle(true);
+};
+
 export const subscribeToIdle = (listener: () => void): (() => void) => {
     idleListeners.add(listener);
     return () => idleListeners.delete(listener);

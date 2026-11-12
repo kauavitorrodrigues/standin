@@ -13,9 +13,20 @@ describe("resolveUserStatus", () => {
         expect(resolveUserStatus(none)).toBe("active");
     });
 
-    it("is away after inactivity and active again on activity", () => {
+    it("is away after inactivity and active again once the person returns", () => {
         expect(resolveUserStatus({ ...none, isIdle: true })).toBe("away");
         expect(resolveUserStatus({ ...none, isIdle: false })).toBe("active");
+    });
+
+    it("leaves away for active or busy, which is how the person returns", () => {
+        const away = { ...none, isManualAway: true, isIdle: true };
+        expect(resolveUserStatus(away)).toBe("away");
+
+        const active = chooseStatus("active");
+        expect(resolveUserStatus({ ...active, isIdle: false })).toBe("active");
+
+        const busy = chooseStatus("busy");
+        expect(resolveUserStatus({ ...busy, isIdle: false })).toBe("busy");
     });
 
     it("stays away after a manual choice, whatever the activity", () => {

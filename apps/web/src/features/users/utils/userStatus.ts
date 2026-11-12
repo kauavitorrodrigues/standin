@@ -7,8 +7,8 @@ import type { ChosenStatus, StatusInputs } from "../types/availability";
 
 /**
  * The status that shows. Busy comes first: a person who asked not to be
- * disturbed is not turned away by being idle. Away comes from a choice that
- * stays until they change it, or from inactivity, which ends on activity.
+ * disturbed is not turned away by being idle. Away comes from a choice, or
+ * from inactivity, and both stay until the person returns.
  */
 export const resolveUserStatus = ({
     isBusy,
