@@ -59,6 +59,13 @@ export const STAND_OFFSETS: readonly { x: number; y: number }[] = [
     { x: 4, y: 12 },
 ];
 
+// The jump of a double click on a tile that has no way.
+export const TELEPORT = {
+    // The farthest tile the avatar may jump to, in tiles, from center to
+    // center. A tile at exactly this distance is allowed.
+    MAX_DISTANCE_TILES: 30,
+} as const;
+
 // How many tiles of a clicked area are tried before giving up, best first.
 export const AREA_GOALS_TRIED = 10;
 
