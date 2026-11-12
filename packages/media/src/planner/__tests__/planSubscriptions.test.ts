@@ -17,6 +17,7 @@ const person = (
     muted = false,
     privacy: {
         headphones?: boolean;
+        away?: boolean;
         focusMode?: boolean;
         announcing?: boolean;
         sharingVideoWithAnnouncer?: boolean;
@@ -26,6 +27,7 @@ const person = (
     roomKey,
     muted,
     headphones: privacy.headphones ?? false,
+    away: privacy.away ?? false,
     focusMode: privacy.focusMode ?? false,
     announcing: privacy.announcing ?? false,
     sharingVideoWithAnnouncer: privacy.sharingVideoWithAnnouncer ?? false,
@@ -265,7 +267,9 @@ describe("planSubscriptions video", () => {
         const people = [person("me", []), person("a", ["camera"])];
         const result = plan(spots, people, {
             focus: new Map([["me", new Map([["a", "mid" as const]])]]),
-            current: new Map([["me", [held("a", "camera", { layer: "high" })]]]),
+            current: new Map([
+                ["me", [held("a", "camera", { layer: "high" })]],
+            ]),
         });
         expect(result.setLayer).toEqual([
             { producerId: "a:camera", layer: "mid" },
@@ -308,9 +312,7 @@ describe("planSubscriptions video", () => {
         ]);
 
         const resumed = plan(spots, people, {
-            current: new Map([
-                ["me", [held("a", "camera", { paused: true })]],
-            ]),
+            current: new Map([["me", [held("a", "camera", { paused: true })]]]),
         });
         expect(resumed.resume).toEqual(["a:camera"]);
     });
@@ -450,15 +452,11 @@ describe("planSubscriptions debounce", () => {
     });
 
     it("still revokes right away when someone is no longer reachable", () => {
-        const result = plan(
-            { me: at(0), ann: at(500) },
-            people,
-            {
-                now: 10_050,
-                lastChangeAt: new Map([["me", 10_000]]),
-                current: new Map([["me", [held("ann", "audio")]]]),
-            }
-        );
+        const result = plan({ me: at(0), ann: at(500) }, people, {
+            now: 10_050,
+            lastChangeAt: new Map([["me", 10_000]]),
+            current: new Map([["me", [held("ann", "audio")]]]),
+        });
         expect(ids(result.close)).toEqual(["ann:audio"]);
     });
 });
@@ -509,7 +507,8 @@ describe("expandDirtySet", () => {
             get: (id: string) => spots[id],
             query: (x: number, y: number, radius: number) =>
                 Object.keys(spots).filter(
-                    (id) => Math.hypot(spots[id]!.x - x, spots[id]!.y - y) <= radius
+                    (id) =>
+                        Math.hypot(spots[id]!.x - x, spots[id]!.y - y) <= radius
                 ),
         };
         const dirty = expandDirtySet(
@@ -612,6 +611,24 @@ describe("planSubscriptions headphones and focus mode", () => {
         expect(ids(plan(spots, people).desired)).toEqual(["b:audio"]);
     });
 
+    it("gives nothing to a person who is away", () => {
+        const people = [
+            person("me", [], null, false, { away: true }),
+            person("a", ["audio", "camera"]),
+            person("b"),
+        ];
+        expect(plan(spots, people).desired).toEqual([]);
+    });
+
+    it("hides a person who is away from the others", () => {
+        const people = [
+            person("me", []),
+            person("a", ["audio", "camera"], null, false, { away: true }),
+            person("b"),
+        ];
+        expect(ids(plan(spots, people).desired)).toEqual(["b:audio"]);
+    });
+
     it("keeps strong connections for a person in focus mode", () => {
         const people = [
             person("me", [], null, false, { focusMode: true }),
@@ -654,22 +671,20 @@ describe("planSubscriptions proximity preset", () => {
         ]);
         const band = { me: at(0), ann: at(175) };
         expect(plan(band, people, { config }).create).toEqual([]);
-        expect(
-            ids(plan(band, people, { config, ...held200 }).close)
-        ).toEqual(["ann:audio"]);
+        expect(ids(plan(band, people, { config, ...held200 }).close)).toEqual([
+            "ann:audio",
+        ]);
     });
 
     it("applies the Long hysteresis band of 384 to 414 px", () => {
         const config = { preset: "Long" as const };
         const band = { me: at(0), ann: at(400) };
         expect(plan(band, people, { config }).create).toEqual([]);
-        expect(
-            plan(band, people, { config, ...held200 }).changed
-        ).toBe(false);
+        expect(plan(band, people, { config, ...held200 }).changed).toBe(false);
         const out = { me: at(0), ann: at(415) };
-        expect(
-            ids(plan(out, people, { config, ...held200 }).close)
-        ).toEqual(["ann:audio"]);
+        expect(ids(plan(out, people, { config, ...held200 }).close)).toEqual([
+            "ann:audio",
+        ]);
     });
 
     it("keeps an explicit radius over the preset", () => {

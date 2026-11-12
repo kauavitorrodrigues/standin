@@ -20,6 +20,7 @@ export const buildPeople = (peers: Iterable<Peer>): PersonState[] =>
             roomKey: peer.roomKey,
             muted: isSilenced(peer),
             headphones: peer.headphones,
+            away: peer.away,
             focusMode: peer.focusMode,
             announcing: peer.announcing,
             sharingVideoWithAnnouncer: peer.sharingVideoWithAnnouncer,

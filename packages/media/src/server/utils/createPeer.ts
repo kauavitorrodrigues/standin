@@ -8,6 +8,7 @@ export const createPeer = (id: string, userId: string): Peer => ({
     muted: false,
     soundboardActive: false,
     headphones: false,
+    away: false,
     focusMode: false,
     announcing: false,
     sharingVideoWithAnnouncer: false,

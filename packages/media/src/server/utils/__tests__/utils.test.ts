@@ -96,6 +96,21 @@ describe("media utils", () => {
         ]);
     });
 
+    it("starts every peer in the office", () => {
+        expect(createPeer("a", "user-a").away).toBe(false);
+    });
+
+    it("carries the away flag of each peer to the planner", () => {
+        const people = buildPeople([
+            receiver("a", { away: true }),
+            receiver("b"),
+        ]);
+        expect(people.map((entry) => [entry.id, entry.away])).toEqual([
+            ["a", true],
+            ["b", false],
+        ]);
+    });
+
     it("carries the privacy flags of each peer to the planner", () => {
         const people = buildPeople([
             receiver("a", { headphones: true, focusMode: true }),

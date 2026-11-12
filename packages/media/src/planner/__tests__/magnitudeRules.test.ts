@@ -4,17 +4,16 @@ import {
     applyMagnitudeRules,
     DEFAULT_MAGNITUDE_RULES,
     focusModeRule,
+    awayRule,
     headphonesRule,
 } from "../magnitudeRules";
 import type { RulePlayer } from "../types";
 
-const player = (
-    id: string,
-    extra: Partial<RulePlayer> = {}
-): RulePlayer => ({
+const player = (id: string, extra: Partial<RulePlayer> = {}): RulePlayer => ({
     id,
     roomKey: null,
     headphones: false,
+    away: false,
     focusMode: false,
     ...extra,
 });
@@ -40,6 +39,27 @@ describe("headphonesRule", () => {
     it("leaves other pairs alone", () => {
         const rules = DEFAULT_MAGNITUDE_RULES;
         const a = player("a", { headphones: true });
+        expect(applyMagnitudeRules(rules, a, player("b"), BASE)).toEqual(NONE);
+        expect(
+            applyMagnitudeRules(rules, player("b"), player("c"), BASE)
+        ).toEqual(BASE);
+    });
+});
+
+describe("awayRule", () => {
+    it("keeps the magnitude when nobody is away", () => {
+        expect(awayRule(player("a"), player("b"), BASE)).toEqual(BASE);
+    });
+
+    it("zeroes the pair when either side is away", () => {
+        const away = player("a", { away: true });
+        expect(awayRule(away, player("b"), BASE)).toEqual(NONE);
+        expect(awayRule(player("b"), away, BASE)).toEqual(NONE);
+    });
+
+    it("is part of the default chain and leaves other pairs alone", () => {
+        const rules = DEFAULT_MAGNITUDE_RULES;
+        const a = player("a", { away: true });
         expect(applyMagnitudeRules(rules, a, player("b"), BASE)).toEqual(NONE);
         expect(
             applyMagnitudeRules(rules, player("b"), player("c"), BASE)

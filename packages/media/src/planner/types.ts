@@ -22,6 +22,9 @@ export type PersonState = {
     // Headphones on: the person has no connection with anybody, in both
     // directions, for audio and video.
     headphones: boolean;
+    // Away: the person is out of the office, so the rule is the same as for
+    // headphones.
+    away: boolean;
     // Focus mode. Stored and shown, it does not change strong connections.
     focusMode: boolean;
     // The person is announcing. An announcer gets no camera from people who
@@ -52,7 +55,7 @@ export type DesiredConsumer = CurrentConsumer & {
 // What the magnitude rules see of one side of a pair.
 export type RulePlayer = Pick<
     PersonState,
-    "id" | "roomKey" | "headphones" | "focusMode"
+    "id" | "roomKey" | "headphones" | "away" | "focusMode"
 >;
 
 export type MagnitudeRule = (

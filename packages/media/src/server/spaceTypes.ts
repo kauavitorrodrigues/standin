@@ -35,6 +35,8 @@ export type Peer = {
     soundboardActive: boolean;
     // Headphones on: no connection with anybody, in both directions.
     headphones: boolean;
+    // Away: out of the office, no connection with anybody, like headphones.
+    away: boolean;
     // The person is announcing, so the planner holds back the camera of the
     // people who did not opt in.
     announcing: boolean;
