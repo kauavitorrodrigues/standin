@@ -29,6 +29,66 @@ describe("position codec", () => {
         }
     );
 
+    it("round trips the teleport count in the flags", () => {
+        const position = {
+            x: 1,
+            y: 2,
+            direction: PLAYER_DIRECTIONS.LEFT,
+            isSitting: true,
+            isDancing: false,
+            teleportCount: 255,
+        };
+
+        expect(decodePosition(encodePosition(1, position)).position).toEqual(
+            position
+        );
+    });
+
+    it("reads a position without a count as 0", () => {
+        const tuple = encodePosition(1, {
+            x: 1,
+            y: 2,
+            direction: PLAYER_DIRECTIONS.UP,
+            isSitting: false,
+            isDancing: false,
+        });
+
+        expect(decodePosition(tuple).position.teleportCount).toBeUndefined();
+    });
+
+    it("sends a bad count as none and keeps the other bits", () => {
+        const base = {
+            x: 1,
+            y: 2,
+            direction: PLAYER_DIRECTIONS.RIGHT,
+            isSitting: true,
+            isDancing: true,
+        };
+
+        [-3, 2.5, 999, Number.NaN].forEach((teleportCount) => {
+            const { position } = decodePosition(
+                encodePosition(1, { ...base, teleportCount })
+            );
+
+            expect(position).toEqual(base);
+        });
+    });
+
+    it("keeps the direction and the bits an old receiver reads", () => {
+        const tuple = encodePosition(1, {
+            x: 1,
+            y: 2,
+            direction: PLAYER_DIRECTIONS.DOWN,
+            isSitting: true,
+            isDancing: true,
+            teleportCount: 9,
+        });
+
+        // An older client reads only the four low bits.
+        const legacy = tuple[3] & 0b1111;
+        expect(legacy).toBe(0b1101);
+    });
+
     it("carries the socket id after the position when someone enters", () => {
         const position = {
             x: 5,
@@ -67,6 +127,36 @@ describe("SpacePositionSchema", () => {
         const { isDancing: _omitted, ...legacy } = valid;
 
         expect(SpacePositionSchema.parse(legacy).isDancing).toBe(false);
+    });
+
+    describe("teleportCount", () => {
+        it("keeps a valid count", () => {
+            expect(
+                SpacePositionSchema.parse({ ...valid, teleportCount: 7 })
+                    .teleportCount
+            ).toBe(7);
+            expect(
+                SpacePositionSchema.parse({ ...valid, teleportCount: 255 })
+                    .teleportCount
+            ).toBe(255);
+        });
+
+        it("reads a missing count as 0", () => {
+            expect(SpacePositionSchema.parse(valid).teleportCount).toBe(0);
+        });
+
+        it.each([-1, 1.5, 256, 1e12, Number.NaN, "3", null])(
+            "reads %j as 0 and still accepts the position",
+            (teleportCount) => {
+                const result = SpacePositionSchema.safeParse({
+                    ...valid,
+                    teleportCount,
+                });
+
+                expect(result.success).toBe(true);
+                expect(result.data?.teleportCount).toBe(0);
+            }
+        );
     });
 
     it.each([
