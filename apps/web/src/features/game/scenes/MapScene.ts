@@ -101,6 +101,7 @@ import { isMotionReduced } from "@/features/game/utils/isMotionReduced";
 import { prefersReducedMotion } from "@/features/game/utils/prefersReducedMotion";
 import { EmoteRateLimiter } from "@/features/game/lib/EmoteRateLimiter";
 import { EMOTE_EVENTS } from "@/features/game/consts/emote";
+import { WAVE } from "@/features/emotes/consts/wave";
 import {
     CONFETTI_PARTY_EMOJI,
     CONFETTI_RATE_LIMIT,
@@ -1878,6 +1879,51 @@ export class MapScene extends Phaser.Scene {
             sources.push({ key: userId, feet: avatar.gameObject });
         });
         return sources;
+    }
+
+    private isWithinEmoteReach(avatar: RemoteAvatar): boolean {
+        return (
+            avatar.hasPosition &&
+            this.getCommunicationDistanceTo(avatar) <=
+                getEmoteRadius(this.proximityPreset)
+        );
+    }
+
+    // Whether any tab of a person is placed and inside the reach of an emote,
+    // in the same private room: the rule the server uses for a wave to reach
+    // them. An avatar with no position yet stands at the local spawn, so it is
+    // never near.
+    isPersonNear(userId: string): boolean {
+        if (!this.player) return false;
+
+        for (const [socketId, remoteUserId] of this.remoteUserIds) {
+            if (remoteUserId !== userId) continue;
+
+            const avatar = this.remoteAvatars.get(socketId);
+            if (avatar && this.isWithinEmoteReach(avatar)) return true;
+        }
+        return false;
+    }
+
+    // A peer waved at the local person. Shows the wave over the sender and
+    // answers who it was, or null when it is out of reach, so the caller only
+    // makes a sound for a wave that was shown. The wave shares the emote limit
+    // of the peer, so a flood of emotes can also hold back a wave.
+    applyRemoteWave(socketId: string): string | null {
+        const avatar = this.remoteAvatars.get(socketId);
+        const userId = this.remoteUserIds.get(socketId);
+        if (!avatar || !userId || !this.player) return null;
+        if (!this.emoteRateLimiter.allow(socketId, this.time.now)) return null;
+        if (!this.isWithinEmoteReach(avatar)) return null;
+
+        this.emoteParticles?.emit(avatar.gameObject, WAVE.EMOJI, 1);
+        return userId;
+    }
+
+    playLocalWave(): void {
+        if (!this.player) return;
+
+        this.emoteParticles?.emit(this.player.gameObject, WAVE.EMOJI, 1);
     }
 
     playLocalConfetti(): void {

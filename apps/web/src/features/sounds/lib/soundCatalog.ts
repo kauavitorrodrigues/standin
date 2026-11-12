@@ -1,3 +1,4 @@
+import { WAVE } from "@/features/emotes/consts/wave";
 import { NOTIFICATION_SOUND } from "@/features/notifications/consts/notificationSettings";
 import {
     HAND_RAISE_SOUND,
@@ -11,6 +12,7 @@ type SoundCatalog = {
     notification: SoundEffect;
     speakerTest: SoundEffect;
     handRaise: SoundEffect;
+    wave: SoundEffect;
 };
 
 let catalog: SoundCatalog | null = null;
@@ -34,6 +36,7 @@ export const getSoundCatalog = (): SoundCatalog => {
             )
         ),
         handRaise: new SoundEffect(createChimeUrl(HAND_RAISE_SOUND)),
+        wave: new SoundEffect(WAVE.SOUND_URL),
     };
     return catalog;
 };
