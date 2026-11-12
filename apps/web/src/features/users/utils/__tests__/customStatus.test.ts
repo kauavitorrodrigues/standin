@@ -16,6 +16,12 @@ describe("computeExpiresAt", () => {
     // 14:30 on a local day.
     const now = new Date(2026, 5, 10, 14, 30, 0, 0).getTime();
 
+    it("keeps a status with no emoji", () => {
+        expect(
+            buildCustomStatus({ text: "Hi", emoji: "", duration: "never" }, 0)
+        ).toEqual({ text: "Hi", emoji: "", expiresAt: null });
+    });
+
     it("has no end when the status stays", () => {
         expect(computeExpiresAt("never", now)).toBeNull();
     });
@@ -79,7 +85,6 @@ describe("buildCustomStatus", () => {
     it.each([
         ["no text", { text: "   ", emoji: "💬" }],
         ["a text too long", { text: "x".repeat(81), emoji: "💬" }],
-        ["no emoji", { text: "Hi", emoji: "" }],
         ["an emoji that is a letter", { text: "Hi", emoji: "a" }],
     ])("gives nothing for %s", (_name, fields) => {
         expect(

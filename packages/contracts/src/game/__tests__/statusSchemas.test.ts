@@ -27,6 +27,12 @@ describe("CustomStatusSchema", () => {
         expect(parsed.success && parsed.data.text).toBe("hi");
     });
 
+    it("accepts a status with no emoji", () => {
+        expect(
+            CustomStatusSchema.safeParse(status({ emoji: "" })).success
+        ).toBe(true);
+    });
+
     it("accepts emojis made of several code points", () => {
         ["👨‍👩‍👧", "🇧🇷", "👍🏽", "❤️"].forEach((emoji) => {
             expect(
@@ -43,7 +49,6 @@ describe("CustomStatusSchema", () => {
             { text: "x".repeat(CUSTOM_STATUS.textMaxLength + 1) },
         ],
         ["a text that is not a string", { text: 3 }],
-        ["an empty emoji", { emoji: "" }],
         ["a letter in place of the emoji", { emoji: "a" }],
         ["two emojis", { emoji: "😀😀" }],
         ["an emoji followed by a letter", { emoji: "😀a" }],
