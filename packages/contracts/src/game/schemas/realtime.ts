@@ -64,6 +64,15 @@ export const SpaceEmoteSchema = z.object({
 // stamped by the server.
 export const SpaceConfettiSchema = z.object({});
 
+// A wave goes to one person, named by user id. Who sent it is stamped by the
+// server, and whether the target is near and online is checked there too.
+export const SpaceWaveSchema = z.object({
+    targetUserId: z
+        .string({ error: GameErrorMessages.wave.targetUserId.invalid })
+        .min(1, { error: GameErrorMessages.wave.targetUserId.invalid })
+        .max(64, { error: GameErrorMessages.wave.targetUserId.invalid }),
+});
+
 export const SpaceNearbyMessageSchema = z.object({
     text: z
         .string({ error: GameErrorMessages.nearby.text.invalid })
