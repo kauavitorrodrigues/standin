@@ -579,6 +579,93 @@ on one machine, so the megabytes are an order of magnitude, not a result to
 build on. The emote cap was not seen at the limit in the browser (the bots emote
 too rarely to reach 32 at once), only in the tests.
 
+### 4.12 Many real browsers in one space
+
+`apps/api/src/scripts/browserloadtest/browserLoadTest.ts` opens N headless
+Chrome browsers in one space. Each one signs in with a bot token in the `token`
+cookie (set for the web and the API addresses), turns its camera and microphone
+on (Chrome's fake devices feed a test picture and a beep) and, after a settle
+time, is read twice: at the start of the window and at the end. A client whose
+camera or microphone does not switch on fails the run, so a silent client never
+counts as a number. Everything comes from the browser itself:
+
+| Column             | Where it comes from                                                               |
+| ------------------ | --------------------------------------------------------------------------------- |
+| Receive, send kbps | `bytesReceived` and `bytesSent` of each RTP stream in `getStats`, summed          |
+| Loss %             | `packetsLost` over packets received plus lost                                     |
+| Jitter ms          | The worst `jitter` among the inbound streams, at the end                          |
+| Video fps          | `framesDecoded` over the window, per received video; the median video of a client |
+| Videos received    | How many inbound video streams the client has at the end                          |
+| Dropped frames     | `framesDropped` of the received videos over the window                            |
+| Stream changes     | Streams that appeared or closed inside the window                                 |
+| Main thread busy % | `TaskDuration` over the clock of the DevTools `Performance` metrics               |
+| JS heap MB         | `JSHeapUsedSize` at the end                                                       |
+
+Counters are compared stream by stream, by the id of the stats entry, each over
+its own timestamps. A stream that closed or started inside the window is left
+out of the rates and counted in "Stream changes", so a value above 0 there means
+the window was not steady. Each cell of the table it prints is
+`median / worst client`. Over several runs of the same size, the median is the
+median of the run medians and the worst is the worst of any run, so one bad run
+still shows. For video fps and videos received, the worst is the smallest value;
+for every other column it is the biggest. Receive and send kbps are load, not
+quality, so read their "worst" as the busiest client.
+
+Before running it, start the API and the web app in development (the hosts you
+pass with `--api-url` and `--web-url` must be the ones the web app is built
+with). Chrome is read from `/usr/bin/google-chrome-stable`, or from `--chrome`.
+From `apps/api`:
+
+```bash
+pnpm loadtest:browser <spaceId> 4,9 --runs 5 --duration 30
+```
+
+The table of each size is printed as soon as its runs end, so a failure at a
+later size keeps the earlier numbers.
+
+**Measured.** One development machine (16 logical cores, 31 GB of RAM), Chrome
+153, the API and the web dev server on the same machine, loopback. Everybody
+stood where they spawned in one space, with the camera and the microphone on and
+Chrome's fake devices. Five runs of each size, 15 s of settling and a 30 s
+window. Each cell is `median / worst client`.
+
+| Browsers | Receive kbps | Send kbps | Loss % | Jitter ms | Video fps | Videos received | Dropped frames | Stream changes | Main thread busy % | JS heap MB |
+| -------- | ------------ | --------- | ------ | --------- | --------- | --------------- | -------------- | -------------- | ------------------ | ---------- |
+| 4        | 211 / 212    | 207 / 209 | 0 / 0  | 161 / 167 | 15 / 15   | 3 / 3           | 0 / 0          | 0 / 0          | 5 / 9              | 82 / 100   |
+| 9        | 235 / 238    | 25 / 211  | 0 / 0  | 167 / 411 | 15 / 15   | 3 / 3           | 0 / 0          | 0 / 0          | 9 / 16             | 84 / 118   |
+
+What they show:
+
+- No packet was lost and no frame was dropped in any run, and no stream came or
+  went inside a window.
+- Going from 4 to 9 browsers did not change what one client receives (about
+  230 kbps and 3 videos), which fits a cap on the streams per person like the
+  one in section 4.6.
+- The send median fell from 207 to 25 kbps at 9. The worst client still sent
+  about 210 kbps, so some cameras kept sending video and most did not. The
+  likely reason is that a camera nobody receives stops sending, but this was
+  not checked.
+- The cost of the page grew with the people around: the main thread went from 5%
+  to 9% (worst 9% to 16%), the heap stayed near 84 MB (worst 118 MB).
+- The jitter is high for a loopback (160 ms median) in both sizes. It looks
+  like a trait of the fake camera and of a loaded machine, and it was not
+  traced; read it as a ceiling to compare against, not as a network figure.
+- The "Videos received" column reads 3 where section 4.6 says a person receives
+  at most 2 videos; why was not checked (a screen share, or a second layer, would
+  explain it).
+
+What the numbers do not say:
+
+- Every browser runs on the same machine as the API and the media server, so the
+  clients take CPU from the thing they measure. The main thread figure is per
+  tab, and the machine and the Chrome version belong next to the numbers.
+- The video is Chrome's test picture, a single simple image: it encodes much
+  cheaper than a real camera.
+- The bots do not walk, so the people stay where they spawn and the media planner
+  decides from that layout alone.
+- It measures the receiving side of a call and the cost of the page, not the
+  quality as a person would see it.
+
 ## 5. What you need to run it
 
 ### 5.1 The data path alone (without the media server)
@@ -929,7 +1016,7 @@ arrives (50 x 49 x 12.5, an Estimate). The second is Measured.
    not run, and the network checks (`iperf3 -u`, CPU steal) need the real
    machine.
 2. **UDP on the host must be checked** with `iperf3 -u` and the CPU steal on the real machine before a deploy.
-3. **No real-browser numbers.** Memory, frame time, name tag cost and audio
+3. **Few real-browser call numbers.** Section 4.12 has 4 and 9 browsers, five runs each, on one machine with fake devices. Memory, frame time, name tag cost and audio
    contexts were only measured in tests, not in a tab.
 4. **The area of interest does little on small maps.** At 3,000 px it covers a
    whole small map. The savings there are from batching, short ids and sending
@@ -945,13 +1032,14 @@ arrives (50 x 49 x 12.5, an Estimate). The second is Measured.
 
 ## 9. Try it yourself
 
-There are two load tests, both in `apps/api/src/scripts/`, with a script each in
+There are three load tests, all in `apps/api/src/scripts/`, with a script each in
 `apps/api/package.json`:
 
-| Script                | Tests                                                    |
-| --------------------- | -------------------------------------------------------- |
-| `pnpm loadtest`       | The data path, with bots that join, walk, chat and emote |
-| `pnpm loadtest:media` | The media server, with synthetic senders (section 4.6)   |
+| Script                  | Tests                                                    |
+| ----------------------- | -------------------------------------------------------- |
+| `pnpm loadtest`         | The data path, with bots that join, walk, chat and emote |
+| `pnpm loadtest:media`   | The media server, with synthetic senders (section 4.6)   |
+| `pnpm loadtest:browser` | N real headless Chrome browsers in a call (section 4.12) |
 
 For the data path, start the API in development and open the space in a
 browser. Then, from `apps/api`:
