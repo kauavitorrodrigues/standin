@@ -8,8 +8,10 @@ export const CustomStatusLine = ({ customStatus }: Props) => {
 
     return (
         <p className="flex items-start gap-1.5 text-sm leading-4 text-muted-foreground">
-            <span aria-hidden>{customStatus.emoji}</span>
-            <span className="min-w-0 break-words">{customStatus.text}</span>
+            {customStatus.emoji !== "" && (
+                <span aria-hidden>{customStatus.emoji}</span>
+            )}
+            <span className="min-w-0 wrap-break-word">{customStatus.text}</span>
         </p>
     );
 };

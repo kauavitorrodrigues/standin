@@ -1,6 +1,6 @@
 import { AVAILABILITIES, type Availability } from "@standin/contracts";
 import { cn } from "@/lib/utils";
-import { USER_STATUS_MESSAGES } from "../../consts/messages";
+import { USER_STATUS_LABELS } from "../../consts/user-status";
 
 type Props = {
     availability: Availability;
@@ -18,7 +18,7 @@ const DOT_COLORS: Record<Availability, string> = {
 export const StatusDot = ({ availability, className }: Props) => (
     <span
         role="img"
-        aria-label={USER_STATUS_MESSAGES.LABELS[availability]}
+        aria-label={USER_STATUS_LABELS[availability]}
         className={cn(
             "inline-block shrink-0 rounded-full",
             DOT_COLORS[availability],

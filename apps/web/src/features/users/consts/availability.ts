@@ -38,23 +38,19 @@ export const CUSTOM_STATUS_DURATIONS = {
 
 export const DEFAULT_CUSTOM_STATUS_DURATION = CUSTOM_STATUS_DURATIONS.NEVER;
 
+// How each duration reads in the choice of when the status clears.
+export const CUSTOM_STATUS_DURATION_LABELS = {
+    [CUSTOM_STATUS_DURATIONS.KEEP]: "Manter o prazo atual",
+    [CUSTOM_STATUS_DURATIONS.NEVER]: "Não limpar",
+    [CUSTOM_STATUS_DURATIONS.THIRTY_MINUTES]: "30 minutos",
+    [CUSTOM_STATUS_DURATIONS.ONE_HOUR]: "1 hora",
+    [CUSTOM_STATUS_DURATIONS.FOUR_HOURS]: "4 horas",
+    [CUSTOM_STATUS_DURATIONS.END_OF_DAY]: "Até o fim do dia",
+} as const;
+
 // How long each fixed duration lasts. The end of the day depends on the clock.
 export const CUSTOM_STATUS_DURATION_MS = {
     [CUSTOM_STATUS_DURATIONS.THIRTY_MINUTES]: 30 * 60 * 1000,
     [CUSTOM_STATUS_DURATIONS.ONE_HOUR]: 60 * 60 * 1000,
     [CUSTOM_STATUS_DURATIONS.FOUR_HOURS]: 4 * 60 * 60 * 1000,
 } as const;
-
-// The emojis offered to start a custom status.
-export const CUSTOM_STATUS_EMOJIS = [
-    "💬",
-    "📅",
-    "🍽️",
-    "🎧",
-    "🏠",
-    "🚗",
-    "🤒",
-    "🌴",
-] as const;
-
-export const DEFAULT_CUSTOM_STATUS_EMOJI = CUSTOM_STATUS_EMOJIS[0];

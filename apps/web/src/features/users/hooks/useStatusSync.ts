@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { socket } from "@/features/game/multiplayer/socket";
 import { useSocketEvent } from "@/features/game/multiplayer/hooks/useSocketEvent";
-import { USER_STATUS_MESSAGES } from "../consts/messages";
 import { emitSetStatus } from "../lib/emitSetStatus";
 import { keepUnlessExpired } from "../utils/customStatus";
 import { announcedAvailability } from "../utils/userStatus";
@@ -69,7 +68,7 @@ export const useStatusSync = () => {
                 // The same message covers a refusal and a missing answer.
             }
             toast.add({
-                title: USER_STATUS_MESSAGES.SYNC_FAILED,
+                title: "Não foi possível atualizar o seu status.",
                 type: "error",
             });
         };
