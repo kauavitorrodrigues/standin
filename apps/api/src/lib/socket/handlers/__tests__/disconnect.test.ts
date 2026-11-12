@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { registerDisconnect } from "../disconnect";
+import { StatusExpiry } from "../../realtime/StatusExpiry";
 
 function createFakeSocket(id: string, userId: string, spaceId: string | null) {
     const emit = vi.fn();
@@ -28,6 +29,26 @@ describe("registerDisconnect", () => {
             socketId: "socket-a",
             userId: "user-a",
         });
+    });
+
+    it("drops the status timer of the socket that left", () => {
+        const socket = createFakeSocket("socket-a", "user-a", "space-1");
+        StatusExpiry.schedule("socket-a", Date.now() + 60_000, vi.fn());
+        registerDisconnect(socket as any);
+
+        getDisconnectHandler(socket)?.();
+
+        expect(StatusExpiry.size()).toBe(0);
+    });
+
+    it("drops the status timer even when the socket never joined a space", () => {
+        const socket = createFakeSocket("socket-a", "user-a", null);
+        StatusExpiry.schedule("socket-a", Date.now() + 60_000, vi.fn());
+        registerDisconnect(socket as any);
+
+        getDisconnectHandler(socket)?.();
+
+        expect(StatusExpiry.size()).toBe(0);
     });
 
     it("does nothing when the socket never joined a space", () => {

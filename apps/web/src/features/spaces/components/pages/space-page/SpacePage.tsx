@@ -71,6 +71,7 @@ import type { DecorateAvailability } from "@/features/decorator/types/decorate-a
 import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 import { handRaiseInGrid } from "@/features/spaces/hand-raise/utils/handRaiseInGrid";
+import { RemoteStatusesContext } from "@/features/users/contexts/RemoteStatusesContext";
 import { ListeningContext } from "@/features/spaces/music/listening/contexts/ListeningContext";
 import { useListeningNotes } from "@/features/spaces/music/listening/hooks/useListeningNotes";
 import { RaisedHandsContext } from "@/features/spaces/hand-raise/contexts/RaisedHandsContext";
@@ -139,6 +140,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         announcing,
         handRaise,
         listening,
+        statuses,
         onlineUserIds,
         speakingUserIds,
         video,
@@ -397,27 +399,31 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         isBelowStageToggle={layout.isStageToggleVisible}
                     >
                         <ListeningContext.Provider value={listening}>
-                            <ProfileCardSlot
-                                isOpen={profileCard.isOpen && !decorator.isOpen}
-                                spaceId={space.id}
-                                isMapLocked={mapLock.isLocked}
-                                decorateAvailability={decorateAvailability}
-                                isAtOwnDesk={isAtOwnDesk}
-                                onWalkToDesk={() => handle?.walkToOwnDesk()}
-                                onDecorate={(focus) => {
-                                    profileCard.close();
-                                    decorator.open(focus);
-                                }}
-                                onClose={profileCard.close}
-                            />
-                            {selectedPerson && (
-                                <PersonProfileCard
-                                    person={selectedPerson}
-                                    onClose={() =>
-                                        handle?.clearPersonSelection()
+                            <RemoteStatusesContext.Provider value={statuses}>
+                                <ProfileCardSlot
+                                    isOpen={
+                                        profileCard.isOpen && !decorator.isOpen
                                     }
+                                    spaceId={space.id}
+                                    isMapLocked={mapLock.isLocked}
+                                    decorateAvailability={decorateAvailability}
+                                    isAtOwnDesk={isAtOwnDesk}
+                                    onWalkToDesk={() => handle?.walkToOwnDesk()}
+                                    onDecorate={(focus) => {
+                                        profileCard.close();
+                                        decorator.open(focus);
+                                    }}
+                                    onClose={profileCard.close}
                                 />
-                            )}
+                                {selectedPerson && (
+                                    <PersonProfileCard
+                                        person={selectedPerson}
+                                        onClose={() =>
+                                            handle?.clearPersonSelection()
+                                        }
+                                    />
+                                )}
+                            </RemoteStatusesContext.Provider>
                         </ListeningContext.Provider>
                         <RoomJoinRequests
                             requests={currentRoom.pendingRequests}

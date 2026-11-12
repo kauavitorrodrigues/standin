@@ -1,6 +1,9 @@
 import { ClockIcon, XIcon } from "lucide-react";
+import type { Availability, CustomStatus } from "@standin/contracts";
 import { UserAvatar } from "../UserAvatar";
+import { CustomStatusLine } from "./CustomStatusLine";
 import { OnlineDot } from "./OnlineDot";
+import { UserStatusLabel } from "./UserStatusLabel";
 import { Button } from "@/components/ui/button";
 
 type ProfileHeaderProps = {
@@ -8,6 +11,10 @@ type ProfileHeaderProps = {
     name: string;
     avatar?: string | null;
     isOnline: boolean;
+    // Away, busy or active, and what the person is up to. Left out they show
+    // as active with nothing to say.
+    availability?: Availability;
+    customStatus?: CustomStatus | null;
     // The local time of the person. Left out when it is not known, as for
     // somebody else, whose time zone the app does not have.
     localTime?: string;
@@ -30,6 +37,8 @@ export const ProfileHeader = ({
     name,
     avatar,
     isOnline,
+    availability,
+    customStatus = null,
     localTime,
     onClose,
 }: ProfileHeaderProps) => (
@@ -42,13 +51,19 @@ export const ProfileHeader = ({
                 size="lg"
                 className="size-12"
             />
-            <OnlineDot isOnline={isOnline} className="size-3 ring-popover" />
+            <OnlineDot
+                isOnline={isOnline}
+                availability={availability}
+                className="size-3 ring-popover"
+            />
         </div>
         <div className="min-w-0">
             <p className="truncate text-base leading-5 font-semibold text-popover-foreground">
                 {name}
             </p>
+            {availability && <UserStatusLabel status={availability} />}
             <LocalTime value={localTime} />
+            <CustomStatusLine customStatus={customStatus} />
         </div>
         <Button
             type="button"

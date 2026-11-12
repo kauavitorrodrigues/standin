@@ -3,20 +3,23 @@ import { Button } from "@/components/ui/button";
 import { DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { USER_STATUSES } from "../../consts/user-status";
+import { USER_STATUS_MESSAGES } from "../../consts/messages";
 import { useUserStatus } from "../../hooks/useUserStatus";
 import { EditProfileDialog } from "../dialogs/EditProfileDialog";
-import { StatusMessageField } from "../fields/StatusMessageField";
+import { CustomStatusField } from "../fields/CustomStatusField";
+import { CustomStatusLine } from "./CustomStatusLine";
+import { StatusDot } from "./StatusDot";
 import { UserStatusOption } from "./UserStatusOption";
 import { UserStatusLabel } from "./UserStatusLabel";
 
 /**
  * The card that opens over the control bar when the person clicks their own
  * avatar: their name and status, the way to edit their profile, the choice
- * between active and busy and the line for what they are up to.
+ * between active, away and busy and the line for what they are up to.
  */
 export const UserStatusPanel = () => {
     const { user } = useAuth();
-    const { status, setStatus } = useUserStatus();
+    const { status, setStatus, customStatus } = useUserStatus();
 
     return (
         <div className="flex flex-col gap-2 p-2">
@@ -24,6 +27,7 @@ export const UserStatusPanel = () => {
                 <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{user.name}</p>
                     <UserStatusLabel status={status} />
+                    <CustomStatusLine customStatus={customStatus} />
                 </div>
                 <EditProfileDialog>
                     <DialogTrigger
@@ -45,20 +49,35 @@ export const UserStatusPanel = () => {
                     isSelected={status === USER_STATUSES.ACTIVE}
                     onSelect={() => setStatus(USER_STATUSES.ACTIVE)}
                     icon={
-                        <span className="size-2.5 rounded-full bg-emerald-500" />
+                        <StatusDot
+                            availability={USER_STATUSES.ACTIVE}
+                            className="size-2.5"
+                        />
                     }
                 >
-                    Ativo
+                    {USER_STATUS_MESSAGES.LABELS.active}
+                </UserStatusOption>
+                <UserStatusOption
+                    isSelected={status === USER_STATUSES.AWAY}
+                    onSelect={() => setStatus(USER_STATUSES.AWAY)}
+                    icon={
+                        <StatusDot
+                            availability={USER_STATUSES.AWAY}
+                            className="size-2.5"
+                        />
+                    }
+                >
+                    {USER_STATUS_MESSAGES.LABELS.away}
                 </UserStatusOption>
                 <UserStatusOption
                     isSelected={status === USER_STATUSES.BUSY}
                     onSelect={() => setStatus(USER_STATUSES.BUSY)}
                     icon={<HeadphonesIcon className="text-amber-500" />}
                 >
-                    Ocupado
+                    {USER_STATUS_MESSAGES.LABELS.busy}
                 </UserStatusOption>
             </div>
-            <StatusMessageField />
+            <CustomStatusField />
         </div>
     );
 };

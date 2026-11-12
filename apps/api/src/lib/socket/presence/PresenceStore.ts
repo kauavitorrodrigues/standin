@@ -1,3 +1,15 @@
+import type {
+    AnnounceableAvailability,
+    CustomStatus,
+} from "@standin/contracts";
+
+// What a person says about themselves: whether they are away and what they
+// are up to.
+export type PresenceStatus = {
+    availability: AnnounceableAvailability;
+    customStatus: CustomStatus | null;
+};
+
 export type PresenceEntry = {
     socketId: string;
     userId: string;
@@ -12,6 +24,11 @@ export type PresenceEntry = {
     headphones: boolean;
     // Whether the person is in focus mode.
     focus: boolean;
+    // Away or active, as the person said. Busy is the headphones above. Memory
+    // only: the device sends it again on every join.
+    availability: AnnounceableAvailability;
+    // What the person is up to, or null. Memory only, like the availability.
+    customStatus: CustomStatus | null;
     // When the person started announcing, in ms since the epoch, or null when
     // they are not. It lives only in memory, like the rest of the presence.
     announcingSince: number | null;
@@ -177,6 +194,55 @@ const setPrivacy = (
     return true;
 };
 
+const isSameCustomStatus = (
+    a: CustomStatus | null,
+    b: CustomStatus | null
+): boolean => {
+    if (a === null || b === null) return a === b;
+    return (
+        a.text === b.text && a.emoji === b.emoji && a.expiresAt === b.expiresAt
+    );
+};
+
+// Returns whether the state changed.
+const setStatus = (
+    spaceId: string,
+    socketId: string,
+    status: PresenceStatus
+): boolean => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry) return false;
+    if (
+        entry.availability === status.availability &&
+        isSameCustomStatus(entry.customStatus, status.customStatus)
+    ) {
+        return false;
+    }
+
+    space.bySocket.set(socketId, { ...entry, ...status });
+    return true;
+};
+
+// Drops the custom status once its time is up and returns the entry, or
+// undefined when there was nothing to drop. The end is compared, so a status
+// the person replaced in the meantime is left alone.
+const expireCustomStatus = (
+    spaceId: string,
+    socketId: string,
+    expiresAt: number
+): PresenceEntry | undefined => {
+    const space = readSpace(spaceId);
+    const entry = space?.bySocket.get(socketId);
+    if (!space || !entry || entry.customStatus?.expiresAt !== expiresAt) {
+        return undefined;
+    }
+
+    const next = { ...entry, customStatus: null };
+    space.bySocket.set(socketId, next);
+    return next;
+};
+
 // Returns whether the state changed. Announcing again keeps the first start,
 // so the order of the announcers does not change under a repeated request.
 const setAnnouncing = (
@@ -299,6 +365,8 @@ export const PresenceStore = {
     updateUser,
     setMuted,
     setPrivacy,
+    setStatus,
+    expireCustomStatus,
     setAnnouncing,
     setSharingVideoWithAnnouncer,
     setHandRaised,

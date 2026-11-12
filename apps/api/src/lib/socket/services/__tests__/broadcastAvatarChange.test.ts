@@ -20,6 +20,8 @@ const join = (spaceId: string, socketId: string, userId: string) =>
         muted: true,
         headphones: false,
         focus: false,
+        availability: "active" as const,
+        customStatus: null,
         announcingSince: null,
         sharingVideoWithAnnouncerSince: null,
         handRaisedSince: null,

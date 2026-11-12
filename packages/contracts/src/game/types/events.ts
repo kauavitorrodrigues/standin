@@ -3,6 +3,8 @@ import type {
     ListeningTrack,
 } from "../../spaces/music/types/listening";
 import type { RemotePlayer } from "./player";
+import type { CustomStatus } from "./status";
+import type { AnnounceableAvailability } from "../enums/availability";
 import type {
     RoomEntitlementsPayload,
     RoomJoinAnswerPayload,
@@ -30,6 +32,7 @@ import type {
     SpaceSetActiveObjectSchema,
     SpaceSetAnnouncingSchema,
     SpaceSetHandRaisedSchema,
+    SpaceSetStatusSchema,
     SpaceShareVideoWithAnnouncerSchema,
 } from "../schemas/realtime";
 import type { EnteredTuple, PositionTuple } from "../position-codec";
@@ -121,6 +124,8 @@ export const SpaceEvents = {
     SPACE_SHARE_VIDEO_WITH_ANNOUNCER: "space:share-video-with-announcer",
     SPACE_SET_HAND_RAISED: "space:set-hand-raised",
     SPACE_RAISED_HANDS: "space:raised-hands",
+    SPACE_SET_STATUS: "space:set-status",
+    SPACE_STATUS: "space:status",
     SPACE_SET_ACTIVE_OBJECT: "space:set-active-object",
     SPACE_ACTIVE_OBJECT: "space:active-object",
     SPACE_CLOSE_OBJECT_FOR_VIEWERS: "space:close-object-for-viewers",
@@ -155,6 +160,7 @@ export type SpaceShareVideoWithAnnouncerInput = z.infer<
     typeof SpaceShareVideoWithAnnouncerSchema
 >;
 export type SpaceSetHandRaisedInput = z.infer<typeof SpaceSetHandRaisedSchema>;
+export type SpaceSetStatusInput = z.infer<typeof SpaceSetStatusSchema>;
 export type SpaceSetActiveObjectInput = z.infer<
     typeof SpaceSetActiveObjectSchema
 >;
@@ -201,6 +207,18 @@ export type SpaceRaisedHandsPayload = {
 
 export type SpaceSetHandRaisedAck =
     { ok: true; raisedSince: number | null } | { ok: false; code: string };
+
+// A person changed their status, or their custom status ended. Sent to the
+// whole space. Busy is not part of it: it comes with the privacy modes.
+export type SpaceStatusPayload = {
+    socketId: string;
+    userId: string;
+    availability: AnnounceableAvailability;
+    customStatus: CustomStatus | null;
+};
+
+export type SpaceSetStatusAck =
+    { ok: true; status: SpaceSetStatusInput } | { ok: false; code: string };
 
 // The object a person has open, such as an embedded website. Not tied to
 // sitting or to any one kind of object, so other objects can use it later.
@@ -309,6 +327,10 @@ export type ClientToServerEvents = {
     "space:set-hand-raised": (
         payload: SpaceSetHandRaisedInput,
         ack: (response: SpaceSetHandRaisedAck) => void
+    ) => void;
+    "space:set-status": (
+        payload: SpaceSetStatusInput,
+        ack: (response: SpaceSetStatusAck) => void
     ) => void;
     "space:set-active-object": (
         payload: SpaceSetActiveObjectInput,
@@ -450,6 +472,7 @@ export type ServerToClientEvents = {
     "space:nearby-typing": (payload: SpaceNearbyTypingOutput) => void;
     "space:announcers": (payload: SpaceAnnouncersPayload) => void;
     "space:raised-hands": (payload: SpaceRaisedHandsPayload) => void;
+    "space:status": (payload: SpaceStatusPayload) => void;
     "space:active-object": (payload: SpaceActiveObjectPayload) => void;
     "space:object-closed": (payload: SpaceObjectClosedPayload) => void;
     "space:music-listening": (payload: SpaceMusicListeningPayload) => void;

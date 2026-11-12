@@ -1,5 +1,10 @@
 import type { Server, Socket } from "socket.io";
-import { RoomEvents, SpaceEvents, SpaceJoinSchema } from "@standin/contracts";
+import {
+    AVAILABILITIES,
+    RoomEvents,
+    SpaceEvents,
+    SpaceJoinSchema,
+} from "@standin/contracts";
 import type { SpaceActiveObject } from "@standin/contracts";
 import { SpaceGuestService } from "@standin/core";
 import { countQueries } from "@standin/database";
@@ -20,6 +25,7 @@ import { SpaceInterests } from "../realtime/SpaceInterests";
 import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 import { RaisedHandSync } from "../realtime/RaisedHandSync";
+import { StatusExpiry } from "../realtime/StatusExpiry";
 import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
 import { ListeningSync } from "../music/listening/ListeningSync";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
@@ -43,6 +49,8 @@ const resolveSelfEntry = async (
         muted: true,
         headphones: false,
         focus: false,
+        availability: AVAILABILITIES.ACTIVE,
+        customStatus: null,
         announcingSince: null,
         sharingVideoWithAnnouncerSince: null,
         handRaisedSince: null,
@@ -105,6 +113,8 @@ const toPeerPayload = ({
     muted,
     headphones,
     focus,
+    availability,
+    customStatus,
 }: PresenceEntry) => ({
     socketId,
     userId,
@@ -114,6 +124,8 @@ const toPeerPayload = ({
     muted,
     headphones,
     focus,
+    availability,
+    customStatus,
 });
 
 // The object each person inside has open, so a person who joins sees who is
@@ -134,6 +146,7 @@ const leavePreviousSpace = async (
 ) => {
     const previousRoom = buildSpaceRoom(previousSpaceId);
     PresenceStore.remove(previousSpaceId, socket.id);
+    StatusExpiry.cancel(socket.id);
     SpaceInterests.remove(previousSpaceId, socket.id);
     MediaRuntime.leave(previousSpaceId, socket.id);
     AnnouncerSync.forget(
@@ -230,6 +243,7 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                 // once inside closes that gap.
                 if (!(await stillHasAccess(userId, spaceId, access))) {
                     PresenceStore.remove(spaceId, socket.id);
+                    StatusExpiry.cancel(socket.id);
                     SpaceInterests.remove(spaceId, socket.id);
                     MediaRuntime.leave(spaceId, socket.id);
                     AnnouncerSync.forget(
@@ -263,6 +277,8 @@ export function registerJoinSpace(io: Server, socket: Socket) {
                     muted: self.muted,
                     headphones: self.headphones,
                     focus: self.focus,
+                    availability: self.availability,
+                    customStatus: self.customStatus,
                 });
                 socket.emit(RoomEvents.ROOM_STATES, {
                     rooms: RoomStates.listNotOpen(spaceId),

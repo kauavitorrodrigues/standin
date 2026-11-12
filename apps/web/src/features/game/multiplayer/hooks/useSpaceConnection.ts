@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type SpaceSettings, type Space, type User } from "@standin/contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import type Phaser from "phaser";
@@ -36,6 +36,9 @@ import { useSpeakingUsers } from "./useSpeakingUsers";
 import { useAnnouncing } from "@/features/spaces/announcing/hooks/useAnnouncing";
 import { useHandRaise } from "@/features/spaces/hand-raise/hooks/useHandRaise";
 import { useListening } from "@/features/spaces/music/listening/hooks/useListening";
+import { useRemoteStatuses } from "@/features/users/hooks/useRemoteStatuses";
+import { reportLocalSpeech } from "@/features/users/lib/availabilityStore";
+import { useStatusSync } from "@/features/users/hooks/useStatusSync";
 import { useSpaceSoundboard } from "@/features/soundboard/hooks/useSpaceSoundboard";
 import { SPACE_SETTINGS_QUERY_KEY } from "@/features/spaces/settings/consts/queryKeys";
 import { STAGE_MAX_NEARBY_PEERS } from "../consts/video";
@@ -80,7 +83,7 @@ export function useSpaceConnection({
         stopClip,
         stopAllClips,
     } = useLocalAudioStream();
-    
+
     const screenShare = useLocalScreenShare();
     // Users currently close enough to receive the local video, nearest first. Drives the stage (everyone nearby is
     // shown there, with an avatar until they turn a camera on) and whether
@@ -199,14 +202,14 @@ export function useSpaceConnection({
     const isMicEnabled = useMicEnabled();
     const isHeadphonesOn = usePrivacyMode("headphones");
     const isFocusModeOn = usePrivacyMode("focus");
-    
+
     const soundboard = useSpaceSoundboard({
         player: { playClip, stopClip, stopAllClips },
         micError: localAudioError,
         hasMicStream: localStream !== null,
         isHeadphonesOn,
     });
-    
+
     const announcing = useAnnouncing({
         isMicEnabled,
         // The stream is released when the camera is turned off.
@@ -215,6 +218,18 @@ export function useSpaceConnection({
     const handRaise = useHandRaise();
     const listening = useListening();
 
+    // The status of the local person goes to the server, and what the others
+    // say about themselves comes back. Whoever has headphones on is busy.
+    useStatusSync();
+    const headphonesUserIds = useMemo(
+        () =>
+            [...remotePrivacy]
+                .filter(([, privacy]) => privacy.headphones)
+                .map(([remoteUserId]) => remoteUserId),
+        [remotePrivacy]
+    );
+    const statuses = useRemoteStatuses(headphonesUserIds);
+
     const sfu = useSfuMedia({
         userId,
         remoteAudioManager,
@@ -222,8 +237,7 @@ export function useSpaceConnection({
         localAudioTrack: localStream?.getAudioTracks()[0] ?? null,
         localCameraTrack: localCameraStream?.getVideoTracks()[0] ?? null,
         localScreenTrack: screenShare.stream?.getVideoTracks()[0] ?? null,
-        localScreenAudioTrack:
-            screenShare.stream?.getAudioTracks()[0] ?? null,
+        localScreenAudioTrack: screenShare.stream?.getAudioTracks()[0] ?? null,
         isMicEnabled,
         isHeadphonesOn,
         isFocusModeOn,
@@ -231,7 +245,7 @@ export function useSpaceConnection({
         setRemoteMicMuted,
         setRemotePrivacy,
     });
-    
+
     const { beginSession, endSession, rebuildSession, failures } = sfu;
 
     // Dev only failure harness, not present in production builds:
@@ -287,11 +301,17 @@ export function useSpaceConnection({
             onSpeakingChange: (isSpeaking) => {
                 localSpeakingRawRef.current = isSpeaking;
                 syncLocalSpeaking();
+                // Speaking is a sign of life for the idle detection.
+                reportLocalSpeech(isSpeaking);
             },
         });
         detector.start(localStream);
 
-        return () => detector.stop();
+        return () => {
+            detector.stop();
+            // A muted or lost microphone says nothing more, so the speech ends.
+            reportLocalSpeech(false);
+        };
     }, [localStream, syncLocalSpeaking]);
 
     useSocketEvent("space:settings-changed", ({ settings: changed }) => {
@@ -694,6 +714,7 @@ export function useSpaceConnection({
         announcing,
         handRaise,
         listening,
+        statuses,
         video: {
             remoteVideos: sfu.remoteVideos,
             setActiveVideoIds: sfu.setActiveVideoIds,

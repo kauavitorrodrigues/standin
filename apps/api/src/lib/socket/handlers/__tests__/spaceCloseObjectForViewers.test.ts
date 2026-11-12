@@ -29,6 +29,8 @@ const presence = (socketId: string, activeObject: string | null) => ({
     muted: false,
     headphones: false,
     focus: false,
+    availability: "active" as const,
+    customStatus: null,
     announcingSince: null,
     sharingVideoWithAnnouncerSince: null,
     handRaisedSince: null,

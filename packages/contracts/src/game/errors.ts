@@ -130,6 +130,23 @@ export class CloseObjectForViewersNotAllowedError extends BaseError {
     }
 }
 
+// The person is not in a space, so they cannot set a status in it.
+export class StatusNotAllowedError extends BaseError {
+    constructor() {
+        super(
+            "You cannot set a status in this space.",
+            "STATUS_NOT_ALLOWED",
+            403
+        );
+    }
+}
+
+export class StatusInvalidError extends BaseError {
+    constructor() {
+        super("The status is invalid.", "STATUS_INVALID", 422);
+    }
+}
+
 export class CloseObjectForViewersInvalidError extends BaseError {
     constructor() {
         super(

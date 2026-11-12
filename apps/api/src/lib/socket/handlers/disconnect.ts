@@ -9,6 +9,7 @@ import { SpaceInterests } from "../realtime/SpaceInterests";
 import { AnnouncerSync } from "../realtime/AnnouncerSync";
 import { buildAnnouncersSender } from "../utils/buildAnnouncersSender";
 import { RaisedHandSync } from "../realtime/RaisedHandSync";
+import { StatusExpiry } from "../realtime/StatusExpiry";
 import { buildRaisedHandsSender } from "../utils/buildRaisedHandsSender";
 import { ListeningSync } from "../music/listening/ListeningSync";
 import { MediaRuntime } from "@/lib/media/MediaRuntime";
@@ -21,6 +22,7 @@ export function registerDisconnect(socket: Socket) {
         // The lock itself is not released here, its expiry covers short
         // reconnects. Only the session to socket mapping is dropped.
         EditorSessions.deleteBySocket(socket.id);
+        StatusExpiry.cancel(socket.id);
 
         const { spaceId, userId } = socket.data;
         if (!spaceId) {

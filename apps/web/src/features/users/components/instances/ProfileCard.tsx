@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useMinuteClock } from "../../hooks/useMinuteClock";
+import { useUserStatus } from "../../hooks/useUserStatus";
 import { formatLocalTime } from "../../utils/formatLocalTime";
 import { ListeningCard } from "@/features/spaces/music/listening/components/instances/ListeningCard";
 import { SpacePageLayout } from "@/features/spaces/components/pages/space-page/layout";
@@ -26,6 +27,7 @@ export const ProfileCard = ({
     decorate,
 }: ProfileCardProps) => {
     const now = useMinuteClock();
+    const { status, customStatus } = useUserStatus();
 
     return (
         <SpacePageLayout.FloatingCard className="w-full p-3">
@@ -34,6 +36,8 @@ export const ProfileCard = ({
                 name={user.name}
                 avatar={user.profilePictureUrl}
                 isOnline={isOnline}
+                availability={status}
+                customStatus={customStatus}
                 localTime={formatLocalTime(now)}
                 onClose={onClose}
             />
