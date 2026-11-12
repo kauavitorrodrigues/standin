@@ -4,21 +4,18 @@ import { randomAvatarConfig } from "@standin/contracts";
 import { toast } from "@/components/ui/toast";
 import { getRootErrorMessage } from "@/features/assets/utils/getRootErrorMessage";
 import { AVATAR_EDITOR_MESSAGES } from "../consts/editor/messages";
-import {
-    categoryPartsInfiniteOptions,
-    resolvePages,
-} from "../queries/useCategoryParts";
+import { loadAllCategoryParts } from "../queries/loadAllCategoryParts";
 import type { AvatarEditorFormValues, RandomizeOptions } from "../types/draft";
 import type { AvatarEditorCategory } from "../types/editor";
 import { buildConfig } from "../utils/draft";
 import { buildRandomCatalog, buildRandomParts } from "../utils/randomDraft";
 import type { RandomPool } from "../utils/randomDraft";
 
-const FIRST_PAGE_ONLY = 1;
-
 // Fills the draft with a random avatar. It does not save. The editor does not
-// hold the whole catalog, so it reads the first page of every category, which
-// goes to the same cache the list uses, and picks from there.
+// hold the whole catalog, so it reads every page of every category, which goes
+// to the same cache the list uses, and picks from there. Essential slots are
+// drawn again, the others keep the draft unless they win a small chance, and
+// the costume is cleared.
 export const useRandomizeDraft = (
     categories: readonly AvatarEditorCategory[]
 ) => {
@@ -33,31 +30,32 @@ export const useRandomizeDraft = (
         RandomizeOptions
     >({
         mutationFn: async () => {
-            const pages = await Promise.all(
+            const items = await Promise.all(
                 categories.map((category) =>
-                    queryClient.ensureInfiniteQueryData({
-                        ...categoryPartsInfiniteOptions(category.slot),
-                        pages: FIRST_PAGE_ONLY,
-                    })
+                    loadAllCategoryParts(queryClient, category.slot)
                 )
             );
             return categories.map((category, index) => ({
                 slot: category.slot,
-                items: resolvePages(pages[index]).pages.flatMap(
-                    (page) => page.items
-                ),
+                items: items[index],
             }));
         },
         onSuccess: (pools, { untouchedKey }) => {
             // The start draft gives way to anything chosen while it loaded.
             if (untouchedKey !== null && untouchedKey !== draftKey()) return;
+            const draft = getValues();
             const config = randomAvatarConfig(
-                buildRandomCatalog(pools, getValues("baseId")),
-                Math.random
+                buildRandomCatalog(pools, draft.baseId),
+                Math.random,
+                buildConfig(draft).parts
             );
-            setValue("parts", buildRandomParts(config.parts, pools), {
-                shouldDirty: true,
-            });
+            setValue(
+                "parts",
+                buildRandomParts(config.parts, pools, draft.parts),
+                {
+                    shouldDirty: true,
+                }
+            );
         },
         onError: (error) => {
             toast.add({

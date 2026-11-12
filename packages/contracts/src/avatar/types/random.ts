@@ -11,7 +11,7 @@ export type AvatarRandomSlot = {
     families: readonly AvatarRandomFamily[];
 };
 
-// What `randomAvatarConfig` draws from: the slots in drawing priority order
+// What `randomAvatarConfig` draws from: the slots in drawing order
 // and the base the avatar will use, null for the default one.
 export type AvatarRandomCatalog = {
     baseId: string | null;

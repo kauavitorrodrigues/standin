@@ -44,7 +44,8 @@ describe("assignRandomAvatar", () => {
 
     it("picks one of the color variations of the family", async () => {
         selectRows.mockResolvedValue(skinRows);
-        const rolls = [0, 0, 0.99];
+        // The skin is essential, so there is no chance roll: family, then color.
+        const rolls = [0, 0.99];
 
         await assignRandomAvatar("u1", () => rolls.shift() ?? 0);
 
