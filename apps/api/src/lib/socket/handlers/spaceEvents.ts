@@ -6,7 +6,9 @@ import {
     SpaceEvents,
     SpaceNearbyMessageSchema,
     SpaceNearbyTypingSchema,
+    SpaceWaveSchema,
 } from "@standin/contracts";
+import { PresenceStore } from "../presence/PresenceStore";
 import { RoomStates } from "../utils/roomStates";
 import { SpaceInterests } from "../realtime/SpaceInterests";
 import { resolveSpaceSettings } from "../services/resolveSpaceSettings";
@@ -39,6 +41,30 @@ const relayNearby = (
 
     // One call, so the packet is encoded once however many hear it.
     io.to(receivers).emit(event, { socketId: socket.id, ...body });
+};
+
+// A wave reaches one person, and only while they are online in the space, near
+// the sender and in the same private rooms. Anything else is dropped without an
+// answer, so a wave cannot tell who is online or where they stand.
+const relayWave = (io: Server, socket: Socket, targetUserId: string) => {
+    const { spaceId, userId } = socket.data;
+    if (!spaceId) return;
+    if (targetUserId === userId) return;
+
+    const near = new Set(
+        SpaceInterests.neighbors(spaceId, socket.id, SPACE_EVENT_RADIUS_PX)
+    );
+    const receivers = PresenceStore.findSocketIdsOfUser(
+        spaceId,
+        targetUserId
+    ).filter(
+        (socketId) =>
+            near.has(socketId) &&
+            RoomStates.sameRooms(spaceId, socket.id, socketId)
+    );
+    if (receivers.length === 0) return;
+
+    io.to(receivers).emit(SpaceEvents.SPACE_WAVE, { socketId: socket.id });
 };
 
 const isDancing = (socket: Socket): boolean => {
@@ -87,6 +113,15 @@ export function registerSpaceEvents(io: Server, socket: Socket) {
         if (!parsed.success) return;
 
         relayNearby(io, socket, SpaceEvents.SPACE_CONFETTI, parsed.data);
+    });
+
+    socket.on(SpaceEvents.SPACE_WAVE, (payload) => {
+        const parsed = SpaceWaveSchema.safeParse(payload);
+        if (!parsed.success) return;
+        // A person who dances makes no other gesture.
+        if (isDancing(socket)) return;
+
+        relayWave(io, socket, parsed.data.targetUserId);
     });
 
     socket.on(SpaceEvents.SPACE_NEARBY_MESSAGE, (payload) => {

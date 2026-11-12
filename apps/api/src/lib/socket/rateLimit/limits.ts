@@ -26,6 +26,10 @@ export const RATE_LIMITS: Record<string, RateLimit> = {
     // The client throttles to two a second, so this only stops a modified one.
     // Keep in step with CONFETTI.RATE_LIMIT on the web.
     [SpaceEvents.SPACE_CONFETTI]: { perSecond: 3, burst: 6 },
+    // The client waits WAVE.SEND_COOLDOWN_MS between waves to the same person,
+    // so this only stops a modified one. The burst stays above what a person
+    // can honestly send to a few people at once.
+    [SpaceEvents.SPACE_WAVE]: { perSecond: 2, burst: 4 },
     [SpaceEvents.SPACE_NEARBY_MESSAGE]: { perSecond: 3, burst: 6 },
     [SpaceEvents.SPACE_NEARBY_TYPING]: { perSecond: 4, burst: 8 },
     [SpaceEvents.SPACE_SET_ANNOUNCING]: { perSecond: 2, burst: 6 },
