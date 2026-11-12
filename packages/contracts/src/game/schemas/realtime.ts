@@ -1,5 +1,7 @@
 import { z } from "zod/v4";
 import { PLAYER_DIRECTIONS } from "../enums/player";
+import { ANNOUNCEABLE_AVAILABILITIES } from "../enums/availability";
+import { CUSTOM_STATUS } from "../consts/custom-status";
 import {
     EMOTE_COMBO_MAX,
     EMOTE_COMBO_MIN,
@@ -37,7 +39,9 @@ export const SpaceEmoteSchema = z.object({
     emoji: z
         .string({ error: GameErrorMessages.emote.emoji.invalid })
         .min(1, { error: GameErrorMessages.emote.emoji.invalid })
-        .max(EMOTE_MAX_LENGTH, { error: GameErrorMessages.emote.emoji.invalid }),
+        .max(EMOTE_MAX_LENGTH, {
+            error: GameErrorMessages.emote.emoji.invalid,
+        }),
     count: z
         .number({ error: GameErrorMessages.emote.count.invalid })
         .int({ error: GameErrorMessages.emote.count.invalid })
@@ -78,6 +82,58 @@ export const SpaceSetHandRaisedSchema = z.object({
     raised: z.boolean({
         error: GameErrorMessages.handRaise.raised.invalid,
     }),
+});
+
+const EMOJI_PATTERN = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+
+// One emoji is one grapheme, so a flag or a family counts once.
+const isSingleEmoji = (value: string): boolean => {
+    const graphemes = [...new Intl.Segmenter().segment(value)];
+    return graphemes.length === 1 && EMOJI_PATTERN.test(value);
+};
+
+// What the person is up to: a short text with an emoji and, optionally, the
+// moment it stops being shown (ms since the epoch). The time is checked when
+// the status arrives, so one that already ended is refused, with a little room
+// for the difference between the clocks.
+export const CustomStatusSchema = z.object({
+    text: z
+        .string({ error: GameErrorMessages.status.text.invalid })
+        .trim()
+        .min(1, { error: GameErrorMessages.status.text.invalid })
+        .max(CUSTOM_STATUS.textMaxLength, {
+            error: GameErrorMessages.status.text.invalid,
+        }),
+    emoji: z
+        .string({ error: GameErrorMessages.status.emoji.invalid })
+        .max(CUSTOM_STATUS.emojiMaxLength, {
+            error: GameErrorMessages.status.emoji.invalid,
+        })
+        .refine(isSingleEmoji, {
+            error: GameErrorMessages.status.emoji.invalid,
+        }),
+    expiresAt: z
+        .number({ error: GameErrorMessages.status.expiresAt.invalid })
+        .int({ error: GameErrorMessages.status.expiresAt.invalid })
+        .refine(
+            (value) =>
+                value > Date.now() - CUSTOM_STATUS.pastToleranceMs &&
+                value <=
+                    Date.now() +
+                        CUSTOM_STATUS.maxDurationMs +
+                        CUSTOM_STATUS.clockToleranceMs,
+            { error: GameErrorMessages.status.expiresAt.invalid }
+        )
+        .nullable(),
+});
+
+// The status of the person: away or active, and the custom status or null to
+// clear it. Always the whole status, so a request replaces the previous one.
+export const SpaceSetStatusSchema = z.object({
+    availability: z.enum(ANNOUNCEABLE_AVAILABILITIES, {
+        error: GameErrorMessages.status.availability.invalid,
+    }),
+    customStatus: CustomStatusSchema.nullable(),
 });
 
 // The object the person has open, or null when they closed it. The server

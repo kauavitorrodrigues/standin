@@ -1,4 +1,6 @@
 import type { PlayerDirection } from "../enums/player";
+import type { AnnounceableAvailability } from "../enums/availability";
+import type { CustomStatus } from "./status";
 import type { User } from "../../users/types/user";
 
 export type PlayerPosition = {
@@ -29,4 +31,8 @@ export type RemotePlayer = {
     headphones: boolean;
     // Whether the person is in focus mode.
     focus: boolean;
+    // Away or active. Busy is the headphones above.
+    availability: AnnounceableAvailability;
+    // What the person is up to, null when they say nothing.
+    customStatus: CustomStatus | null;
 };

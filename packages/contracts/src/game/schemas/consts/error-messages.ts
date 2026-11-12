@@ -68,6 +68,20 @@ export const GameErrorMessages = {
             invalid: "The raised hand state must be true or false.",
         },
     },
+    status: {
+        availability: {
+            invalid: "The availability must be active or away.",
+        },
+        text: {
+            invalid: "The status text must have 1 to 80 characters.",
+        },
+        emoji: {
+            invalid: "The status emoji must be a single emoji.",
+        },
+        expiresAt: {
+            invalid: "The status must end in the future, within a day.",
+        },
+    },
     activeObject: {
         objectId: {
             invalid: "The object must be an id or null.",

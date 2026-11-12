@@ -10,6 +10,8 @@ const entry = (socketId: string, userId: string): PresenceEntry => ({
     muted: true,
     headphones: false,
     focus: false,
+    availability: "active" as const,
+    customStatus: null,
     announcingSince: null,
     sharingVideoWithAnnouncerSince: null,
     handRaisedSince: null,
@@ -81,6 +83,92 @@ describe("PresenceStore", () => {
         expect(PresenceStore.setPrivacy("space-1", "nobody", privacy)).toBe(
             false
         );
+    });
+
+    it("starts active with no custom status", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+
+        expect(PresenceStore.get("space-1", "s1")).toMatchObject({
+            availability: "active" as const,
+            customStatus: null,
+        });
+    });
+
+    it("sets the status and tells whether it changed", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        const status = {
+            availability: "away" as const,
+            customStatus: { text: "Lunch", emoji: "🍕", expiresAt: 5000 },
+        };
+
+        expect(PresenceStore.setStatus("space-1", "s1", status)).toBe(true);
+        expect(PresenceStore.get("space-1", "s1")).toMatchObject(status);
+        // The same status again, as a new object, is not a change.
+        expect(
+            PresenceStore.setStatus("space-1", "s1", {
+                ...status,
+                customStatus: { ...status.customStatus },
+            })
+        ).toBe(false);
+        expect(PresenceStore.setStatus("space-1", "nobody", status)).toBe(
+            false
+        );
+    });
+
+    it("clears the status", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.setStatus("space-1", "s1", {
+            availability: "away",
+            customStatus: { text: "Lunch", emoji: "🍕", expiresAt: null },
+        });
+
+        expect(
+            PresenceStore.setStatus("space-1", "s1", {
+                availability: "active" as const,
+                customStatus: null,
+            })
+        ).toBe(true);
+        expect(PresenceStore.get("space-1", "s1")).toMatchObject({
+            availability: "active" as const,
+            customStatus: null,
+        });
+    });
+
+    it("expires only the custom status that ends at that time", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.setStatus("space-1", "s1", {
+            availability: "away",
+            customStatus: { text: "Lunch", emoji: "🍕", expiresAt: 5000 },
+        });
+
+        // A timer of a status the person replaced does nothing.
+        expect(PresenceStore.expireCustomStatus("space-1", "s1", 4000)).toBe(
+            undefined
+        );
+        expect(PresenceStore.get("space-1", "s1")?.customStatus).not.toBeNull();
+
+        const expired = PresenceStore.expireCustomStatus("space-1", "s1", 5000);
+
+        expect(expired).toMatchObject({ availability: "away" });
+        expect(PresenceStore.get("space-1", "s1")?.customStatus).toBeNull();
+        expect(PresenceStore.expireCustomStatus("space-1", "s1", 5000)).toBe(
+            undefined
+        );
+        expect(
+            PresenceStore.expireCustomStatus("space-1", "nobody", 5000)
+        ).toBe(undefined);
+    });
+
+    it("forgets the status with the person who leaves", () => {
+        PresenceStore.add("space-1", entry("s1", "u1"));
+        PresenceStore.setStatus("space-1", "s1", {
+            availability: "away",
+            customStatus: null,
+        });
+        PresenceStore.remove("space-1", "s1");
+        PresenceStore.add("space-1", entry("s1", "u1"));
+
+        expect(PresenceStore.get("space-1", "s1")?.availability).toBe("active");
     });
 
     it("keeps the first start of an announcement and lists the oldest first", () => {

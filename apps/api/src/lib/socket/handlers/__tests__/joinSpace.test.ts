@@ -52,6 +52,7 @@ vi.mock("@standin/core", () => ({
 
 import { registerJoinSpace } from "../joinSpace";
 import { PresenceStore } from "../../presence/PresenceStore";
+import { StatusExpiry } from "../../realtime/StatusExpiry";
 
 function createFakeSocket(id: string, userId: string) {
     return {
@@ -94,6 +95,8 @@ function createFakeIo(
             muted: true,
             headphones: false,
             focus: false,
+            availability: "active" as const,
+            customStatus: null,
             announcingSince: null,
             sharingVideoWithAnnouncerSince: null,
             handRaisedSince: null,
@@ -127,6 +130,7 @@ describe("registerJoinSpace", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         PresenceStore.clear();
+        StatusExpiry.clear();
         resolveJoinAccessMock.mockResolvedValue(GUEST);
         recheckAccessMock.mockResolvedValue(GUEST);
         listPendingMock.mockResolvedValue([]);
@@ -166,6 +170,8 @@ describe("registerJoinSpace", () => {
                     muted: true,
                     headphones: false,
                     focus: false,
+                    availability: "active" as const,
+                    customStatus: null,
                 },
             ],
         });
@@ -196,6 +202,8 @@ describe("registerJoinSpace", () => {
                     muted: true,
                     headphones: false,
                     focus: false,
+                    availability: "active" as const,
+                    customStatus: null,
                 },
             ],
         });
@@ -221,6 +229,8 @@ describe("registerJoinSpace", () => {
             muted: true,
             headphones: false,
             focus: false,
+            availability: "active" as const,
+            customStatus: null,
         });
     });
 
@@ -243,6 +253,8 @@ describe("registerJoinSpace", () => {
             muted: true,
             headphones: false,
             focus: false,
+            availability: "active" as const,
+            customStatus: null,
         });
     });
 
@@ -295,6 +307,8 @@ describe("registerJoinSpace", () => {
             muted: true,
             headphones: false,
             focus: false,
+            availability: "active" as const,
+            customStatus: null,
             announcingSince: null,
             sharingVideoWithAnnouncerSince: null,
             handRaisedSince: null,
@@ -434,6 +448,8 @@ describe("registerJoinSpace", () => {
             muted: true,
             headphones: false,
             focus: false,
+            availability: "active" as const,
+            customStatus: null,
             announcingSince: null,
             sharingVideoWithAnnouncerSince: null,
             handRaisedSince: null,
@@ -556,6 +572,39 @@ describe("registerJoinSpace", () => {
             "space:joined",
             expect.anything()
         );
+    });
+
+    it("drops the status timer of the socket that changes space", async () => {
+        const socket = createFakeSocket("socket-b", "user-b");
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            socket as any
+        );
+        await getJoinHandler(socket)?.(validPayload);
+        StatusExpiry.schedule("socket-b", Date.now() + 60_000, vi.fn());
+        expect(StatusExpiry.size()).toBe(1);
+
+        socket.data.spaceId = "space-1";
+        await getJoinHandler(socket)?.({ spaceId: "space-2" });
+
+        expect(StatusExpiry.size()).toBe(0);
+    });
+
+    it("drops the status timer of a guest put out right after joining", async () => {
+        resolveJoinAccessMock.mockResolvedValue(GUEST);
+        recheckAccessMock.mockImplementation(async () => {
+            StatusExpiry.schedule("socket-g", Date.now() + 60_000, vi.fn());
+            return null;
+        });
+        const socket = createFakeSocket("socket-g", "user-g");
+        registerJoinSpace(
+            createFakeIo([], "space:space-1") as any,
+            socket as any
+        );
+
+        await getJoinHandler(socket)?.(validPayload);
+
+        expect(StatusExpiry.size()).toBe(0);
     });
 
     it("does not look again at a member: the organization does not end by itself in a join", async () => {
