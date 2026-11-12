@@ -7,6 +7,7 @@ import { useSocketEvent } from "./useSocketEvent";
 import { DEFAULT_SPACE_SETTINGS, JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getSoundCatalog } from "@/features/sounds/lib/soundCatalog";
 import { getMapScene } from "@/features/game/utils/map";
+import { listAwayUserIds } from "@/features/users/utils/listAwayUserIds";
 import { EmoteSender } from "@/features/game/lib/EmoteSender";
 import { ConfettiThrottle } from "@/features/game/lib/ConfettiThrottle";
 import { SpaceChannel, type SpaceChannelTransport } from "../lib/SpaceChannel";
@@ -229,6 +230,13 @@ export function useSpaceConnection({
         [remotePrivacy]
     );
     const statuses = useRemoteStatuses(headphonesUserIds);
+
+    // Whoever is away stays standing where they were, with the moon on the tag.
+    useEffect(() => {
+        (game ? getMapScene(game) : null)?.setAwayUserIds(
+            listAwayUserIds(statuses)
+        );
+    }, [game, statuses]);
 
     const sfu = useSfuMedia({
         userId,

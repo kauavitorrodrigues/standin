@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { planSubscriptions } from "../planSubscriptions";
-import type {
-    CurrentConsumer,
-    PersonState,
-    ProducerKind,
-} from "../types";
+import type { CurrentConsumer, PersonState, ProducerKind } from "../types";
 
 type Spot = { x: number; y: number };
 
@@ -13,6 +9,7 @@ const person = (id: string, kinds: ProducerKind[] = []): PersonState => ({
     roomKey: null,
     muted: false,
     headphones: false,
+    away: false,
     focusMode: false,
     announcing: false,
     sharingVideoWithAnnouncer: false,
@@ -64,7 +61,9 @@ const reasonOf = (result: ReturnType<typeof plan>, producerId: string) =>
 
 describe("the limit a weak machine asked for", () => {
     it("plays the first video and holds the next one back for that reason", () => {
-        const result = plan(spots, cameras, { config: { activeVideoLimit: 1 } });
+        const result = plan(spots, cameras, {
+            config: { activeVideoLimit: 1 },
+        });
 
         expect(result.desired.map((c) => c.producerId)).toEqual([
             "a:camera",
@@ -73,7 +72,9 @@ describe("the limit a weak machine asked for", () => {
         expect(reasonOf(result, "a:camera")).toBeNull();
         expect(reasonOf(result, "b:camera")).toBe("client-limit");
         // It is created already paused, with the reason.
-        expect(result.create.find((c) => c.producerId === "b:camera")).toMatchObject({
+        expect(
+            result.create.find((c) => c.producerId === "b:camera")
+        ).toMatchObject({
             paused: true,
             pauseReason: "client-limit",
         });
@@ -218,7 +219,10 @@ describe("what the server sheds when it is short of CPU", () => {
 
 describe("the video a receiver hid", () => {
     const hide = (...ids: string[]) =>
-        new Map([["me", new Set(ids)]]) as ReadonlyMap<string, ReadonlySet<string>>;
+        new Map([["me", new Set(ids)]]) as ReadonlyMap<
+            string,
+            ReadonlySet<string>
+        >;
     const people = [
         person("me"),
         person("a", ["audio", "camera", "screen"]),

@@ -1,5 +1,10 @@
 import type { Socket } from "socket.io";
-import { MediaNotJoinedError, MediaUnavailableError } from "@standin/contracts";
+import {
+    AVAILABILITIES,
+    MediaNotJoinedError,
+    MediaUnavailableError,
+} from "@standin/contracts";
+import { PresenceStore } from "@/lib/socket/presence/PresenceStore";
 import { AnnouncerVideo } from "@/lib/socket/realtime/AnnouncerVideo";
 import { MediaRuntime } from "../MediaRuntime";
 import type { MediaContext } from "../types";
@@ -35,6 +40,11 @@ export const requireMediaContext = async (
     // Someone may already announce, or have chosen to show the camera, before
     // the media session starts.
     if (isNew) AnnouncerVideo.apply(spaceId, socket.id);
+    // The person may be away before the media session starts.
+    if (isNew) {
+        const entry = PresenceStore.get(spaceId, socket.id);
+        room.setAway(socket.id, entry?.availability === AVAILABILITIES.AWAY);
+    }
     return { spaceId, room };
 };
 

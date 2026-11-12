@@ -6,4 +6,11 @@ export const USER_STATUSES = {
     BUSY: "busy",
 } as const;
 
+// The word for each status, under the name and as the label of its dot.
+export const USER_STATUS_LABELS = {
+    [USER_STATUSES.ACTIVE]: "Ativo",
+    [USER_STATUSES.AWAY]: "Ausente",
+    [USER_STATUSES.BUSY]: "Ocupado",
+} as const;
+
 export type UserStatus = (typeof USER_STATUSES)[keyof typeof USER_STATUSES];

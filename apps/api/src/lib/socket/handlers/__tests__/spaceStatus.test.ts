@@ -92,6 +92,18 @@ describe("registerSpaceStatus", () => {
         });
     });
 
+    it("keeps the custom status of a person who is away in the presence", () => {
+        const socket = createSocket({ spaceId: "space-1", isGuest: false });
+        registerSpaceStatus(createIo().io as never, socket as never);
+
+        send(socket, { availability: "away", customStatus: lunch(null) });
+
+        expect(PresenceStore.get("space-1", "me")).toMatchObject({
+            availability: "away",
+            customStatus: lunch(null),
+        });
+    });
+
     it("tells nobody when the status did not change", () => {
         const socket = createSocket({ spaceId: "space-1", isGuest: false });
         registerSpaceStatus(createIo().io as never, socket as never);

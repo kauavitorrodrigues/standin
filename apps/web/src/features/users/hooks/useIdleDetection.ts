@@ -4,12 +4,17 @@ import {
     IDLE_AWAY_AFTER_MS,
     SPEECH_ACTIVITY_PULSE_MS,
 } from "../consts/availability";
-import { setIdle, setSpeechListener } from "../lib/availabilityStore";
+import {
+    handleIdleChange,
+    setIdle,
+    setSpeechListener,
+} from "../lib/availabilityStore";
 import { createIdleWatcher } from "../utils/idleWatcher";
 
 /**
- * Marks the local person as idle after a while without mouse, keyboard, touch
- * or focus on the tab and no speech into the microphone, and as active again on the first sign of life. Mount it
+ * Takes the local person away after a while without mouse, keyboard, touch
+ * or focus on the tab and no speech into the microphone. Activity afterwards
+ * does not bring them back: they return to the office by choice. Mount it
  * once, where the person is in a space.
  */
 export const useIdleDetection = () => {
@@ -17,7 +22,7 @@ export const useIdleDetection = () => {
         const watcher = createIdleWatcher({
             timeoutMs: IDLE_AWAY_AFTER_MS,
             speechPulseMs: SPEECH_ACTIVITY_PULSE_MS,
-            onChange: setIdle,
+            onChange: handleIdleChange,
         });
         const onActivity = () => watcher.activity();
         const onVisibility = () => {

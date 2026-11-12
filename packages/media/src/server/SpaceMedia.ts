@@ -315,6 +315,17 @@ export class SpaceMedia {
     }
 
     /**
+     * Whether a person is away. Away cuts every connection in both directions,
+     * like headphones. The caller marks the neighbours dirty so the planner
+     * runs.
+     */
+    setAway(peerId: string, away: boolean): void {
+        const peer = this.peers.get(peerId);
+        if (!peer) return;
+        peer.away = away;
+    }
+
+    /**
      * Whether a person announces and whether they show their camera to the
      * announcers. The caller marks the neighbours dirty so the planner runs.
      */

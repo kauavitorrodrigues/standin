@@ -32,6 +32,7 @@ export const NAME_TAG = {
     DOT_COLOR: "#00c245",
     // The chat icon that takes the place of the dot while the person types.
     TYPING_ICON_SIZE: 12,
+    AWAY_DOT_COLOR: "#9ca3af",
     // The glow of the tag that was clicked.
     SELECTED_SHADOW: "0px 0px 8px 2px #3893e3",
     MAX_CHARACTERS: 20,

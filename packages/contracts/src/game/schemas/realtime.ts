@@ -120,7 +120,8 @@ export const CustomStatusSchema = z.object({
         .max(CUSTOM_STATUS.emojiMaxLength, {
             error: GameErrorMessages.status.emoji.invalid,
         })
-        .refine(isSingleEmoji, {
+        // An empty emoji is a status with only text.
+        .refine((value) => value === "" || isSingleEmoji(value), {
             error: GameErrorMessages.status.emoji.invalid,
         }),
     expiresAt: z

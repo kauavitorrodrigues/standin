@@ -142,6 +142,10 @@ export class RemoteAvatar {
         this.nameTag.setTyping(isTyping);
     }
 
+    setAway(isAway: boolean): void {
+        this.nameTag.setAway(isAway);
+    }
+
     setNameTagDetailed(isDetailed: boolean): void {
         this.nameTag.setDetailed(isDetailed);
     }

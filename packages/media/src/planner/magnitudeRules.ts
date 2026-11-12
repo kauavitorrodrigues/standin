@@ -16,6 +16,10 @@ export const privateRoomRule: MagnitudeRule = (playerA, playerB, mag) =>
 export const headphonesRule: MagnitudeRule = (playerA, playerB, mag) =>
     playerA.headphones || playerB.headphones ? UNCONNECTED : mag;
 
+// Away is out of the office, so it cuts the pair the same way headphones do.
+export const awayRule: MagnitudeRule = (playerA, playerB, mag) =>
+    playerA.away || playerB.away ? UNCONNECTED : mag;
+
 // Focus mode only matters for the ambient layer, which is dropped for a person
 // in focus when the connection is not strong. This planner has strong
 // connections only, so the rule keeps the magnitude. The flag is stored and
@@ -31,6 +35,7 @@ export const teamAreaRule: MagnitudeRule = (_playerA, _playerB, mag) => mag;
 export const DEFAULT_MAGNITUDE_RULES: readonly MagnitudeRule[] = [
     privateRoomRule,
     headphonesRule,
+    awayRule,
     focusModeRule,
     lockedClusterRule,
     teamAreaRule,

@@ -71,6 +71,12 @@ import type { DecorateAvailability } from "@/features/decorator/types/decorate-a
 import type { DecoratorFocus } from "@/features/decorator/types/decorator-focus";
 import { useGameMapData } from "@/features/game/hooks/useGameMapData";
 import { handRaiseInGrid } from "@/features/spaces/hand-raise/utils/handRaiseInGrid";
+import { AwayBar } from "@/features/users/components/views/AwayBar";
+import { AwayControlsSwitch } from "@/features/users/components/views/AwayControlsSwitch";
+import { AwayLayer } from "@/features/users/components/views/AwayLayer";
+import { useAwayInputLock } from "@/features/users/hooks/useAwayInputLock";
+import { USER_STATUSES } from "@/features/users/consts/user-status";
+import { useUserStatus } from "@/features/users/hooks/useUserStatus";
 import { RemoteStatusesContext } from "@/features/users/contexts/RemoteStatusesContext";
 import { ListeningContext } from "@/features/spaces/music/listening/contexts/ListeningContext";
 import { useListeningNotes } from "@/features/spaces/music/listening/hooks/useListeningNotes";
@@ -120,6 +126,11 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     } = useSpaceSearch();
 
     const { user } = useAuth();
+    // Away takes the person out of the office: a layer over the game, no
+    // controls, and a bar with the way back.
+    const { status, returnToOffice, customStatus } = useUserStatus();
+    const isAway = status === USER_STATUSES.AWAY;
+    useAwayInputLock(isAway);
     const [chipHost, setChipHost] = useState<HTMLElement | null>(null);
 
     const peoplePanel = usePeoplePanel({ view, selectView });
@@ -315,7 +326,11 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     chatPage={chatPage}
                     isPeopleOpen={peoplePanel.isVisible}
                     onTogglePeople={peoplePanel.toggle}
-                    chatFooter={<ChatFooter tiles={stageTiles} media={media} />}
+                    chatFooter={
+                        isAway ? null : (
+                            <ChatFooter tiles={stageTiles} media={media} />
+                        )
+                    }
                     onDecorate={() => decorator.open()}
                     decorateAvailability={decorateAvailability}
                 />
@@ -331,10 +346,13 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                 />
                 <LayoutPrimitive.Content style={layout.contentStyle}>
                     <GameCanvas ref={containerRef} />
-                    <GameControls
-                        handle={handle}
-                        topSlot={<OnboardingLauncher />}
-                    />
+                    <AwayLayer isAway={isAway} />
+                    {!isAway && (
+                        <GameControls
+                            handle={handle}
+                            topSlot={<OnboardingLauncher />}
+                        />
+                    )}
                     <RoomHeader
                         roomLabel={currentRoom.roomLabel}
                         state={currentRoom.state}
@@ -474,7 +492,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                         />
                     </RaisedHandsContext.Provider>
                     <LayoutPrimitive.TopControls
-                        visible={layout.isControlsVisible}
+                        visible={layout.isControlsVisible && !isAway}
                         className="gap-2"
                     >
                         {/* The chip of an open website lands here, beside the switch. */}
@@ -489,13 +507,27 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     <LayoutPrimitive.Controls
                         visible={layout.isControlsVisible}
                     >
-                        <MediaControlGroup
-                            {...media}
-                            handRaise={handRaiseInGrid(
-                                isGridView,
-                                media.handRaise
-                            )}
-                            isMeetingContext
+                        <AwayControlsSwitch
+                            isAway={isAway}
+                            away={
+                                <AwayBar
+                                    id={user.id}
+                                    name={user.name}
+                                    profilePictureUrl={user.profilePictureUrl}
+                                    customStatus={customStatus}
+                                    onReturn={returnToOffice}
+                                />
+                            }
+                            controls={
+                                <MediaControlGroup
+                                    {...media}
+                                    handRaise={handRaiseInGrid(
+                                        isGridView,
+                                        media.handRaise
+                                    )}
+                                    isMeetingContext
+                                />
+                            }
                         />
                     </LayoutPrimitive.Controls>
                 </LayoutPrimitive.Content>
