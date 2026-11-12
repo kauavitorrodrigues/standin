@@ -1,3 +1,5 @@
+import { DEGRADED_PERFORMANCE_LEVEL } from "@/features/settings/performance/consts/performanceLevels";
+import { getLevelSettings } from "@/features/settings/performance/lib/performanceLevels";
 import { type PerformanceSettings } from "@/features/settings/performance/consts/performanceSettings";
 import { createMemoryStore, type MemoryStore } from "@/lib/createMemoryStore";
 import { type LocalPreference } from "@/lib/createLocalPreference";
@@ -22,12 +24,9 @@ export type DegradationNotice = {
 
 export const degradationNoticeStore = createMemoryStore<DegradationNotice | null>(null);
 
-// Degraded values, mapped onto standin's independent knobs: 30 fps and reduced
-// motion.
-export const getDegradedSettings = (): PerformanceSettings => ({
-    fpsLimit: "30",
-    reduceMotion: true,
-});
+// Degraded values are the settings of the power saver level.
+export const getDegradedSettings = (): PerformanceSettings =>
+    getLevelSettings(DEGRADED_PERFORMANCE_LEVEL);
 
 type Deps = {
     preference: LocalPreference<PerformanceSettings>;
