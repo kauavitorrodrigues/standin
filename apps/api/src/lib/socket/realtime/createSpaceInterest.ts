@@ -82,7 +82,8 @@ export const createSpaceInterest = ({
             previous.y === position.y &&
             previous.direction === position.direction &&
             previous.isSitting === position.isSitting &&
-            previous.isDancing === position.isDancing
+            previous.isDancing === position.isDancing &&
+            (previous.teleportCount ?? 0) === (position.teleportCount ?? 0)
         ) {
             return;
         }

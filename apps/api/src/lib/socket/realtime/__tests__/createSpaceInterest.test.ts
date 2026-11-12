@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { PLAYER_DIRECTIONS, type PlayerPosition } from "@standin/contracts";
+import {
+    decodePosition,
+    PLAYER_DIRECTIONS,
+    type PlayerPosition,
+} from "@standin/contracts";
 import { createSpaceInterest } from "../createSpaceInterest";
 
 const at = (x: number, y: number): PlayerPosition => ({
@@ -25,7 +29,9 @@ const learn = (
     other: string
 ) => {
     const result = interest.flush();
-    return result.get(receiver)?.entered.find((tuple) => tuple[4] === other)?.[0];
+    return result
+        .get(receiver)
+        ?.entered.find((tuple) => tuple[4] === other)?.[0];
 };
 
 describe("createSpaceInterest", () => {
@@ -200,5 +206,58 @@ describe("createSpaceInterest", () => {
 
         expect(interest.neighbors("a", 100)).toEqual(["b"]);
         expect(interest.neighbors("nobody", 100)).toEqual([]);
+    });
+
+    describe("teleport count", () => {
+        const jumped = (x: number, y: number, teleportCount: number) => ({
+            ...at(x, y),
+            teleportCount,
+        });
+
+        it("relays the count to who already knows the person", () => {
+            const interest = build();
+            interest.update("a", at(0, 0));
+            interest.update("b", at(50, 0));
+            interest.flush();
+
+            interest.update("b", jumped(50, 40, 3));
+            const moved = interest.flush().get("a")?.moved ?? [];
+
+            expect(moved).toHaveLength(1);
+            expect(decodePosition(moved[0]!).position.teleportCount).toBe(3);
+        });
+
+        it("tells a change of the count even when nothing else moved", () => {
+            const interest = build();
+            interest.update("a", at(0, 0));
+            interest.update("b", at(50, 0));
+            interest.flush();
+
+            interest.update("b", jumped(50, 0, 1));
+
+            expect(interest.hasPending()).toBe(true);
+            expect(interest.flush().get("a")?.moved).toHaveLength(1);
+        });
+
+        it("keeps the count of a person who comes into sight, as it is", () => {
+            const interest = build();
+            interest.update("b", jumped(50, 0, 5));
+            interest.update("a", at(0, 0));
+
+            const entered = interest.flush().get("a")?.entered ?? [];
+
+            expect(decodePosition(entered[0]!).position.teleportCount).toBe(5);
+        });
+
+        it("sends nothing for the same position and count", () => {
+            const interest = build();
+            interest.update("a", at(0, 0));
+            interest.update("b", jumped(50, 0, 2));
+            interest.flush();
+
+            interest.update("b", jumped(50, 0, 2));
+
+            expect(interest.hasPending()).toBe(false);
+        });
     });
 });
