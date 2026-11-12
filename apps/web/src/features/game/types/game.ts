@@ -72,6 +72,9 @@ export type GameEngineHandle = {
     walkToPerson: (userId: string) => boolean;
     // Walks to the reach of an object that embeds a website.
     walkToWebsite: (objectId: string) => boolean;
+    // Whether a person is drawn and within the reach of an emote, which is
+    // where a wave can reach them.
+    isPersonNear: (userId: string) => boolean;
     // Lets go of the person selected by a click, with their outline.
     clearPersonSelection: () => void;
 };

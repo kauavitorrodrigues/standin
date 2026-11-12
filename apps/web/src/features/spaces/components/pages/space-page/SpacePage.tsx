@@ -16,6 +16,7 @@ import { WalkChip } from "@/features/game/components/WalkChip";
 import { ZoneLabel } from "@/features/game/components/ZoneLabel";
 import { useMapRender } from "@/features/game/queries/useMapRender";
 import { useWalkState } from "@/features/game/hooks/useWalkState";
+import { useWaveToasts } from "@/features/emotes/hooks/useWaveToasts";
 import { useSelectedPerson } from "@/features/game/hooks/useSelectedPerson";
 import { WalkToPersonChip } from "@/features/game/components/WalkToPersonChip";
 import { describeWalk } from "@/features/game/utils/describeWalk";
@@ -157,6 +158,8 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         video,
         sendEmote,
         sendConfetti,
+        sendWave,
+        waveActivity,
         setDancing,
         sendNearbyMessage,
         sendNearbyTyping,
@@ -237,6 +240,12 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
         user.id,
         peopleById
     );
+    // Waving needs the game, which the card does without while it loads.
+    const personWave = handle && {
+        isPersonNear: handle.isPersonNear,
+        onWave: sendWave,
+        activity: waveActivity,
+    };
     useLocalAvatarSheet(handle?.game ?? null);
     const avatars = new Map(members.map((m) => [m.id, m.profilePictureUrl]));
     useLocalUserProfile(handle?.game ?? null, {
@@ -262,6 +271,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
     const isOfficeView =
         stageView === STAGE_VIEWS.OFFICE && view === SPACE_VIEWS.SPACE;
     useLowerHandOutsideGrid({ handRaise, isGridView });
+    useWaveToasts({ activity: waveActivity, personOf: (id) => peopleById.get(id) });
     useHandRaiseToasts({
         hands: handRaise.hands,
         personOf: (userId) => peopleById.get(userId),
@@ -436,6 +446,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                                 {selectedPerson && (
                                     <PersonProfileCard
                                         person={selectedPerson}
+                                        wave={personWave}
                                         onClose={() =>
                                             handle?.clearPersonSelection()
                                         }

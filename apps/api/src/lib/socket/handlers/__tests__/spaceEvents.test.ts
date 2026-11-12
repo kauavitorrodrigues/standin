@@ -1,13 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { neighborsMock, getMock, settingsMock } = vi.hoisted(() => ({
-    neighborsMock: vi.fn(),
-    getMock: vi.fn(),
-    settingsMock: vi.fn(),
-}));
+const { neighborsMock, getMock, settingsMock, socketsOfUserMock } = vi.hoisted(
+    () => ({
+        socketsOfUserMock: vi.fn(),
+        neighborsMock: vi.fn(),
+        getMock: vi.fn(),
+        settingsMock: vi.fn(),
+    })
+);
 
 vi.mock("../../realtime/SpaceInterests", () => ({
     SpaceInterests: { neighbors: neighborsMock, get: getMock },
+}));
+
+vi.mock("../../presence/PresenceStore", () => ({
+    PresenceStore: { findSocketIdsOfUser: socketsOfUserMock },
 }));
 
 vi.mock("../../services/resolveSpaceSettings", () => ({
@@ -21,7 +28,7 @@ const createSocket = () => {
     const handlers = new Map<string, (payload: unknown) => unknown>();
     return {
         id: "sender",
-        data: { spaceId: "space-1" },
+        data: { spaceId: "space-1", userId: "user-sender" },
         on: (event: string, handler: (payload: unknown) => unknown) => {
             handlers.set(event, handler);
         },
@@ -42,6 +49,7 @@ describe("registerSpaceEvents", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         RoomStates.clear();
+        getMock.mockReset();
         neighborsMock.mockReturnValue(["near-1", "near-2"]);
         settingsMock.mockResolvedValue({ enableSendNearbyInMapView: true });
     });
@@ -103,6 +111,60 @@ describe("registerSpaceEvents", () => {
         registerSpaceEvents(io as never, socket as never);
 
         socket.handlers.get("space:confetti")?.("party");
+
+        expect(to).not.toHaveBeenCalled();
+    });
+
+    it("sends a wave only to the sockets of the target that are near", () => {
+        neighborsMock.mockReturnValue(["near-1", "near-2"]);
+        socketsOfUserMock.mockReturnValue(["near-2", "far-9"]);
+        const socket = createSocket();
+        const { io, to, emit } = createIo();
+        registerSpaceEvents(io as never, socket as never);
+
+        socket.handlers.get("space:wave")?.({ targetUserId: "user-2" });
+
+        expect(socketsOfUserMock).toHaveBeenCalledWith("space-1", "user-2");
+        expect(to).toHaveBeenCalledWith(["near-2"]);
+        expect(emit).toHaveBeenCalledWith("space:wave", {
+            socketId: "sender",
+        });
+    });
+
+    it("drops a wave to a target who is far or offline", () => {
+        socketsOfUserMock.mockReturnValue(["far-9"]);
+        const socket = createSocket();
+        const { io, to } = createIo();
+        registerSpaceEvents(io as never, socket as never);
+
+        socket.handlers.get("space:wave")?.({ targetUserId: "user-2" });
+        socketsOfUserMock.mockReturnValue([]);
+        socket.handlers.get("space:wave")?.({ targetUserId: "user-3" });
+
+        expect(to).not.toHaveBeenCalled();
+    });
+
+    it("drops a wave from a person who is dancing", () => {
+        socketsOfUserMock.mockReturnValue(["near-1"]);
+        getMock.mockReturnValueOnce({ isDancing: true });
+        const socket = createSocket();
+        const { io, to } = createIo();
+        registerSpaceEvents(io as never, socket as never);
+
+        socket.handlers.get("space:wave")?.({ targetUserId: "user-2" });
+
+        expect(to).not.toHaveBeenCalled();
+    });
+
+    it("drops a wave to oneself or with a bad payload", () => {
+        socketsOfUserMock.mockReturnValue(["near-1"]);
+        const socket = createSocket();
+        const { io, to } = createIo();
+        registerSpaceEvents(io as never, socket as never);
+
+        socket.handlers.get("space:wave")?.({ targetUserId: "user-sender" });
+        socket.handlers.get("space:wave")?.({});
+        socket.handlers.get("space:wave")?.("hi");
 
         expect(to).not.toHaveBeenCalled();
     });

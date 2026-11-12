@@ -37,6 +37,11 @@ export const GameErrorMessages = {
             invalid: "The dancing state must be true or false.",
         },
     },
+    wave: {
+        targetUserId: {
+            invalid: "The person to wave to is invalid.",
+        },
+    },
     emote: {
         emoji: {
             invalid: "The emote must be a single emoji.",

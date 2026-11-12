@@ -86,6 +86,10 @@ export class SpaceChannel {
         this.transport.emit(SpaceEvents.SPACE_CONFETTI, {});
     }
 
+    sendWave(targetUserId: string): void {
+        this.transport.emit(SpaceEvents.SPACE_WAVE, { targetUserId });
+    }
+
     sendNearbyMessage(payload: SpaceNearbyMessageInput): void {
         this.transport.emit(SpaceEvents.SPACE_NEARBY_MESSAGE, payload);
     }

@@ -9,6 +9,10 @@ import { getSoundCatalog } from "@/features/sounds/lib/soundCatalog";
 import { getMapScene } from "@/features/game/utils/map";
 import { listAwayUserIds } from "@/features/users/utils/listAwayUserIds";
 import { EmoteSender } from "@/features/game/lib/EmoteSender";
+import { WAVE } from "@/features/emotes/consts/wave";
+import { WaveActivity } from "@/features/emotes/lib/WaveActivity";
+import { WaveGate } from "@/features/emotes/lib/WaveGate";
+import { playWaveSound } from "@/features/emotes/lib/playWaveSound";
 import { ConfettiThrottle } from "@/features/game/lib/ConfettiThrottle";
 import { SpaceChannel, type SpaceChannelTransport } from "../lib/SpaceChannel";
 import { SCENE_EVENTS } from "@/features/game/consts/scene-keys";
@@ -418,6 +422,22 @@ export function useSpaceConnection({
         (game ? getMapScene(game) : null)?.applyRemoteConfetti(socketId);
     });
 
+    // One sound per sender in a window, however often their wave arrives.
+    const waveSoundGateRef = useRef(new WaveGate(WAVE.SOUND_WINDOW_MS));
+    // Who waved at whom, read by the card of a person.
+    const [waveActivity] = useState(() => new WaveActivity());
+    useSocketEvent("space:wave", ({ socketId }) => {
+        const senderId = (game ? getMapScene(game) : null)?.applyRemoteWave(
+            socketId
+        );
+        if (!senderId) return;
+        waveActivity.markReceived(senderId);
+        if (!waveSoundGateRef.current.allow(senderId, performance.now()))
+            return;
+
+        playWaveSound();
+    });
+
     useSocketEvent("space:nearby-message", ({ socketId, text }) => {
         (game ? getMapScene(game) : null)?.applyRemoteNearbyMessage(socketId, {
             text,
@@ -694,6 +714,25 @@ export function useSpaceConnection({
         []
     );
 
+    // A wave goes to one person who is near, with a short wave over the local
+    // avatar and a sound. Waving at the same person again soon is ignored.
+    const waveCooldownRef = useRef(new WaveGate(WAVE.SEND_COOLDOWN_MS));
+    const sendWave = useCallback(
+        (targetUserId: string) => {
+            const scene = game ? getMapScene(game) : null;
+            if (!scene?.isPersonNear(targetUserId)) return;
+            if (scene.isLocalDancing) return;
+            if (!waveCooldownRef.current.allow(targetUserId, performance.now()))
+                return;
+
+            channel.sendWave(targetUserId);
+            waveActivity.markSent(targetUserId, performance.now());
+            scene.playLocalWave();
+            playWaveSound();
+        },
+        [channel, game, waveActivity]
+    );
+
     // A nearby message goes to the server and is shown at once on the local
     // avatar and in the list, since the server never sends it back. The text was
     // already validated by the form that sent it.
@@ -742,6 +781,8 @@ export function useSpaceConnection({
         sendEmote,
         setDancing,
         sendConfetti,
+        sendWave,
+        waveActivity,
         sendNearbyMessage,
         sendNearbyTyping,
         isSendNearbyEnabled: settings.enableSendNearbyInMapView,

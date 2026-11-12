@@ -53,4 +53,13 @@ describe("applyRateLimit", () => {
 
         expect(next).not.toHaveBeenCalled();
     });
+
+    it("drops a wave flood past its burst, below the fallback limit", () => {
+        const send = setup();
+
+        for (let i = 0; i < 4; i++) send(["space:wave", {}]);
+        const next = send(["space:wave", {}]);
+
+        expect(next).not.toHaveBeenCalled();
+    });
 });

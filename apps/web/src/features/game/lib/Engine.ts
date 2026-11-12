@@ -174,6 +174,8 @@ export const createGameEngine = ({
             getMapScene(game)?.walkToPerson(userId) ?? false,
         walkToWebsite: (objectId) =>
             getMapScene(game)?.walkToWebsite(objectId) ?? false,
+        isPersonNear: (userId) =>
+            getMapScene(game)?.isPersonNear(userId) ?? false,
         clearPersonSelection: () => getMapScene(game)?.clearRemoteSelection(),
     };
 };
