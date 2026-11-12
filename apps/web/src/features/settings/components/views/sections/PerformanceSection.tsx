@@ -1,3 +1,4 @@
+import { PerformanceLevelSelect } from "../../instances/PerformanceLevelSelect";
 import { PerformanceSettingsSelect } from "../../instances/PerformanceSettingsSelect";
 import { ReduceMotionSwitch } from "../../instances/ReduceMotionSwitch";
 import { SettingsGroup } from "../../layout/SettingsGroup";
@@ -5,6 +6,14 @@ import { SettingsRow } from "../../layout/SettingsRow";
 
 export const PerformanceSection = () => (
     <>
+        <SettingsGroup label="Nível">
+            <SettingsRow
+                title="Nível de desempenho"
+                description="Ajusta o limite de quadros e as animações de uma vez. Mudar uma opção abaixo passa o nível para Personalizado"
+            >
+                <PerformanceLevelSelect />
+            </SettingsRow>
+        </SettingsGroup>
         <SettingsGroup label="Jogo">
             <SettingsRow
                 title="Limite de quadros"
