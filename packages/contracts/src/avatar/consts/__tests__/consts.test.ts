@@ -11,7 +11,11 @@ import {
     AVATAR_SHEET_SLOTS,
 } from "../dimensions";
 import { AVATAR_COLOR_PATTERN } from "../color";
-import { AVATAR_PARTS_PAGE, AVATAR_RANDOM_CHANCE } from "../limits";
+import {
+    AVATAR_PARTS_PAGE,
+    AVATAR_RANDOM_ESSENTIAL_SLOTS,
+    AVATAR_RANDOM_EXTRA_CHANCE,
+} from "../limits";
 import { AVATAR_SLOT_ORDER, AVATAR_SLOT_TABS } from "../slot-order";
 
 // The sheet has these poses only facing down, so every direction shares them.
@@ -80,7 +84,8 @@ describe("dimensions", () => {
 
                     // The sheet only has the emote facing down, so every
                     // direction shows that one, and the dance reuses it.
-                    const isShared = SHARED_FRAME_ANIMATIONS.includes(animation);
+                    const isShared =
+                        SHARED_FRAME_ANIMATIONS.includes(animation);
                     const expected = [direction, PLAYER_DIRECTIONS.DOWN];
                     expect(slot.direction).toBe(expected[Number(isShared)]);
                     expect(allowed).toContain(slot.kind);
@@ -137,10 +142,15 @@ describe("color", () => {
 });
 
 describe("limits", () => {
-    it("has a chance from 0 to 1 per slot", () => {
-        for (const slot of AVATAR_SLOT_VALUES) {
-            expect(AVATAR_RANDOM_CHANCE[slot]).toBeGreaterThanOrEqual(0);
-            expect(AVATAR_RANDOM_CHANCE[slot]).toBeLessThanOrEqual(1);
+    it("has an extra chance from 0 to 1", () => {
+        expect(AVATAR_RANDOM_EXTRA_CHANCE).toBeGreaterThan(0);
+        expect(AVATAR_RANDOM_EXTRA_CHANCE).toBeLessThan(1);
+    });
+
+    it("never lists the costume as an essential slot", () => {
+        expect(AVATAR_RANDOM_ESSENTIAL_SLOTS).not.toContain("COSTUME");
+        for (const slot of AVATAR_RANDOM_ESSENTIAL_SLOTS) {
+            expect(AVATAR_SLOT_VALUES).toContain(slot);
         }
     });
 

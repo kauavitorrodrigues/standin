@@ -13,17 +13,15 @@ export const AVATAR_PARTS_PAGE = { default: 24, max: 60 } as const;
 // How many sheets the server assembles at the same time.
 export const AVATAR_ASSEMBLY_CONCURRENCY = 2;
 
-// Chance of each slot being filled by `randomAvatarConfig`, from 0 to 1.
-export const AVATAR_RANDOM_CHANCE: Record<AvatarSlot, number> = {
-    [AVATAR_SLOTS.SKIN]: 1,
-    [AVATAR_SLOTS.HAIR]: 0.9,
-    [AVATAR_SLOTS.FACIAL_HAIR]: 0.25,
-    [AVATAR_SLOTS.TOP]: 0.9,
-    [AVATAR_SLOTS.JACKET]: 0.3,
-    [AVATAR_SLOTS.BOTTOM]: 0.9,
-    [AVATAR_SLOTS.SHOES]: 0.8,
-    [AVATAR_SLOTS.HAT]: 0.2,
-    [AVATAR_SLOTS.GLASSES]: 0.25,
-    [AVATAR_SLOTS.OTHER]: 0.15,
-    [AVATAR_SLOTS.COSTUME]: 0.03,
-};
+// Slots a random avatar always draws again. The rest keep what the person has
+// unless they win the extra chance. COSTUME is never drawn.
+export const AVATAR_RANDOM_ESSENTIAL_SLOTS: readonly AvatarSlot[] = [
+    AVATAR_SLOTS.SKIN,
+    AVATAR_SLOTS.HAIR,
+    AVATAR_SLOTS.TOP,
+    AVATAR_SLOTS.BOTTOM,
+    AVATAR_SLOTS.SHOES,
+];
+
+// Chance, from 0 to 1, that a slot that is not essential is drawn again.
+export const AVATAR_RANDOM_EXTRA_CHANCE = 0.25;
