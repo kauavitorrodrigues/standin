@@ -2003,6 +2003,14 @@ export class MapScene extends Phaser.Scene {
         this.nearbyStore?.setTyping(userId, isTyping);
     }
 
+    // Who is away, by user id. Their avatars stay where they were, with the
+    // moon on the tag.
+    private awayUserIds: ReadonlySet<string> = new Set();
+
+    setAwayUserIds(userIds: ReadonlySet<string>): void {
+        this.awayUserIds = userIds;
+    }
+
     // The chat icon in the name tag of whoever is writing a nearby message.
     private updateTypingMarks(): void {
         const { nearbyStore } = this;
@@ -2020,9 +2028,9 @@ export class MapScene extends Phaser.Scene {
         userId: string,
         socketId: string
     ): void => {
-        this.remoteAvatars
-            .get(socketId)
-            ?.setTyping(this.nearbyStore?.isTyping(userId) ?? false);
+        const avatar = this.remoteAvatars.get(socketId);
+        avatar?.setTyping(this.nearbyStore?.isTyping(userId) ?? false);
+        avatar?.setAway(this.awayUserIds.has(userId));
     };
 
     // The avatar of a person for the bubble: the local one, or the first remote

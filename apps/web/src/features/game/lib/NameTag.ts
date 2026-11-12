@@ -31,6 +31,7 @@ export class NameTag {
     private name = "";
     private isAllowed = true;
     private isTyping = false;
+    private isAway = false;
 
     constructor({ scene, isLocal, target }: Params) {
         this.baseLayer = isLocal
@@ -76,6 +77,15 @@ export class NameTag {
 
         this.isTyping = isTyping;
         this.overlay.setProps(this.id, { isTyping });
+    }
+
+    // The moon in place of the dot, while the person is away.
+    setAway(isAway: boolean): void {
+        // Called for every avatar on every frame, like the typing mark.
+        if (isAway === this.isAway) return;
+
+        this.isAway = isAway;
+        this.overlay.setProps(this.id, { isAway });
     }
 
     // The tag was clicked: the photo shows, it glows, and it draws over the

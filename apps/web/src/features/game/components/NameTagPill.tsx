@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { MessageCircleIcon } from "lucide-react";
+import { MessageCircleIcon, MoonIcon } from "lucide-react";
 import { NAME_TAG } from "@/features/game/consts/name-tag";
 import { truncateName } from "@/features/game/utils/truncateName";
 import { UserAvatar } from "@/features/users/components/UserAvatar";
@@ -17,6 +17,9 @@ export type NameTagPillProps = {
     // The person is writing a nearby message: the chat icon takes the place of
     // the dot. With the photo shown there is no dot, so nothing changes.
     isTyping?: boolean;
+    // The person is away: their avatar stands still where it was, and the moon
+    // takes the place of the dot.
+    isAway?: boolean;
 };
 
 const getBackgroundColor = (isLocal: boolean): string =>
@@ -33,6 +36,7 @@ export const NameTagPill = ({
     userId,
     profilePictureUrl,
     isTyping = false,
+    isAway = false,
 }: NameTagPillProps) => {
     const backgroundColor = getBackgroundColor(isLocal);
     const boxStyle: CSSProperties = {
@@ -72,9 +76,10 @@ export const NameTagPill = ({
                         name={name}
                         profilePictureUrl={profilePictureUrl}
                         ringColor={backgroundColor}
+                        isAway={isAway}
                     />
                 ) : (
-                    <NameTagStatus isTyping={isTyping} />
+                    <NameTagStatus isTyping={isTyping} isAway={isAway} />
                 )}
                 <span
                     title={name}
@@ -105,6 +110,7 @@ type NameTagPhotoProps = {
     profilePictureUrl: string | null;
     // The ring that cuts the online badge out of the photo.
     ringColor: string;
+    isAway: boolean;
 };
 
 // The photo of the person with the small online badge on its corner.
@@ -113,6 +119,7 @@ const NameTagPhoto = ({
     name,
     profilePictureUrl,
     ringColor,
+    isAway,
 }: NameTagPhotoProps) => (
     <span
         style={{
@@ -138,16 +145,34 @@ const NameTagPhoto = ({
                 height: NAME_TAG.PHOTO_BADGE_SIZE,
                 boxSizing: "content-box",
                 borderRadius: "50%",
-                backgroundColor: NAME_TAG.DOT_COLOR,
+                backgroundColor: isAway
+                    ? NAME_TAG.AWAY_DOT_COLOR
+                    : NAME_TAG.DOT_COLOR,
                 border: `1px solid ${ringColor}`,
             }}
         />
     </span>
 );
 
-// The mark before the name when there is no photo: the green dot, or the chat
-// icon while the person writes a nearby message.
-const NameTagStatus = ({ isTyping }: { isTyping: boolean }) => {
+// The mark before the name when there is no photo: the green dot, the moon
+// while the person is away, or the chat icon while they write a nearby message.
+const NameTagStatus = ({
+    isTyping,
+    isAway,
+}: {
+    isTyping: boolean;
+    isAway: boolean;
+}) => {
+    if (isAway) {
+        return (
+            <MoonIcon
+                aria-hidden
+                size={NAME_TAG.TYPING_ICON_SIZE}
+                style={{ flexShrink: 0 }}
+            />
+        );
+    }
+
     if (isTyping) {
         return (
             <MessageCircleIcon
