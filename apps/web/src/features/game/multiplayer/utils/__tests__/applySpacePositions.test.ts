@@ -72,11 +72,34 @@ describe("applySpacePositions", () => {
         expect(state.inSight.get("sock-a")).toMatchObject({ x: 11, y: 21 });
     });
 
+    it("passes the teleport count of a moved position on", () => {
+        const target = build();
+        const state = buildState();
+        state.shortIds.set(1, "sock-a");
+
+        applySpacePositions(
+            { entered: [], moved: [[1, 11, 21, 49]], left: [] },
+            state,
+            target
+        );
+
+        expect(target.applyRemotePosition).toHaveBeenCalledWith(
+            "sock-a",
+            expect.objectContaining({ teleportCount: 3 })
+        );
+    });
+
     it("removes the avatar on left and forgets the short id and the sighting", () => {
         const target = build();
         const state = buildState();
         state.shortIds.set(1, "sock-a");
-        state.inSight.set("sock-a", { x: 1, y: 1, direction: "up", isSitting: false, isDancing: false });
+        state.inSight.set("sock-a", {
+            x: 1,
+            y: 1,
+            direction: "up",
+            isSitting: false,
+            isDancing: false,
+        });
 
         applySpacePositions(
             { entered: [], moved: [], left: [1, 2] },

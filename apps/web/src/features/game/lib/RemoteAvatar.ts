@@ -71,14 +71,14 @@ export class RemoteAvatar {
     // records the snapshot; update() (called every frame from MapScene)
     // interpolates the game object linearly from where it is drawn to it, over
     // the time the snapshots are apart.
-    move(x: number, y: number): void {
+    move(x: number, y: number, teleportCount = 0): void {
         if (!this.hasReceivedPosition) {
             this.hasReceivedPosition = true;
             this.glide.snapTo(x, y);
             this.gameObject.setPosition(x, y);
         }
 
-        this.glide.push(x, y, this.gameObject.scene.time.now);
+        this.glide.push(x, y, this.gameObject.scene.time.now, teleportCount);
     }
 
     // delta is Phaser's per-frame delta in milliseconds.

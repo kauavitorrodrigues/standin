@@ -21,7 +21,8 @@ const isSamePosition = (a: PlayerPosition, b: PlayerPosition): boolean =>
     Math.round(a.y) === Math.round(b.y) &&
     a.direction === b.direction &&
     a.isSitting === b.isSitting &&
-    a.isDancing === b.isDancing;
+    a.isDancing === b.isDancing &&
+    (a.teleportCount ?? 0) === (b.teleportCount ?? 0);
 
 // What the client says to the server inside a space: where the avatar is, and
 // the discrete things (emote, nearby message, typing). The server decides who
