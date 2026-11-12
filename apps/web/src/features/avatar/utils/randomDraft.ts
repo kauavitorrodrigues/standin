@@ -12,9 +12,8 @@ export type RandomPool = {
     items: readonly AvatarCategoryPartItem[];
 };
 
-// What `randomAvatarConfig` draws from: the parts already fetched of each
-// category, in the order of the editor. A random avatar only uses the first
-// page of each category, so it never walks a whole list.
+// What `randomAvatarConfig` draws from: every part of each category, in
+// the order of the editor.
 export const buildRandomCatalog = (
     pools: readonly RandomPool[],
     baseId: string | null
@@ -29,14 +28,22 @@ export const buildRandomCatalog = (
 });
 
 // Turns the random config into the parts of the draft, with the sheets the
-// preview needs. A part that is not in the pools is skipped.
+// preview needs. A part the draft already has keeps its choice, so one that
+// is no longer in the list (a deleted part) is not lost. Any other part that
+// is not in the pools is skipped.
 export const buildRandomParts = (
     parts: readonly AvatarConfigPart[],
-    pools: readonly RandomPool[]
+    pools: readonly RandomPool[],
+    current: DraftPartsBySlot = createEmptyParts()
 ): DraftPartsBySlot => {
     const next = createEmptyParts();
 
     for (const part of parts) {
+        const kept = current[part.slot];
+        if (kept?.partId === part.partId) {
+            next[part.slot] = kept;
+            continue;
+        }
         const pool = pools.find((entry) => entry.slot === part.slot);
         for (const item of pool?.items ?? []) {
             const variation = item.variations.find(
