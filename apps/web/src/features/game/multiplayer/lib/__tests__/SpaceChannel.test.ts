@@ -120,4 +120,18 @@ describe("SpaceChannel", () => {
             "chat:typing",
         ]);
     });
+
+    it("sends a position whose only change is a teleport", () => {
+        const { channel, emit, volatileEmit, advance } = build();
+        channel.sendPosition(position);
+        advance(200);
+
+        channel.sendPosition({ ...position, teleportCount: 1 });
+
+        expect(emit).toHaveBeenCalledTimes(1);
+        expect(volatileEmit).toHaveBeenCalledWith("space:position", {
+            ...position,
+            teleportCount: 1,
+        });
+    });
 });

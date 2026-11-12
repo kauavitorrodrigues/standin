@@ -13,6 +13,7 @@ import {
     type RoomDoorState,
     type ProximityPreset,
     DEFAULT_PROXIMITY_PRESET,
+    SPACE_TELEPORT_COUNT_MAX,
 } from "@standin/contracts";
 import {
     GAME_SCENE_KEYS,
@@ -61,7 +62,9 @@ import { buildZoneAreas } from "@/features/game/utils/buildZoneAreas";
 import { findAreaGoals } from "@/features/game/utils/findAreaGoals";
 import type { HoverState, HoverTarget } from "@/features/game/types/hover";
 import { TileCursor } from "@/features/game/lib/TileCursor";
+import { teleportWhenBlockedPreference } from "@/features/game/lib/teleportWhenBlockedPreference";
 import { findPath, getStandingPoint } from "@/features/game/utils/findPath";
+import { planTeleport } from "@/features/game/utils/planTeleport";
 import {
     getCellAt,
     getCellCenter,
@@ -305,7 +308,11 @@ export class MapScene extends Phaser.Scene {
         direction: PLAYER_DIRECTIONS.DOWN,
         isSitting: false,
         isDancing: false,
+        teleportCount: 0,
     };
+    // Goes up on each teleport and wraps, sent with the position so the others
+    // show the jump at once even if a message is lost.
+    private teleportCount = 0;
     private readonly remoteHoverPool = new Map<string, HoverTarget>();
     private emoteParticles: EmoteParticles | null = null;
     private confettiParticles: ConfettiParticles | null = null;
@@ -1071,12 +1078,43 @@ export class MapScene extends Phaser.Scene {
             (area !== null && this.startWalkToArea(area, world)) ||
             this.startWalk(goal);
         if (!isStarted) {
+            if (this.teleportToCell(goal)) return;
             this.game.events.emit(WALK_EVENTS.FAILED);
             return;
         }
 
         player.standUp();
         this.cameraController?.recenterOn(player.gameObject);
+    }
+
+    // Jumps to the tile that was clicked when no walk has a way there. Only
+    // when the person allows it and the tile is open, outside what is
+    // forbidden and in reach. The position goes out like any other, so the
+    // others see the jump. False leaves things as they were.
+    private teleportToCell(goal: Cell): boolean {
+        const { player } = this;
+        if (!player || !teleportWhenBlockedPreference.get()) return false;
+
+        const isBlocked = this.getSolidIndex(0);
+        const target = planTeleport({
+            goal,
+            origin: getCellAt(player),
+            isOpen: (cell) => this.isCellWalkable(cell, 0),
+            isForbidden: (cell) => this.isForbiddenTile(cell),
+        });
+        if (!target) return false;
+
+        const point = getStandingPoint(target, (spot) => !isBlocked(spot));
+        if (!point) return false;
+
+        this.pathWalker.cancel();
+        this.tileMover?.cancel();
+        player.standUp();
+        player.teleportTo(point.x, point.y);
+        this.teleportCount =
+            (this.teleportCount + 1) % (SPACE_TELEPORT_COUNT_MAX + 1);
+        this.cameraController?.recenterOn(player.gameObject);
+        return true;
     }
 
     // Who holds which desk, from the page. The desk of the person is where
@@ -1750,7 +1788,7 @@ export class MapScene extends Phaser.Scene {
         const avatar = this.remoteAvatars.get(socketId);
         if (!avatar) return;
 
-        avatar.move(position.x, position.y);
+        avatar.move(position.x, position.y, position.teleportCount);
         avatar.updateAnimation(position.direction);
         avatar.setSitting(position.isSitting);
         avatar.setDancing(position.isDancing);
@@ -2087,6 +2125,7 @@ export class MapScene extends Phaser.Scene {
         position.direction = this.player.direction;
         position.isSitting = this.player.isSitting;
         position.isDancing = this.player.isDancing;
+        position.teleportCount = this.teleportCount;
         this.broadcastLocalPosition(position);
     }
 

@@ -11,6 +11,10 @@ export type PlayerPosition = {
     // Held while the key is down. Replicated with the position, so whoever
     // comes into sight later gets it with the rest.
     isDancing: boolean;
+    // How many times the person jumped (teleported), from 0 to
+    // SPACE_TELEPORT_COUNT_MAX and then around. A state and not an event, so a
+    // lost position still shows the jump on the next one. Left out means 0.
+    teleportCount?: number;
 };
 
 export type RemotePlayer = {

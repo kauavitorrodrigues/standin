@@ -43,7 +43,7 @@ export function registerSpacePosition(socket: Socket) {
         const parsed = SpacePositionSchema.safeParse(payload);
         if (!parsed.success) return;
 
-        const { x, y, direction, isSitting } = parsed.data;
+        const { x, y, direction, isSitting, teleportCount } = parsed.data;
         const next = { x: Math.round(x), y: Math.round(y) };
         const previous = SpaceInterests.get(spaceId, socket.id);
         const wantsToDance = parsed.data.isDancing;
@@ -61,6 +61,7 @@ export function registerSpacePosition(socket: Socket) {
             direction,
             isSitting,
             isDancing,
+            teleportCount,
         });
         trackDanceCap(spaceId, socket.id, isDancing);
         // The people around the one who moved may now hear or see them, or

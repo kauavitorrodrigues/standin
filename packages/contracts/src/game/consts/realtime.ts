@@ -20,6 +20,11 @@ export const SPACE_TICK_MS = 100;
 // sending numbers that break the grid of the server.
 export const SPACE_MAX_COORDINATE_PX = 100_000;
 
+// A counter that goes up by one on each jump of an avatar (a teleport) and
+// wraps after this value. Others compare it with the last one they saw to show
+// the jump at once, so it only has to differ from one position to the next.
+export const SPACE_TELEPORT_COUNT_MAX = 255;
+
 // What the connection that lives for the whole signed-in session says about
 // itself in the handshake, so the server sends it the app notifications.
 export const SOCKET_APP_CHANNEL = "app";

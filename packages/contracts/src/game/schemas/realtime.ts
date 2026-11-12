@@ -8,7 +8,10 @@ import {
     EMOTE_MAX_LENGTH,
 } from "../consts/emote";
 import { NEARBY_MESSAGE_RECEIVE_MAX_LENGTH } from "../consts/nearby-message";
-import { SPACE_MAX_COORDINATE_PX } from "../consts/realtime";
+import {
+    SPACE_MAX_COORDINATE_PX,
+    SPACE_TELEPORT_COUNT_MAX,
+} from "../consts/realtime";
 import { GameErrorMessages } from "./consts/error-messages";
 
 const coordinate = z
@@ -33,6 +36,14 @@ export const SpacePositionSchema = z.object({
     isDancing: z
         .boolean({ error: GameErrorMessages.position.isDancing.invalid })
         .default(false),
+    // Only a look: a missing or bad value reads as 0 and never rejects the
+    // position.
+    teleportCount: z
+        .number()
+        .int()
+        .min(0)
+        .max(SPACE_TELEPORT_COUNT_MAX)
+        .catch(0),
 });
 
 export const SpaceEmoteSchema = z.object({

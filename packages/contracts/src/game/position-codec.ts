@@ -1,3 +1,4 @@
+import { SPACE_TELEPORT_COUNT_MAX } from "./consts/realtime";
 import { PLAYER_DIRECTIONS, type PlayerDirection } from "./enums/player";
 import type { PlayerPosition } from "./types/player";
 
@@ -26,15 +27,28 @@ const DIRECTION_ORDER: PlayerDirection[] = [
 const DIRECTION_MASK = 0b11;
 const SITTING_BIT = 0b100;
 const DANCING_BIT = 0b1000;
+// The jump counter sits above the bits of the state, so a receiver that does
+// not know it reads the same direction and bits and only sees a larger number.
+const TELEPORT_SHIFT = 4;
+
+// A count the wire can carry: a whole number from 0 to the maximum, or 0.
+const sanitizeTeleportCount = (count: number | undefined): number => {
+    if (count === undefined || !Number.isInteger(count)) return 0;
+    if (count < 0 || count > SPACE_TELEPORT_COUNT_MAX) return 0;
+    return count;
+};
 
 export const encodePositionFlags = (
     direction: PlayerDirection,
     isSitting: boolean,
-    isDancing: boolean
+    isDancing: boolean,
+    teleportCount?: number
 ): number => {
     const index = DIRECTION_ORDER.indexOf(direction);
     const stateBits =
-        Number(isDancing) * DANCING_BIT + Number(isSitting) * SITTING_BIT;
+        Number(isDancing) * DANCING_BIT +
+        Number(isSitting) * SITTING_BIT +
+        sanitizeTeleportCount(teleportCount) * (1 << TELEPORT_SHIFT);
     // A direction the order does not know reads as right, like the decoder.
     if (index < 0) return stateBits | 1;
 
@@ -43,10 +57,15 @@ export const encodePositionFlags = (
 
 export const decodePositionFlags = (
     flags: number
-): Pick<PlayerPosition, "direction" | "isSitting" | "isDancing"> => ({
-    direction: DIRECTION_ORDER[flags & DIRECTION_MASK] ?? PLAYER_DIRECTIONS.DOWN,
+): Pick<
+    PlayerPosition,
+    "direction" | "isSitting" | "isDancing" | "teleportCount"
+> => ({
+    direction:
+        DIRECTION_ORDER[flags & DIRECTION_MASK] ?? PLAYER_DIRECTIONS.DOWN,
     isSitting: (flags & SITTING_BIT) !== 0,
     isDancing: (flags & DANCING_BIT) !== 0,
+    teleportCount: sanitizeTeleportCount(flags >> TELEPORT_SHIFT),
 });
 
 export const encodePosition = (
@@ -59,7 +78,8 @@ export const encodePosition = (
     encodePositionFlags(
         position.direction,
         position.isSitting,
-        position.isDancing
+        position.isDancing,
+        position.teleportCount
     ),
 ];
 
@@ -69,13 +89,18 @@ export const encodeEnteredPosition = (
     position: PlayerPosition
 ): EnteredTuple => [...encodePosition(shortId, position), socketId];
 
+// A count of 0 is left out, which is how a position without one reads.
 export const decodePosition = (
     tuple: PositionTuple | EnteredTuple
-): { shortId: number; position: PlayerPosition } => ({
-    shortId: tuple[0],
-    position: {
-        x: tuple[1],
-        y: tuple[2],
-        ...decodePositionFlags(tuple[3]),
-    },
-});
+): { shortId: number; position: PlayerPosition } => {
+    const { teleportCount = 0, ...state } = decodePositionFlags(tuple[3]);
+    return {
+        shortId: tuple[0],
+        position: {
+            x: tuple[1],
+            y: tuple[2],
+            ...state,
+            ...(teleportCount > 0 ? { teleportCount } : {}),
+        },
+    };
+};

@@ -1,5 +1,7 @@
 import { ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MOVEMENT_MESSAGES } from "../../../consts/movementMessages";
+import { TeleportWhenBlockedSwitch } from "../../instances/TeleportWhenBlockedSwitch";
 import { ThemeSelector } from "../../instances/ThemeSelector";
 import { SettingsGroup } from "../../layout/SettingsGroup";
 import { SettingsRow } from "../../layout/SettingsRow";
@@ -25,6 +27,14 @@ export const GeneralSection = () => (
                 description="Escolha entre claro, escuro ou o padrão do sistema"
             >
                 <ThemeSelector />
+            </SettingsRow>
+        </SettingsGroup>
+        <SettingsGroup label={MOVEMENT_MESSAGES.groupLabel}>
+            <SettingsRow
+                title={MOVEMENT_MESSAGES.teleportTitle}
+                description={MOVEMENT_MESSAGES.teleportDescription}
+            >
+                <TeleportWhenBlockedSwitch />
             </SettingsRow>
         </SettingsGroup>
     </>

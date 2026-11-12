@@ -1,4 +1,4 @@
-import { SPACE_TICK_MS } from "@standin/contracts";
+import { SPACE_TICK_MS, TILE_SIZE } from "@standin/contracts";
 
 export const REMOTE_AVATAR_APPEARANCE = {
     // A remote avatar closer than this to the position it is gliding to counts
@@ -18,4 +18,13 @@ export const REMOTE_AVATAR_APPEARANCE = {
     // packets does not make it jump.
     MIN_SNAPSHOT_INTERVAL_MS: 50,
     MAX_SNAPSHOT_INTERVAL_MS: 250,
+    // A snapshot farther than this from the last one is a jump, not a step:
+    // the avatar appears there at once instead of gliding through whatever is
+    // in between. Walking at 220 px/s covers about 22 px per tick, so only a
+    // gap above roughly 0.4 s between snapshots counts as a jump, which is
+    // fine after a stall.
+    JUMP_FROM_TARGET_PX: 3 * TILE_SIZE,
+    // The same for the distance from where the avatar is drawn, which also
+    // catches a hidden tab, where the glide does not advance.
+    SNAP_DISTANCE_PX: 160,
 } as const;

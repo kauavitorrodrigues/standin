@@ -54,7 +54,44 @@ describe("registerSpacePosition", () => {
             direction: "up",
             isSitting: false,
             isDancing: false,
+            teleportCount: 0,
         });
+    });
+
+    describe("teleport count", () => {
+        it("keeps the count the client sent", () => {
+            const socket = createSocket("s1", "space-1");
+            registerSpacePosition(socket as any);
+
+            socket.fire("space:position", { ...position, teleportCount: 4 });
+
+            expect(SpaceInterests.get("space-1", "s1")?.teleportCount).toBe(4);
+        });
+
+        it("reads a missing count as 0", () => {
+            const socket = createSocket("s1", "space-1");
+            registerSpacePosition(socket as any);
+
+            socket.fire("space:position", position);
+
+            expect(SpaceInterests.get("space-1", "s1")?.teleportCount).toBe(0);
+        });
+
+        it.each([-1, 2.5, 1e9, "7"])(
+            "keeps the position when the count is %j",
+            (teleportCount) => {
+                const socket = createSocket("s1", "space-1");
+                registerSpacePosition(socket as any);
+
+                socket.fire("space:position", { ...position, teleportCount });
+
+                expect(SpaceInterests.get("space-1", "s1")).toMatchObject({
+                    x: 10,
+                    y: 21,
+                    teleportCount: 0,
+                });
+            }
+        );
     });
 
     describe("dancing", () => {

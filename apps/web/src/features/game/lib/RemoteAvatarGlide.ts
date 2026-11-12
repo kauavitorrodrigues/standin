@@ -18,6 +18,8 @@ export class RemoteAvatarGlide {
     private durationMs: number =
         REMOTE_AVATAR_APPEARANCE.DEFAULT_SNAPSHOT_INTERVAL_MS;
     private lastSnapshotAt: number | null = null;
+    // The teleport count of the last snapshot, null before the first one.
+    private lastTeleportCount: number | null = null;
     // When the last snapshot that moved the peer arrived, null once it stopped.
     private lastMovedAt: number | null = null;
 
@@ -41,8 +43,24 @@ export class RemoteAvatarGlide {
         this.progress = 1;
     }
 
-    // A snapshot arrived: glide from where it is drawn to it.
-    push(x: number, y: number, now: number): void {
+    // A snapshot arrived: glide from where it is drawn to it. A teleport (the
+    // count of the peer changed since the last snapshot) is shown at once, and
+    // so is a jump farther than a walk can cover. The first snapshot only
+    // records the count: someone who comes into sight with a count above 0
+    // did not just teleport.
+    push(x: number, y: number, now: number, teleportCount = 0): void {
+        const hasTeleported =
+            this.lastTeleportCount !== null &&
+            this.lastTeleportCount !== teleportCount;
+        this.lastTeleportCount = teleportCount;
+
+        if (hasTeleported || this.isJump(x, y)) {
+            this.snapTo(x, y);
+            this.lastSnapshotAt = now;
+            this.lastMovedAt = null;
+            return;
+        }
+
         if (this.lastSnapshotAt !== null) {
             this.durationMs = resolveSnapshotInterval(
                 now - this.lastSnapshotAt
@@ -61,6 +79,16 @@ export class RemoteAvatarGlide {
         this.progress = 0;
         this.targetX = x;
         this.targetY = y;
+    }
+
+    private isJump(x: number, y: number): boolean {
+        const fromDrawn = Math.hypot(x - this.x, y - this.y);
+        if (fromDrawn > REMOTE_AVATAR_APPEARANCE.SNAP_DISTANCE_PX) return true;
+
+        // The first snapshot has no earlier one to be far from.
+        if (this.lastSnapshotAt === null) return false;
+        const fromTarget = Math.hypot(x - this.targetX, y - this.targetY);
+        return fromTarget > REMOTE_AVATAR_APPEARANCE.JUMP_FROM_TARGET_PX;
     }
 
     // delta is the frame time in milliseconds.
