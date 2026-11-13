@@ -2,6 +2,7 @@ import { Router } from "express";
 import { RequiresAuth } from "@/middlewares/requiresAuth";
 import { RequiresOrgMember } from "@/middlewares/requiresOrgMember";
 import { RequiresCreationAllowed } from "@/middlewares/requiresCreationAllowed";
+import { RequiresOrgOwner } from "@/middlewares/requiresOrgOwner";
 import { RequiresPermission } from "@/middlewares/requiresPermission";
 import { OrganizationController } from "./controllers";
 import { spacesRouter } from "../spaces/routes";
@@ -35,6 +36,21 @@ router.get(
     "/:organizationId/member-entries",
     RequiresInviteManager,
     OrganizationController.members.entries
+);
+
+// Only the owner removes someone, and the instance admin has no say inside an
+// organization it is not a member of. The service checks it again.
+router.delete(
+    "/:organizationId/members/:userId",
+    RequiresOrgMember,
+    RequiresOrgOwner,
+    OrganizationController.members.remove
+);
+
+router.post(
+    "/:organizationId/leave",
+    RequiresOrgMember,
+    OrganizationController.members.leave
 );
 
 router.put(

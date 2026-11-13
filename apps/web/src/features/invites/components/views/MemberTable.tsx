@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
     getCoreRowModel,
     useReactTable,
@@ -6,13 +7,15 @@ import {
 } from "@tanstack/react-table";
 import type { OrganizationMemberEntry } from "@standin/contracts";
 import { DataTable } from "@/components/data-table/DataTable";
-import { memberColumns } from "./memberColumns";
+import { getMemberColumns } from "./memberColumns";
 
 type Props = {
     members: OrganizationMemberEntry[];
     total: number;
     pagination: PaginationState;
     onPaginationChange: OnChangeFn<PaginationState>;
+    canRemove: boolean;
+    onRemove: (member: OrganizationMemberEntry) => void;
 };
 
 export const MemberTable = ({
@@ -20,10 +23,16 @@ export const MemberTable = ({
     total,
     pagination,
     onPaginationChange,
+    canRemove,
+    onRemove,
 }: Props) => {
+    const columns = useMemo(
+        () => getMemberColumns({ canRemove, onRemove }),
+        [canRemove, onRemove]
+    );
     const table = useReactTable({
         data: members,
-        columns: memberColumns,
+        columns,
         pageCount: Math.ceil(total / pagination.pageSize),
         manualPagination: true,
         getCoreRowModel: getCoreRowModel(),

@@ -25,7 +25,10 @@ describe("broadcastMemberDesksReleased", () => {
             { spaceId: "s2", mapAssetId: "desk-2", userId: "u1" },
         ]);
 
-        await broadcastMemberDesksReleased({ userId: "u1", organizationId: "org-1" });
+        await broadcastMemberDesksReleased({
+            userId: "u1",
+            organizationId: "org-1",
+        });
 
         expect(releaseMock).toHaveBeenCalledWith("u1", "org-1");
         expect(emitMock).toHaveBeenCalledTimes(2);
@@ -38,7 +41,25 @@ describe("broadcastMemberDesksReleased", () => {
 
     it("says nothing when the person held no desk", async () => {
         releaseMock.mockResolvedValue([]);
-        await broadcastMemberDesksReleased({ userId: "u1", organizationId: "org-1" });
+        await broadcastMemberDesksReleased({
+            userId: "u1",
+            organizationId: "org-1",
+        });
         expect(emitMock).not.toHaveBeenCalled();
+    });
+
+    it("announces the desks the removal already freed, without freeing again", async () => {
+        await broadcastMemberDesksReleased({
+            userId: "u1",
+            organizationId: "org-1",
+            freedDesks: [{ spaceId: "s1", mapAssetId: "desk-1", userId: "u1" }],
+        });
+
+        expect(releaseMock).not.toHaveBeenCalled();
+        expect(emitMock).toHaveBeenCalledWith(
+            buildSpaceRoom("s1"),
+            MapEvents.DESK_RELEASED,
+            { mapAssetId: "desk-1", userId: "u1" }
+        );
     });
 });

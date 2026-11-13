@@ -7,6 +7,7 @@ import {
     inArray,
     isNull,
 } from "@standin/database";
+import type { DbExecutor } from "../../../lib/types";
 import type { DeskChange } from "./types/desk-change";
 
 /**
@@ -19,9 +20,11 @@ import type { DeskChange } from "./types/desk-change";
  */
 export const releaseMemberDesks = async (
     userId: string,
-    organizationId: string
+    organizationId: string,
+    // The removal passes its transaction, so the desk is freed with it.
+    executor: DbExecutor = db
 ): Promise<DeskChange[]> =>
-    db
+    executor
         .update(deskAssignmentsTable)
         .set({ deletedAt: new Date() })
         .where(
@@ -30,7 +33,7 @@ export const releaseMemberDesks = async (
                 eq(deskAssignmentsTable.userId, userId),
                 inArray(
                     deskAssignmentsTable.spaceId,
-                    db
+                    executor
                         .select({ id: spacesTable.id })
                         .from(spacesTable)
                         .where(eq(spacesTable.organizationId, organizationId))

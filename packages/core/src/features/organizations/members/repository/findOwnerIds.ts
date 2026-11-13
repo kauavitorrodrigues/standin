@@ -1,4 +1,10 @@
-import { db, organizationMembersTable, and, eq, isNull } from "@standin/database";
+import {
+    db,
+    organizationMembersTable,
+    and,
+    eq,
+    isNull,
+} from "@standin/database";
 import { ORGANIZATION_MEMBER_ROLES } from "@standin/contracts";
 
 /** The active owners of an organization: who runs its invites. */

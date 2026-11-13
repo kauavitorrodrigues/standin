@@ -1,6 +1,8 @@
 import { findActiveOrganizationMembers } from "./findActive";
 import { listOrganizationMemberEntries } from "./listEntries";
 import { listActiveOrganizationMembersWithProfile } from "./listActiveWithProfile";
+import { leaveOrganization } from "./leave";
+import { removeOrganizationMember } from "./remove";
 import { OrganizationMemberRepository } from "./repository";
 import {
     onOrganizationMembersChanged,
@@ -19,7 +21,10 @@ export const OrganizationMemberService = {
     onRemoved: onOrganizationMemberRemoved,
     // For whatever ends a membership, once it is saved.
     publishRemoved: publishOrganizationMemberRemoved,
+    remove: removeOrganizationMember,
+    leave: leaveOrganization,
     findOwnerIds: OrganizationMemberRepository.findOwnerIds,
+    findActiveAmong: OrganizationMemberRepository.findActiveAmong,
     // Hook for the socket: runs after someone joins or an invitation changes.
     onChanged: onOrganizationMembersChanged,
     // For whatever adds a person or changes an invitation, once it is saved.

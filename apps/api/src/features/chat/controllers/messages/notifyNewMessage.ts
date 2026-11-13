@@ -10,8 +10,8 @@ import { SocketManager } from "@/lib/socket/socketManager";
 // The message itself reaches each recipient, so the conversation updates with
 // no fetch, and it carries that recipient's unread count for the conversation,
 // so the badge updates with no fetch either. The counts for the whole batch of
-// recipients come from two queries, so a message costs four queries however
-// many people hear it. Access was already checked by the route and by
+// recipients come from two queries, so a message costs a fixed handful of
+// queries however many people hear it. Access was already checked by the route and by
 // MessageService.create, so it is not checked again here. The sender hears
 // nothing. Best effort like notifyConversation: a failure is logged and
 // swallowed, and whoever misses it sees the change on the next fetch.

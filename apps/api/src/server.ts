@@ -3,7 +3,6 @@ import { GlobalSettingsService } from "@standin/core";
 import { createApp } from "./app";
 import { validateEnv } from "@/utils/validateEnv";
 import { createSocketServer } from "@/lib/socket/createSocketServer";
-import { registerIntegrationsCleanup } from "@/lib/integrations/registerIntegrationsCleanup";
 import { startLockSweeper } from "@/lib/socket/startLockSweeper";
 import { startGuestSweeper } from "@/lib/socket/startGuestSweeper";
 import { startListeningPoller } from "@/lib/socket/music/listening/startListeningPoller";
@@ -25,7 +24,6 @@ validateEnv([
 const server = createServer(createApp());
 
 createSocketServer(server);
-registerIntegrationsCleanup();
 
 const stopLockSweeper = startLockSweeper();
 const stopGuestSweeper = startGuestSweeper();

@@ -1,4 +1,4 @@
-import { SpaceNotFoundError } from "@standin/contracts";
+import { OrganizationEvents, SpaceNotFoundError } from "@standin/contracts";
 import type { OrganizationMemberRemoval } from "@standin/core";
 import { UserCache } from "@/features/auth/services/userCache";
 import { JoinAccessCache } from "./joinAccessCache";
@@ -26,7 +26,18 @@ const isSpaceOfOrganization = async (
 export const broadcastMemberRemoved = async ({
     userId,
     organizationId,
+    notice,
 }: OrganizationMemberRemoval): Promise<void> => {
+    // Every tab and device of the person hears it first, so it is on the wire
+    // before the sockets close.
+    if (notice) {
+        SocketManager.emitToUser(userId, OrganizationEvents.MEMBER_REMOVED, {
+            organizationId,
+            organizationName: notice.organizationName,
+            reason: notice.reason,
+        });
+    }
+
     UserCache.invalidate(userId);
     JoinAccessCache.invalidateUser(userId);
 
