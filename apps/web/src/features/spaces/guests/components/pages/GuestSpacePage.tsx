@@ -5,6 +5,7 @@ import { GameControls } from "@/features/game/components/GameControls";
 import { RoomHeader } from "@/features/game/components/RoomHeader";
 import { RoomJoinRequests } from "@/features/game/components/RoomJoinRequests";
 import { WalkChip } from "@/features/game/components/WalkChip";
+import { AmbientConversationLabel } from "@/features/ambient/components/AmbientConversationLabel";
 import { ZoneLabel } from "@/features/game/components/ZoneLabel";
 import { LockedDoorDialog } from "@/features/game/components/dialogs/LockedDoorDialog";
 import { SocketProvider } from "@/features/game/multiplayer/contexts/SocketContext";
@@ -191,6 +192,7 @@ function GuestSpaceContent({ space }: { space: SpaceView }) {
                     />
                     <LockedDoorDialog {...lockedDoor} />
                     <ZoneLabel handle={handle} />
+                    <AmbientConversationLabel handle={handle} />
                     <VideoStage
                         tiles={stageTiles}
                         isGridOpen={isGridOpen}

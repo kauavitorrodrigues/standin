@@ -13,6 +13,7 @@ import { GameCanvas } from "@/features/game/components/GameCanvas";
 import { GameControls } from "@/features/game/components/GameControls";
 import { RoomHeader } from "@/features/game/components/RoomHeader";
 import { WalkChip } from "@/features/game/components/WalkChip";
+import { AmbientConversationLabel } from "@/features/ambient/components/AmbientConversationLabel";
 import { ZoneLabel } from "@/features/game/components/ZoneLabel";
 import { useMapRender } from "@/features/game/queries/useMapRender";
 import { useWalkState } from "@/features/game/hooks/useWalkState";
@@ -397,6 +398,7 @@ function SpacePageContent({ space }: { space: SpaceDetails }) {
                     />
                     <LockedDoorDialog {...lockedDoor} />
                     <ZoneLabel handle={handle} />
+                    <AmbientConversationLabel handle={handle} />
                     <DeskHoverCard
                         handle={handle}
                         spaceId={space.id}

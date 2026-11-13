@@ -6,6 +6,7 @@ import { connectionReporter, socket } from "../socket";
 import { useSocketEvent } from "./useSocketEvent";
 import { DEFAULT_SPACE_SETTINGS, JOIN_TIMEOUT_MS } from "../consts/connection";
 import { getSoundCatalog } from "@/features/sounds/lib/soundCatalog";
+import { useAmbientSettingsPreference } from "@/features/ambient/hooks/useAmbientSettingsPreference";
 import { getMapScene } from "@/features/game/utils/map";
 import { listAwayUserIds } from "@/features/users/utils/listAwayUserIds";
 import { EmoteSender } from "@/features/game/lib/EmoteSender";
@@ -78,7 +79,8 @@ export function useSpaceConnection({
         DEFAULT_SPACE_SETTINGS
     );
 
-    const { proximityPreset } = settings;
+    const { proximityPreset, ambientRange } = settings;
+    const ambientSettings = useAmbientSettingsPreference();
 
     const {
         stream: localStream,
@@ -553,6 +555,7 @@ export function useSpaceConnection({
             );
             scene?.setLocalSocketIdProvider(() => socket.id ?? "");
             scene?.setProximityPreset(proximityPreset);
+            scene?.setAmbient(ambientRange, ambientSettings);
             scene?.setVolumeUpdater((socketId, volume) =>
                 remoteAudioManager.setVolume(socketId, volume)
             );
@@ -608,7 +611,22 @@ export function useSpaceConnection({
         setProximityGate,
         syncLocalSpeaking,
         proximityPreset,
+        ambientRange,
+        ambientSettings,
     ]);
+
+    // The speaking people tell the map which conversations are overheard.
+    useEffect(() => {
+        if (!game) return;
+
+        const apply = () =>
+            getMapScene(game)?.setSpeakingUsers(speakingUserIds);
+        apply();
+        game.events.on(SCENE_EVENTS.MAP_READY, apply);
+        return () => {
+            game.events.off(SCENE_EVENTS.MAP_READY, apply);
+        };
+    }, [game, speakingUserIds]);
 
     useEffect(() => {
         // Joining on "connect" (rather than right after calling connect())

@@ -4,6 +4,7 @@ export const SETTINGS_SECTION_IDS = [
     "video",
     "streaming",
     "notifications",
+    "ambient",
     "integrations",
     "performance",
     "members",

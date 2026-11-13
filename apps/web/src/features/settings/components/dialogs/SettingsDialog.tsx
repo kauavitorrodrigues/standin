@@ -22,7 +22,7 @@ export const SettingsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
             showCloseButton={false}
-            className="flex h-150 max-h-[calc(100%-2rem)] gap-0 overflow-hidden p-0 sm:max-w-225"
+            className="flex h-180 max-h-[calc(100%-3rem)] gap-0 overflow-hidden p-0 sm:max-w-240"
         >
             <SettingsContent space={space} initialSection={initialSection} />
         </DialogContent>

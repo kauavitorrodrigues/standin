@@ -29,6 +29,17 @@ export class RemoteAvatarOutlines {
         if (selectedId !== hoveredId) this.show(selectedId);
     }
 
+    // Shows exactly these avatars and lets the other outlines go.
+    showOnly(socketIds: readonly string[]): void {
+        this.outlines.forEach((outline, socketId) => {
+            if (socketIds.includes(socketId)) return;
+
+            outline.destroy();
+            this.outlines.delete(socketId);
+        });
+        socketIds.forEach((socketId) => this.show(socketId));
+    }
+
     // The avatar is about to go, so its outline goes before it.
     release(socketId: string): void {
         this.outlines.get(socketId)?.destroy();
