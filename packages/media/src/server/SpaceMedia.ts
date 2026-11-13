@@ -11,7 +11,9 @@ import {
     MediaTransportNotFoundError,
     MediaTransportNotRestartableError,
     type MediaPauseReason,
+    DEFAULT_AMBIENT_RANGE,
     DEFAULT_PROXIMITY_PRESET,
+    type AmbientRange,
     type MediaSource,
     type ProximityPreset,
     type MediaTransportDirection,
@@ -102,6 +104,7 @@ export class SpaceMedia {
     private speakerListener: ((peerIds: string[]) => void) | null = null;
     private closed = false;
     private proximityPreset: ProximityPreset = DEFAULT_PROXIMITY_PRESET;
+    private ambientRange: AmbientRange = DEFAULT_AMBIENT_RANGE;
     // How many videos of each receiver the server holds back while it is short
     // of CPU (see ServerLoadMonitor), 0 when it is not.
     private videoShed = 0;
@@ -193,6 +196,16 @@ export class SpaceMedia {
     /** Sets how far people hear and see each other in this space. */
     setProximityPreset(preset: ProximityPreset): void {
         this.proximityPreset = preset;
+    }
+
+    /** Sets how far past the proximity ring people overhear the conversations. */
+    setAmbientRange(range: AmbientRange): void {
+        this.ambientRange = range;
+    }
+
+    /** How far past the proximity ring people overhear the conversations. */
+    getAmbientRange(): AmbientRange {
+        return this.ambientRange;
     }
 
     /** How far people hear and see each other in this space. */
@@ -618,6 +631,7 @@ export class SpaceMedia {
             this.peers,
             split,
             this.proximityPreset,
+            this.ambientRange,
             this.videoShed
         );
         await Promise.all(

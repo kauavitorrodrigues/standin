@@ -18,3 +18,4 @@ import type { types } from "mediasoup";
 export type MediaRtpCapabilities = types.RtpCapabilities;
 export type MediaRtpParameters = types.RtpParameters;
 export type MediaDtlsParameters = types.DtlsParameters;
+export * from "./planner/utils/ambientRadii";

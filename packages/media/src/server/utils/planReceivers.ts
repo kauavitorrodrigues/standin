@@ -1,4 +1,4 @@
-import type { ProximityPreset } from "@standin/contracts";
+import type { AmbientRange, ProximityPreset } from "@standin/contracts";
 import { LOW_QUALITY_PLANNER_CONFIG } from "../../consts/spaceMedia";
 import { planSubscriptions } from "../../planner/planSubscriptions";
 import type {
@@ -34,6 +34,7 @@ export const planReceivers = (
     peers: ReadonlyMap<string, Peer>,
     split: SplitReceivers,
     preset: ProximityPreset,
+    ambientRange: AmbientRange,
     videoShed: number = 0
 ): PlannedReceivers => {
     const base: Omit<PlanInput, "dirtyIds" | "config"> = {
@@ -60,7 +61,12 @@ export const planReceivers = (
         planned.deferred.push(...result.deferred);
     };
 
-    run(split.normal, { preset, videoShed });
-    run(split.low, { ...LOW_QUALITY_PLANNER_CONFIG, preset, videoShed });
+    run(split.normal, { preset, ambientRange, videoShed });
+    run(split.low, {
+        ...LOW_QUALITY_PLANNER_CONFIG,
+        preset,
+        ambientRange,
+        videoShed,
+    });
     return planned;
 };
