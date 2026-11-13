@@ -17,7 +17,7 @@ export const usePickArea = (
 
     return useMutation({
         mutationFn: async (area: LibraryPaletteArea) => {
-            const { stamp } = await queryClient.fetchQuery({
+            const { stamp } = await queryClient.query({
                 queryKey: [AREA_STAMP_QUERY_KEY, area.id, area.version],
                 queryFn: () => fetchAreaStamp(area.id, area.version),
                 staleTime: Infinity,
