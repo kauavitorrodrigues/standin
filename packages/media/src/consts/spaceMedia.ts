@@ -35,4 +35,6 @@ export const SPATIAL_LAYER: Record<SimulcastLayer, number> = {
 export const LOW_QUALITY_PLANNER_CONFIG: Partial<PlannerConfig> = {
     activeVideoLimit: LOW_QUALITY_ACTIVE_VIDEOS,
     loudestSpeakers: LOW_QUALITY_LOUDEST_SPEAKERS,
+    // A weak machine overhears one voice at most.
+    ambientListeners: 1,
 };

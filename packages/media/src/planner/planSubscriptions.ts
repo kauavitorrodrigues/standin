@@ -4,6 +4,9 @@ import {
 } from "@standin/contracts";
 import type { MediaPauseReason, ProximityMagnitude } from "@standin/contracts";
 import {
+    AMBIENT_LISTENERS,
+    AMBIENT_MAGNITUDE,
+    AMBIENT_RANGE,
     CAROUSEL_SIZE,
     LOUDEST_SPEAKERS,
     MIN_CHANGE_INTERVAL_MS,
@@ -11,9 +14,15 @@ import {
     PX_PER_TILE,
     VIDEO_PAUSE_MAGNITUDE,
 } from "../consts/planner";
+import { ambientRadii } from "./utils/ambientRadii";
 import { radiiForPreset } from "./utils/radiiForPreset";
 import { withholdsCamera } from "./utils/withholdsCamera";
-import { DEFAULT_MAGNITUDE_RULES, applyMagnitudeRules } from "./magnitudeRules";
+import {
+    DEFAULT_AMBIENT_RULES,
+    DEFAULT_MAGNITUDE_RULES,
+    allowsAmbient,
+    applyMagnitudeRules,
+} from "./magnitudeRules";
 import type {
     CurrentConsumer,
     DesiredConsumer,
@@ -27,6 +36,17 @@ import type {
 } from "./types";
 
 const DEFAULT_RADII = radiiForPreset(PROXIMITY_PRESET, PX_PER_TILE);
+const DEFAULT_AMBIENT_RADII = ambientRadii(
+    PROXIMITY_PRESET,
+    AMBIENT_RANGE,
+    PX_PER_TILE
+);
+
+// What an ambient pair enters the magnitude rules with: a voice, no video.
+const AMBIENT_BASE: ProximityMagnitude = {
+    audio: AMBIENT_MAGNITUDE,
+    video: 0,
+};
 
 export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
     loudestSpeakers: LOUDEST_SPEAKERS,
@@ -37,6 +57,11 @@ export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
     videoExitRadius: DEFAULT_RADII.exitRadius,
     pxPerTile: PX_PER_TILE,
     preset: PROXIMITY_PRESET,
+    ambientRange: AMBIENT_RANGE,
+    ambientEnterRadius: DEFAULT_AMBIENT_RADII.enterRadius,
+    ambientExitRadius: DEFAULT_AMBIENT_RADII.exitRadius,
+    ambientListeners: AMBIENT_LISTENERS,
+    ambientRules: DEFAULT_AMBIENT_RULES,
     videoPauseMagnitude: VIDEO_PAUSE_MAGNITUDE,
     activeVideoLimit: CAROUSEL_SIZE,
     videoShed: 0,
@@ -50,6 +75,9 @@ type Candidate = {
     mag: ProximityMagnitude;
     audioReachable: boolean;
     videoReachable: boolean;
+    // Beyond the proximity ring but inside the ambient one, and allowed by
+    // the rules: overheard, not talked to.
+    ambientReachable: boolean;
     // The receiver already hears this person.
     holdsAudio: boolean;
     // The receiver announces and this person did not share their camera.
@@ -202,13 +230,31 @@ const buildDesired = (
                 config.videoExitRadius
             );
 
-        if (audioReachable || videoReachable) reachable.add(person.id);
+        // The ambient pair goes through the same magnitude rules as a strong
+        // one, so a private room or headphones cut it too.
+        const ambientReachable =
+            !audioReachable &&
+            config.ambientExitRadius > 0 &&
+            applyMagnitudeRules(config.rules, receiver, person, AMBIENT_BASE)
+                .audio > 0 &&
+            allowsAmbient(config.ambientRules, receiver, person) &&
+            isWithinReach(
+                distance,
+                holdsAudio,
+                config.ambientEnterRadius,
+                config.ambientExitRadius
+            );
+
+        if (audioReachable || videoReachable || ambientReachable) {
+            reachable.add(person.id);
+        }
         candidates.push({
             person,
             distance,
             mag,
             audioReachable,
             videoReachable,
+            ambientReachable,
             holdsAudio,
             withholdsCamera: withholdsCamera(receiver, person),
         });
@@ -218,22 +264,21 @@ const buildDesired = (
 
     // Audio: the loudest speakers first, then the nearest to fill the rest.
     // When nobody speaks this is simply the K nearest.
+    const byAudioPriority = (a: Candidate, b: Candidate) =>
+        rankOf(a.person.id) - rankOf(b.person.id) ||
+        // Who is already heard keeps the slot, so walking past someone
+        // slightly closer does not swap the voices on every step.
+        Number(b.holdsAudio) - Number(a.holdsAudio) ||
+        a.distance - b.distance ||
+        compareText(a.person.id, b.person.id);
+    const canBeHeard = (candidate: Candidate) =>
+        !candidate.person.muted && candidate.person.producers.audio;
+
     candidates
         .filter(
-            (candidate) =>
-                candidate.audioReachable &&
-                !candidate.person.muted &&
-                candidate.person.producers.audio
+            (candidate) => candidate.audioReachable && canBeHeard(candidate)
         )
-        .sort(
-            (a, b) =>
-                rankOf(a.person.id) - rankOf(b.person.id) ||
-                // Who is already heard keeps the slot, so walking past someone
-                // slightly closer does not swap the voices on every step.
-                Number(b.holdsAudio) - Number(a.holdsAudio) ||
-                a.distance - b.distance ||
-                compareText(a.person.id, b.person.id)
-        )
+        .sort(byAudioPriority)
         .slice(0, config.loudestSpeakers)
         .forEach(({ person }) => {
             consumers.push(
@@ -245,6 +290,32 @@ const buildDesired = (
                     null
                 )
             );
+        });
+
+    // Ambient: a few voices from the ring beyond, picked by the same order, so
+    // speakers come first. A new slot goes only to somebody who is speaking
+    // now. Who already holds one keeps it through the hysteresis, so a pause
+    // in a sentence does not drop the voice.
+    candidates
+        .filter(
+            (candidate) =>
+                candidate.ambientReachable &&
+                canBeHeard(candidate) &&
+                (candidate.holdsAudio || speakerRank.has(candidate.person.id))
+        )
+        .sort(byAudioPriority)
+        .slice(0, config.ambientListeners)
+        .forEach(({ person }) => {
+            consumers.push({
+                ...toDesired(
+                    person.id,
+                    person.producers.audio!,
+                    "audio",
+                    null,
+                    null
+                ),
+                connection: "ambient",
+            });
         });
 
     // Video: pinned people take the slots first, then screens, a camera and a screen of the same
@@ -417,8 +488,15 @@ const resolveConfig = (overrides?: Partial<PlannerConfig>): PlannerConfig => {
     const preset = overrides?.preset ?? DEFAULT_PLANNER_CONFIG.preset;
     const pxPerTile = overrides?.pxPerTile ?? DEFAULT_PLANNER_CONFIG.pxPerTile;
     const { enterRadius, exitRadius } = radiiForPreset(preset, pxPerTile);
+    const ambient = ambientRadii(
+        preset,
+        overrides?.ambientRange ?? DEFAULT_PLANNER_CONFIG.ambientRange,
+        pxPerTile
+    );
     return {
         ...DEFAULT_PLANNER_CONFIG,
+        ambientEnterRadius: ambient.enterRadius,
+        ambientExitRadius: ambient.exitRadius,
         audioEnterRadius: enterRadius,
         audioExitRadius: exitRadius,
         videoEnterRadius: enterRadius,

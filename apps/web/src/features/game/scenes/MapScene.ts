@@ -11,6 +11,7 @@ import {
     PLAYER_DIRECTIONS,
     type PlayerPosition,
     type RoomDoorState,
+    type AmbientRange,
     type ProximityPreset,
     DEFAULT_PROXIMITY_PRESET,
     SPACE_TELEPORT_COUNT_MAX,
@@ -221,6 +222,12 @@ import { PendingProfilePictures } from "@/features/game/lib/PendingProfilePictur
 import { PendingUserNames } from "@/features/game/lib/PendingUserNames";
 import { RemoteSelection } from "@/features/game/lib/RemoteSelection";
 import { calculatePresetVolume } from "@/features/game/multiplayer/utils/proximityRadii";
+import { AmbientConversations } from "@/features/ambient/lib/AmbientConversations";
+import {
+    AMBIENT_CONVERSATION_LABEL,
+    AMBIENT_EVENTS,
+} from "@/features/ambient/consts/ambientConversation";
+import type { AmbientSettings } from "@/features/ambient/types";
 import { ROOM_DOOR_PADLOCK } from "@/features/game/consts/room-door";
 import padlockUrl from "@assets/game/lock.png";
 
@@ -387,6 +394,14 @@ export class MapScene extends Phaser.Scene {
     private anyPeerAudible = false;
     // The reach of the voice and video of the space, set by the owner.
     private proximityPreset: ProximityPreset = DEFAULT_PROXIMITY_PRESET;
+    // The conversations overheard from the ring beyond the voice.
+    private readonly ambient = new AmbientConversations();
+    private ambientHoverController: HoverTargetController | null = null;
+    private ambientOutlines: RemoteAvatarOutlines | null = null;
+    private readonly ambientHoverTargets: HoverTarget[] = [];
+    // Reused between frames, so a person overheard for a while builds one
+    // target and no more.
+    private readonly ambientHoverPool = new Map<string, HoverTarget>();
     private proximityListener: ((anyPeerAudible: boolean) => void) | null =
         null;
     private peerDistanceListener:
@@ -565,10 +580,20 @@ export class MapScene extends Phaser.Scene {
             REMOTE_AVATAR_EVENTS.HOVER_CHANGED,
             { drawsOutline: false, setsCursor: true }
         );
-        this.remoteOutlines = new RemoteAvatarOutlines((socketId) => {
+        const createRemoteOutline = (socketId: string) => {
             const avatar = this.remoteAvatars.get(socketId);
             return avatar ? new AvatarOutline(this, avatar.gameObject) : null;
-        });
+        };
+        this.remoteOutlines = new RemoteAvatarOutlines(createRemoteOutline);
+        // The people whose conversation is overheard are named on hover and
+        // outlined for a moment when it starts. Their own controller, so it
+        // never takes the click or the cursor of the avatar.
+        this.ambientOutlines = new RemoteAvatarOutlines(createRemoteOutline);
+        this.ambientHoverController = new HoverTargetController(
+            this,
+            AMBIENT_EVENTS.HOVER_CHANGED,
+            { drawsOutline: false, setsCursor: false }
+        );
         const onRemoteHover = (hover: HoverState | null) => {
             this.hoveredRemoteId = hover?.id ?? null;
         };
@@ -587,6 +612,9 @@ export class MapScene extends Phaser.Scene {
             );
             this.remoteOutlines?.destroy();
             this.remoteOutlines = null;
+            this.ambientOutlines?.destroy();
+            this.ambientOutlines = null;
+            this.ambientHoverController = null;
         });
 
         this.playerOutline = new AvatarOutline(this, this.player.gameObject);
@@ -1536,6 +1564,45 @@ export class MapScene extends Phaser.Scene {
             this.hoveredRemoteId,
             this.remoteSelection.id
         );
+        this.updateAmbientHover();
+    }
+
+    // The avatars of the people whose conversation is overheard are targets
+    // that carry the label of the tooltip, and the ones whose conversation just
+    // started are outlined until the highlight ends.
+    private updateAmbientHover(): void {
+        const { ambientHoverController } = this;
+        if (!ambientHoverController) return;
+
+        this.ambientHoverTargets.length = 0;
+        this.ambient.getOverheard().forEach((socketId) => {
+            const avatar = this.remoteAvatars.get(socketId);
+            if (!avatar) return;
+
+            let target = this.ambientHoverPool.get(socketId);
+            if (!target) {
+                target = {
+                    id: socketId,
+                    bounds: getAvatarHitRect(avatar.gameObject),
+                    label: AMBIENT_CONVERSATION_LABEL,
+                };
+                this.ambientHoverPool.set(socketId, target);
+            }
+            writeAvatarHitRect(avatar.gameObject, target.bounds);
+            this.ambientHoverTargets.push(target);
+        });
+        if (this.ambientHoverPool.size > this.ambient.getOverheard().size) {
+            this.ambientHoverPool.forEach((_target, socketId) => {
+                if (!this.ambient.getOverheard().has(socketId)) {
+                    this.ambientHoverPool.delete(socketId);
+                }
+            });
+        }
+        ambientHoverController.setTargets(this.ambientHoverTargets);
+        ambientHoverController.update();
+        this.ambientOutlines?.showOnly(
+            this.ambient.getHighlighted(this.time.now)
+        );
     }
 
     private readonly collectRemoteHoverTarget = (
@@ -1745,6 +1812,8 @@ export class MapScene extends Phaser.Scene {
         this.remoteSelection.remove(socketId);
         this.reportRemoteSelection();
         this.remoteOutlines?.release(socketId);
+        this.ambientOutlines?.release(socketId);
+        this.ambient.forget(socketId);
         this.avatarSheets?.release(socketId);
         this.remoteAvatars.get(socketId)?.destroy();
         this.remoteAvatars.delete(socketId);
@@ -1762,6 +1831,7 @@ export class MapScene extends Phaser.Scene {
         this.remoteSelection.clear();
         this.reportRemoteSelection();
         this.remoteOutlines?.destroy();
+        this.ambientOutlines?.destroy();
         this.remoteAvatars.forEach((_avatar, socketId) =>
             this.avatarSheets?.release(socketId)
         );
@@ -2128,6 +2198,18 @@ export class MapScene extends Phaser.Scene {
         );
     }
 
+    // The ambient range of the space and what the person chose about it.
+    setAmbient(range: AmbientRange, settings: AmbientSettings): void {
+        this.ambient.setRange(range);
+        this.ambient.setSettings(settings);
+    }
+
+    // Who is speaking, by user id. The conversations overheard are the speaking
+    // people in the ambient ring.
+    setSpeakingUsers(speakingUserIds: ReadonlySet<string>): void {
+        this.ambient.setSpeakingUserIds(speakingUserIds);
+    }
+
     setProximityListener(
         listener: ((anyPeerAudible: boolean) => void) | null
     ): void {
@@ -2200,10 +2282,23 @@ export class MapScene extends Phaser.Scene {
             const distance = this.getCommunicationDistanceTo(avatar);
             distances.set(socketId, distance);
             const volume = calculatePresetVolume(this.proximityPreset, distance);
+            // Only a voice of the proximity ring counts as someone nearby, the
+            // ring beyond is overheard and never opens the microphone.
             if (volume > 0) anyAudible = true;
 
-            updateRemoteVolume(socketId, volume);
+            updateRemoteVolume(
+                socketId,
+                volume > 0
+                    ? volume
+                    : this.ambient.volumeAt(this.proximityPreset, distance)
+            );
         });
+        this.ambient.refresh(
+            this.proximityPreset,
+            distances,
+            this.remoteUserIds,
+            this.time.now
+        );
 
         this.peerDistanceListener?.(distances);
 

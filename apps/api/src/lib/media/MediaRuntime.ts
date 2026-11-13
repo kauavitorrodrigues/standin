@@ -8,6 +8,7 @@ import {
 import { resolveSpaceSettings } from "@/lib/socket/services/resolveSpaceSettings";
 import { SocketManager } from "@/lib/socket/socketManager";
 import { mediaNotifier } from "./mediaNotifier";
+import { forgetSpeakerChanges } from "./syncSpeakerChanges";
 import { MEDIA_RESTART_DELAY_MS } from "./consts/media";
 import { MediaLogMessages } from "./consts/messages";
 
@@ -96,6 +97,7 @@ const acquireRoom = async (spaceId: string): Promise<SpaceMedia> => {
     if (!spacesWithRooms.has(spaceId)) {
         const settings = await resolveSpaceSettings(spaceId);
         room.setProximityPreset(settings.proximityPreset);
+        room.setAmbientRange(settings.ambientRange);
     }
     spacesWithRooms.add(spaceId);
     return room;
@@ -121,6 +123,7 @@ const leave = (spaceId: string, socketId: string): void => {
     server?.releaseRoomIfEmpty(spaceId);
     spacesWithRooms.delete(spaceId);
     mediaDirty.forget(spaceId);
+    forgetSpeakerChanges(spaceId);
 };
 
 const usage = () => server?.usage();

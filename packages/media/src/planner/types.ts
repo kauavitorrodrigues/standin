@@ -1,4 +1,5 @@
 import type {
+    AmbientRange,
     MediaPauseReason,
     ProximityMagnitude,
     ProximityPreset,
@@ -8,8 +9,9 @@ export type ProducerKind = "audio" | "camera" | "screen" | "screen-audio";
 
 export type SimulcastLayer = "low" | "mid" | "high";
 
-// "ambient" is the hook for awareness without a decoded stream. The planner
-// only emits "strong" for now.
+// "strong" is a person inside the proximity ring, "ambient" one overheard from
+// the ring beyond it (audio only). The client works the ring out from the
+// distance, so the connection is not sent.
 export type ConnectionType = "strong" | "ambient";
 
 export type PersonState = {
@@ -64,6 +66,12 @@ export type MagnitudeRule = (
     mag: ProximityMagnitude
 ) => ProximityMagnitude;
 
+// The hook of the ambient ring: true keeps the pair in it, false drops the
+// receiver's connection with that person. Other features (focus sessions,
+// contextual tips) add a rule here and nothing else changes in the planner.
+// It runs after the magnitude rules, which already apply to the ambient pair.
+export type AmbientRule = (playerA: RulePlayer, playerB: RulePlayer) => boolean;
+
 // Read side of the SpatialGrid in apps/api/src/lib/socket/presence, kept
 // structural so the planner has no dependency on the api.
 export type PositionSource = {
@@ -79,6 +87,13 @@ export type PlannerConfig = {
     videoExitRadius: number;
     pxPerTile: number;
     preset: ProximityPreset;
+    // The ambient ring beyond the proximity ring. Off has radii of 0.
+    ambientRange: AmbientRange;
+    ambientEnterRadius: number;
+    ambientExitRadius: number;
+    // Voices overheard at once from the ring.
+    ambientListeners: number;
+    ambientRules: readonly AmbientRule[];
     videoPauseMagnitude: number;
     // Video consumers that play at once. The ones beyond it, up to the
     // carousel, are kept paused for the receiver (a weak machine asked for

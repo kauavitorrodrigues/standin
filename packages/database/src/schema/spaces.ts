@@ -15,6 +15,8 @@ import {
     uniqueIndex,
 } from "drizzle-orm/pg-core";
 import {
+    AMBIENT_RANGES,
+    DEFAULT_AMBIENT_RANGE,
     DEFAULT_PROXIMITY_PRESET,
     SPACE_GUEST_ACCESS,
     SPACE_PROXIMITY_PRESETS,
@@ -33,6 +35,11 @@ export const spaceGuestAccessEnum = pgEnum(
 export const spaceProximityPresetEnum = pgEnum(
     "space_proximity_preset",
     SPACE_PROXIMITY_PRESETS
+);
+
+export const spaceAmbientRangeEnum = pgEnum(
+    "space_ambient_range",
+    AMBIENT_RANGES
 );
 
 export const spacesTable = pgTable(
@@ -55,6 +62,9 @@ export const spacesTable = pgTable(
         proximityPreset: spaceProximityPresetEnum("proximity_preset")
             .notNull()
             .default(DEFAULT_PROXIMITY_PRESET),
+        ambientRange: spaceAmbientRangeEnum("ambient_range")
+            .notNull()
+            .default(DEFAULT_AMBIENT_RANGE),
         membersCanInvite: boolean("members_can_invite")
             .notNull()
             .default(false),

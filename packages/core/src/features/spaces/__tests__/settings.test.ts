@@ -10,6 +10,7 @@ vi.mock("@standin/database", () => ({
     spacesTable: {
         enableSendNearbyInMapView: {},
         proximityPreset: {},
+        ambientRange: {},
         membersCanInvite: {},
     },
     and: vi.fn(),
@@ -40,6 +41,7 @@ describe("getSpaceSettings", () => {
         await expect(getSpaceSettings("org-1", "s1")).resolves.toEqual({
             enableSendNearbyInMapView: true,
             proximityPreset: "Long",
+            ambientRange: "short",
             membersCanInvite: false,
         });
     });
@@ -50,6 +52,7 @@ describe("getSpaceSettings", () => {
         await expect(getSpaceSettings("org-1", "s1")).resolves.toEqual({
             enableSendNearbyInMapView: false,
             proximityPreset: "Long",
+            ambientRange: "short",
             membersCanInvite: false,
         });
     });
@@ -76,6 +79,7 @@ describe("updateSpaceSettings", () => {
         ).resolves.toEqual({
             enableSendNearbyInMapView: false,
             proximityPreset: "Long",
+            ambientRange: "short",
             membersCanInvite: false,
         });
         expect(setMock).toHaveBeenCalledWith({
@@ -91,6 +95,7 @@ describe("updateSpaceSettings", () => {
         ).resolves.toEqual({
             enableSendNearbyInMapView: true,
             proximityPreset: "Long",
+            ambientRange: "short",
             membersCanInvite: false,
         });
         expect(setMock).not.toHaveBeenCalled();

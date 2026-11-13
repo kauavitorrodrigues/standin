@@ -5,6 +5,7 @@ import { MediaLogMessages } from "./consts/messages";
 import { emitSpeakers } from "./emitSpeakers";
 import { MediaRuntime, mediaDirty } from "./MediaRuntime";
 import { syncRoomKeys } from "./syncRoomKeys";
+import { syncSpeakerChanges } from "./syncSpeakerChanges";
 import { dirtyRadiusForPreset } from "./utils/dirtyRadiusForPreset";
 
 /**
@@ -30,12 +31,16 @@ export const startMediaTicker = (
         if (!room) return;
 
         syncRoomKeys(spaceId, room);
+        syncSpeakerChanges(spaceId, room);
         const index = SpaceInterests.indexOf(spaceId);
         const dirty = mediaDirty.take(
             spaceId,
             index,
             room.currentConsumers(),
-            dirtyRadiusForPreset(room.getProximityPreset())
+            dirtyRadiusForPreset(
+                room.getProximityPreset(),
+                room.getAmbientRange()
+            )
         );
         if (dirty.size > 0) {
             const deferred = await room.tick(Date.now(), index, dirty);

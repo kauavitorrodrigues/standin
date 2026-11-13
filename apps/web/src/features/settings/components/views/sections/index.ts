@@ -11,6 +11,7 @@ import { VideoSection } from "./VideoSection";
 import { ConversationsSection } from "./ConversationsSection";
 import { SecuritySection } from "./SecuritySection";
 import { AppsSection } from "./AppsSection";
+import { AmbientSection } from "./AmbientSection";
 import { IntegrationsSection } from "./IntegrationsSection";
 
 export const SETTINGS_SECTION_VIEWS: Record<SettingsSectionId, ComponentType> =
@@ -20,6 +21,7 @@ export const SETTINGS_SECTION_VIEWS: Record<SettingsSectionId, ComponentType> =
         video: VideoSection,
         streaming: StreamingSection,
         notifications: NotificationsSection,
+        ambient: AmbientSection,
         performance: PerformanceSection,
         members: MembersSection,
         guests: GuestsSection,

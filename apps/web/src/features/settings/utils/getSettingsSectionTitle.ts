@@ -7,6 +7,7 @@ export const getSettingsSectionTitle = (id: SettingsSectionId): string => {
         video: "Vídeo",
         streaming: "Transmissão",
         notifications: "Notificações",
+        ambient: "Conversas por perto",
         integrations: "Integrações",
         performance: "Desempenho",
         members: "Gerenciar membros",

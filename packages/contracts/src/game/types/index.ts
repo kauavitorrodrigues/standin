@@ -4,3 +4,4 @@ export * from "./socket";
 export * from "./events";
 export * from "./ice";
 export * from "./room";
+export * from "./ambient";

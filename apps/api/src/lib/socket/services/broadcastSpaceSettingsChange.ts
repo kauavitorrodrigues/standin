@@ -13,6 +13,7 @@ const updateMediaProximity = (
     if (!room) return;
 
     room.setProximityPreset(settings.proximityPreset);
+    room.setAmbientRange(settings.ambientRange);
     mediaDirty.markReceivers(spaceId, room.peerIds());
 };
 

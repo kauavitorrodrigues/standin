@@ -6,6 +6,7 @@ import type { SpaceSettings } from "@standin/contracts";
 export const spaceSettingsSelect = {
     enableSendNearbyInMapView: spacesTable.enableSendNearbyInMapView,
     proximityPreset: spacesTable.proximityPreset,
+    ambientRange: spacesTable.ambientRange,
     membersCanInvite: spacesTable.membersCanInvite,
 };
 

@@ -9,6 +9,7 @@ describe("SpaceSettingsSchema", () => {
         expect(SpaceSettingsSchema.parse({})).toEqual({
             enableSendNearbyInMapView: true,
             proximityPreset: "Long",
+            ambientRange: "short",
             membersCanInvite: false,
         });
     });
@@ -19,6 +20,7 @@ describe("SpaceSettingsSchema", () => {
         ).toEqual({
             enableSendNearbyInMapView: false,
             proximityPreset: "Long",
+            ambientRange: "short",
             membersCanInvite: false,
         });
     });
@@ -31,6 +33,19 @@ describe("SpaceSettingsSchema", () => {
         expect(
             SpaceSettingsSchema.safeParse({ proximityPreset: "Huge" }).success
         ).toBe(false);
+    });
+
+    it("keeps a saved ambient range and rejects one that does not exist", () => {
+        expect(SpaceSettingsSchema.parse({}).ambientRange).toBe("short");
+        expect(
+            SpaceSettingsSchema.parse({ ambientRange: "off" }).ambientRange
+        ).toBe("off");
+        expect(
+            SpaceSettingsSchema.safeParse({ ambientRange: "huge" }).success
+        ).toBe(false);
+        expect(
+            SpaceSettingsUpdateSchema.safeParse({ ambientRange: "long" }).success
+        ).toBe(true);
     });
 
     it("keeps members from inviting until the setting is saved", () => {

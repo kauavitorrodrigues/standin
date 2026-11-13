@@ -1,5 +1,5 @@
 import type { ProximityMagnitude } from "@standin/contracts";
-import type { MagnitudeRule, RulePlayer } from "./types";
+import type { AmbientRule, MagnitudeRule, RulePlayer } from "./types";
 
 // Chain of pure overrides: each rule is
 // (playerA, playerB, mag) => mag and runs over the result of the previous one.
@@ -20,10 +20,9 @@ export const headphonesRule: MagnitudeRule = (playerA, playerB, mag) =>
 export const awayRule: MagnitudeRule = (playerA, playerB, mag) =>
     playerA.away || playerB.away ? UNCONNECTED : mag;
 
-// Focus mode only matters for the ambient layer, which is dropped for a person
-// in focus when the connection is not strong. This planner has strong
-// connections only, so the rule keeps the magnitude. The flag is stored and
-// shown to the others.
+// Focus mode keeps the magnitude of a strong connection. It only drops the
+// ambient ring, which focusModeAmbientRule does. The flag is stored and shown
+// to the others.
 export const focusModeRule: MagnitudeRule = (_playerA, _playerB, mag) => mag;
 
 // Placeholders for product features that come later. Each one keeps the
@@ -48,3 +47,18 @@ export const applyMagnitudeRules = (
     base: ProximityMagnitude
 ): ProximityMagnitude =>
     rules.reduce((mag, rule) => rule(playerA, playerB, mag), base);
+
+// The ambient ring is dropped when either side is in focus mode: a person who
+// asked not to be disturbed neither overhears nor is overheard.
+export const focusModeAmbientRule: AmbientRule = (playerA, playerB) =>
+    !playerA.focusMode && !playerB.focusMode;
+
+export const DEFAULT_AMBIENT_RULES: readonly AmbientRule[] = [
+    focusModeAmbientRule,
+];
+
+export const allowsAmbient = (
+    rules: readonly AmbientRule[],
+    playerA: RulePlayer,
+    playerB: RulePlayer
+): boolean => rules.every((rule) => rule(playerA, playerB));

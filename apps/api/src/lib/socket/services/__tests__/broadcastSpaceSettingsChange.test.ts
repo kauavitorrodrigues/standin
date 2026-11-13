@@ -31,6 +31,7 @@ describe("broadcastSpaceSettingsChange", () => {
         const settings = {
             enableSendNearbyInMapView: false,
             proximityPreset: "Long" as const,
+            ambientRange: "short" as const,
             membersCanInvite: false,
         };
 
@@ -44,9 +45,10 @@ describe("broadcastSpaceSettingsChange", () => {
         );
     });
 
-    it("gives the media room the new preset and plans everybody again", () => {
+    it("gives the media room the new reach and plans everybody again", () => {
         const room = {
             setProximityPreset: vi.fn(),
+            setAmbientRange: vi.fn(),
             peerIds: () => ["a", "b"],
         };
         getRoomMock.mockReturnValue(room);
@@ -54,11 +56,13 @@ describe("broadcastSpaceSettingsChange", () => {
         broadcastSpaceSettingsChange("space-1", {
             enableSendNearbyInMapView: true,
             proximityPreset: "Short",
+            ambientRange: "long",
             membersCanInvite: false,
         });
 
         expect(getRoomMock).toHaveBeenCalledWith("space-1");
         expect(room.setProximityPreset).toHaveBeenCalledWith("Short");
+        expect(room.setAmbientRange).toHaveBeenCalledWith("long");
         expect(markReceiversMock).toHaveBeenCalledWith("space-1", ["a", "b"]);
     });
 
@@ -68,6 +72,7 @@ describe("broadcastSpaceSettingsChange", () => {
         broadcastSpaceSettingsChange("space-1", {
             enableSendNearbyInMapView: true,
             proximityPreset: "Short",
+            ambientRange: "long",
             membersCanInvite: false,
         });
 
