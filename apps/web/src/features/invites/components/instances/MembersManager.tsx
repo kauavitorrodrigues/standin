@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
 import type { PaginationState } from "@tanstack/react-table";
+import type { OrganizationMemberEntry } from "@standin/contracts";
 import { MailIcon, SearchXIcon, UserPlusIcon, UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/toast";
 import { DEFAULT_TABLE_PAGE_SIZE } from "@/consts/dataTable";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useOrganization } from "@/features/organizations/hooks/useOrganization";
+import { memberErrorMessage } from "@/features/organizations/utils/memberErrorMessage";
 import { InviteMessages } from "../../consts/messages";
 import { useCopyText } from "../../hooks/useCopyText";
 import { useMembersSync } from "../../hooks/useMembersSync";
 import { InviteMutations } from "../../mutations";
 import { InviteQueries } from "../../queries";
 import { buildJoinLink } from "@/features/organizations/invite-links/utils/link";
+import { RemoveMemberDialog } from "../dialogs/RemoveMemberDialog";
 import { ListSearchField } from "../fields/ListSearchField";
 import { InvitationTable } from "../views/InvitationTable";
 import { ListEmptyState } from "../views/ListEmptyState";
@@ -41,6 +46,7 @@ const FIRST_PAGE: PaginationState = {
 
 // The people of the organization and the invitations still waiting.
 export const MembersManager = ({ organizationId, onAdd }: Props) => {
+    const { user } = useAuth();
     const [tab, setTab] = useState(LIST_TAB);
     const [search, setSearch] = useState("");
     const [memberPage, setMemberPage] = useState(FIRST_PAGE);
@@ -60,6 +66,11 @@ export const MembersManager = ({ organizationId, onAdd }: Props) => {
     });
     useMembersSync(organizationId);
     const cancel = InviteMutations.cancelInvitation(organizationId);
+    // Only the owner removes. The instance admin who runs the invites does not.
+    const canRemove = useOrganization().organization?.ownerId === user.id;
+    const removeMember = InviteMutations.removeMember(organizationId);
+    const [memberToRemove, setMemberToRemove] =
+        useState<OrganizationMemberEntry | null>(null);
     const copy = useCopyText();
 
     // Closing the last item of a page leaves it empty: go back one page.
@@ -119,6 +130,27 @@ export const MembersManager = ({ organizationId, onAdd }: Props) => {
                     type: "error",
                 }),
         });
+
+    const confirmRemove = () => {
+        if (!memberToRemove) return;
+        removeMember.mutate(memberToRemove.userId, {
+            onSuccess: () => {
+                setMemberToRemove(null);
+                toast.add({
+                    title: "Pessoa removida.",
+                    type: "success",
+                });
+            },
+            onError: (error) =>
+                toast.add({
+                    title: memberErrorMessage(
+                        error,
+                        "Não foi possível remover a pessoa."
+                    ),
+                    type: "error",
+                }),
+        });
+    };
 
     return (
         <div className="flex h-full min-h-0 flex-col gap-3 px-4 pt-4 pb-4">
@@ -221,6 +253,8 @@ export const MembersManager = ({ organizationId, onAdd }: Props) => {
                                 total={members.total}
                                 pagination={memberPage}
                                 onPaginationChange={setMemberPage}
+                                canRemove={canRemove}
+                                onRemove={setMemberToRemove}
                             />
                         ) : (
                             <InvitationTable
@@ -235,6 +269,12 @@ export const MembersManager = ({ organizationId, onAdd }: Props) => {
                     }
                 />
             </div>
+            <RemoveMemberDialog
+                memberName={memberToRemove?.name ?? null}
+                isBusy={removeMember.isPending}
+                onConfirm={confirmRemove}
+                onCancel={() => setMemberToRemove(null)}
+            />
         </div>
     );
 };

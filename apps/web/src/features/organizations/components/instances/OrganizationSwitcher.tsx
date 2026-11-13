@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { ChevronsUpDownIcon, PlusIcon, UserPlusIcon } from "lucide-react";
+import {
+    ChevronsUpDownIcon,
+    LogOutIcon,
+    PlusIcon,
+    UserPlusIcon,
+} from "lucide-react";
 import { USER_ROLES } from "@standin/contracts";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,17 +22,22 @@ import { InviteCollaboratorsDialog } from "@/features/invites/components/dialogs
 import { OrganizationsQueries } from "../../queries";
 import { useOrganization } from "../../hooks/useOrganization";
 import { CreateOrganizationDialog } from "../dialogs/CreateDialog";
+import { LeaveOrganizationDialog } from "../dialogs/LeaveDialog";
 
 export const OrganizationSwitcher = () => {
     const { organizations } = OrganizationsQueries.useAll();
     const { organization, setOrganization } = useOrganization();
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+    const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
     const { user } = useAuth();
     const { canCreateOrganization } = useGlobalCapabilities();
     const canInvite =
         !!organization &&
         (organization.ownerId === user.id || user.role === USER_ROLES.ADMIN);
+
+    // The owner stays: an organization needs its owner.
+    const canLeave = !!organization && organization.ownerId !== user.id;
 
     if (organizations.length === 0) return null;
 
@@ -70,6 +80,14 @@ export const OrganizationSwitcher = () => {
                             Convidar pessoas
                         </DropdownMenuItem>
                     )}
+                    {canLeave && (
+                        <DropdownMenuItem
+                            onClick={() => setIsLeaveDialogOpen(true)}
+                        >
+                            <LogOutIcon />
+                            Sair da organização
+                        </DropdownMenuItem>
+                    )}
                     {canCreateOrganization && (
                         <DropdownMenuItem
                             onClick={() => setIsCreateDialogOpen(true)}
@@ -87,6 +105,15 @@ export const OrganizationSwitcher = () => {
                     spaceId={null}
                     open={isInviteDialogOpen}
                     onOpenChange={setIsInviteDialogOpen}
+                />
+            )}
+
+            {organization && canLeave && (
+                <LeaveOrganizationDialog
+                    organizationId={organization.id}
+                    organizationName={organization.name}
+                    open={isLeaveDialogOpen}
+                    onOpenChange={setIsLeaveDialogOpen}
                 />
             )}
 

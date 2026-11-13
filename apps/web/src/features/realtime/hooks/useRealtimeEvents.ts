@@ -1,4 +1,5 @@
 import { useChatRealtimeEvents } from "@/features/chat/hooks/useChatRealtimeEvents";
+import { useMemberRemovedNotice } from "@/features/organizations/hooks/useMemberRemovedNotice";
 import { useGuestStatusSync } from "@/features/spaces/guests/hooks/useGuestStatusSync";
 
 // Single fan-out entry point: a new feature's socket reaction gets added
@@ -6,4 +7,5 @@ import { useGuestStatusSync } from "@/features/spaces/guests/hooks/useGuestStatu
 export const useRealtimeEvents = () => {
     useChatRealtimeEvents();
     useGuestStatusSync();
+    useMemberRemovedNotice();
 };
