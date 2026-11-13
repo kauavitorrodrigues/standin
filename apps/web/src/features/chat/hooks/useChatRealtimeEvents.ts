@@ -71,7 +71,7 @@ export const useChatRealtimeEvents = () => {
     const notifyIncomingMessage = async (conversationId: string) => {
         if (!document.hidden) return;
 
-        const { conversations } = await queryClient.fetchQuery({
+        const { conversations } = await queryClient.query({
             queryKey: conversationsQueryKey(organizationId),
             queryFn: () => fetchConversations(organizationId),
             staleTime: Infinity,
