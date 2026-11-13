@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchSocketsMock, inMock, orgMock } = vi.hoisted(() => ({
-    fetchSocketsMock: vi.fn(),
-    inMock: vi.fn(),
-    orgMock: vi.fn(),
-}));
+const { fetchSocketsMock, inMock, orgMock, emitToUserMock } = vi.hoisted(
+    () => ({
+        emitToUserMock: vi.fn(),
+        fetchSocketsMock: vi.fn(),
+        inMock: vi.fn(),
+        orgMock: vi.fn(),
+    })
+);
 
 vi.mock("../../socketManager", () => ({
-    SocketManager: { get: () => ({ in: inMock }) },
+    SocketManager: { get: () => ({ in: inMock }), emitToUser: emitToUserMock },
 }));
 vi.mock("../resolveSpaceOrganizationId", () => ({
     resolveSpaceOrganizationId: orgMock,
@@ -62,5 +65,54 @@ describe("broadcastMemberRemoved", () => {
         await broadcastMemberRemoved({ userId: "u1", organizationId: "org-1" });
 
         expect(gone.disconnect).toHaveBeenCalledWith(true);
+    });
+
+    it("tells a person the owner removed, before the sockets close", async () => {
+        const inside = socketIn("space-a");
+        fetchSocketsMock.mockResolvedValue([inside]);
+        emitToUserMock.mockImplementation(() => {
+            expect(inside.disconnect).not.toHaveBeenCalled();
+        });
+
+        await broadcastMemberRemoved({
+            userId: "u1",
+            organizationId: "org-1",
+            notice: { organizationName: "Acme", reason: "removed" },
+        });
+
+        expect(emitToUserMock).toHaveBeenCalledWith(
+            "u1",
+            "organization:member-removed",
+            {
+                organizationId: "org-1",
+                organizationName: "Acme",
+                reason: "removed",
+            }
+        );
+        expect(inside.disconnect).toHaveBeenCalledWith(true);
+    });
+
+    it("sends no notice when the organization went away", async () => {
+        fetchSocketsMock.mockResolvedValue([]);
+
+        await broadcastMemberRemoved({ userId: "u1", organizationId: "org-1" });
+
+        expect(emitToUserMock).not.toHaveBeenCalled();
+    });
+
+    it("tells the other devices of a person who left, with the reason", async () => {
+        fetchSocketsMock.mockResolvedValue([]);
+
+        await broadcastMemberRemoved({
+            userId: "u1",
+            organizationId: "org-1",
+            notice: { organizationName: "Acme", reason: "left" },
+        });
+
+        expect(emitToUserMock).toHaveBeenCalledWith(
+            "u1",
+            "organization:member-removed",
+            expect.objectContaining({ reason: "left" })
+        );
     });
 });
