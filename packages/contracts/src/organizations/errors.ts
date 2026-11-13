@@ -65,3 +65,33 @@ export class OrganizationOwnerOnlyError extends BaseError {
         );
     }
 }
+
+export class OrganizationMemberNotFoundError extends BaseError {
+    constructor() {
+        super(
+            "This person is not a member of the organization.",
+            "ORGANIZATION_MEMBER_NOT_FOUND",
+            404
+        );
+    }
+}
+
+export class OrganizationOwnerCannotBeRemovedError extends BaseError {
+    constructor() {
+        super(
+            "The owner cannot be removed from the organization.",
+            "ORGANIZATION_OWNER_CANNOT_BE_REMOVED",
+            409
+        );
+    }
+}
+
+export class OrganizationOwnerCannotLeaveError extends BaseError {
+    constructor() {
+        super(
+            "The only owner cannot leave the organization.",
+            "ORGANIZATION_OWNER_CANNOT_LEAVE",
+            409
+        );
+    }
+}

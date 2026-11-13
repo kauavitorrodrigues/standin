@@ -83,6 +83,7 @@ import type {
     MediaStateChangedPayload,
 } from "../../media/types";
 import type { OrganizationMembersChangedPayload } from "../../organizations/types/members-changed";
+import type { OrganizationMemberRemovedPayload } from "../../organizations/types/member-removed";
 import type { SpaceSettings } from "../../spaces/types/space-settings";
 import type {
     SpaceGuestRemovedPayload,
@@ -137,6 +138,7 @@ export const SpaceEvents = {
 
 export const OrganizationEvents = {
     MEMBERS_CHANGED: "organization:members-changed",
+    MEMBER_REMOVED: "organization:member-removed",
 } as const;
 
 export const EditorEvents = {
@@ -467,6 +469,11 @@ export type ServerToClientEvents = {
     // owners hear it, to refresh the lists they act on.
     "organization:members-changed": (
         payload: OrganizationMembersChangedPayload
+    ) => void;
+    // This person was removed from an organization or left it. Only they
+    // hear it, on every tab and device.
+    "organization:member-removed": (
+        payload: OrganizationMemberRemovedPayload
     ) => void;
     // The guest lost the access (kicked, expired or guest access turned off).
     "space:guest-removed": (payload: SpaceGuestRemovedPayload) => void;
