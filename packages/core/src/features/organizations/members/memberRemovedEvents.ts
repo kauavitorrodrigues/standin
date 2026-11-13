@@ -1,6 +1,18 @@
+import type { OrganizationMemberRemovalReason } from "@standin/contracts";
+import type { DeskChange } from "../../maps/desks";
+
 export type OrganizationMemberRemoval = {
     userId: string;
     organizationId: string;
+    // Set when the person was removed or left: their devices are told why.
+    // Not set when the organization went away.
+    notice?: {
+        organizationName: string;
+        reason: OrganizationMemberRemovalReason;
+    };
+    // The desks freed in the same transaction, for the clients to be told.
+    // Not set when the organization went away: the listener frees them then.
+    freedDesks?: DeskChange[];
 };
 
 export type OrganizationMemberRemovedListener = (

@@ -7,7 +7,8 @@ import { listConversationParticipants } from "./participants/listByConversation"
 // actor. Mirrors the same SPACE vs DIRECT split as canAccessConversation:
 // SPACE reaches every active org member (conversation_participants is only
 // a creation-time snapshot, not the access boundary), DIRECT only its
-// active participants.
+// participants who are still active members of the organization (someone
+// removed keeps the row, for history, but hears nothing).
 export const getConversationRecipientUserIds = async (
     conversation: ConversationRow,
     excludeUserId: string
@@ -24,8 +25,14 @@ export const getConversationRecipientUserIds = async (
     }
 
     const participants = await listConversationParticipants(conversation.id);
+    const activeIds = new Set(
+        await OrganizationMemberService.findActiveAmong(
+            conversation.organizationId,
+            participants.map((participant) => participant.id)
+        )
+    );
 
     return participants
         .map((participant) => participant.id)
-        .filter((userId) => userId !== excludeUserId);
+        .filter((userId) => userId !== excludeUserId && activeIds.has(userId));
 };
