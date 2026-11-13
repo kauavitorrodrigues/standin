@@ -48,6 +48,36 @@ describe("updateSettings controller", () => {
         });
     });
 
+    it("saves and broadcasts the ambient range", async () => {
+        updateMock.mockResolvedValue({ ambientRange: "off" });
+        const res = buildRes();
+
+        await updateSettings(
+            { spaceRef, body: { ambientRange: "off" } } as any,
+            res
+        );
+
+        expect(updateMock).toHaveBeenCalledWith("org-1", "s1", {
+            ambientRange: "off",
+        });
+        expect(broadcastMock).toHaveBeenCalledWith("s1", {
+            ambientRange: "off",
+        });
+        expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it("rejects an ambient range that does not exist", async () => {
+        const res = buildRes();
+
+        await updateSettings(
+            { spaceRef, body: { ambientRange: "huge" } } as any,
+            res
+        );
+
+        expect(updateMock).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(400);
+    });
+
     it("rejects a key that is not a setting without saving", async () => {
         const res = buildRes();
 
